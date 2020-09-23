@@ -65,7 +65,7 @@ jobs:
        name: lightzonefx-win
        path: LightZoneFX/target/package/*
 
-build-linux:
+  build-linux:
 
     runs-on: ubuntu-latest
 

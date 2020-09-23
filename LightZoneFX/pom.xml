@@ -362,10 +362,9 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>pkg</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
-                <icons>${project.resources[0].directory}/at/itarchitects/lightzonefx/img/osx/LightZone.icns</icons>
-                <fileicon>${project.resources[0].directory}/at/itarchitects/lightzonefx/img/fileassociate_osx.properties</fileicon>
+                <icons>${project.resources[0].directory}/at/itarchitects/lightzonefx/img/osx/LightZone.icns</icons>                
             </properties>
         </profile>
         <profile>
@@ -377,12 +376,26 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>exe</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
-                <icons>${project.resources[0].directory}\at\itarchitects\lightzonefx\img\win\LightZone.ico</icons>               
-                <fileicon>${project.resources[0].directory}\at\itarchitects\lightzonefx\img\fileassociate_win.properties</fileicon>
+                <icons>${project.resources[0].directory}\at\itarchitects\lightzonefx\img\win\LightZone.ico</icons>                
             </properties>
-        </profile>        
+        </profile>   
+        <profile>
+            <id>linux</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <os>
+                    <family>unix</family>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <properties>
+                <bundle.type>app-image</bundle.type>
+                <exec.executable>${java.home}/bin/java</exec.executable> 
+                <icons>${project.resources[0].directory}/at/itarchitects/lightzonefx/img/linux/LightZoneFX.png</icons>                
+            </properties>
+        </profile>   
         <profile>
             <id>package</id>                        
             <build>
@@ -454,7 +467,7 @@
                                         <argument>--dest</argument>
                                         <argument>package</argument>
                                         <argument>--type</argument>
-                                        <argument>app-image</argument>
+                                        <argument>${bundle.type}</argument>
                                         <argument>--verbose</argument>                                        
                                         <argument>--icon</argument>
                                         <argument>${icons}</argument>                                        

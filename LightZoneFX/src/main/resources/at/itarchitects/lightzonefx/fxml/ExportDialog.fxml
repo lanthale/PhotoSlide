@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="243.0" prefWidth="511.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.itarchitects.lightzonefx.ExportDialogController">
+   <children>
+      <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
+      <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="161.0" />
+      <Label layoutX="67.0" layoutY="143.0" text="Output directory" />
+      <TextField fx:id="outputDirText" editable="false" layoutX="164.0" layoutY="139.0" />
+      <Button layoutX="332.0" layoutY="139.0" mnemonicParsing="false" onAction="#outputSelectionButtonAction">
+         <graphic>
+            <FontAwesomeIconView fill="#9f9f9f" glyphName="FOLDER_OPEN" />
+         </graphic>
+      </Button>
+      <TextField fx:id="filenamePrefixText" layoutX="164.0" layoutY="101.0" />
+      <Label layoutX="77.0" layoutY="106.0" text="Filenameprefix" />
+      <Label layoutX="334.0" layoutY="106.0" text="Example:" />
+      <Label fx:id="exampleLabel" layoutX="392.0" layoutY="106.0" text="wildeben_1.jpg" textFill="#a8a4a4" />
+      <Label layoutX="102.0" layoutY="36.0" text="Fileformat" />
+      <ComboBox fx:id="fileFormatCombo" layoutX="164.0" layoutY="31.0" prefHeight="27.0" prefWidth="161.0" />
+      <VBox layoutX="162.0" layoutY="179.0" spacing="10.0">
+         <children>
+            <CheckBox fx:id="exportSelectedBox" mnemonicParsing="false" text="Export only selected" />
+            <CheckBox fx:id="exportDeletedFileBox" mnemonicParsing="false" text="Export deleted files as well" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

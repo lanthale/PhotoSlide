@@ -1,0 +1,10 @@
+.root{    
+    -fx-base: rgb(80, 80, 80);
+    -fx-background: rgb(100, 100, 100);
+}
+
+.dialog {
+    -fx-background-color: #9f9f9f;
+}
+
+

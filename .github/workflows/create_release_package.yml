@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 15
-      uses: cescoffier/setup-jdk@v1.1.2
+      uses: cescoffier/setup-jdk@v1.1.3
       with:
         java-version: 15
         java-package: jdk
@@ -44,7 +44,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 15
-      uses: cescoffier/setup-jdk@v1.1.2
+      uses: cescoffier/setup-jdk@v1.1.3
       with:
         java-version: 15
         java-package: jdk
@@ -72,7 +72,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 15
-      uses: cescoffier/setup-jdk@v1.1.2
+      uses: cescoffier/setup-jdk@v1.1.3
       with:
         java-version: 15
         java-package: jdk

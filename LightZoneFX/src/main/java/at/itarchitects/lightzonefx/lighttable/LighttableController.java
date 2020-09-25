@@ -166,7 +166,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
         //sortOrderComboBox.setDisable(true);
-        dummyMedia = new Media(getClass().getResource("/at/itarchitects/lightzonefx/img/dummyMovie.mp4").toString());
+        //dummyMedia = new Media(getClass().getResource("/at/itarchitects/lightzonefx/img/dummyMovie.mp4").toString());
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryLZFX("lightTableController"));
         executorParallel = Executors.newSingleThreadExecutor(new ThreadFactoryLZFX("lightTableControllerSelection"));
     }

@@ -376,7 +376,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>exe</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
                 <icons>${project.resources[0].directory}\at\itarchitects\lightzonefx\img\win\LightZone.ico</icons>                
             </properties>

@@ -391,7 +391,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>deb</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable> 
                 <icons>${project.resources[0].directory}/at/itarchitects/lightzonefx/img/linux/LightZoneFX.png</icons>                
             </properties>

@@ -7,6 +7,7 @@ package at.itarchitects.lightzonefx.datamodel;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
@@ -222,7 +224,7 @@ public class MediaFile extends StackPane {
 
     public void saveEdits() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
-        String fileNameWithExt = fileNameWithOutExt + ".edit";
+        String fileNameWithExt = "Ω_" + fileNameWithOutExt + ".edit";
 
         try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
@@ -255,6 +257,17 @@ public class MediaFile extends StackPane {
     public void readEdits() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         String fileNameWithExt = fileNameWithOutExt + ".edit";
+        Path source = new File(fileNameWithExt).toPath();
+
+        if (new File(fileNameWithExt).exists()) {            
+            try {
+                Files.move(source, source.resolveSibling("Ω_"+source.toFile().getName()));
+            } catch (IOException ex) {
+                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+            }            
+        }
+
+        fileNameWithExt = source.resolveSibling("Ω_"+source.toFile().getName()).toString();
 
         try ( InputStream input = new FileInputStream(fileNameWithExt)) {
 

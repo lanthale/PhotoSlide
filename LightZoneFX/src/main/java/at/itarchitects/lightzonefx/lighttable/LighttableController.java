@@ -14,12 +14,15 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimeZone;
@@ -40,7 +43,10 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -144,6 +150,10 @@ public class LighttableController implements Initializable {
     private ComboBox<String> sortOrderComboBox;
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
+    @FXML
+    private Button copyButton;
+    @FXML
+    private Button pasteButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -200,6 +210,8 @@ public class LighttableController implements Initializable {
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;
         Platform.runLater(() -> {
+            detailToolbar.setDisable(true);
+            pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             //sortOrderComboBox.setDisable(true);
             mainController.getStatusLabelLeft().setVisible(true);
             mainController.getStatusLabelLeft().setText("Scanning...");
@@ -532,7 +544,9 @@ public class LighttableController implements Initializable {
                 try {
                     snapshotView.setSelection(new Rectangle2D(38.5, 46.5, 100.0 * ratioF, 100.0));
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Exception");
+                    Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+                    infoPane.setDisable(false);
+                    optionPane.setDisable(false);
                 }
                 snapshotView.requestFocus();
             });
@@ -685,6 +699,101 @@ public class LighttableController implements Initializable {
 
     public StackPane getStackPane() {
         return stackPane;
+    }
+
+    @FXML
+    private void copyButtonAction(ActionEvent event) {
+        Platform.runLater(() -> {
+            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getStatusLabelLeft().setText("Copying to clipboard...");
+        });
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+        List<File> filesForClipboard = new ArrayList<>();
+        Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.NO ,ButtonType.YES);
+        confirmDiaglog.setHeaderText("Do you want to transfer all media edits as well ?");
+
+        Optional<ButtonType> result = confirmDiaglog.showAndWait();        
+        if (result.get() == ButtonType.YES) {
+            list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+                filesForClipboard.add(mfile.getPathStorage().toFile());
+                filesForClipboard.add(mfile.getEditFilePath().toFile());
+            });
+        } else {
+            list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+                filesForClipboard.add(mfile.getPathStorage().toFile());                
+            });
+        }
+        content.putFiles(filesForClipboard);
+        clipboard.setContent(content);
+        Platform.runLater(() -> {
+            pasteButton.setDisable(false);
+            mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+        });
+    }
+
+    @FXML
+    private void pasteButtonAction(ActionEvent event) {
+        Platform.runLater(() -> {
+            mainController.getProgressPane().setVisible(true);
+            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getStatusLabelLeft().setText("Pasting...");
+        });
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        List<File> clipboardFileList = new ArrayList<>();
+        if (clipboard.hasFiles()) {
+            clipboardFileList = clipboard.getFiles();
+        }
+        final List<File> files = clipboardFileList;
+        Task<String> pasteTask = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                files.forEach((fileItem) -> {
+                    if (this.isCancelled() == false) {
+                        try {
+                            updateProgress(files.indexOf(fileItem) + 1, files.size());
+                            updateMessage("" + (files.indexOf(fileItem) + 1) + "/" + files.size());
+                            Files.copy(fileItem.toPath(), selectedPath.resolve(fileItem.getName()), StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException ex) {
+                            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                });
+                return "Successfully!";
+            }
+
+        };
+        mainController.getProgressbar().progressProperty().unbind();
+        mainController.getProgressbar().progressProperty().bind(pasteTask.progressProperty());
+        mainController.getProgressbarLabel().textProperty().unbind();
+        mainController.getProgressbarLabel().textProperty().bind(pasteTask.messageProperty());
+        pasteTask.setOnFailed((t) -> {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, t.getSource().getMessage(), t.getSource().getException());
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+        });
+        pasteTask.setOnSucceeded((t) -> {
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getStatusLabelLeft().setText("Pasting...Done!");
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+            setSelectedPath(selectedPath);
+        });
+        if (clipboard.hasFiles()) {
+            executorParallel.submit(pasteTask);
+        } else {
+            Platform.runLater(() -> {
+                mainController.getProgressbarLabel().textProperty().unbind();
+                mainController.getProgressbar().progressProperty().unbind();
+                mainController.getProgressPane().setVisible(false);
+                mainController.getStatusLabelLeft().setVisible(false);
+            });
+        }
     }
 
 }

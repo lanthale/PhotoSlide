@@ -107,7 +107,7 @@
                            </font>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="18.0" />
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" text="Copy">
+                        <Button id="toolbutton" fx:id="copyButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#copyButtonAction" text="Copy">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="COPY" size="16" />
                            </graphic>
@@ -115,7 +115,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" text="Paste">
+                        <Button id="toolbutton" fx:id="pasteButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#pasteButtonAction" text="Paste">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="PASTE" size="16" />
                            </graphic>

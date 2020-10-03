@@ -223,9 +223,11 @@ public class MediaFile extends StackPane {
     }
 
     public void saveEdits() {
-        String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
-        String fileNameWithExt = "Ω_" + fileNameWithOutExt + ".edit";
-
+        //String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
+        //String fileNameWithExt = "Ω_" + fileNameWithOutExt + ".edit";
+                
+        String fileNameWithExt=getEditFilePath().toString();
+        
         try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
@@ -259,15 +261,15 @@ public class MediaFile extends StackPane {
         String fileNameWithExt = fileNameWithOutExt + ".edit";
         Path source = new File(fileNameWithExt).toPath();
 
-        if (new File(fileNameWithExt).exists()) {            
+        if (new File(fileNameWithExt).exists()) {
             try {
-                Files.move(source, source.resolveSibling("Ω_"+source.toFile().getName()));
+                Files.move(source, getEditFilePath());
             } catch (IOException ex) {
                 Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
-            }            
+            }
         }
 
-        fileNameWithExt = source.resolveSibling("Ω_"+source.toFile().getName()).toString();
+        fileNameWithExt = getEditFilePath().toString();
 
         try ( InputStream input = new FileInputStream(fileNameWithExt)) {
 
@@ -469,6 +471,13 @@ public class MediaFile extends StackPane {
 
     public void setCreationTime(FileTime creationTime) {
         this.creationTime = creationTime;
+    }   
+    
+    public Path getEditFilePath(){
+        String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
+        String fileNameWithExt = fileNameWithOutExt + ".edit";
+        Path source = new File(fileNameWithExt).toPath();
+        return source.resolveSibling("Ω_" + source.toFile().getName());        
     }
-
+        
 }

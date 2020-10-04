@@ -36,22 +36,29 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Screen;
 import javafx.stage.Window;
 
@@ -93,6 +100,12 @@ public class MainViewController implements Initializable {
     private Font x3;
     @FXML
     private MenuBar menuBar;
+    @FXML
+    private MenuItem preferencesMenu;
+    @FXML
+    private MenuItem quitMenu;
+    @FXML
+    private MenuItem aboutMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -292,6 +305,38 @@ public class MainViewController implements Initializable {
             // ... user chose CANCEL or closed the dialog
             System.out.println("Cancled");
         }
+    }
+
+    @FXML
+    private void preferencesMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void quitMenuAction(ActionEvent event) {
+        System.exit(0);
+    }
+
+    @FXML
+    private void aboutMenuAction(ActionEvent event) {
+        Alert alert=new Alert(AlertType.NONE,"About",ButtonType.OK);
+        HBox hb=new HBox();
+        hb.setAlignment(Pos.TOP_LEFT);
+        hb.setSpacing(10);
+        
+        ImageView iv=new ImageView(new Image(getClass().getResourceAsStream("/at/itarchitects/lightzonefx/img/Splash.png")));
+        iv.setPreserveRatio(true);
+        iv.setFitWidth(400);
+        hb.getChildren().add(iv);
+        Text txt=new Text("LightZoneFX\n1.0\n\n\n\n\n(c) ITArchitects 2020\nLicense: GPL v3");
+        txt.setStyle("-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
+        txt.setLineSpacing(4);
+        txt.setTextAlignment(TextAlignment.LEFT);
+        txt.setTextOrigin(VPos.CENTER);
+        hb.getChildren().add(txt);
+        alert.getDialogPane().setContent(hb);
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/at/itarchitects/lightzonefx/fxml/Dialogs.css").toExternalForm());
+        alert.showAndWait();
     }
 
 }

@@ -189,6 +189,10 @@ public class LighttableController implements Initializable {
         this.metadataController = metaController;
     }
 
+    /**
+     *
+     * @param sPath The root path where all collections via directories exists
+     */
     public void setSelectedPath(Path sPath) {
         imageGridPane.getChildren().clear();
         if (taskEmtpy != null) {
@@ -712,7 +716,9 @@ public class LighttableController implements Initializable {
         List<File> filesForClipboard = new ArrayList<>();
         Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.NO ,ButtonType.YES);
         confirmDiaglog.setHeaderText("Do you want to transfer all media edits as well ?");
-
+        
+        confirmDiaglog.getDialogPane().getStylesheets().add(
+                getClass().getResource("/at/itarchitects/lightzonefx/fxml/Dialogs.css").toExternalForm());
         Optional<ButtonType> result = confirmDiaglog.showAndWait();        
         if (result.get() == ButtonType.YES) {
             list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {

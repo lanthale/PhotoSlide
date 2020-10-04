@@ -245,4 +245,10 @@
     -fx-background-color: #9f9f9f;
 }
 
+#AboutText{
+    -fx-fill: white;
+    -fx-font-size:18pt;
+    -fx-font-weight: bold;
+}
+
 

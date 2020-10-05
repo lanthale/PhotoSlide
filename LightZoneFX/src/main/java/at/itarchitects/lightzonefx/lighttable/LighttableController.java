@@ -374,7 +374,11 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void rotateLeftAction(ActionEvent event) {
+    private void rotateLeftButtonAction(ActionEvent event) {
+        rotateLeftAction();
+    }
+
+    public void rotateLeftAction() {
         imageView.fitWidthProperty().unbind();
         imageView.fitHeightProperty().unbind();
         double rotate = imageView.getRotate();
@@ -399,7 +403,11 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void rotateRightAction(ActionEvent event) {
+    private void rotateRightButtonAction(ActionEvent event) {
+        rotateRightAction();
+    }
+
+    public void rotateRightAction() {
         imageView.fitWidthProperty().unbind();
         imageView.fitHeightProperty().unbind();
         double rotate = imageView.getRotate();
@@ -424,7 +432,11 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void rateAction(ActionEvent event) {
+    private void rateButtonAction(ActionEvent event) {
+        rateAction();
+    }
+
+    public void rateAction() {
         PopOver popOver = new PopOver();
         popOver.setDetachable(false);
         popOver.setAnimated(true);
@@ -451,12 +463,16 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void deleteAction(ActionEvent event) {
-        /*Alert alert = new Alert(AlertType.CONFIRMATION, "Mark MediaFile " + factory.getSelectedCell().getItem().getName() + " \n as deleted ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
+    private void deleteButtonAction(ActionEvent event) {
+        deleteAction();
+    }
 
+    public void deleteAction() {
+        /*Alert alert = new Alert(AlertType.CONFIRMATION, "Mark MediaFile " + factory.getSelectedCell().getItem().getName() + " \n as deleted ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
+        
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/at/itarchitects/lightzonefx/fxml/Dialogs.css").toExternalForm());
+        getClass().getResource("/at/itarchitects/lightzonefx/fxml/Dialogs.css").toExternalForm());
         alert.showAndWait();
         if (alert.getResult() == ButtonType.YES) {*/
         //new File(factory.getSelectedCell().getItem().getName()).delete();
@@ -470,17 +486,22 @@ public class LighttableController implements Initializable {
         getFilenameLabel().setVisible(false);
         getRatingControl().setVisible(false);
         /*} else {
-            alert.hide();
+        alert.hide();
         }
         factory.getSelectedCell().requestLayout();*/
     }
 
     @FXML
-    private void stackAction(ActionEvent event) {
+    private void stackButtonAction(ActionEvent event) {
     }
 
     @FXML
-    public void cropAction(ActionEvent event) {
+    public void cropButtonAction(ActionEvent event) {
+        cropAction();
+
+    }
+
+    public void cropAction() {
         if (snapshotView != null) {
             if (snapshotView.isSelectionActive()) {
                 snapshotView.setSelectionActive(false);
@@ -555,7 +576,6 @@ public class LighttableController implements Initializable {
                 snapshotView.requestFocus();
             });
         }
-
     }
 
     public SnapshotView getSnapshotView() {
@@ -707,6 +727,15 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void copyButtonAction(ActionEvent event) {
+        copyAction();
+    }
+    
+    @FXML
+    private void pasteButtonAction(ActionEvent event) {
+        pastAction();
+    }
+
+    public void copyAction() {
         Platform.runLater(() -> {
             mainController.getStatusLabelLeft().setVisible(true);
             mainController.getStatusLabelLeft().setText("Copying to clipboard...");
@@ -738,9 +767,9 @@ public class LighttableController implements Initializable {
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
         });
     }
+    
 
-    @FXML
-    private void pasteButtonAction(ActionEvent event) {
+    public void pastAction() {
         Platform.runLater(() -> {
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setVisible(true);

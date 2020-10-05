@@ -56,6 +56,57 @@
                         <MenuItem mnemonicParsing="false" text="Unselect All" />
                     </items>
                 </Menu>
+            <Menu mnemonicParsing="false" text="MediaFile">
+              <items>
+                <MenuItem fx:id="rotateMenuLeft" mnemonicParsing="false" onAction="#rotateMenuLeftAction" text="Rotate mediafile left">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="L" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="rotateMenuRight" mnemonicParsing="false" onAction="#rotateMenuRightAction" text="Rotate mediafile right">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="cropMenu" mnemonicParsing="false" onAction="#cropMenuAction" text="Crop media file">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="rateMenu" mnemonicParsing="false" onAction="#rateMenuAction" text="Rate mediafile">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="Mark mediafile deleted">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="copyMediaMenu" mnemonicParsing="false" onAction="#copyMediaMenuAction" text="Copy mediafile">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="pasteMediaMenu" mnemonicParsing="false" onAction="#pastMediaMenuAction" text="Paste mediafile">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="V" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="stackMenu" mnemonicParsing="false" onAction="#stackMenuAction" text="Stack media files">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+                  <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+              </items>
+            </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
                         <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="About LightZoneFX" />
@@ -98,17 +149,17 @@
                                 <FontAwesomeIconView fill="#c5c5c5" glyphName="EXTERNAL_LINK" size="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" text="Send">
+                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Send">
                             <graphic>
                                 <FontAwesomeIconView fill="#c5c5c5" glyphName="SHARE_SQUARE" size="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" text="Print">
+                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Print">
                             <graphic>
                                 <FontAwesomeIconView fill="#c5c5c5" glyphName="PRINT" size="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" text="Styles">
+                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Styles">
                             <graphic>
                                 <FontAwesomeIconView fill="#c5c5c5" glyphName="ADJUST" size="24" />
                             </graphic>

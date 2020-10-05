@@ -3,7 +3,6 @@ package at.itarchitects.lightzonefx;
 import at.itarchitects.lightzonefx.browser.CollectionsController;
 import at.itarchitects.lightzonefx.datamodel.MediaFile;
 import at.itarchitects.lightzonefx.lighttable.LighttableController;
-import at.itarchitects.lightzonefx.lighttable.MediaGridCell;
 import at.itarchitects.lightzonefx.metadata.MetadataController;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -39,7 +37,6 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -73,11 +70,8 @@ public class MainViewController implements Initializable {
     private AnchorPane lighttablePane;
     @FXML
     private AnchorPane metadataPane;
-    @FXML
     private CollectionsController collectionsPaneController;
-    @FXML
     private LighttableController lighttablePaneController;
-    @FXML
     private MetadataController metadataPaneController;
 
     @FXML
@@ -106,6 +100,24 @@ public class MainViewController implements Initializable {
     private MenuItem quitMenu;
     @FXML
     private MenuItem aboutMenu;
+    @FXML
+    private MenuItem rotateMenuLeft;
+    @FXML
+    private MenuItem rotateMenuRight;
+    @FXML
+    private MenuItem cropMenu;
+    @FXML
+    private MenuItem rateMenu;
+    @FXML
+    private MenuItem deleteMenu;
+    @FXML
+    private MenuItem copyMediaMenu;
+    @FXML
+    private MenuItem pasteMediaMenu;
+    @FXML
+    private MenuItem stackMenu;
+    @FXML
+    private MenuItem unstackMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -337,6 +349,49 @@ public class MainViewController implements Initializable {
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/at/itarchitects/lightzonefx/fxml/Dialogs.css").toExternalForm());
         alert.showAndWait();
+    }
+
+    @FXML
+    private void rotateMenuLeftAction(ActionEvent event) {
+        lighttablePaneController.rotateLeftAction();
+    }
+
+    @FXML
+    private void rotateMenuRightAction(ActionEvent event) {
+        lighttablePaneController.rotateRightAction();
+    }
+
+    @FXML
+    private void cropMenuAction(ActionEvent event) {
+        lighttablePaneController.cropAction();
+    }
+
+    @FXML
+    private void rateMenuAction(ActionEvent event) {
+        lighttablePaneController.rateAction();
+    }
+
+    @FXML
+    private void deleteMenuAction(ActionEvent event) {
+        lighttablePaneController.deleteAction();
+    }
+
+    @FXML
+    private void copyMediaMenuAction(ActionEvent event) {
+        lighttablePaneController.copyAction();
+    }
+
+    @FXML
+    private void pastMediaMenuAction(ActionEvent event) {
+        lighttablePaneController.pastAction();
+    }
+
+    @FXML
+    private void stackMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void unstackMenuAction(ActionEvent event) {
     }
 
 }

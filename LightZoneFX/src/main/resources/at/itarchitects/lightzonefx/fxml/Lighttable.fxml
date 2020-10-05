@@ -66,7 +66,7 @@
                <children>
                   <ToolBar fx:id="detailToolbar" disable="true" VBox.vgrow="ALWAYS">
                      <items>
-                        <Button id="toolbutton" fx:id="rotateLeftButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateLeftAction" text="Rotate Left">
+                        <Button id="toolbutton" fx:id="rotateLeftButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateLeftButtonAction" text="Rotate Left">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="ROTATE_LEFT" size="16" />
                            </graphic>
@@ -74,7 +74,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" fx:id="rotateRightButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateRightAction" text="Rotate Right">
+                        <Button id="toolbutton" fx:id="rotateRightButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateRightButtonAction" text="Rotate Right">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="ROTATE_RIGHT" size="16" />
                            </graphic>
@@ -82,7 +82,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" fx:id="cropButton" contentDisplay="TOP" layoutX="159.0" layoutY="10.0" mnemonicParsing="false" onAction="#cropAction" text="Crop">
+                        <Button id="toolbutton" fx:id="cropButton" contentDisplay="TOP" layoutX="159.0" layoutY="10.0" mnemonicParsing="false" onAction="#cropButtonAction" text="Crop">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="CROP" size="16" />
                            </graphic>
@@ -90,7 +90,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" fx:id="rateButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rateAction" text="Rate">
+                        <Button id="toolbutton" fx:id="rateButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rateButtonAction" text="Rate">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="STAR" size="16" />
                            </graphic>
@@ -98,7 +98,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" fx:id="deleteButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#deleteAction" text="Delete">
+                        <Button id="toolbutton" fx:id="deleteButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#deleteButtonAction" text="Delete">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="TRASH" size="16" />
                            </graphic>
@@ -123,7 +123,7 @@
                               <Font size="11.0" />
                            </font>
                         </Button>
-                        <Button id="toolbutton" fx:id="stackButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#stackAction" text="Stack">
+                        <Button id="toolbutton" fx:id="stackButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#stackButtonAction" text="Stack">
                            <graphic>
                               <FontAwesomeIconView fill="#9f9f9f" glyphName="PASTE" size="16" />
                            </graphic>

@@ -15,7 +15,7 @@ All of the listed applications had the issue that they could not handle photo's 
 
 During my vacation time in spring I could not travel and therefore I decided to start creating this software. It is far from perfect, but it could handle some of my workflow use cases already.
 
-# Features
+## Features
 - Viewing of JPG/TIFF/PNG images
 - Viewing of movies with MP4/h264 codec
 - Lossles editing: Rotated / Crop images / rate images
@@ -28,11 +28,12 @@ During my vacation time in spring I could not travel and therefore I decided to 
 - Copy/Paste images from one directory/collection to another
 - Have as many places to store photos/videos as you want
 
-# Missing features
+## Missing features
 - View of all raw data format (using libdcraw)
 - Implement stacking of photos
 - Implement search function
 - Implement face recognizion
+- Implement GPS including a map view
 - Replace icons with iKonli icons
 - Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Porting the edition capabilities over from LightZone (edit module is not implemented yet)

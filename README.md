@@ -1,13 +1,38 @@
 # LightzoneFX
-This is recreation of Lightzone with a modern and reactive user interface written in JavaFX.
+This is a recreation of Lightzone with a modern and reactive user interface written in JavaFX.
 
 Actually it is only a picture viewer / video file viewer with some small editing features and metadata support.
 
-Stay tuned until the other management features will be released and the edit modul from LightZone is ported over
-The target actually is to get better managment features and not to create another photo editor.
+Stay tuned until the other management features will be released and the edit modul from LightZone is ported over.
 
-The reason to create such a software was the fustration with already existing photo app such as ON1, Darktable, ...
+The main focus actually is to create better managment support like Lightroom has and not to create another photo editor.
 
-Short history:
-Lightroom was my primary solution until Adobe decided to goto the montly payment train which I do not want to follow. All other programs I have found on the net (opensource and commercial ones) have performance issues in the management modules. Therefore I want to create an easy software to manage my photo library.
+- Why create another photo editor ?
+I was happy Lightroom user before Adobe was changing to the Abo model for payments and additionally an update on Apples side (OSX 10.15 dropped support for 32bit) had issues on Lightroom (could not find any more pictures on network drives, import only partly working, ...) poping up which as read on the internet can only be fixed by a new version which means paying monthly to Adobe.
 
+So I decided to search for an replacement for Lightroom and tried: darktable, ON1, LightZone, digicam and a few others.
+All of the listed applications had the issue that they could not handle photo's stored on a NAS. They are working only good if the photos are stored on an external USB drive but cannot handle the delay from the network drive. Additionally all of them have not implemented to handle the delay so that you are getting on each photo a spinning beach ball on OSX for at least 15 to 20 secounds. With Lighroom I do not had such issues and then I tried how Javafx and Java can handle that. Supprisingly the speed was extremly well and much better than in all of the applications listed above.
+
+During my vacation time in spring I could not travel and therefore I decided to start creating this software. It is far from perfect, but it could handle some of my workflow use cases already.
+
+# Features
+- Viewing of JPG/TIFF/PNG images
+- Viewing of movies with MP4/h264 codec
+- Lossles editing: Rotated / Crop images / rate images
+- Add keywords and tags to images
+- Read all metadata (IPTC, XMP, ...) from the image
+- Write metadata
+- Apply mass updates to metadata on images
+- Export images including editing and JPG/TIFF/PNG
+- Drag and drop to desktop
+- Copy/Paste images from one directory/collection to another
+- Have as many places to store photos/videos as you want
+
+# Missing features
+- View of all raw data format (using libdcraw)
+- Implement stacking of photos
+- Implement search function
+- Implement face recognizion
+- Replace icons with iKonli icons
+- Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
+- Porting the edition capabilities over from LightZone (edit module is not implemented yet)

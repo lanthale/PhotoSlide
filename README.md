@@ -23,10 +23,11 @@ During my vacation time in spring I could not travel and therefore I decided to 
 - Read all metadata (IPTC, XMP, ...) from the image
 - Write metadata
 - Apply mass updates to metadata on images
-- Export images including editing and JPG/TIFF/PNG
-- Drag and drop to desktop
+- Export images including changes to JPG/TIFF/PNG
+- Drag and drop mediafiles to desktop (multi selection on OSX not possible)
 - Copy/Paste images from one directory/collection to another
 - Have as many places to store photos/videos as you want
+- Usage of multi threads for reading image information / editing and metadata support
 
 ## Missing features
 - View of all raw data format (using libdcraw)
@@ -34,6 +35,7 @@ During my vacation time in spring I could not travel and therefore I decided to 
 - Implement search function
 - Implement face recognizion
 - Implement GPS including a map view
+- Implement multi threading for loading images (actually only one image after the other is loaded)
 - Replace icons with iKonli icons
 - Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Porting the edition capabilities over from LightZone (edit module is not implemented yet)

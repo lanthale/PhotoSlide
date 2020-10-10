@@ -17,7 +17,6 @@ During my vacation time in spring I could not travel and therefore I decided to 
 
 ## Screenshot of the application
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
-Format: ![Alt Text](url)
 
 
 ## Features

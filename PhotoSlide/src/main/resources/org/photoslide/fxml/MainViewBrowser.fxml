@@ -175,7 +175,7 @@
                         </Button>
                         <Label text="PhotoSlide" textFill="#e17c08">
                             <font>
-                                <Font name="Arial" size="24.0" />
+                                <Font name="Silom" size="24.0" />
                             </font>
                         </Label>
                     </items>

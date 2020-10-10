@@ -52,11 +52,13 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -337,23 +339,41 @@ public class MainViewController implements Initializable {
     @FXML
     private void aboutMenuAction(ActionEvent event) {
         Alert alert=new Alert(AlertType.NONE,"About",ButtonType.OK);
+        alert.initStyle(StageStyle.UNDECORATED);
         HBox hb=new HBox();
         hb.setAlignment(Pos.TOP_LEFT);
         hb.setSpacing(10);
         
-        ImageView iv=new ImageView(new Image(getClass().getResourceAsStream("/org/photoslide/img/Splash.png")));
+        ImageView iv=new ImageView(new Image(getClass().getResourceAsStream("/org/photoslide/img/Splashscreen.png")));
         iv.setPreserveRatio(true);
         iv.setFitWidth(400);
+        iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
-        Text txt=new Text("PhotoSlide\n1.0\n\n\n\n\n(c) lanthale 2020\nLicense: GPL v3");
-        txt.setStyle("-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
+        VBox vbText=new VBox();
+        Text txtHeader=new Text("PhotoSlide 1.0\n");
+        txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
+        txtHeader.setLineSpacing(2);
+        txtHeader.setTextAlignment(TextAlignment.LEFT);
+        txtHeader.setTextOrigin(VPos.CENTER);
+        Text txt=new Text("Thanks to the opensource community:\n - OpenJFX for this great GUI tookit\n - ControlsFX for very nice components\n - iCafe for the image codecs and metadata implementation\n - iKonli for nice icons\n - UndoFX\n\nLicense: GPL v3\n(c) lanthale 2020");
+        txt.setStyle("-fx-fill: #e17c08;-fx-font-size:10pt;");
         txt.setLineSpacing(4);
         txt.setTextAlignment(TextAlignment.LEFT);
         txt.setTextOrigin(VPos.CENTER);
-        hb.getChildren().add(txt);
+        vbText.getChildren().add(txtHeader);
+        vbText.getChildren().add(txt);
+        hb.getChildren().add(vbText);        
         alert.getDialogPane().setContent(hb);
+        alert.setResizable(false);
+        
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Platform.runLater(() -> {
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            Window window = alert.getDialogPane().getScene().getWindow();
+            window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
+            window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
+        });
         alert.showAndWait();
     }
 

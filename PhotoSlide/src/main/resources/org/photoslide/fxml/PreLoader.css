@@ -20,6 +20,7 @@
 }
 
 #titelLabel{
+    -fx-font-family: 'Silom';
     -fx-text-fill: #e17c08;
     -fx-font-size:32pt;
     -fx-font-weight: bold;

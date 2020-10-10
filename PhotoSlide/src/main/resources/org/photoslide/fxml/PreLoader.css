@@ -1,0 +1,32 @@
+.root{    
+    -fx-base: rgb(80, 80, 80);
+    -fx-background: rgb(50, 50, 50);
+}
+
+.progress-bar{
+    -fx-border-color: transparent;
+    -fx-control-inner-background:  transparent;
+    -fx-border-width: 0;-fx-background-color: transparent;
+    -fx-text-box-border:transparent;
+}
+
+.progress-bar > .bar {
+    -fx-background-radius: 0;
+    -fx-background-color:#e17c08;
+}
+
+.progress-bar > .track{
+    -fx-background-color:transparent;
+}
+
+#titelLabel{
+    -fx-text-fill: #e17c08;
+    -fx-font-size:32pt;
+    -fx-font-weight: bold;
+}
+
+#versionLabel{
+    -fx-text-fill: white;
+    -fx-font-size:20pt;
+    -fx-font-weight: bold;
+}

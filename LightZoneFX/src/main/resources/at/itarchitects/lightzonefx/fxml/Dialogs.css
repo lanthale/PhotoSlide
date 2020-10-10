@@ -3,6 +3,10 @@
     -fx-background: rgb(100, 100, 100);
 }
 
+.ikonli-font-icon {
+    -fx-icon-color: #c5c5c5;
+}
+
 .dialog {
     -fx-background-color: #9f9f9f;
 }

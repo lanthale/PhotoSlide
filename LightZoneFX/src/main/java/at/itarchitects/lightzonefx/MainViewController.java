@@ -14,7 +14,6 @@ import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -58,10 +57,10 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Screen;
 import javafx.stage.Window;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 public class MainViewController implements Initializable {
 
-    private FontAwesomeIconView icon;
     private ExecutorService executor;
 
     @FXML
@@ -70,8 +69,11 @@ public class MainViewController implements Initializable {
     private AnchorPane lighttablePane;
     @FXML
     private AnchorPane metadataPane;
+    @FXML
     private CollectionsController collectionsPaneController;
+    @FXML
     private LighttableController lighttablePaneController;
+    @FXML
     private MetadataController metadataPaneController;
 
     @FXML
@@ -136,6 +138,7 @@ public class MainViewController implements Initializable {
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);
+        FontIcon icon=new FontIcon();
     }
 
     @FXML
@@ -257,6 +260,8 @@ public class MainViewController implements Initializable {
                                 newImage = new WritableImage(reader, (int) img.getWidth(), (int) img.getHeight());
                                 fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                             }
+                            // rotate image in FX or swing
+                            
                             try {
                                 FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + i + "." + imageType.getExtension(), false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
@@ -314,8 +319,7 @@ public class MainViewController implements Initializable {
             });
             executor.submit(task);
         } else {
-            // ... user chose CANCEL or closed the dialog
-            System.out.println("Cancled");
+            Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
     }
 

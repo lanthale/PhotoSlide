@@ -10,7 +10,6 @@ import at.itarchitects.lightzonefx.MainViewController;
 import at.itarchitects.lightzonefx.ThreadFactoryLZFX;
 import at.itarchitects.lightzonefx.Utility;
 import at.itarchitects.lightzonefx.metadata.MetadataController;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -73,14 +72,13 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
  *
  * @author selfemp
  */
 public class LighttableController implements Initializable {
-
-    private FontAwesomeIconView icon;
 
     private MainViewController mainController;
     private Path selectedPath;
@@ -120,7 +118,7 @@ public class LighttableController implements Initializable {
     @FXML
     private StackPane invalidStackPane;
     @FXML
-    private FontAwesomeIconView playIcon;
+    private FontIcon playIcon;
     private final KeyCombination keyMetaA = new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN);
     private MediaGridCellFactory factory;
     @FXML
@@ -598,7 +596,7 @@ public class LighttableController implements Initializable {
         return mediaView;
     }
 
-    public FontAwesomeIconView getPlayIcon() {
+    public FontIcon getPlayIcon() {
         return playIcon;
     }
 

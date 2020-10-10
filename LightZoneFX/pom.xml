@@ -289,40 +289,27 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>           
-        </dependency>  
+        </dependency>          
         <dependency>
-            <groupId>de.jensd</groupId>
-            <artifactId>fontawesomefx-commons</artifactId>
-            <version>11.0</version> 
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>           
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-core</artifactId>
+            <version>11.5.0</version>            
+        </dependency>        
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-javafx</artifactId>
+            <version>11.5.0</version>            
+        </dependency>        
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-themify-pack</artifactId>
+            <version>11.5.0</version>            
         </dependency>
         <dependency>
-            <groupId>de.jensd</groupId>
-            <artifactId>fontawesomefx-controls</artifactId>
-            <version>11.0</version>   
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>         
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-fontawesome-pack</artifactId>
+            <version>11.5.0</version>
         </dependency>
-        <dependency>
-            <groupId>de.jensd</groupId>
-            <artifactId>fontawesomefx-fontawesome</artifactId>
-            <version>4.7.0-11</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>            
-        </dependency> 
         <dependency>
             <groupId>com.github.dragon66</groupId>
             <artifactId>icafe</artifactId>
@@ -435,6 +422,10 @@
                                         <module>de.jensd.fx.fontawesomefx.commons</module>
                                         <module>de.jensd.fx.fontawesomefx.controls</module>
                                         <module>de.jensd.fx.fontawesomefx.fontawesome</module>                                        
+                                        <module>org.kordamp.iconli.core</module>
+                                        <module>org.kordamp.ikonli.javafx</module>    
+                                        <module>org.kordamp.ikonli.themify</module> 
+                                        <module>org.kordamp.ikonli.fontawesome</module>   
                                         <module>jdk.charsets</module>                                          
                                         <module>org.fxmisc.undo</module> 
                                         <module>org.reactfx</module>
@@ -480,9 +471,7 @@
                                         <argument>--runtime-image</argument>
                                         <argument>${project.build.directory}/jlink-image</argument>
                                         <argument>--java-options</argument>
-                                        <argument>--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls</argument>
-                                        <argument>--java-options</argument>
-                                        <argument>--add-opens=javafx.graphics/javafx.css=de.jensd.fx.fontawesomefx.commons</argument> 
+                                        <argument>--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls</argument>                                        
                                         <argument>--java-options</argument>    
                                         <argument>--add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls</argument>                                        
                                         <argument>--java-options</argument>

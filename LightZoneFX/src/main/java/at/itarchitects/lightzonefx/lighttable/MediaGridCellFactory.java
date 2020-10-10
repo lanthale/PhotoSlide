@@ -8,8 +8,6 @@ package at.itarchitects.lightzonefx.lighttable;
 import at.itarchitects.lightzonefx.datamodel.MediaFile;
 import at.itarchitects.lightzonefx.Utility;
 import at.itarchitects.lightzonefx.metadata.MetadataController;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -35,10 +33,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.paint.Paint;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
  *
@@ -254,9 +252,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     Platform.runLater(() -> {
                                         lightController.getPlayIcon().setVisible(true);
                                     });
-                                    lightController.getPlayIcon().setIcon(FontAwesomeIcon.PAUSE_CIRCLE);
+                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
                                 } else {
-                                    lightController.getPlayIcon().setIcon(FontAwesomeIcon.PLAY_CIRCLE);
+                                    lightController.getPlayIcon().setIconLiteral("fa-play");
                                 }
                                 util.hideNodeAfterTime(lightController.getPlayIcon(), 2);
                             });
@@ -265,7 +263,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     lightController.getMediaView().getMediaPlayer().pause();
                                 } else {
                                     lightController.getMediaView().getMediaPlayer().play();
-                                    lightController.getPlayIcon().setIcon(FontAwesomeIcon.PAUSE_CIRCLE);
+                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
                                     util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
                                 }
                             });
@@ -275,7 +273,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                         lightController.getMediaView().getMediaPlayer().pause();
                                     } else {
                                         lightController.getMediaView().getMediaPlayer().play();
-                                        lightController.getPlayIcon().setIcon(FontAwesomeIcon.PAUSE_CIRCLE);
+                                        lightController.getPlayIcon().setIconLiteral("fa-pause");
                                         util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
                                     }
                                 }
@@ -284,11 +282,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
                                 VBox vb = new VBox();
                                 vb.setAlignment(Pos.CENTER);
-                                FontAwesomeIconView filmIcon = new FontAwesomeIconView(FontAwesomeIcon.FILM, "300px");
-                                filmIcon.setFill(Paint.valueOf("#9f9f9f"));
+                                FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");                                
                                 filmIcon.setOpacity(0.3);
-                                FontAwesomeIconView controlIcon = new FontAwesomeIconView(FontAwesomeIcon.MINUS_CIRCLE, "150px");
-                                controlIcon.setFill(Paint.valueOf("#9f9f9f"));
+                                FontIcon controlIcon = new FontIcon("fa-minus-circle:150");                                
                                 Label lb = new Label("Filtype not supported!");
                                 lb.setStyle("-fx-font-size: 20px;");
                                 Platform.runLater(() -> {
@@ -353,9 +349,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 
                             Button resetCrop = new Button();
-                            FontAwesomeIconView restoreIcon = new FontAwesomeIconView(FontAwesomeIcon.UNDO);
-                            restoreIcon.setSize("24");
-                            restoreIcon.setFill(Paint.valueOf("#9f9f9f"));
+                            FontIcon restoreIcon = new FontIcon("ti-back-right:24");                            
                             resetCrop.setGraphic(restoreIcon);
                             if (selectedCell.getItem().getCropView() != null) {
                                 lightController.getOptionPane().getChildren().clear();

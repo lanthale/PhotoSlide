@@ -19,14 +19,12 @@ import com.icafe4j.image.meta.iptc.IPTCDataSet;
 import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.meta.jpeg.JpegExif;
 import com.icafe4j.image.meta.xmp.XMP;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -49,7 +47,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -81,7 +78,6 @@ import org.controlsfx.control.textfield.TextFields;
  */
 public class MetadataController implements Initializable {
     
-    private FontAwesomeIconView icon;
     private ExecutorService executor;
     private MainViewController mainController;
     private LighttableController lightController;

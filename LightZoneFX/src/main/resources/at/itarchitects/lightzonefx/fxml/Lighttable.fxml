@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
@@ -19,6 +18,7 @@
 <?import javafx.scene.media.MediaView?>
 <?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.Rating?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefHeight="675.0" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.itarchitects.lightzonefx.lighttable.LighttableController">
    <children>
@@ -38,7 +38,7 @@
                   </HBox>
                   <MediaView fx:id="mediaView" StackPane.alignment="CENTER" />
                   <ProgressIndicator fx:id="imageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
-                  <FontAwesomeIconView fx:id="playIcon" fill="#9f9f9f" glyphName="PLAY_CIRCLE" opacity="0.9" size="80" />
+                  <FontIcon fx:id="playIcon" iconLiteral="ti-control-play" iconSize="80" />
                   <VBox fx:id="infoPane" alignment="BOTTOM_LEFT" focusTraversable="true" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                      <children>
                         <Label fx:id="titleLabel" text="Title" visible="false">
@@ -67,69 +67,69 @@
                   <ToolBar fx:id="detailToolbar" disable="true" VBox.vgrow="ALWAYS">
                      <items>
                         <Button id="toolbutton" fx:id="rotateLeftButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateLeftButtonAction" text="Rotate Left">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="ROTATE_LEFT" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-rotate-left" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="rotateRightButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateRightButtonAction" text="Rotate Right">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="ROTATE_RIGHT" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-rotate-right" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="cropButton" contentDisplay="TOP" layoutX="159.0" layoutY="10.0" mnemonicParsing="false" onAction="#cropButtonAction" text="Crop">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="CROP" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-crop" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="rateButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rateButtonAction" text="Rate">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="STAR" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-star" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="deleteButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#deleteButtonAction" text="Delete">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="TRASH" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-trash" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="18.0" />
                         <Button id="toolbutton" fx:id="copyButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#copyButtonAction" text="Copy">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="COPY" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-copy" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="pasteButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#pasteButtonAction" text="Paste">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="PASTE" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-paste" iconSize="17" />
+                           </graphic>
                         </Button>
                         <Button id="toolbutton" fx:id="stackButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#stackButtonAction" text="Stack">
-                           <graphic>
-                              <FontAwesomeIconView fill="#9f9f9f" glyphName="PASTE" size="16" />
-                           </graphic>
                            <font>
                               <Font size="11.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-stack-overflow" iconSize="17" />
+                           </graphic>
                         </Button>
                      </items>
                   </ToolBar>
@@ -145,7 +145,7 @@
                               </Slider>
                               <HBox alignment="CENTER_LEFT" prefHeight="15.0" prefWidth="250.0" spacing="5.0">
                                  <children>
-                                    <FontAwesomeIconView fill="#9f9f9f" glyphName="SORT_AMOUNT_ASC" HBox.hgrow="NEVER" />
+                                    <FontIcon iconLiteral="fa-sort-amount-asc" />
                                     <ComboBox fx:id="sortOrderComboBox" onAction="#selectSortOrderAction" prefHeight="27.0" prefWidth="250.0" scaleX="0.7" scaleY="0.7" translateX="-30.0" />
                                  </children>
                                  <padding>

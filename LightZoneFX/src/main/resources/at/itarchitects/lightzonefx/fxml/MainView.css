@@ -1,7 +1,16 @@
 .root{    
     -fx-base: rgb(80, 80, 80);
-    -fx-background: rgb(50, 50, 50);
+    -fx-background: rgb(50, 50, 50);    
     default-color: #e17c08;
+}
+
+.ikonli-font-icon {
+    -fx-icon-color: #c5c5c5;
+}
+
+#star-ikonli-font-icon {    
+    -fx-icon-size: 6;
+    -fx-icon-color: radial-gradient(focus-angle 0, focus-distance 0%, center 0 0,  radius 0.5, reflect, #f8f542, #c2b326);
 }
 
 .progress-indicator {
@@ -10,11 +19,6 @@
 
 .progress-bar .bar {
     -fx-accent: default-color;
-}
-
-.button:default {
-    -fx-base: default-color;
-    -fx-focus-color: default-color;
 }
 
 .split-pane:horizontal > .split-pane-divider {

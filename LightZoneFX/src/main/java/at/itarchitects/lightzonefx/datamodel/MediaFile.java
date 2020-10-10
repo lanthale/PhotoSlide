@@ -5,8 +5,6 @@
  */
 package at.itarchitects.lightzonefx.datamodel;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -45,6 +43,7 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.Paint;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
  *
@@ -58,7 +57,7 @@ public class MediaFile extends StackPane {
     private MediaPlayer mediaPlayer;
     private final MediaView mediaview;
     private final ImageView imageView;
-    private FontAwesomeIconView dummyIcon;
+    private FontIcon dummyIcon;
 
     private String name;
     private Path pathStorage;
@@ -133,9 +132,7 @@ public class MediaFile extends StackPane {
     }
 
     private void setDeletedNode() {
-        FontAwesomeIconView restoreIcon = new FontAwesomeIconView(FontAwesomeIcon.UNDO);
-        restoreIcon.setSize("24");
-        restoreIcon.setFill(Paint.valueOf("#9f9f9f"));
+        FontIcon restoreIcon = new FontIcon("ti-back-right:22");        
         VBox v = new VBox();
         v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         this.getChildren().add(v);
@@ -147,13 +144,12 @@ public class MediaFile extends StackPane {
             VBox vb = new VBox();
             vb.setAlignment(Pos.BOTTOM_RIGHT);
             Stop[] stops = {new Stop(0, Color.valueOf("#f8f542")), new Stop(1, Color.valueOf("#c2b326"))};
-            RadialGradient gradient = new RadialGradient(0, 0.0, 0, 0, 0.5, true, CycleMethod.NO_CYCLE, stops);
+            RadialGradient gradient = new RadialGradient(0, 0.0, 0, 0, 0.5, true, CycleMethod.NO_CYCLE, stops);            
             HBox hb = new HBox();
             hb.setPadding(new Insets(40, 0, 0, 0));
             for (int i = 0; i < rating.getValue(); i++) {
-                FontAwesomeIconView starIcon = new FontAwesomeIconView(FontAwesomeIcon.STAR);
-                starIcon.setSize("8");
-                starIcon.setFill(gradient);
+                FontIcon starIcon = new FontIcon("fa-star");                
+                starIcon.setId("star-ikonli-font-icon");
                 hb.getChildren().add(starIcon);
             }
             vb.getChildren().add(hb);
@@ -193,16 +189,13 @@ public class MediaFile extends StackPane {
             this.media = media;
             this.videoSupported = type;
             if (type == VideoTypes.SUPPORTED) {
-                dummyIcon = new FontAwesomeIconView(FontAwesomeIcon.FILM, "40px");
-                dummyIcon.setFill(Paint.valueOf("#9f9f9f"));
+                dummyIcon = new FontIcon("fa-file-movie-o:40");                
                 this.getChildren().clear();
                 this.getChildren().add(dummyIcon);
             } else {
-                FontAwesomeIconView filmIcon = new FontAwesomeIconView(FontAwesomeIcon.FILM, "40px");
-                filmIcon.setFill(Paint.valueOf("#9f9f9f"));
+                FontIcon filmIcon = new FontIcon("fa-file-movie-o:40");                
                 filmIcon.setOpacity(0.3);
-                dummyIcon = new FontAwesomeIconView(FontAwesomeIcon.MINUS_CIRCLE, "40px");
-                dummyIcon.setFill(Paint.valueOf("#9f9f9f"));
+                dummyIcon = new FontIcon("fa-minus-circle:40");                
                 this.getChildren().clear();
                 this.getChildren().add(filmIcon);
                 this.getChildren().add(dummyIcon);

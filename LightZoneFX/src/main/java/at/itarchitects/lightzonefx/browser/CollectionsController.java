@@ -78,6 +78,8 @@ public class CollectionsController implements Initializable {
     private Preferences pref;
     private static TreeItem placeholder;
     private ProgressIndicator waitPrg;
+    @FXML
+    private Button refreshButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {

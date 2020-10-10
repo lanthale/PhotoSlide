@@ -43,6 +43,7 @@ public class PSPreloader extends Preloader {
     private StackPane stack;
     private static double width = 640;
     private static double hight = 500;
+    private Scene createPreloaderScene;
 
     private Scene createPreloaderScene() {
         bar = new ProgressBar();
@@ -67,7 +68,7 @@ public class PSPreloader extends Preloader {
         p.setPrefWidth(width);
         p.setPadding(new Insets(15));
         p.setBackground(Background.EMPTY);
-        ImageView img = new ImageView(new Image(getClass().getResource("/org/photoslide/img/Splash.png").toString()));
+        ImageView img = new ImageView(new Image(getClass().getResource("/org/photoslide/img/Splashscreen.png").toString()));
         //img.setFitHeight(hight);
         img.setFitWidth(width);
         img.setPreserveRatio(true);
@@ -82,7 +83,7 @@ public class PSPreloader extends Preloader {
     public void start(Stage stage) throws Exception {
         this.stage = stage;
         stage.setAlwaysOnTop(true);
-        Scene createPreloaderScene = createPreloaderScene();
+        createPreloaderScene = createPreloaderScene();
         createPreloaderScene.getStylesheets().add(getClass().getResource("/org/photoslide/fxml/PreLoader.css").toExternalForm());
         createPreloaderScene.setFill(Color.TRANSPARENT);
         stage.setScene(createPreloaderScene);
@@ -92,8 +93,17 @@ public class PSPreloader extends Preloader {
 
     @Override
     public void handleStateChangeNotification(StateChangeNotification scn) {
-        if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {            
-            stage.hide();
+        if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {
+            FadeTransition fadeOut = new FadeTransition(Duration.seconds(2), createPreloaderScene.getRoot());
+            fadeOut.setFromValue(1);
+            fadeOut.setToValue(0);
+            fadeOut.setCycleCount(1);
+            
+            fadeOut.setOnFinished((t) -> {
+                stage.hide();
+            });            
+            fadeOut.play();
+
         }
     }
 
@@ -101,7 +111,9 @@ public class PSPreloader extends Preloader {
     public void handleApplicationNotification(PreloaderNotification arg0) {
         if (arg0 instanceof ProgressNotification) {
             ProgressNotification pn = (ProgressNotification) arg0;
-            bar.setProgress(pn.getProgress());            
+            Platform.runLater(() -> {
+                bar.setProgress(pn.getProgress());
+            });
         }
     }
 

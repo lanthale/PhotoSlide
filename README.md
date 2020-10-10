@@ -15,6 +15,11 @@ All of the listed applications had the issue that they could not handle photo's 
 
 During my vacation time in spring I could not travel and therefore I decided to start creating this software. It is far from perfect, but it could handle some of my workflow use cases already.
 
+##Screenshot of the application
+![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
+Format: ![Alt Text](url)
+
+
 ## Features
 - Viewing of JPG/TIFF/PNG images
 - Viewing of movies with MP4/h264 codec

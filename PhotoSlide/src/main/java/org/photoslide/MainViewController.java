@@ -56,6 +56,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Screen;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -329,6 +330,7 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void quitMenuAction(ActionEvent event) {
+        App.saveSettings((Stage)browseButton.getScene().getWindow());
         System.exit(0);
     }
 

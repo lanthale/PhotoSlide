@@ -34,7 +34,7 @@ import javafx.util.Duration;
  *
  * @author Clemens Lanthaler clemens.lanthaler@itarchitects.at
  */
-public class LZFXPreloader extends Preloader {
+public class PSPreloader extends Preloader {
 
     ProgressBar bar;
     Label text;

@@ -18,7 +18,7 @@ import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
 import javafx.stage.WindowEvent;
-import org.photoslide.pspreloader.LZFXPreloader;
+import org.photoslide.pspreloader.PSPreloader;
 
 /**
  * JavaFX App
@@ -60,7 +60,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         restoreSettings(stage);
-
+        
         stage.setOnCloseRequest((final WindowEvent event) -> {
             saveSettings(stage);
             MainViewController controller = fxmlLoader.getController();
@@ -76,7 +76,7 @@ public class App extends Application {
 
     }
 
-    private void saveSettings(Stage stage) {
+    public static void saveSettings(Stage stage) {
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());
@@ -89,7 +89,7 @@ public class App extends Application {
         }
     }
 
-    private void restoreSettings(Stage stage) {
+    public static void restoreSettings(Stage stage) {
         // Pull the saved preferences and set the stage size and start location
 
         Preferences pref = Preferences.userRoot().node(NODE_NAME);
@@ -114,7 +114,7 @@ public class App extends Application {
             logger.setLevel(Level.ALL);
 
             handler.setFormatter(new SimpleFormatter());            
-            System.setProperty("javafx.preloader", LZFXPreloader.class.getCanonicalName());
+            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
         } catch (IOException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);

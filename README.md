@@ -18,6 +18,9 @@ During my vacation time in spring I could not travel and therefore I decided to 
 ## Screenshot of the application
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 
+## Download of binary's:
+https://github.com/lanthale/PhotoSlide/releases/tag/v0.2
+Remarks: Linux is not tested yet
 
 ## Features
 - Viewing of JPG/TIFF/PNG images

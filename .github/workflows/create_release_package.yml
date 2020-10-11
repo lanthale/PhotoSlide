@@ -28,13 +28,13 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn clean compile package -Ppackage -f LightZoneFX/pom.xml
+      run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
     
     - name: upload-osx
       uses: actions/upload-artifact@v2
       with:
-       name: lightzonefx-osx
-       path: LightZoneFX/target/package/*
+       name: photoslide-osx
+       path: PhotoSlide/target/package/*
 
   build-win:
 
@@ -55,13 +55,13 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn -B clean compile package -Ppackage -f LightZoneFX/pom.xml
+      run: mvn -B clean compile package -Ppackage -f PhotoSlide/pom.xml
 
     - name: upload-win
       uses: actions/upload-artifact@v2
       with:
-       name: lightzonefx-win
-       path: LightZoneFX/target/package/*
+       name: photoslide-win
+       path: PhotoSlide/target/package/*
 
   build-linux:
 
@@ -82,10 +82,10 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn clean compile package -Ppackage -f LightZoneFX/pom.xml
+      run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
     
     - name: upload-linux
       uses: actions/upload-artifact@v2
       with:
-       name: lightzonefx-linux
-       path: LightZoneFX/target/package/*
+       name: photoslide-linux
+       path: PhotoSlide/target/package/*

@@ -187,7 +187,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getCameraLabel().setVisible(false);
             lightController.getFilenameLabel().setVisible(false);
             lightController.getRatingControl().setVisible(false);
-            lightController.getOptionPane().setDisable(false);
+            lightController.getOptionPane().setDisable(false);            
             metadataController.cancelTasks();
             if (img != null) {
                 img.cancel();
@@ -406,6 +406,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void setStdGUIState() {
+        lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
         lightController.getDetailToolbar().setDisable(true);

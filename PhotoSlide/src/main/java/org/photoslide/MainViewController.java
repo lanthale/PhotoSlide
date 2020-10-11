@@ -141,7 +141,20 @@ public class MainViewController implements Initializable {
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);
-        FontIcon icon=new FontIcon();
+        FontIcon icon = new FontIcon();
+        handleMenuDisable(true);
+    }
+
+    public void handleMenuDisable(boolean disabled) {
+        Platform.runLater(() -> {
+            rotateMenuLeft.setDisable(disabled);
+            rotateMenuRight.setDisable(disabled);
+            cropMenu.setDisable(disabled);
+            rateMenu.setDisable(disabled);
+            deleteMenu.setDisable(disabled);
+            copyMediaMenu.setDisable(disabled);
+            pasteMediaMenu.setDisable(disabled);
+        });
     }
 
     @FXML
@@ -264,7 +277,7 @@ public class MainViewController implements Initializable {
                                 fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                             }
                             // rotate image in FX or swing
-                            
+
                             try {
                                 FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + i + "." + imageType.getExtension(), false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
@@ -332,40 +345,40 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void quitMenuAction(ActionEvent event) {
-        App.saveSettings((Stage)browseButton.getScene().getWindow());
+        App.saveSettings((Stage) browseButton.getScene().getWindow());
         System.exit(0);
     }
 
     @FXML
     private void aboutMenuAction(ActionEvent event) {
-        Alert alert=new Alert(AlertType.NONE,"About",ButtonType.OK);
+        Alert alert = new Alert(AlertType.NONE, "About", ButtonType.OK);
         alert.initStyle(StageStyle.UNDECORATED);
-        HBox hb=new HBox();
+        HBox hb = new HBox();
         hb.setAlignment(Pos.TOP_LEFT);
         hb.setSpacing(10);
-        
-        ImageView iv=new ImageView(new Image(getClass().getResourceAsStream("/org/photoslide/img/Splashscreen.png")));
+
+        ImageView iv = new ImageView(new Image(getClass().getResourceAsStream("/org/photoslide/img/Splashscreen.png")));
         iv.setPreserveRatio(true);
         iv.setFitWidth(400);
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
-        VBox vbText=new VBox();
-        Text txtHeader=new Text("PhotoSlide 1.0\n");
+        VBox vbText = new VBox();
+        Text txtHeader = new Text("PhotoSlide 1.0\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
-        Text txt=new Text("Thanks to the opensource community:\n - OpenJFX for this great GUI tookit\n - ControlsFX for very nice components\n - iCafe for the image codecs and metadata implementation\n - iKonli for nice icons\n - UndoFX\n\nLicense: GPL v3\n(c) lanthale 2020");
+        Text txt = new Text("Thanks to the opensource community:\n - OpenJFX for this great GUI tookit\n - ControlsFX for very nice components\n - iCafe for the image codecs and metadata implementation\n - iKonli for nice icons\n - UndoFX\n\nLicense: GPL v3\n(c) lanthale 2020");
         txt.setStyle("-fx-fill: #e17c08;-fx-font-size:10pt;");
         txt.setLineSpacing(4);
         txt.setTextAlignment(TextAlignment.LEFT);
         txt.setTextOrigin(VPos.CENTER);
         vbText.getChildren().add(txtHeader);
         vbText.getChildren().add(txt);
-        hb.getChildren().add(vbText);        
+        hb.getChildren().add(vbText);
         alert.getDialogPane().setContent(hb);
         alert.setResizable(false);
-        
+
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         Platform.runLater(() -> {

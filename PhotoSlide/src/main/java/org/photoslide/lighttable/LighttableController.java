@@ -211,6 +211,7 @@ public class LighttableController implements Initializable {
         selectedPath = sPath;
         Platform.runLater(() -> {
             detailToolbar.setDisable(true);
+            mainController.handleMenuDisable(true);
             pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             //sortOrderComboBox.setDisable(true);
             mainController.getStatusLabelLeft().setVisible(true);
@@ -826,5 +827,10 @@ public class LighttableController implements Initializable {
             });
         }
     }
+
+    public MainViewController getMainController() {
+        return mainController;
+    }
+    
 
 }

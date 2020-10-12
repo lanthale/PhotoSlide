@@ -363,7 +363,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>app-image</bundle.type>
+                <bundle.type>exe</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
                 <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide.ico</icons>                
             </properties>

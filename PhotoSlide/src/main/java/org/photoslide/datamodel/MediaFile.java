@@ -472,5 +472,11 @@ public class MediaFile extends StackPane {
         Path source = new File(fileNameWithExt).toPath();
         return source.resolveSibling("Ω_" + source.toFile().getName());        
     }
+    
+    public void setSize(double height, double width){
+        this.setHeight(height);
+        this.setWidth(width);
+        this.requestLayout();
+    }
         
 }

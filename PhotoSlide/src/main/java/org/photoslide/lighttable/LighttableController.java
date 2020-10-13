@@ -490,6 +490,15 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void stackButtonAction(ActionEvent event) {
+        factory.getSelectedMediaItem().setVisible(false);
+        //factory.getSelectedMediaItem().setSize(0, 0);
+        factory.getSelectedCell().setVisible(false);
+        factory.getSelectedCell().setMaxSize(0, 0);
+        factory.getSelectedCell().setMinSize(0, 0);
+        factory.getSelectedCell().setPrefSize(0, 0);
+        factory.getSelectedCell().setManaged(false);
+        factory.getSelectedCell().requestLayout();
+        imageGrid.requestLayout();
     }
 
     @FXML

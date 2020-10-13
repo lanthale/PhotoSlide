@@ -349,9 +349,11 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>app-image</bundle.type>
+                <bundle.type>pkg</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
+                <param1></param1>                
+                <param2></param2>                                
             </properties>
         </profile>
         <profile>
@@ -366,6 +368,8 @@
                 <bundle.type>exe</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
                 <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide.ico</icons>                
+                <param1>--win-menu</param1>
+                <param2>--win-shortcut</param2>
             </properties>
         </profile>   
         <profile>
@@ -378,9 +382,11 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>app-image</bundle.type>
+                <bundle.type>deb</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable> 
                 <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
+                <param1>--linux-app-release 1.0</param1>                
+                <param2>--linux-shortcut</param2>                
             </properties>
         </profile>   
         <profile>
@@ -475,6 +481,8 @@
                                         <argument>--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls</argument>
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls</argument>
+                                        <argument>${param1}</argument>
+                                        <argument>${param2}</argument>
                                         <argument>--module</argument>
                                         <argument>${moduleName}/${mainClass}</argument>
                                     </arguments>

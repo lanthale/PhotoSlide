@@ -256,6 +256,10 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void plusButtonAction(ActionEvent event) {
+        addExistingPath();
+    }
+
+    public void addExistingPath() {
         Stage stage = (Stage) accordionPane.getScene().getWindow();
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setInitialDirectory(new File(System.getProperty("user.dir")));

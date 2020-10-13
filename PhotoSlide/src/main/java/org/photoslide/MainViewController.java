@@ -123,6 +123,8 @@ public class MainViewController implements Initializable {
     private MenuItem stackMenu;
     @FXML
     private MenuItem unstackMenu;
+    @FXML
+    private MenuItem openMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -365,7 +367,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide "+appVersion+"\n");
+        Text txtHeader = new Text("PhotoSlide\n"+appVersion+"\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
@@ -433,6 +435,11 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void unstackMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void openMenuAction(ActionEvent event) {
+        collectionsPaneController.addExistingPath();
     }
 
 }

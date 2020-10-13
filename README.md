@@ -46,3 +46,9 @@ Remarks: Linux is not tested yet
 - ~~Replace icons with iKonli icons~~
 - Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
+
+
+## Steps to create your own build
+- Install AdoptJDK 14 or later (you can also use openjdk or Azul)
+- Install maven
+- Run maven with: mvn -Ppackage clean compile package 

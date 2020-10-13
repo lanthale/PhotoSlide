@@ -385,8 +385,8 @@
                 <bundle.type>deb</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable> 
                 <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
-                <param1>--linux-app-release 1.0</param1>                
-                <param2>--linux-shortcut</param2>                
+                <param1>--linux-shortcut</param1>                
+                <param2></param2>                
             </properties>
         </profile>   
         <profile>

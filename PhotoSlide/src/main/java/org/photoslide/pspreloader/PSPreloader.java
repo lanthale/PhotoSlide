@@ -5,10 +5,7 @@
  */
 package org.photoslide.pspreloader;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.application.Preloader;
 import javafx.application.Preloader.ProgressNotification;
@@ -28,6 +25,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.photoslide.Utility;
 
 /**
  * Simple Preloader Using the ProgressBar Control
@@ -52,7 +50,7 @@ public class PSPreloader extends Preloader {
         bar.setMaxWidth(230);
         text = new Label("PhotoSlide");
         text.setId("titelLabel");
-        text2 = new Label("1.0");
+        text2 = new Label(new Utility().getAppVersion());
         text2.setId("versionLabel");
 
         VBox v1 = new VBox();

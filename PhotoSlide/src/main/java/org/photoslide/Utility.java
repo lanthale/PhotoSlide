@@ -6,7 +6,12 @@
 package org.photoslide;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -95,12 +100,28 @@ public class Utility {
             path = System.getProperty("user.dir");
         }
 
-        path = path+File.separator+"PhotoSlide";
-        if (new File(path).exists()==false){
+        path = path + File.separator + "PhotoSlide";
+        if (new File(path).exists() == false) {
             new File(path).mkdirs();
         }
 
         return path;
+    }
+
+    public String getAppVersion() {
+        String version = "";        
+        InputStream resourceAsStream
+                = this.getClass().getResourceAsStream(
+                        "/META-INF/maven/org.photoslide/PhotoSlide/pom.properties"
+                );
+        Properties prop = new Properties();
+        try {
+            prop.load(resourceAsStream);
+            version = (String) prop.get("version");
+        } catch (IOException ex) {
+            Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return version;
     }
 
 }

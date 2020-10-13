@@ -351,6 +351,8 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void aboutMenuAction(ActionEvent event) {
+        Utility util=new Utility();
+        String appVersion = util.getAppVersion();
         Alert alert = new Alert(AlertType.NONE, "About", ButtonType.OK);
         alert.initStyle(StageStyle.UNDECORATED);
         HBox hb = new HBox();
@@ -363,7 +365,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide 1.0\n");
+        Text txtHeader = new Text("PhotoSlide "+appVersion+"\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);

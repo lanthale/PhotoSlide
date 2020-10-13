@@ -51,4 +51,4 @@ Remarks: Linux is not tested yet
 ## Steps to create your own build
 - Install AdoptJDK 14 or later (you can also use openjdk or Azul)
 - Install maven
-- Run maven with: mvn -Ppackage clean compile package 
+- Run maven with: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml

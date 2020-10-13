@@ -18,8 +18,8 @@ During my vacation time in spring I could not travel and therefore I decided to 
 ## Screenshot of the application
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 
-## Download of binary's:
-https://github.com/lanthale/PhotoSlide/releases/tag/v0.2
+## Download of installers including the binary:
+https://github.com/lanthale/PhotoSlide/releases/tag/v0.3
 Remarks: Linux is not tested yet
 
 ## Features
@@ -46,3 +46,12 @@ Remarks: Linux is not tested yet
 - ~~Replace icons with iKonli icons~~
 - Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
+
+
+## Steps to create your own build
+- Install AdoptOpenJDK 14 or later (you can also use openjdk or Azul)
+- Install maven
+- On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools
+- Run maven with: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
+
+The maven file is downloading every dependency automatically in the background.

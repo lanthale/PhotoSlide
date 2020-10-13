@@ -19,7 +19,7 @@ During my vacation time in spring I could not travel and therefore I decided to 
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 
 ## Download of installers including the binary:
-https://github.com/lanthale/PhotoSlide/releases/tag/v0.3
+https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.1
 Remarks: Linux is not tested yet
 
 ## Features

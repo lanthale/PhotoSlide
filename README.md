@@ -20,7 +20,13 @@ During my vacation time in spring I could not travel and therefore I decided to 
 
 ## Download of installers including the binary:
 https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.1
-Remarks: Linux is not tested yet
+
+- Windows: Unzip und execute the installer
+- OSX: Unzip and execute the installer
+- Linux: 
+    Download and unpack ZIP file.
+    Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb
+    Run /opt/photoslide/bin/PhotoSlide
 
 ## Features
 - Viewing of JPG/TIFF/PNG images

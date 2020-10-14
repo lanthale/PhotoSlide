@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -52,6 +53,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.photoslide.datamodel.FileTypes;
 
 /**
  *
@@ -156,10 +158,15 @@ public class CollectionsController implements Initializable {
             return res;
         })) {
             Stream<Path> sortedStream = StreamSupport.stream(newDirectoryStream.spliterator(), false).sorted();
+            final AtomicInteger i = new AtomicInteger(0);
+            final long qty = Files.list(root_file).count();
             sortedStream.forEach((t) -> {
                 //try {
                 Platform.runLater(() -> {
-                    mainController.getProgressbarLabel().setText(t.toString());
+                    double prgValue = ((double) (i.addAndGet(1)) / qty * 100);
+                    //System.out.println(String.format("%1$,.2f", prgValue));
+                    //mainController.getProgressbar().setProgress(prgValue);
+                    mainController.getProgressbarLabel().setText(t.toString() + " " + String.format("%1$,.0f", prgValue) + "%");
                 });
                 try {
                     Thread.sleep(100);
@@ -185,7 +192,7 @@ public class CollectionsController implements Initializable {
                 executor.submit(taskTree);
                 //} catch (IOException ex) {
                 //    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                //}
+                //}                
             });
 
         }

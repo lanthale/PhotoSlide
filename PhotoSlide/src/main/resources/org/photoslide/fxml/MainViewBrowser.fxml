@@ -166,11 +166,11 @@
         </MenuBar>
         <HBox prefWidth="1280.0">
             <children>
-                <ToolBar prefHeight="67.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                <ToolBar prefHeight="67.0" prefWidth="179.0" HBox.hgrow="ALWAYS">
                     <items>
-                  <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0">
+                  <HBox alignment="CENTER" maxWidth="230.0" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
                      <children>
-                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse">
+                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
@@ -180,7 +180,7 @@
                               <Insets bottom="10.0" top="10.0" />
                            </padding>
                         </Separator>
-                                <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" text="Edit">
+                                <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>

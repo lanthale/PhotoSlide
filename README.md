@@ -20,9 +20,10 @@ During my vacation time in spring I could not travel and therefore I decided to 
 
 ## Download of installers including the binary:
 https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.2
+The software is not notarized with developer accounts on OSX/Windows.
 
-- Windows: Unzip und execute the installer
-- OSX: Unzip and execute the installer
+- Windows: Unzip und execute the installer. If defender is poping up please click on "more info" and then on "run anyway"
+- OSX: Unzip and execute the installer. The first time right click on the icon in Application folder and select "open"
 - Linux: 
   - Download and unpack ZIP file.
   - Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb

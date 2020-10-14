@@ -24,9 +24,9 @@ https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.1
 - Windows: Unzip und execute the installer
 - OSX: Unzip and execute the installer
 - Linux: 
-    Download and unpack ZIP file.
-    Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb
-    Run /opt/photoslide/bin/PhotoSlide
+-- Download and unpack ZIP file.
+-- Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb
+-- Run /opt/photoslide/bin/PhotoSlide
 
 ## Features
 - Viewing of JPG/TIFF/PNG images

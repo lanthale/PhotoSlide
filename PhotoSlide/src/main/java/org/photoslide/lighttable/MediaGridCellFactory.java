@@ -10,12 +10,16 @@ import org.photoslide.Utility;
 import org.photoslide.metadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.Event;
@@ -37,6 +41,7 @@ import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.datamodel.TIFFSimpleSupport;
 
 /**
  *
@@ -187,7 +192,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getCameraLabel().setVisible(false);
             lightController.getFilenameLabel().setVisible(false);
             lightController.getRatingControl().setVisible(false);
-            lightController.getOptionPane().setDisable(false);            
+            lightController.getOptionPane().setDisable(false);
             metadataController.cancelTasks();
             if (img != null) {
                 img.cancel();
@@ -282,9 +287,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
                                 VBox vb = new VBox();
                                 vb.setAlignment(Pos.CENTER);
-                                FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");                                
+                                FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
                                 filmIcon.setOpacity(0.3);
-                                FontIcon controlIcon = new FontIcon("fa-minus-circle:150");                                
+                                FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
                                 Label lb = new Label("Filtype not supported!");
                                 lb.setStyle("-fx-font-size: 20px;");
                                 Platform.runLater(() -> {
@@ -315,7 +320,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().setVisible(true);
                         });
                         String url = selectedMediaItem.getImage().getUrl();
-                        img = new Image(url, true);
+                        if (selectedMediaItem.getName().toLowerCase().indexOf("tiff") != -1) {
+                            img = new TIFFSimpleSupport().readImage(selectedMediaItem.getPathStorage().toUri());
+                            Platform.runLater(() -> {
+                                lightController.getImageProgress().setVisible(false);
+                            });
+                        } else {
+                            img = new Image(url, true);
+                        }
                         Platform.runLater(() -> {
                             lightController.getDetailToolbar().setDisable(false);
                             lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
@@ -349,7 +361,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 
                             Button resetCrop = new Button();
-                            FontIcon restoreIcon = new FontIcon("ti-back-right:24");                            
+                            FontIcon restoreIcon = new FontIcon("ti-back-right:24");
                             resetCrop.setGraphic(restoreIcon);
                             if (selectedCell.getItem().getCropView() != null) {
                                 lightController.getOptionPane().getChildren().clear();

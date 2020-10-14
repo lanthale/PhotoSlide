@@ -14,6 +14,7 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.controlsfx.control.GridView;
+import org.photoslide.datamodel.TIFFSimpleSupport;
 
 /**
  *
@@ -67,20 +68,25 @@ public class MediaLoadingTask extends Task<Boolean> {
                     }
 
                     case IMAGE -> {
-                        Image img = new Image(fileItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 300, imageGrid.getCellHeight() + 300, true, false, false);
+                        Image img = null;
+                        if (fileItem.getName().toLowerCase().indexOf("tiff") != -1) {
+                            img = new TIFFSimpleSupport().readImage(fileItem.getPathStorage().toUri());
+                        } else {
+                            img = new Image(fileItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 300, imageGrid.getCellHeight() + 300, true, false, false);
+                        }
                         updateMessage("Retrieve image... " + fileItem.getName());
                         item = list.get(list.indexOf(fileItem));
                         item.setImage(img);
                         final MediaFile itemImage = item;
                         Platform.runLater(() -> {
-                            list.set(list.indexOf(fileItem), itemImage);                            
+                            list.set(list.indexOf(fileItem), itemImage);
                         });
                     }
 
                     default -> {
                     }
                 }
-            } else {                
+            } else {
                 return false;
             }
         }

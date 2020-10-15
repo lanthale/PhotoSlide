@@ -41,7 +41,7 @@ import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.datamodel.TIFFSimpleSupport;
+import org.photoslide.datamodel.tiffsupport.TIFFSimpleSupport;
 
 /**
  *
@@ -320,7 +320,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().setVisible(true);
                         });
                         String url = selectedMediaItem.getImage().getUrl();
-                        if (selectedMediaItem.getName().toLowerCase().indexOf("tiff") != -1) {
+                        if (selectedMediaItem.getName().toLowerCase().contains("tiff") || selectedMediaItem.getName().toLowerCase().contains("tif")) {
                             img = new TIFFSimpleSupport().readImage(selectedMediaItem.getPathStorage().toUri());
                             Platform.runLater(() -> {
                                 lightController.getImageProgress().setVisible(false);

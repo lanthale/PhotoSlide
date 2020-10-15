@@ -480,7 +480,11 @@
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls</argument>
                                         <argument>--java-options</argument>
-                                        <argument>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls</argument>
+                                        <argument>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls</argument>                                        
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide</argument>
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>--module</argument>

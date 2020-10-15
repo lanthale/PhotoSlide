@@ -3,14 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel;
+package org.photoslide.datamodel.tiffsupport;
 
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.reader.ImageReader;
-import com.icafe4j.image.tiff.TIFFImage;
-import com.icafe4j.io.FileCacheRandomAccessInputStream;
+import com.icafe4j.image.tiff.PageReader;
 import com.icafe4j.io.PeekHeadInputStream;
-import com.icafe4j.io.RandomAccessInputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,13 +31,12 @@ public class TIFFSimpleSupport {
         Image image = null;
         try {
             File f = new File(uri);
-            fin = new FileInputStream(f);
+            //fin = new FileInputStream(f);
 
             BufferedImage bufferedImage;
-            try (PeekHeadInputStream peekHeadInputStream = new PeekHeadInputStream(fin, ImageIO.IMAGE_MAGIC_NUMBER_LEN)) {
-                ImageReader reader = ImageIO.getReader(peekHeadInputStream);
-                bufferedImage = reader.read(peekHeadInputStream);
-            }
+            
+            
+            bufferedImage = ImageIO.read(f);
             if (bufferedImage == null) {
                 Logger.getLogger(TIFFSimpleSupport.class.getName()).log(Level.SEVERE, "Failed to load image");
                 return null;
@@ -50,11 +47,11 @@ public class TIFFSimpleSupport {
         } catch (Exception ex) {
             Logger.getLogger(TIFFSimpleSupport.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
-            try {
+            /*try {
                 fin.close();
             } catch (IOException ex) {
                 Logger.getLogger(TIFFSimpleSupport.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            }*/
         }
         return image;
     }

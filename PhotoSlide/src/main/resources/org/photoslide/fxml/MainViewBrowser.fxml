@@ -20,7 +20,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<VBox prefHeight="800.0" prefWidth="1280.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.MainViewController">
+<VBox prefHeight="750.0" prefWidth="1280.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.MainViewController">
     <children>
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
             <menus>
@@ -164,11 +164,11 @@
                 </Menu>
             </menus>
         </MenuBar>
-        <HBox prefWidth="1280.0">
+        <HBox>
             <children>
-                <ToolBar prefHeight="67.0" prefWidth="179.0" HBox.hgrow="ALWAYS">
+                <ToolBar prefHeight="67.0" prefWidth="259.0" HBox.hgrow="NEVER">
                     <items>
-                  <HBox alignment="CENTER" maxWidth="230.0" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
+                  <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
                      <children>
                                 <ToggleButton id="tooltoggle-button" fx:id="browseButton" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
                                     <font>
@@ -192,7 +192,7 @@
                         <Insets left="20.0" />
                     </padding>
                 </ToolBar>
-                <ToolBar prefHeight="67.0" prefWidth="400.0" HBox.hgrow="ALWAYS">
+                <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
                      <graphic>
@@ -216,7 +216,7 @@
                         </Button>
                     </items>
                <padding>
-                  <Insets left="200.0" />
+                  <Insets left="100.0" />
                </padding>
                 </ToolBar>
                 <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="67.0" prefWidth="100.0" HBox.hgrow="ALWAYS">

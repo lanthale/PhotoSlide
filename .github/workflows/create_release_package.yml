@@ -76,11 +76,9 @@ jobs:
 
     - name: Get Name of Artifact
       shell: cmd
-      run: |
-        ARTIFACT_PATHNAME=$(dir /s/b PhotoSlide\target\package\*.exe)
-        ARTIFACT_NAME=$(for %a in (PhotoSlide\target\package\*.exe) do @echo %~nxa)
-        echo ::set-env name=ARTIFACT_NAME::${ARTIFACT_NAME}
-        echo ::set-env name=ARTIFACT_PATHNAME::${ARTIFACT_PATHNAME}
+      run: |        
+        echo ::set-env name=ARTIFACT_NAME::${for %a in (PhotoSlide\target\package\*.exe) do @echo %~nxa}
+        echo ::set-env name=ARTIFACT_PATHNAME::${dir /s/b PhotoSlide\target\package\*.exe}
     - name: Get upload URL
       id: geturl
       run:   |

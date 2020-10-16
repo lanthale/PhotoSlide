@@ -82,7 +82,7 @@ jobs:
     - name: Get upload URL
       id: geturl
       run:   |
-         upload_url=$(jobs.build-linux.steps.geturl.outputs.upload_url)
+         upload_url=$jobs.build-linux.steps.geturl.outputs.upload_url
          echo ::set-output name=upload_url::$upload_url
     - name: Upload Release Asset Win
       id: upload-release-asset 

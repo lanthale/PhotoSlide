@@ -25,7 +25,7 @@ jobs:
         prerelease: false
  
   build-osx:
-    
+    needs: create-release
     runs-on: macos-latest
 
     steps:
@@ -57,7 +57,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ create-release.steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        upload_url: ${{ needs.create-release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: PhotoSlide/target/package/*.pkg
         asset_name: photoslide-osx.pkg
         asset_content_type: application/pkg
@@ -115,17 +115,3 @@ jobs:
       with:
        name: photoslide-linux
        path: PhotoSlide/target/package/*
-    
-    - name: Upload Release Asset Linux
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ create-release.steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: PhotoSlide/target/package/*.deb
-        asset_name: photoslide-linux.deb
-        asset_content_type: application/deb
-   
-
-    

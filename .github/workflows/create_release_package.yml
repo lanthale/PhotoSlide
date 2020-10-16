@@ -76,8 +76,8 @@ jobs:
 
     - name: Get Name of Artifact
       run: |
-        ARTIFACT_PATHNAME=$(ls PhotoSlide/target/package/*.exe | head -n 1)
-        ARTIFACT_NAME=$(basename $ARTIFACT_PATHNAME)
+        ARTIFACT_PATHNAME=$(dir /s/b PhotoSlide/target/package/*.exe)
+        ARTIFACT_NAME=$(for %a in (PhotoSlide\target\package\*.exe) do @echo %~nxa)
         echo ::set-env name=ARTIFACT_NAME::${ARTIFACT_NAME}
         echo ::set-env name=ARTIFACT_PATHNAME::${ARTIFACT_PATHNAME}
     - name: Get upload URL

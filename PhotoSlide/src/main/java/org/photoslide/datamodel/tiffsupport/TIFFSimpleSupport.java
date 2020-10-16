@@ -5,20 +5,16 @@
  */
 package org.photoslide.datamodel.tiffsupport;
 
-import com.icafe4j.image.ImageIO;
-import com.icafe4j.image.reader.ImageReader;
-import com.icafe4j.image.tiff.PageReader;
-import com.icafe4j.io.PeekHeadInputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javax.imageio.ImageIO;
 
 /**
  *

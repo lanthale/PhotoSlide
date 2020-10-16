@@ -214,6 +214,8 @@
                                     </artifact>                                    
                                     <moduleInfoSource>
                                         open module jai.imageio.core {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires java.desktop;
                                             
                                         exports com.github.jaiimageio.impl.common;                                         
                                         exports com.github.jaiimageio.impl.plugins.bmp;
@@ -225,7 +227,10 @@
                                         exports com.github.jaiimageio.impl.plugins.raw;
                                         exports com.github.jaiimageio.impl.plugins.tiff;
                                         exports com.github.jaiimageio.impl.stream;
-                                        exports com.github.jaiimageio.stream;
+                                        exports com.github.jaiimageio.plugins.bmp;
+                                        exports com.github.jaiimageio.plugins.pnm;
+                                        exports com.github.jaiimageio.plugins.tiff;
+                                        exports com.github.jaiimageio.stream;                                        
                                         }
                                     </moduleInfoSource>
                                 </module>                                                                          
@@ -324,7 +329,17 @@
         <dependency>
             <groupId>com.github.jai-imageio</groupId>
             <artifactId>jai-imageio-core</artifactId>
-            <version>1.3.0</version>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-metadata</artifactId>
+            <version>3.6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

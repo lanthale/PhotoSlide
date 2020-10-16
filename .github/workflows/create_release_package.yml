@@ -9,8 +9,23 @@ on:
     - '*'
 
 jobs:
+  create-release:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+ 
   build-osx:
-
+    
     runs-on: macos-latest
 
     steps:
@@ -35,9 +50,20 @@ jobs:
       with:
        name: photoslide-osx
        path: PhotoSlide/target/package/*
+ 
+    - name: Upload Release Asset OSX
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: PhotoSlide/target/package/*.pkg
+        asset_name: photoslide-osx.pkg
+        asset_content_type: application/pkg
 
   build-win:
-
+    
     runs-on: windows-latest
 
     steps:
@@ -89,3 +115,17 @@ jobs:
       with:
        name: photoslide-linux
        path: PhotoSlide/target/package/*
+    
+    - name: Upload Release Asset Linux
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: PhotoSlide/target/package/*.deb
+        asset_name: photoslide-linux.deb
+        asset_content_type: application/deb
+   
+
+    

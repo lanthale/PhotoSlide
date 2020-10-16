@@ -32,7 +32,7 @@ jobs:
       run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
     - name: Get Name of Artifact
       run: |
-        ARTIFACT_PATHNAME=$(ls PhotoSlide/target/*.pkg | head -n 1)
+        ARTIFACT_PATHNAME=$(ls PhotoSlide/target/package/*.pkg | head -n 1)
         ARTIFACT_NAME=$(basename $ARTIFACT_PATHNAME)
         echo ::set-env name=ARTIFACT_NAME::${ARTIFACT_NAME}
         echo ::set-env name=ARTIFACT_PATHNAME::${ARTIFACT_PATHNAME}

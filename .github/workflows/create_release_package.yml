@@ -75,6 +75,7 @@ jobs:
       run: mvn -B clean compile package -Ppackage -f PhotoSlide/pom.xml
 
     - name: Get Name of Artifact
+      shell: cmd
       run: |
         ARTIFACT_PATHNAME=$(dir /s/b PhotoSlide\target\package\*.exe)
         ARTIFACT_NAME=$(for %a in (PhotoSlide\target\package\*.exe) do @echo %~nxa)

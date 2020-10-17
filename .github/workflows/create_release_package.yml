@@ -77,7 +77,7 @@ jobs:
     - name: Get Name of Artifact
       shell: cmd
       run: |  
-        for %a in (PhotoSlide\target\package\*.exe) do @echo "%~nxa" > filename.txt
+        for %%a in (PhotoSlide\target\package\*.exe) do @echo "%%~nxa" > filename.txt
         SET /p FILENAME= < filename.txt
         DEL filename.txt  
         dir /s/b PhotoSlide\target\package\*.exe > pathname.txt

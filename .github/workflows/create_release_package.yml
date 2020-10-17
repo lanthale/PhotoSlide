@@ -73,23 +73,13 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B clean compile package -Ppackage -f PhotoSlide/pom.xml
-
-    - name: Get Name of Artifact
-      shell: cmd
-      run: |  
-        for %%a in (PhotoSlide\target\package\*.exe) do @echo "%%~nxa" > filename.txt
-        SET /p FILENAME= < filename.txt
-        DEL filename.txt  
-        dir /s/b PhotoSlide\target\package\*.exe > pathname.txt
-        SET /p PATHNAME= < pathname.txt   
-        DEL pathname.txt
-        echo "ARTIFACT_NAME=$Env:FILENAME" >> $GITHUB_ENV 
-        echo "ARTIFACT_PATHNAME=$Env:PATHNAME" >> $GITHUB_ENV     
+        
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.2
       env:
         GITHUB_TOKEN: ${{ github.token }}
+        
     - name: Upload Release Asset Win
       id: upload-release-asset 
       uses: csexton/release-asset-action@v2

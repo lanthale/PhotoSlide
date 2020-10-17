@@ -83,8 +83,8 @@ jobs:
         dir /s/b PhotoSlide\target\package\*.exe > pathname.txt
         SET /p PATHNAME= < pathname.txt   
         DEL pathname.txt
-        echo ::set-env name=ARTIFACT_NAME::${FILENAME}
-        echo ::set-env name=ARTIFACT_PATHNAME::${PATHNAME}
+        echo ::set-env name=ARTIFACT_NAME::${$env:FILENAME}
+        echo ::set-env name=ARTIFACT_PATHNAME::${$env:PATHNAME}
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.2

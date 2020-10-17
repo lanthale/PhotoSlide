@@ -54,7 +54,7 @@ jobs:
         asset_content_type: application/pkg
 
   build-win:
-    needs: build-linux
+    
     runs-on: windows-latest
 
     steps:

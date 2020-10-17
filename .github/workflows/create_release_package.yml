@@ -82,9 +82,7 @@ jobs:
         DEL filename.txt  
         dir /s/b PhotoSlide\target\package\*.exe > pathname.txt
         SET /p PATHNAME= < pathname.txt   
-        DEL pathname.txt
-        echo ::set-env name=ARTIFACT_NAME::${$env:FILENAME}
-        echo ::set-env name=ARTIFACT_PATHNAME::${$env:PATHNAME}
+        DEL pathname.txt        
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.2
@@ -97,8 +95,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: ${{ env.ARTIFACT_PATHNAME }}
-        asset_name: ${{ env.ARTIFACT_NAME }}
+        asset_path: ${{ env.PATHNAME }}
+        asset_name: ${{ env.FILENAME }}
         asset_content_type: application/exe
 
   build-linux:

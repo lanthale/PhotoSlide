@@ -19,7 +19,7 @@ During my vacation time in spring I could not travel and therefore I decided to 
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 
 ## Download of installers including the binary:
-https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.2
+https://github.com/lanthale/PhotoSlide/releases/tag/v0.3.4
 The software is not notarized with developer accounts on OSX/Windows.
 
 - Windows: Execute the installer. If defender is poping up please click on "more info" and then on "run anyway"

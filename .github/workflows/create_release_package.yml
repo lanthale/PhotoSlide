@@ -78,13 +78,13 @@ jobs:
       shell: cmd
       run: |  
         for %%a in (PhotoSlide\target\package\*.exe) do @echo "%%~nxa" > filename.txt
-        SET /p FILENAME= < filename.txt
+        SETX /p FILENAME= < filename.txt
         DEL filename.txt  
         dir /s/b PhotoSlide\target\package\*.exe > pathname.txt
-        SET /p PATHNAME= < pathname.txt   
+        SETX /p PATHNAME= < pathname.txt   
         DEL pathname.txt
-        echo "ARTIFACT_NAME=%FILENAME%" >> $GITHUB_ENV 
-        echo "ARTIFACT_PATHNAME=%PATHNAME%" >> $GITHUB_ENV     
+        echo "ARTIFACT_NAME=$Env:FILENAME" >> $GITHUB_ENV 
+        echo "ARTIFACT_PATHNAME=$Env:PATHNAME" >> $GITHUB_ENV     
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.2

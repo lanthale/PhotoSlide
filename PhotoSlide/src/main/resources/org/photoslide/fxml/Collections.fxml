@@ -19,7 +19,7 @@
         </Label>
         <HBox alignment="CENTER_RIGHT" layoutX="235.0" layoutY="9.0" prefHeight="27.0" prefWidth="146.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="40.0">
             <children>
-                <Button id="toolbutton" fx:id="minusButton" mnemonicParsing="false">
+                <Button id="toolbutton" fx:id="minusButton" mnemonicParsing="false" onAction="#minusButtonAction">
                <graphic>
                   <FontIcon iconLiteral="ti-minus" />
                </graphic>

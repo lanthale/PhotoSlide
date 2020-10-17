@@ -75,12 +75,16 @@ public class MediaLoadingTask extends Task<Boolean> {
                             img = new Image(fileItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 300, imageGrid.getCellHeight() + 300, true, false, false);
                         }
                         updateMessage("Retrieve image... " + fileItem.getName());
-                        item = list.get(list.indexOf(fileItem));
-                        item.setImage(img);
-                        final MediaFile itemImage = item;
-                        Platform.runLater(() -> {
-                            list.set(list.indexOf(fileItem), itemImage);
-                        });
+                        try {
+                            item = list.get(list.indexOf(fileItem));
+                            item.setImage(img);
+                            final MediaFile itemImage = item;
+                            Platform.runLater(() -> {
+                                list.set(list.indexOf(fileItem), itemImage);
+                            });
+                        } catch (IndexOutOfBoundsException e){
+                            
+                        }
                     }
 
                     default -> {

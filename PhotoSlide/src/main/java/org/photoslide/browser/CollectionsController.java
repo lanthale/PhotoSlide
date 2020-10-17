@@ -38,6 +38,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
@@ -399,6 +400,34 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void deleteMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void minusButtonAction(ActionEvent event) {
+        TreeView<PathItem> content = (TreeView<PathItem>)accordionPane.getExpandedPane().getContent();
+        PathItem value = content.getRoot().getValue();
+        String url1 = pref.get("URL1", "");
+        String url2 = pref.get("URL2", "");
+        String url3 = pref.get("URL3", "");
+        String url4 = pref.get("URL4", "");
+        String url5 = pref.get("URL5", "");
+        if (value.getFilePath().toString().contains(url1)){
+            pref.remove("URL1");
+        }
+        if (value.getFilePath().toString().contains(url2)){
+            pref.remove("URL2");
+        }
+        if (value.getFilePath().toString().contains(url3)){
+            pref.remove("URL3");
+        }
+        if (value.getFilePath().toString().contains(url4)){
+            pref.remove("URL4");
+        }
+        if (value.getFilePath().toString().contains(url5)){
+            pref.remove("URL5");
+        }
+        lighttablePaneController.resetLightTableView();
+        accordionPane.getPanes().remove(accordionPane.getExpandedPane());
     }
 
 }

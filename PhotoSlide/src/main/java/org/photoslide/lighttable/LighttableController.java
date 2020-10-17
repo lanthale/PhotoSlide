@@ -841,5 +841,9 @@ public class LighttableController implements Initializable {
         return mainController;
     }
     
+    public void resetLightTableView(){
+        list.clear();
+    }
+    
 
 }

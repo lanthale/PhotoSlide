@@ -82,9 +82,9 @@ jobs:
         DEL filename.txt  
         dir /s/b PhotoSlide\target\package\*.exe > pathname.txt
         SET /p PATHNAME= < pathname.txt   
-        DEL pathname.txt  
-        echo ::set-env name=ARTIFACT_NAME::%FILENAME%%
-        echo ::set-env name=ARTIFACT_PATHNAME::%PATHNAME%      
+        DEL pathname.txt
+        echo "ARTIFACT_NAME=%FILENAME%" >> $GITHUB_ENV 
+        echo "ARTIFACT_PATHNAME=%PATHNAME%" >> $GITHUB_ENV     
     - name: Get release
       id: get_release
       uses: bruceadams/get-release@v1.2.2

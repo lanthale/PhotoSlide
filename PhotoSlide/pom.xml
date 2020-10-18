@@ -366,7 +366,8 @@
             <properties>
                 <bundle.type>pkg</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
-                <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
+                <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
+                <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide2.icns</icons>                
                 <param1></param1>                
                 <param2></param2>                                
             </properties>
@@ -382,7 +383,8 @@
             <properties>
                 <bundle.type>exe</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
-                <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide.ico</icons>                
+                <installericon>${project.resources[0].directory}\org\photoslide\img\win\pkgresource</installericon>
+                <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide2.ico</icons>                
                 <param1>--win-menu</param1>
                 <param2>--win-shortcut</param2>
             </properties>
@@ -399,7 +401,8 @@
             <properties>
                 <bundle.type>deb</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable> 
-                <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
+                <installericon>${project.resources[0].directory}/org/photoslide/img/linux/pkgresource</installericon>
+                <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide2.png</icons>                
                 <param1>--linux-shortcut</param1>                
                 <param2></param2>                
             </properties>
@@ -480,8 +483,10 @@
                                         <argument>--verbose</argument>                                        
                                         <argument>--icon</argument>
                                         <argument>${icons}</argument>                                        
-                                        <argument>--app-version</argument>
+                                        <argument>--app-version</argument>                                        
                                         <argument>1.0.0</argument>
+                                        <argument>--resource-dir</argument>
+                                        <argument>${installericon}</argument>
                                         <argument>--copyright</argument>
                                         <argument>ITArchitects</argument>                                        
                                         <argument>--name</argument>

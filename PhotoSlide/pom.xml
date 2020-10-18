@@ -367,7 +367,7 @@
                 <bundle.type>pkg</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
-                <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide2.icns</icons>                
+                <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
                 <param1></param1>                
                 <param2></param2>
                 <param3></param3>
@@ -386,7 +386,7 @@
                 <bundle.type>exe</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
                 <installericon>${project.resources[0].directory}\org\photoslide\img\win\pkgresource</installericon>
-                <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide2.ico</icons>                
+                <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide.ico</icons>                
                 <param1>--win-menu</param1>
                 <param2>--win-shortcut</param2>
                 <param3></param3>
@@ -406,7 +406,7 @@
                 <bundle.type>deb</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable> 
                 <installericon>${project.resources[0].directory}/org/photoslide/img/linux/pkgresource</installericon>
-                <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide2.png</icons>                
+                <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
                 <param1>--linux-shortcut</param1>                
                 <param2></param2> 
                 <param3></param3>

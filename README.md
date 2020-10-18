@@ -57,6 +57,7 @@ The software is not notarized with developer accounts on OSX/Windows.
 
 ## Steps to create your own build
 - Install AdoptOpenJDK 14 or later (you can also use openjdk or Azul)
+- Set env var JAVA_HOME
 - Install maven
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools
 - Run maven with: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml

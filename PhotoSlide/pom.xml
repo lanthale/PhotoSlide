@@ -369,7 +369,9 @@
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide2.icns</icons>                
                 <param1></param1>                
-                <param2></param2>                                
+                <param2></param2>
+                <param3></param3>
+                <param4></param4>                                
             </properties>
         </profile>
         <profile>
@@ -387,6 +389,8 @@
                 <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide2.ico</icons>                
                 <param1>--win-menu</param1>
                 <param2>--win-shortcut</param2>
+                <param3></param3>
+                <param4></param4>
             </properties>
         </profile>   
         <profile>
@@ -404,7 +408,9 @@
                 <installericon>${project.resources[0].directory}/org/photoslide/img/linux/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide2.png</icons>                
                 <param1>--linux-shortcut</param1>                
-                <param2></param2>                
+                <param2></param2> 
+                <param3></param3>
+                <param4></param4>               
             </properties>
         </profile>   
         <profile>

@@ -17,11 +17,13 @@ import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 /**
@@ -109,7 +111,7 @@ public class Utility {
     }
 
     public String getAppVersion() {
-        String version = "";        
+        String version = "";
         InputStream resourceAsStream
                 = this.getClass().getResourceAsStream(
                         "/META-INF/maven/org.photoslide/PhotoSlide/pom.properties"
@@ -122,6 +124,42 @@ public class Utility {
             Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
         }
         return version;
+    }
+
+    public static void centerChildWindowOnStage(Stage stage, Stage primaryStage) {
+        if (primaryStage == null) {
+            return;
+        }
+        double x = stage.getX();
+        double y = stage.getY();
+
+        // Firstly we need to force CSS and layout to happen, as the dialogPane
+        // may not have been shown yet (so it has no dimensions)
+        stage.getScene().getRoot().applyCss();
+        stage.getScene().getRoot().layout();
+        final Scene ownerScene = primaryStage.getScene();
+        final double titleBarHeight = ownerScene.getY();
+
+        // because Stage does not seem to centre itself over its owner, we
+        // do it here.
+        // then we can get the dimensions and position the dialog appropriately.
+        final double dialogWidth = stage.getScene().getRoot().prefWidth(-1);
+        final double dialogHeight = stage.getScene().getRoot().prefHeight(dialogWidth);
+        final double ownerWidth = primaryStage.getScene().getRoot().prefWidth(-1);
+        final double ownerHeight = primaryStage.getScene().getRoot().prefHeight(ownerWidth);
+        if (dialogWidth < ownerWidth) {
+            x = primaryStage.getX() + (ownerScene.getWidth() / 2.0) - (dialogWidth / 2.0);
+        } else {
+            x = primaryStage.getX();
+            stage.setWidth(dialogWidth);
+        }
+        if (dialogHeight < ownerHeight) {
+            y = primaryStage.getY() + titleBarHeight / 2.0 + (ownerScene.getHeight() / 2.0) - (dialogHeight / 2.0);
+        } else {
+            y = primaryStage.getY();
+        }
+        stage.setX(x);
+        stage.setY(y);
     }
 
 }

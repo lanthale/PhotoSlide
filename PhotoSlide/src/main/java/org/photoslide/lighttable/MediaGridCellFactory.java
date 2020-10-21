@@ -37,6 +37,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
@@ -210,6 +211,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+            Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)grid.getScene().getWindow()); 
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);

@@ -50,7 +50,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -68,9 +67,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Screen;
-import javafx.stage.Window;
+import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
+import org.photoslide.Utility;
 
 /**
  *
@@ -628,12 +627,7 @@ public class MetadataController implements Initializable {
         dialogPane.setContent(content);
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        Platform.runLater(() -> {
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-            Window window = alert.getDialogPane().getScene().getWindow();
-            window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
-            window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
-        });
+        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
             

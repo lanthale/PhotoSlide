@@ -67,6 +67,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
@@ -754,6 +755,7 @@ public class LighttableController implements Initializable {
         
         confirmDiaglog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Utility.centerChildWindowOnStage((Stage)confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage)stackPane.getScene().getWindow()); 
         Optional<ButtonType> result = confirmDiaglog.showAndWait();        
         if (result.get() == ButtonType.YES) {
             list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {

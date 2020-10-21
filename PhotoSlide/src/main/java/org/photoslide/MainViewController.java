@@ -199,26 +199,16 @@ public class MainViewController implements Initializable {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-            Platform.runLater(() -> {
-                Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-                Window window = alert.getDialogPane().getScene().getWindow();
-                window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
-                window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
-            });
+                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());            
             alert.setResizable(false);
+            Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
             alert.showAndWait();
             return;
         }
         diag.getController().setTitel(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue());
-        diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());
-        Platform.runLater(() -> {
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-            Window window = diag.getDialogPane().getScene().getWindow();
-            window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
-            window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
-        });
+        diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());        
         diag.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage)diag.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
         Optional<ButtonType> result = diag.showAndWait();
         if (result.get() == ButtonType.OK) {
             // ... user chose OK
@@ -382,15 +372,9 @@ public class MainViewController implements Initializable {
         hb.getChildren().add(vbText);
         alert.getDialogPane().setContent(hb);
         alert.setResizable(false);
-
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        Platform.runLater(() -> {
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-            Window window = alert.getDialogPane().getScene().getWindow();
-            window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
-            window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
-        });
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());        
+        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
         alert.showAndWait();
     }
 

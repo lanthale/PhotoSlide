@@ -376,14 +376,9 @@ public class CollectionsController implements Initializable {
         alert.setContentText("Please enter the name:");
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        Platform.runLater(() -> {
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-            Window window = alert.getDialogPane().getScene().getWindow();
-            window.setX((screenBounds.getWidth() - window.getWidth()) / 2);
-            window.setY((screenBounds.getHeight() - window.getHeight()) / 2);
-        });
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());        
         alert.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)accordionPane.getScene().getWindow()); 
         Optional<String> result = alert.showAndWait();
         result.ifPresent((t) -> {
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();

@@ -409,7 +409,7 @@
                 <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
                 <param1>--linux-shortcut</param1>                
                 <param2>--linux-package-name</param2> 
-                <param3>PhotoSlide</param3>
+                <param3>${project.name}</param3>
                 <param4></param4>               
             </properties>
         </profile>   

@@ -459,7 +459,11 @@
                                         <module>icafe</module>
                                         <module>jai.imageio.core</module>
                                         <module>org.slf4j</module>                                       
-                                    </modules>                                                                                                            
+                                    </modules> 
+                                    <launcher>
+                                        <name>${project.name}</name>
+                                        <module>${moduleName}/${mainClass}</module>
+                                    </launcher>                                                                                                           
                                 </configuration>
                             </execution> 
                         </executions>

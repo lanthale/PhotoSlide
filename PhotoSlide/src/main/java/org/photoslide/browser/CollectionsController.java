@@ -129,7 +129,9 @@ public class CollectionsController implements Initializable {
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
             Platform.runLater(() -> {
-                accordionPane.setExpandedPane(accordionPane.getPanes().get(0));
+                if (accordionPane.getPanes().size() > 0) {
+                    accordionPane.setExpandedPane(accordionPane.getPanes().get(0));
+                }
             });
         });
         executor.submit(task);
@@ -376,9 +378,9 @@ public class CollectionsController implements Initializable {
         alert.setContentText("Please enter the name:");
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());        
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         alert.setResizable(false);
-        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)accordionPane.getScene().getWindow()); 
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Optional<String> result = alert.showAndWait();
         result.ifPresent((t) -> {
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -399,26 +401,26 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void minusButtonAction(ActionEvent event) {
-        TreeView<PathItem> content = (TreeView<PathItem>)accordionPane.getExpandedPane().getContent();
+        TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
         PathItem value = content.getRoot().getValue();
         String url1 = pref.get("URL1", "");
         String url2 = pref.get("URL2", "");
         String url3 = pref.get("URL3", "");
         String url4 = pref.get("URL4", "");
         String url5 = pref.get("URL5", "");
-        if (value.getFilePath().toString().contains(url1)){
+        if (value.getFilePath().toString().contains(url1)) {
             pref.remove("URL1");
         }
-        if (value.getFilePath().toString().contains(url2)){
+        if (value.getFilePath().toString().contains(url2)) {
             pref.remove("URL2");
         }
-        if (value.getFilePath().toString().contains(url3)){
+        if (value.getFilePath().toString().contains(url3)) {
             pref.remove("URL3");
         }
-        if (value.getFilePath().toString().contains(url4)){
+        if (value.getFilePath().toString().contains(url4)) {
             pref.remove("URL4");
         }
-        if (value.getFilePath().toString().contains(url5)){
+        if (value.getFilePath().toString().contains(url5)) {
             pref.remove("URL5");
         }
         lighttablePaneController.resetLightTableView();

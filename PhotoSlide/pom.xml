@@ -408,8 +408,8 @@
                 <installericon>${project.resources[0].directory}/org/photoslide/img/linux/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png</icons>                
                 <param1>--linux-shortcut</param1>                
-                <param2></param2> 
-                <param3></param3>
+                <param2>--linux-package-name</param2> 
+                <param3>${moduleName}</param3>
                 <param4></param4>               
             </properties>
         </profile>   
@@ -459,11 +459,7 @@
                                         <module>icafe</module>
                                         <module>jai.imageio.core</module>
                                         <module>org.slf4j</module>                                       
-                                    </modules> 
-                                    <launcher>
-                                        <name>${project.name}</name>
-                                        <module>${moduleName}/${mainClass}</module>
-                                    </launcher>                                                                                                           
+                                    </modules>                                                                                                          
                                 </configuration>
                             </execution> 
                         </executions>

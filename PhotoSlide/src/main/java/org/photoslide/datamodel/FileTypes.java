@@ -11,7 +11,7 @@ package org.photoslide.datamodel;
  */
 public class FileTypes {
 
-    private static final String imageTypes = "jpg,tif,tiff,jpeg,png";
+    private static final String imageTypes = "jpg,tif,tiff,jpeg,png,psd";
     private static final String videoTypes = "mp4,mov";
 
     /**

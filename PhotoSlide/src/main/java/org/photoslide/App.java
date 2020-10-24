@@ -18,6 +18,7 @@ import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
 import javafx.stage.WindowEvent;
+import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
 
@@ -56,6 +57,7 @@ public class App extends Application {
         notifyPreloader(new ProgressNotification(0.6));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         TIFFImageLoaderFactory.install();
+        PSDImageLoaderFactory.install();
         notifyPreloader(new ProgressNotification(0.8));        
     }
 

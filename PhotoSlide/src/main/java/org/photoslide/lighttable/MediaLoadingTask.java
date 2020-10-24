@@ -14,7 +14,6 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.controlsfx.control.GridView;
-import org.photoslide.datamodel.customformats.tiffsupport.TIFFSimpleSupport;
 
 /**
  *

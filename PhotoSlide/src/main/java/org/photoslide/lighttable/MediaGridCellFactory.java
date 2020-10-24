@@ -42,7 +42,6 @@ import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.datamodel.customformats.tiffsupport.TIFFSimpleSupport;
 
 /**
  *

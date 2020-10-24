@@ -30,7 +30,7 @@ The software is not notarized with developer accounts on OSX/Windows.
   - Run /opt/photoslide/bin/PhotoSlide
 
 ## Features
-- Viewing of JPG/TIFF/PNG images
+- Viewing of JPG/TIFF/PNG/PSD images
 - Viewing of movies with MP4/h264 codec
 - Lossles editing: Rotated / Crop images / rate images
 - Add keywords and tags to images

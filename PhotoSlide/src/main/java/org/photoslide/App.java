@@ -18,7 +18,7 @@ import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
 import javafx.stage.WindowEvent;
-import org.photoslide.datamodel.tiffsupport.TIFFImageLoaderFactory;
+import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
 
 /**

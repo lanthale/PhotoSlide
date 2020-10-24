@@ -513,6 +513,8 @@
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide</argument>
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
+                                        <argument>${param3}</argument>
+                                        <argument>${param4}</argument>
                                         <argument>--module</argument>
                                         <argument>${moduleName}/${mainClass}</argument>
                                     </arguments>

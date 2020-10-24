@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel.tiffsupport;
+package org.photoslide.datamodel.customformats.tiffsupport;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

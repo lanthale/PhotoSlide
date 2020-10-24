@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel.tiffsupport.dimension;
+package org.photoslide.datamodel.customformats.dimension;
 
 /**
  *

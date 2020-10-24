@@ -3,10 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel.tiffsupport.dimension;
-
-import javafx.geometry.Rectangle2D;
-import org.w3c.dom.Document;
+package org.photoslide.datamodel.customformats.dimension;
 
 /**
  *
@@ -15,7 +12,7 @@ import org.w3c.dom.Document;
 public class PrimitiveDimensionProvider implements DimensionProvider {
 
     @Override
-    public Dimension getDimension(Document document) {
+    public Dimension getDimension() {
         /*UserAgent agent = new UserAgentAdapter();
         DocumentLoader loader = new DocumentLoader(agent);
 

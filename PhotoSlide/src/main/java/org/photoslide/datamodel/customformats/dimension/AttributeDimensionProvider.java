@@ -3,9 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel.tiffsupport.dimension;
-
-import org.w3c.dom.Document;
+package org.photoslide.datamodel.customformats.dimension;
 
 /**
  *
@@ -17,13 +15,13 @@ public class AttributeDimensionProvider implements DimensionProvider {
     private static final String WIDTH = "width";
 
     @Override
-    public Dimension getDimension(Document document) {
-        return new Dimension(getFloatAttribute(document, WIDTH), getFloatAttribute(document, HEIGHT));
+    public Dimension getDimension() {
+        return new Dimension(getFloatAttribute(WIDTH), getFloatAttribute(HEIGHT));
     }
 
-    private float getFloatAttribute(Document document, String name) {
+    private float getFloatAttribute(String name) {
         try {
-            return Float.parseFloat(document.getDocumentElement().getAttribute(name));
+            return Float.parseFloat(name);
         } catch (NumberFormatException e) {
             return 0;
         }

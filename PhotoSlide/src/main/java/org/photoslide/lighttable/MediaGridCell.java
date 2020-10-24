@@ -36,6 +36,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         } else {     
             mediaFile.setSize(item.getHeight(), item.getWidth());
             mediaFile.setVisible(item.isVisible());
+            mediaFile.setManaged(item.isManaged());
             mediaFile.setName(item.getName());
             mediaFile.setDeleted(item.isDeleted());
             mediaFile.setSeleted(item.isSelected());

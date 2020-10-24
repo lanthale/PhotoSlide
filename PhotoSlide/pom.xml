@@ -6,12 +6,12 @@
     <version>1.0-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>15</javafx.version>
+        <javafx.version>15.0.1</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>14</maven.compiler.source>
-        <maven.compiler.target>14</maven.compiler.target>
+        <maven.compiler.source>15</maven.compiler.source>
+        <maven.compiler.target>15</maven.compiler.target>
     </properties>
     
     <repositories>
@@ -82,7 +82,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>14</release>
+                    <release>${maven.compiler.target}</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -364,7 +364,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>pkg</bundle.type>
+                <bundle.type>dmg</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
@@ -383,7 +383,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>exe</bundle.type>
+                <bundle.type>msi</bundle.type>
                 <exec.executable>${java.home}\bin\java</exec.executable> 
                 <installericon>${project.resources[0].directory}\org\photoslide\img\win\pkgresource</installericon>
                 <icons>${project.resources[0].directory}\org\photoslide\img\win\PhotoSlide.ico</icons>                

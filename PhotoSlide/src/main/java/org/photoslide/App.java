@@ -18,6 +18,9 @@ import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
 import javafx.stage.WindowEvent;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ServiceRegistry;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
@@ -49,22 +52,25 @@ public class App extends Application {
 
     @Override
     public void init() throws Exception {
-        super.init(); //To change body of generated methods, choose Tools | Templates.        
+        super.init(); //To change body of generated methods, choose Tools | Templates.            
         notifyPreloader(new ProgressNotification(0.1));
         fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainViewBrowser.fxml"));
         notifyPreloader(new ProgressNotification(0.2));
         root = (Parent) fxmlLoader.load();
-        notifyPreloader(new ProgressNotification(0.6));
+        notifyPreloader(new ProgressNotification(0.4));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-        TIFFImageLoaderFactory.install();        
-        PSDImageLoaderFactory.install();        
-        notifyPreloader(new ProgressNotification(0.8));        
+        notifyPreloader(new ProgressNotification(0.6));
+        setDefaultTIFFCodec();
+        notifyPreloader(new ProgressNotification(0.8));
+        TIFFImageLoaderFactory.install();
+        PSDImageLoaderFactory.install();
+        notifyPreloader(new ProgressNotification(0.9));
     }
 
     @Override
     public void start(Stage stage) throws IOException {
         restoreSettings(stage);
-        
+
         stage.setOnCloseRequest((final WindowEvent event) -> {
             saveSettings(stage);
             MainViewController controller = fxmlLoader.getController();
@@ -111,19 +117,36 @@ public class App extends Application {
 
         try {
             String appData = Utility.getAppData();
-            Logger logger = Logger.getLogger("org.photoslide");            
-            File logFile=new File(appData+File.separator+"photoslide.log");            
+            Logger logger = Logger.getLogger("org.photoslide");
+            File logFile = new File(appData + File.separator + "photoslide.log");
             Handler handler = new FileHandler(logFile.getAbsolutePath(), 50000, 1, true);
             logger.addHandler(handler);
             logger.setLevel(Level.ALL);
 
-            handler.setFormatter(new SimpleFormatter());            
+            handler.setFormatter(new SimpleFormatter());
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
         } catch (IOException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    private void setDefaultTIFFCodec() {
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        ImageReaderSpi jaiProvider = lookupProviderByName(registry, "com.github.jaiimageio.impl.plugins.tiff.TIFFImageReaderSpi");
+        ImageReaderSpi twelvProvider = lookupProviderByName(registry, "com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi");
+        if (jaiProvider != null && twelvProvider != null) {
+            registry.deregisterServiceProvider(jaiProvider);
+        }
+    }
+
+    private static <T> T lookupProviderByName(final ServiceRegistry registry, final String providerClassName) {
+        try {
+            return (T) registry.getServiceProviderByClass(Class.forName(providerClassName));
+        } catch (ClassNotFoundException ignore) {
+            return null;
+        }
     }
 
 }

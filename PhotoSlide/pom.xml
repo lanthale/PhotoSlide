@@ -6,12 +6,12 @@
     <version>1.0-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>15</javafx.version>
+        <javafx.version>15.0.1</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>14</maven.compiler.source>
-        <maven.compiler.target>14</maven.compiler.target>
+        <maven.compiler.source>15</maven.compiler.source>
+        <maven.compiler.target>15</maven.compiler.target>
     </properties>
     
     <repositories>
@@ -82,7 +82,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>14</release>
+                    <release>${maven.compiler.target}</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -216,7 +216,7 @@
                                         open module jai.imageio.core {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
                                         
                                         requires transitive java.desktop;
-                                        requires transitive java.xml;
+                                        requires transitive java.xml;                                                                                
 
                                         provides javax.imageio.spi.ImageInputStreamSpi with
                                         com.github.jaiimageio.impl.stream.ChannelImageInputStreamSpi;
@@ -255,6 +255,12 @@
 
                                         requires transitive java.desktop;
                                         requires transitive java.xml;
+                                        
+                                        exports com.twelvemonkeys.imageio;
+                                        exports com.twelvemonkeys.imageio.color;
+                                        exports com.twelvemonkeys.imageio.spi;
+                                        exports com.twelvemonkeys.imageio.stream;
+                                        exports com.twelvemonkeys.imageio.util;
                                                                                     
                                         }
                                     </moduleInfoSource>
@@ -275,6 +281,8 @@
                                         requires transitive imageio.metadata;
                                         requires transitive java.desktop;
                                         requires transitive java.xml;
+                                        
+                                        exports com.twelvemonkeys.imageio.plugins.tiff;
 
                                         provides javax.imageio.spi.ImageReaderSpi with
                                         com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi,
@@ -300,6 +308,8 @@
                                         requires transitive imageio.core;
                                         requires transitive java.desktop;
                                         requires transitive java.xml;
+                                        
+                                        exports com.twelvemonkeys.imageio.plugins.psd;
 
                                         provides javax.imageio.spi.ImageReaderSpi with
                                         com.twelvemonkeys.imageio.plugins.psd.PSDImageReaderSpi;                                                                                                        
@@ -319,6 +329,14 @@
                                         requires java.xml;
 
                                         requires transitive java.desktop;
+                                        
+                                        exports com.twelvemonkeys.imageio.metadata;
+                                        exports com.twelvemonkeys.imageio.metadata.exif;
+                                        exports com.twelvemonkeys.imageio.metadata.iptc;
+                                        exports com.twelvemonkeys.imageio.metadata.jpeg;
+                                        exports com.twelvemonkeys.imageio.metadata.psd;
+                                        exports com.twelvemonkeys.imageio.metadata.tiff;
+                                        exports com.twelvemonkeys.imageio.metadata.xmp;                                        
                                         }
                                     </moduleInfoSource>
                                 </module> 
@@ -333,6 +351,8 @@
                                         requires transitive java.desktop;
                                         requires transitive java.sql;
                                         
+                                        exports com.twelvemonkeys.lang;
+                                        exports com.twelvemonkeys.util;
                                         }
                                     </moduleInfoSource>
                                 </module>
@@ -347,6 +367,12 @@
                                         requires transitive common.lang;
                                         requires transitive java.desktop;
                                         requires transitive java.xml;
+                                        
+                                        exports com.twelvemonkeys.io;
+                                        exports com.twelvemonkeys.io.enc;
+                                        exports com.twelvemonkeys.io.ole2;
+                                        exports com.twelvemonkeys.net;
+                                        exports com.twelvemonkeys.xml;
                                         }
                                     </moduleInfoSource>
                                 </module>
@@ -616,8 +642,7 @@
                                         <module>imageio.tiff</module>
                                         <module>imageio.psd</module>
                                         <module>imageio.metadata</module>
-                                        <module>java.xml</module>
-                                        <module>java.desktop</module>
+                                        <module>java.xml</module>                                        
                                         <module>common.image</module>
                                         <module>common.io</module>
                                         <module>common.lang</module>

@@ -6,12 +6,12 @@
     <version>1.0-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>15.0.1</javafx.version>
+        <javafx.version>15</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>15</maven.compiler.source>
-        <maven.compiler.target>15</maven.compiler.target>
+        <maven.compiler.source>14</maven.compiler.source>
+        <maven.compiler.target>14</maven.compiler.target>
     </properties>
     
     <repositories>
@@ -82,7 +82,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>${maven.compiler.target}</release>
+                    <release>14</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -321,7 +321,46 @@
                                         requires transitive java.desktop;
                                         }
                                     </moduleInfoSource>
-                                </module>                                                                                                                                     
+                                </module> 
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.common</groupId>
+                                        <artifactId>common-lang</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module common.lang {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires transitive java.desktop;
+                                        requires transitive java.sql;
+                                        
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.common</groupId>
+                                        <artifactId>common-io</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module common.io {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires transitive common.lang;
+                                        requires transitive java.desktop;
+                                        requires transitive java.xml;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.common</groupId>
+                                        <artifactId>common-image</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module common.image {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                            exports com.twelvemonkeys.image;
+                                        }
+                                    </moduleInfoSource>
+                                </module>                                                                                                                                 
                             </modules>                                                                             
                             <module>                                                                   
                                 <moduleInfo>
@@ -423,7 +462,24 @@
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-core</artifactId>
             <version>3.6</version>
-        </dependency>        
+        </dependency>
+        
+        <dependency>
+            <groupId>com.twelvemonkeys.common</groupId>
+            <artifactId>common-lang</artifactId>
+            <version>3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.common</groupId>
+            <artifactId>common-io</artifactId>
+            <version>3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.common</groupId>
+            <artifactId>common-image</artifactId>
+            <version>3.6</version>
+        </dependency>
+        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
@@ -560,6 +616,13 @@
                                         <module>imageio.tiff</module>
                                         <module>imageio.psd</module>
                                         <module>imageio.metadata</module>
+                                        <module>java.xml</module>
+                                        <module>java.desktop</module>
+                                        <module>common.image</module>
+                                        <module>common.io</module>
+                                        <module>common.lang</module>
+                                        <module>java.datatransfer</module>
+                                        <module>java.sql</module>
                                         <module>org.slf4j</module>                                       
                                     </modules>                                                                                                          
                                 </configuration>

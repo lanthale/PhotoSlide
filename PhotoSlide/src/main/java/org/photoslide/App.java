@@ -56,8 +56,8 @@ public class App extends Application {
         root = (Parent) fxmlLoader.load();
         notifyPreloader(new ProgressNotification(0.6));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-        TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install();
+        TIFFImageLoaderFactory.install();        
+        PSDImageLoaderFactory.install();        
         notifyPreloader(new ProgressNotification(0.8));        
     }
 

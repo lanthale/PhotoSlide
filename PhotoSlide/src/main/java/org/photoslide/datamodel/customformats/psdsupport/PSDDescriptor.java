@@ -5,6 +5,7 @@
  */
 package org.photoslide.datamodel.customformats.psdsupport;
 
+import org.photoslide.datamodel.customformats.tiffsupport.*;
 import com.sun.javafx.iio.common.ImageDescriptor;
 
 /**

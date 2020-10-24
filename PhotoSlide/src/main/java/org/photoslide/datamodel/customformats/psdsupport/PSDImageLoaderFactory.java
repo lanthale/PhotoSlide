@@ -15,7 +15,7 @@ import org.photoslide.datamodel.customformats.dimension.DefaultDimensionProvider
 import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
 
 /**
- * Class to install the TIFF renderer to the javafx image systems
+ * Class to install the PSD renderer to the javafx image systems
  * @author selfemp
  */
 public class PSDImageLoaderFactory implements ImageLoaderFactory {

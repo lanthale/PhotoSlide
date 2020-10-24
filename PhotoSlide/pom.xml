@@ -215,26 +215,114 @@
                                     <moduleInfoSource>
                                         open module jai.imageio.core {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
                                         
-                                        requires java.desktop;
-                                            
-                                        exports com.github.jaiimageio.impl.common;                                         
-                                        exports com.github.jaiimageio.impl.plugins.bmp;
-                                        exports com.github.jaiimageio.impl.plugins.clib;
-                                        exports com.github.jaiimageio.impl.plugins.gif;
-                                        exports com.github.jaiimageio.impl.plugins.jpeg;
-                                        exports com.github.jaiimageio.impl.plugins.pcx;
-                                        exports com.github.jaiimageio.impl.plugins.png;
-                                        exports com.github.jaiimageio.impl.plugins.raw;
-                                        exports com.github.jaiimageio.impl.plugins.tiff;
-                                        exports com.github.jaiimageio.impl.stream;
-                                        exports com.github.jaiimageio.plugins.bmp;
-                                        exports com.github.jaiimageio.plugins.pnm;
-                                        exports com.github.jaiimageio.plugins.tiff;
-                                        exports com.github.jaiimageio.stream;                                        
+                                        requires transitive java.desktop;
+                                        requires transitive java.xml;
+
+                                        provides javax.imageio.spi.ImageInputStreamSpi with
+                                        com.github.jaiimageio.impl.stream.ChannelImageInputStreamSpi;
+                                        provides javax.imageio.spi.ImageOutputStreamSpi with
+                                        com.github.jaiimageio.impl.stream.ChannelImageOutputStreamSpi;
+                                        provides javax.imageio.spi.ImageReaderSpi with
+                                        com.github.jaiimageio.impl.plugins.wbmp.WBMPImageReaderSpi,
+                                        com.github.jaiimageio.impl.plugins.bmp.BMPImageReaderSpi,
+                                        com.github.jaiimageio.impl.plugins.pcx.PCXImageReaderSpi,
+                                        com.github.jaiimageio.impl.plugins.pnm.PNMImageReaderSpi,
+                                        com.github.jaiimageio.impl.plugins.raw.RawImageReaderSpi,
+                                        com.github.jaiimageio.impl.plugins.tiff.TIFFImageReaderSpi;
+                                        provides javax.imageio.spi.ImageWriterSpi with
+                                        com.github.jaiimageio.impl.plugins.wbmp.WBMPImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.bmp.BMPImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.gif.GIFImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.pcx.PCXImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.pnm.PNMImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.raw.RawImageWriterSpi,
+                                        com.github.jaiimageio.impl.plugins.tiff.TIFFImageWriterSpi;                                                                            
                                         }
                                     </moduleInfoSource>
-                                </module>                                                                          
-                            </modules>                                                                              
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.imageio</groupId>
+                                        <artifactId>imageio-core</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module imageio.core {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires common.image;
+                                        requires common.io;
+                                        requires common.lang;
+                                        requires java.datatransfer;
+
+                                        requires transitive java.desktop;
+                                        requires transitive java.xml;
+                                                                                    
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.imageio</groupId>
+                                        <artifactId>imageio-tiff</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module imageio.tiff {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires common.image;
+                                        requires common.io;
+                                        requires common.lang;
+
+                                        requires transitive imageio.core;
+                                        requires transitive imageio.metadata;
+                                        requires transitive java.desktop;
+                                        requires transitive java.xml;
+
+                                        provides javax.imageio.spi.ImageReaderSpi with
+                                        com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi,
+                                        com.twelvemonkeys.imageio.plugins.tiff.BigTIFFImageReaderSpi;
+                                        provides javax.imageio.spi.ImageWriterSpi with
+                                        com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;                                                                                                         
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.imageio</groupId>
+                                        <artifactId>imageio-psd</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module imageio.psd {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires common.image;
+                                        requires common.io;
+                                        requires common.lang;
+                                        requires imageio.metadata;
+
+                                        requires transitive imageio.core;
+                                        requires transitive java.desktop;
+                                        requires transitive java.xml;
+
+                                        provides javax.imageio.spi.ImageReaderSpi with
+                                        com.twelvemonkeys.imageio.plugins.psd.PSDImageReaderSpi;                                                                                                        
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.twelvemonkeys.imageio</groupId>
+                                        <artifactId>imageio-metadata</artifactId>
+                                    </artifact>                                    
+                                    <moduleInfoSource>
+                                        open module imageio.metadata {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                        
+                                        requires common.lang;
+                                        requires imageio.core;
+                                        requires java.xml;
+
+                                        requires transitive java.desktop;
+                                        }
+                                    </moduleInfoSource>
+                                </module>                                                                                                                                     
+                            </modules>                                                                             
                             <module>                                                                   
                                 <moduleInfo>
                                     <name>${moduleName}</name>
@@ -331,6 +419,11 @@
             <artifactId>jai-imageio-core</artifactId>
             <version>1.4.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-core</artifactId>
+            <version>3.6</version>
+        </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
@@ -463,6 +556,10 @@
                                         <module>org.reactfx</module>
                                         <module>icafe</module>
                                         <module>jai.imageio.core</module>
+                                        <module>imageio.core</module>
+                                        <module>imageio.tiff</module>
+                                        <module>imageio.psd</module>
+                                        <module>imageio.metadata</module>
                                         <module>org.slf4j</module>                                       
                                     </modules>                                                                                                          
                                 </configuration>

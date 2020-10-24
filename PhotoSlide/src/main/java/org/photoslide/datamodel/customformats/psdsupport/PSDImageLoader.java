@@ -62,9 +62,7 @@ public class PSDImageLoader extends ImageLoaderImpl {
         }
     }
 
-    /*private Document createDocument() throws IOException {
-        return new TIFFImageLoaderFactory(XMLResourceDescriptor.getXMLParserClassName()).createDocument(null, this.input);
-    }*/
+    
     public float getPixelScale() {
         if (maxPixelScale == 0) {
             maxPixelScale = calculateMaxRenderScale();

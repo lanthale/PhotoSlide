@@ -61,15 +61,16 @@ public class App extends Application {
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         notifyPreloader(new ProgressNotification(0.6));
         setDefaultTIFFCodec();
-        notifyPreloader(new ProgressNotification(0.8));
+        notifyPreloader(new ProgressNotification(0.7));
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
-        notifyPreloader(new ProgressNotification(0.9));
+        notifyPreloader(new ProgressNotification(0.8));
     }
 
     @Override
     public void start(Stage stage) throws IOException {
-        restoreSettings(stage);
+        restoreSettings(stage, fxmlLoader.getController());
+        notifyPreloader(new ProgressNotification(0.9));
 
         stage.setOnCloseRequest((final WindowEvent event) -> {
             MainViewController controller = fxmlLoader.getController();
@@ -100,9 +101,9 @@ public class App extends Application {
         }
     }
 
-    public static void restoreSettings(Stage stage) {
+    public static void restoreSettings(Stage stage, MainViewController controller) {
         // Pull the saved preferences and set the stage size and start location
-
+        controller.restoreSettings();
         Preferences pref = Preferences.userRoot().node(NODE_NAME);
         double x = pref.getDouble(WINDOW_POSITION_X, DEFAULT_X);
         double y = pref.getDouble(WINDOW_POSITION_Y, DEFAULT_Y);

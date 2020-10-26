@@ -189,13 +189,7 @@ public class MainViewController implements Initializable {
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
         executor.shutdownNow();
-    }
-
-    public void saveSettings() {
-        collectionsPaneController.saveSettings();
-        lighttablePaneController.saveSettings();
-        metadataPaneController.saveSettings();
-    }
+    }    
 
     @FXML
     private void exportAction(ActionEvent event) {
@@ -430,6 +424,18 @@ public class MainViewController implements Initializable {
     @FXML
     private void openMenuAction(ActionEvent event) {
         collectionsPaneController.addExistingPath();
+    }
+    
+    public void saveSettings() {
+        collectionsPaneController.saveSettings();
+        lighttablePaneController.saveSettings();
+        metadataPaneController.saveSettings();
+    }
+
+    void restoreSettings() {
+        collectionsPaneController.restoreSettings();
+        lighttablePaneController.restoreSettings();
+        metadataPaneController.restoreSettings();
     }
 
 }

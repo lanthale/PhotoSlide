@@ -101,27 +101,20 @@ public class CollectionsController implements Initializable {
             if (newScene != null) {
                 loadURLs();
             }
-        });        
+        });
     }
 
     private void loadURLs() {
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                String[] keys = pref.keys();
-                pref.getInt("activeAccordionPane", 0);
-                for (String key : keys) {
-                    if (key.contains("URL")) {
-                        collectionStorage.put(key, pref.get(key, null));
-                    }
-                }
                 collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
                     loadDirectoryTree(t.getValue());
                 });
                 return true;
             }
         };
-        task.setOnSucceeded((WorkerStateEvent t) -> {
+        task.setOnSucceeded((WorkerStateEvent t) -> {            
             Platform.runLater(() -> {
                 if (accordionPane.getPanes().size() > 0) {
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
@@ -131,8 +124,22 @@ public class CollectionsController implements Initializable {
         executor.submit(task);
     }
 
-    public void saveActiveCollectionsPane() {
-        pref.putInt("activeAccordionPane", activeAccordionPane);
+    public void saveSettings() {        
+        pref.putInt("activeAccordionPane", accordionPane.getPanes().indexOf(accordionPane.getExpandedPane()));
+    }
+
+    public void restoreSettings() {
+        try {
+            activeAccordionPane = pref.getInt("activeAccordionPane", 0);            
+            String[] keys = pref.keys();            
+            for (String key : keys) {
+                if (key.contains("URL")) {
+                    collectionStorage.put(key, pref.get(key, null));
+                }
+            }
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -420,10 +427,6 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void deleteCollectionAction(ActionEvent event) {
-    }
-
-    public void saveSettings() {
-        pref.putInt("activeAccordionPane", activeAccordionPane);
     }
 
 }

@@ -683,8 +683,10 @@ public class MetadataController implements Initializable {
         }
     }
 
-    public void saveSettings() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void saveSettings() {        
+    }
+
+    public void restoreSettings() {        
     }
     
     private class KeywordChangeListener implements ChangeListener<String> {

@@ -27,7 +27,7 @@ The software is not notarized with developer accounts on OSX/Windows.
 - Linux: 
   - Download the deb package
   - Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb
-  - Run /opt/photoslide/bin/PhotoSlide
+  - Click on icon or run /opt/photoslide/bin/PhotoSlide
 
 ## Features
 - Viewing of JPG/TIFF/PNG/PSD images

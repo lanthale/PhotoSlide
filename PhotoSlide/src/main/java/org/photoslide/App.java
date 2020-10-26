@@ -72,8 +72,8 @@ public class App extends Application {
         restoreSettings(stage);
 
         stage.setOnCloseRequest((final WindowEvent event) -> {
-            saveSettings(stage);
             MainViewController controller = fxmlLoader.getController();
+            saveSettings(stage, controller);
             controller.Shutdown();
         });
 
@@ -86,7 +86,8 @@ public class App extends Application {
 
     }
 
-    public static void saveSettings(Stage stage) {        
+    public static void saveSettings(Stage stage, MainViewController controller) {
+        controller.saveSettings();
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());

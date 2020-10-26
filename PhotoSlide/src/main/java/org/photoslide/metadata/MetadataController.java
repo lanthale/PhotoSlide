@@ -682,6 +682,10 @@ public class MetadataController implements Initializable {
             executor.submit(taskApplyToAll);
         }
     }
+
+    public void saveSettings() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
     private class KeywordChangeListener implements ChangeListener<String> {
         

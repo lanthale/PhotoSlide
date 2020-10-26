@@ -191,6 +191,12 @@ public class MainViewController implements Initializable {
         executor.shutdownNow();
     }
 
+    public void saveSettings() {
+        collectionsPaneController.saveSettings();
+        lighttablePaneController.saveSettings();
+        metadataPaneController.saveSettings();
+    }
+
     @FXML
     private void exportAction(ActionEvent event) {
         ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
@@ -199,16 +205,16 @@ public class MainViewController implements Initializable {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());            
+                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
             alert.setResizable(false);
-            Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             alert.showAndWait();
             return;
         }
         diag.getController().setTitel(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue());
-        diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());        
+        diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());
         diag.setResizable(false);
-        Utility.centerChildWindowOnStage((Stage)diag.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
+        Utility.centerChildWindowOnStage((Stage) diag.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Optional<ButtonType> result = diag.showAndWait();
         if (result.get() == ButtonType.OK) {
             // ... user chose OK
@@ -337,13 +343,13 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void quitMenuAction(ActionEvent event) {
-        App.saveSettings((Stage) browseButton.getScene().getWindow());
+        App.saveSettings((Stage) browseButton.getScene().getWindow(), MainViewController.this);
         System.exit(0);
     }
 
     @FXML
     private void aboutMenuAction(ActionEvent event) {
-        Utility util=new Utility();
+        Utility util = new Utility();
         String appVersion = util.getAppVersion();
         Alert alert = new Alert(AlertType.NONE, "About", ButtonType.OK);
         alert.initStyle(StageStyle.UNDECORATED);
@@ -357,7 +363,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide\n"+appVersion+"\n");
+        Text txtHeader = new Text("PhotoSlide\n" + appVersion + "\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
@@ -373,8 +379,8 @@ public class MainViewController implements Initializable {
         alert.getDialogPane().setContent(hb);
         alert.setResizable(false);
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());        
-        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         alert.showAndWait();
     }
 

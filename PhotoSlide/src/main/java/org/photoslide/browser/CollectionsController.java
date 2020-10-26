@@ -40,6 +40,7 @@ import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Accordion;
@@ -100,7 +101,7 @@ public class CollectionsController implements Initializable {
             if (newScene != null) {
                 loadURLs();
             }
-        });
+        });        
     }
 
     private void loadURLs() {
@@ -419,6 +420,10 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void deleteCollectionAction(ActionEvent event) {
+    }
+
+    public void saveSettings() {
+        pref.putInt("activeAccordionPane", activeAccordionPane);
     }
 
 }

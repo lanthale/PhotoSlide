@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import org.kordamp.ikonli.javafx.StackedFontIcon?>
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefHeight="676.0" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browser.CollectionsController">
     <children>
@@ -36,19 +37,29 @@
             </Button>
             <MenuButton fx:id="menuButton" mnemonicParsing="false">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#refreshMenuAction" text="Refresh">
+                <MenuItem mnemonicParsing="false" onAction="#createCollectionAction" text="Create a new collection">
                      <graphic>
-                        <FontIcon iconLiteral="ti-loop" />
+                        <StackedFontIcon>
+                           <children>
+                              <FontIcon iconLiteral="ti-file" />
+                              <FontIcon iconLiteral="ti-plus" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                <MenuItem mnemonicParsing="false" onAction="#addMenuAction" text="Add Event...">
+                  <MenuItem mnemonicParsing="false" onAction="#moveCollectionAction" text="Move collection">
                      <graphic>
-                        <FontIcon iconLiteral="ti-plus" />
+                        <FontIcon iconLiteral="ti-move" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#deleteMenuAction" text="Delete Event...">
+                  <MenuItem mnemonicParsing="false" onAction="#copyCollectionAction" text="Copy collection">
                      <graphic>
-                        <FontIcon iconLiteral="ti-minus" />
+                        <FontIcon iconLiteral="ti-files" />
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#deleteCollectionAction" text="Delete collection">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-trash" />
                      </graphic>
                   </MenuItem>
               </items>

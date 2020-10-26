@@ -494,10 +494,10 @@ public class LighttableController implements Initializable {
         factory.getSelectedMediaItem().setVisible(false);
         factory.getSelectedMediaItem().setManaged(false);
         factory.getSelectedMediaItem().requestFocus();
-        factory.getSelectedMediaItem().requestLayout();        
-        factory.getSelectedCell().setVisible(false);        
+        factory.getSelectedMediaItem().requestLayout();
+        factory.getSelectedCell().setVisible(false);
         factory.getSelectedCell().setManaged(false);
-        factory.getSelectedCell().requestLayout();                
+        factory.getSelectedCell().requestLayout();
         imageGrid.requestFocus();
         imageGrid.layout();
         imageGrid.requestLayout();
@@ -844,7 +844,9 @@ public class LighttableController implements Initializable {
     }
 
     public void resetLightTableView() {
-        list.clear();
+        if (list != null) {
+            list.clear();
+        }
     }
 
 }

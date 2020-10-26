@@ -254,13 +254,7 @@
                                         requires java.datatransfer;
 
                                         requires transitive java.desktop;
-                                        requires transitive java.xml;
-                                        
-                                        exports com.twelvemonkeys.imageio;
-                                        exports com.twelvemonkeys.imageio.color;
-                                        exports com.twelvemonkeys.imageio.spi;
-                                        exports com.twelvemonkeys.imageio.stream;
-                                        exports com.twelvemonkeys.imageio.util;
+                                        requires transitive java.xml;                                                                                
                                                                                     
                                         }
                                     </moduleInfoSource>
@@ -280,9 +274,7 @@
                                         requires transitive imageio.core;
                                         requires transitive imageio.metadata;
                                         requires transitive java.desktop;
-                                        requires transitive java.xml;
-                                        
-                                        exports com.twelvemonkeys.imageio.plugins.tiff;
+                                        requires transitive java.xml;                                                                                
 
                                         provides javax.imageio.spi.ImageReaderSpi with
                                         com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi,
@@ -307,9 +299,7 @@
 
                                         requires transitive imageio.core;
                                         requires transitive java.desktop;
-                                        requires transitive java.xml;
-                                        
-                                        exports com.twelvemonkeys.imageio.plugins.psd;
+                                        requires transitive java.xml;                                                                                
 
                                         provides javax.imageio.spi.ImageReaderSpi with
                                         com.twelvemonkeys.imageio.plugins.psd.PSDImageReaderSpi;                                                                                                        
@@ -329,14 +319,7 @@
                                         requires java.xml;
 
                                         requires transitive java.desktop;
-                                        
-                                        exports com.twelvemonkeys.imageio.metadata;
-                                        exports com.twelvemonkeys.imageio.metadata.exif;
-                                        exports com.twelvemonkeys.imageio.metadata.iptc;
-                                        exports com.twelvemonkeys.imageio.metadata.jpeg;
-                                        exports com.twelvemonkeys.imageio.metadata.psd;
-                                        exports com.twelvemonkeys.imageio.metadata.tiff;
-                                        exports com.twelvemonkeys.imageio.metadata.xmp;                                        
+                                                                                  
                                         }
                                     </moduleInfoSource>
                                 </module> 
@@ -350,9 +333,7 @@
                                         
                                         requires transitive java.desktop;
                                         requires transitive java.sql;
-                                        
-                                        exports com.twelvemonkeys.lang;
-                                        exports com.twelvemonkeys.util;
+                                                                                
                                         }
                                     </moduleInfoSource>
                                 </module>
@@ -367,12 +348,7 @@
                                         requires transitive common.lang;
                                         requires transitive java.desktop;
                                         requires transitive java.xml;
-                                        
-                                        exports com.twelvemonkeys.io;
-                                        exports com.twelvemonkeys.io.enc;
-                                        exports com.twelvemonkeys.io.ole2;
-                                        exports com.twelvemonkeys.net;
-                                        exports com.twelvemonkeys.xml;
+                                                                                
                                         }
                                     </moduleInfoSource>
                                 </module>

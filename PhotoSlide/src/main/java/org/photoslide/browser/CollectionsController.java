@@ -16,6 +16,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -37,8 +42,6 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
@@ -51,10 +54,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.Window;
-import org.photoslide.datamodel.FileTypes;
 
 /**
  *
@@ -66,6 +66,8 @@ public class CollectionsController implements Initializable {
     private Utility util;
     private static final String NODE_NAME = "PhotoSlide";
     private Path selectedPath;
+    private LinkedHashMap<String, String> collectionStorage;
+    private int activeAccordionPane;
 
     private MainViewController mainController;
     @FXML
@@ -89,6 +91,7 @@ public class CollectionsController implements Initializable {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("collectionsController"));
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
+        collectionStorage = new LinkedHashMap<>();
         placeholder = new TreeItem("Please wait...");
         waitPrg = new ProgressIndicator();
         waitPrg.setPrefSize(15, 15);
@@ -104,37 +107,31 @@ public class CollectionsController implements Initializable {
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                String url1 = pref.get("URL1", null);
-                String url2 = pref.get("URL2", null);
-                String url3 = pref.get("URL3", null);
-                String url4 = pref.get("URL4", null);
-                String url5 = pref.get("URL5", null);
-                if (url1 != null) {
-                    loadDirectoryTree(url1);
+                String[] keys = pref.keys();
+                pref.getInt("activeAccordionPane", 0);
+                for (String key : keys) {
+                    if (key.contains("URL")) {
+                        collectionStorage.put(key, pref.get(key, null));
+                    }
                 }
-                if (url2 != null) {
-                    loadDirectoryTree(url2);
-                }
-                if (url3 != null) {
-                    loadDirectoryTree(url3);
-                }
-                if (url4 != null) {
-                    loadDirectoryTree(url4);
-                }
-                if (url5 != null) {
-                    loadDirectoryTree(url5);
-                }
+                collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+                    loadDirectoryTree(t.getValue());
+                });
                 return true;
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
             Platform.runLater(() -> {
                 if (accordionPane.getPanes().size() > 0) {
-                    accordionPane.setExpandedPane(accordionPane.getPanes().get(0));
+                    accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
                 }
             });
         });
         executor.submit(task);
+    }
+
+    public void saveActiveCollectionsPane() {
+        pref.putInt("activeAccordionPane", activeAccordionPane);
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -276,20 +273,25 @@ public class CollectionsController implements Initializable {
         File selectedDirectory = directoryChooser.showDialog(stage);
         if (selectedDirectory != null) {
             loadDirectoryTree(selectedDirectory.getAbsolutePath());
-            if (pref.get("URL1", null) == null) {
-                pref.put("URL1", selectedDirectory.getAbsolutePath());
-            } else if (pref.get("URL2", null) == null) {
-                pref.put("URL2", selectedDirectory.getAbsolutePath());
-            } else if (pref.get("URL3", null) == null) {
-                pref.put("URL3", selectedDirectory.getAbsolutePath());
-            } else if (pref.get("URL4", null) == null) {
-                pref.put("URL4", selectedDirectory.getAbsolutePath());
-            } else if (pref.get("URL5", null) == null) {
-                pref.put("URL5", selectedDirectory.getAbsolutePath());
-            } else {
-                pref.put("URL5", selectedDirectory.getAbsolutePath());
-            }
+            pref.put("URL" + getPrefKeyForSaving(), selectedDirectory.getAbsolutePath());
         }
+    }
+
+    private String getPrefKeyForSaving() {
+        try {
+            String[] keys = pref.keys();
+            ArrayList<Integer> numbers = new ArrayList<>();
+            for (String key : keys) {
+                if (key.contains("URL")) {
+                    numbers.add(Integer.parseInt(key.substring(3)));
+                }
+            }
+            Integer i = Collections.max(numbers);
+            return "" + (i + 1);
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     private void loadDirectoryTree(String selectedRootPath) {
@@ -371,7 +373,19 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void addMenuAction(ActionEvent event) {
+    private void minusButtonAction(ActionEvent event) {
+        TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        PathItem value = content.getRoot().getValue();
+
+        collectionStorage.entrySet().stream().filter(c -> c.getValue().equalsIgnoreCase(value.getFilePath().toString())).forEach((t) -> {
+            pref.remove(t.getKey());
+        });
+        lighttablePaneController.resetLightTableView();
+        accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+    }
+
+    @FXML
+    private void createCollectionAction(ActionEvent event) {
         TextInputDialog alert = new TextInputDialog();
         alert.setTitle("Create event");
         alert.setHeaderText("Create event (directory)");
@@ -396,35 +410,15 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void deleteMenuAction(ActionEvent event) {
+    private void moveCollectionAction(ActionEvent event) {
     }
 
     @FXML
-    private void minusButtonAction(ActionEvent event) {
-        TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
-        PathItem value = content.getRoot().getValue();
-        String url1 = pref.get("URL1", "");
-        String url2 = pref.get("URL2", "");
-        String url3 = pref.get("URL3", "");
-        String url4 = pref.get("URL4", "");
-        String url5 = pref.get("URL5", "");
-        if (value.getFilePath().toString().contains(url1)) {
-            pref.remove("URL1");
-        }
-        if (value.getFilePath().toString().contains(url2)) {
-            pref.remove("URL2");
-        }
-        if (value.getFilePath().toString().contains(url3)) {
-            pref.remove("URL3");
-        }
-        if (value.getFilePath().toString().contains(url4)) {
-            pref.remove("URL4");
-        }
-        if (value.getFilePath().toString().contains(url5)) {
-            pref.remove("URL5");
-        }
-        lighttablePaneController.resetLightTableView();
-        accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+    private void copyCollectionAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void deleteCollectionAction(ActionEvent event) {
     }
 
 }

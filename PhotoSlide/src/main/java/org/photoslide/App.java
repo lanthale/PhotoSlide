@@ -86,7 +86,7 @@ public class App extends Application {
 
     }
 
-    public static void saveSettings(Stage stage) {
+    public static void saveSettings(Stage stage) {        
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());

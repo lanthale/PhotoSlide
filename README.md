@@ -42,6 +42,8 @@ The software is not notarized with developer accounts on OSX/Windows.
 - Copy/Paste images from one directory/collection to another
 - Have as many places to store photos/videos as you want
 - Usage of multi threads for reading image information / editing and metadata support
+- Nicer icons with (iKonli)
+- Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 
 ## Missing features
 - View of all raw data format (using libdcraw)
@@ -51,7 +53,7 @@ The software is not notarized with developer accounts on OSX/Windows.
 - Implement GPS including a map view
 - Implement multi threading for loading images (actually only one image after the other is loaded)
 - ~~Replace icons with iKonli icons~~
-- Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
+- ~~Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS~~
 - Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
 
 

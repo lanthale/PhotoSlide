@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
@@ -47,16 +48,21 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#moveCollectionAction" text="Move collection">
+                  <MenuItem mnemonicParsing="false" onAction="#cutCollectionAction" text="Cut collection">
                      <graphic>
-                        <FontIcon iconLiteral="ti-move" />
+                        <FontIcon iconLiteral="ti-cut" />
                      </graphic>
                   </MenuItem>
                   <MenuItem mnemonicParsing="false" onAction="#copyCollectionAction" text="Copy collection">
                      <graphic>
                         <FontIcon iconLiteral="ti-files" />
+                     </graphic></MenuItem>
+                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteCollectionAction" text="Paste collection">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-stamp" />
                      </graphic>
                   </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
                   <MenuItem mnemonicParsing="false" onAction="#deleteCollectionAction" text="Delete collection">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" />

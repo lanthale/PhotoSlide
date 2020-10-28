@@ -12,10 +12,15 @@ import org.photoslide.lighttable.LighttableController;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -40,14 +45,17 @@ import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TitledPane;
@@ -56,6 +64,8 @@ import javafx.scene.control.TreeView;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.javafx.StackedFontIcon;
 
 /**
  *
@@ -63,12 +73,21 @@ import javafx.stage.Stage;
  */
 public class CollectionsController implements Initializable {
 
+    @FXML
+    private MenuItem pasteMenu;
+
+    private enum ClipboardMode {
+        CUT,
+        COPY
+    }
     private ExecutorService executor;
     private Utility util;
     private static final String NODE_NAME = "PhotoSlide";
     private Path selectedPath;
     private LinkedHashMap<String, String> collectionStorage;
     private int activeAccordionPane;
+    private Path clipboardPath;
+    private ClipboardMode clipboardMode;
 
     private MainViewController mainController;
     @FXML
@@ -114,7 +133,7 @@ public class CollectionsController implements Initializable {
                 return true;
             }
         };
-        task.setOnSucceeded((WorkerStateEvent t) -> {            
+        task.setOnSucceeded((WorkerStateEvent t) -> {
             Platform.runLater(() -> {
                 if (accordionPane.getPanes().size() > 0) {
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
@@ -124,14 +143,14 @@ public class CollectionsController implements Initializable {
         executor.submit(task);
     }
 
-    public void saveSettings() {        
+    public void saveSettings() {
         pref.putInt("activeAccordionPane", accordionPane.getPanes().indexOf(accordionPane.getExpandedPane()));
     }
 
     public void restoreSettings() {
         try {
-            activeAccordionPane = pref.getInt("activeAccordionPane", 0);            
-            String[] keys = pref.keys();            
+            activeAccordionPane = pref.getInt("activeAccordionPane", 0);
+            String[] keys = pref.keys();
             for (String key : keys) {
                 if (key.contains("URL")) {
                     collectionStorage.put(key, pref.get(key, null));
@@ -362,18 +381,34 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void refreshMenuAction(ActionEvent event) {
+        refreshTree();
+    }
+
+    private void refreshTree() {
         try {
+            TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
             ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
             String selectedItemName = selectedItems.get(0).getValue().toString();
-            TreeItem<PathItem> parent = selectedItems.get(0).getParent();
-            Path filePath = selectedItems.get(0).getValue().getFilePath();
-            parent.getChildren().remove(selectedItems.get(0));
-            createTree(filePath, parent);
-            SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-            parent.getChildren().setAll(sorted);
-            Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
-            treeView.getSelectionModel().select(findFirst.get());
+            if (selectedItems.get(0).getParent() == null) {
+                parent = selectedItems.get(0);
+                parent.getChildren().clear();
+                //createTree(parent.getValue().getFilePath(), parent);
+                createRootTree(parent.getValue().getFilePath(), parent);
+                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
+                parent.getChildren().setAll(sorted);
+                //Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
+                //treeView.getSelectionModel().select(findFirst.get());
+            } else {
+                parent = selectedItems.get(0).getParent();
+                Path filePath = selectedItems.get(0).getValue().getFilePath();
+                parent.getChildren().remove(selectedItems.get(0));
+                createTree(filePath, parent);
+                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
+                parent.getChildren().setAll(sorted);
+                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
+                treeView.getSelectionModel().select(findFirst.get());
+            }
         } catch (IOException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
             util.showError("Cannot create directory tree", ex);
@@ -392,11 +427,51 @@ public class CollectionsController implements Initializable {
         accordionPane.getPanes().remove(accordionPane.getExpandedPane());
     }
 
+    private boolean checkIfElementInTreeSelected(String message) {
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        if (selectedItems.isEmpty()) {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            StackedFontIcon st = new StackedFontIcon();
+            FontIcon f1 = new FontIcon("ti-layout-width-full");
+            f1.setIconSize(50);
+            FontIcon f2 = new FontIcon("ti-close");
+            f2.setIconSize(30);
+            st.getChildren().add(f1);
+            st.getChildren().add(f2);
+            alert.setGraphic(st);
+            alert.setContentText(message);
+            alert.getDialogPane().getStylesheets().add(
+                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+            alert.setResizable(false);
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+            alert.showAndWait();
+            return true;
+        }
+        return false;
+    }
+
     @FXML
     private void createCollectionAction(ActionEvent event) {
+        if (checkIfElementInTreeSelected("Please select an element in tree first to create a child collection!")) {
+            return;
+        }
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        TreeItem<PathItem> parent = selectedItems.get(0);
         TextInputDialog alert = new TextInputDialog();
         alert.setTitle("Create event");
         alert.setHeaderText("Create event (directory)");
+        StackedFontIcon stackIcon = new StackedFontIcon();
+        FontIcon fileIcon = new FontIcon("ti-file");
+        fileIcon.setIconSize(50);
+        FontIcon plusIcon = new FontIcon("ti-plus");
+        plusIcon.setIconSize(20);
+        stackIcon.getChildren().add(fileIcon);
+        stackIcon.getChildren().add(plusIcon);
+        alert.setGraphic(stackIcon);
         alert.setContentText("Please enter the name:");
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
@@ -405,9 +480,6 @@ public class CollectionsController implements Initializable {
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Optional<String> result = alert.showAndWait();
         result.ifPresent((t) -> {
-            TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
-            ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
-            TreeItem<PathItem> parent = selectedItems.get(0).getParent();
             Path filePath = selectedItems.get(0).getValue().getFilePath();
             String newPath = filePath.toString() + File.separator + t;
             //Paths.get(newPath).toFile().mkdir();                 
@@ -418,15 +490,133 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void moveCollectionAction(ActionEvent event) {
+    private void cutCollectionAction(ActionEvent event) {
+        if (checkIfElementInTreeSelected("Please select an element in the tree to be cut!")) {
+            return;
+        }
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        TreeItem<PathItem> item = selectedItems.get(0);
+        clipboardPath = item.getValue().getFilePath();
+        clipboardMode = ClipboardMode.CUT;
+        pasteMenu.setDisable(false);
+        treeView.getSelectionModel().clearSelection();
+        mainController.getStatusLabelLeft().setVisible(true);
+        mainController.getStatusLabelLeft().setText("Cut collection " + clipboardPath.getFileName().toString());
+        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
     }
 
     @FXML
     private void copyCollectionAction(ActionEvent event) {
+        if (checkIfElementInTreeSelected("Please select an element in the tree to be copied!")) {
+            return;
+        }
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        TreeItem<PathItem> item = selectedItems.get(0);
+        clipboardPath = item.getValue().getFilePath();
+        clipboardMode = ClipboardMode.COPY;
+        pasteMenu.setDisable(false);
+        treeView.getSelectionModel().clearSelection();
+        mainController.getStatusLabelLeft().setVisible(true);
+        mainController.getStatusLabelLeft().setText("Copy collection " + clipboardPath.getFileName().toString());
+        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
     }
 
     @FXML
     private void deleteCollectionAction(ActionEvent event) {
+        if (checkIfElementInTreeSelected("Please select an element in the tree to be deleted!")) {
+            return;
+        }
+    }
+
+    @FXML
+    private void pasteCollectionAction(ActionEvent event) {
+        Path sourceFilePath = clipboardPath;
+
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        TreeItem<PathItem> item = selectedItems.get(0);
+        Path targetPath = item.getValue().getFilePath();
+        mainController.getProgressPane().setVisible(true);
+        mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
+        mainController.getStatusLabelLeft().setText("Paste collection");
+        if (clipboardMode == clipboardMode.CUT) {
+            mainController.getProgressbarLabel().setText("Moving files...");
+        } else {
+            mainController.getProgressbarLabel().setText("Copying files...");
+        }
+        mainController.getStatusLabelLeft().setVisible(true);
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                try {
+                    if (clipboardMode == ClipboardMode.CUT) {
+                        //cut
+                        final Path targetFinalPath = Paths.get(targetPath.toString(), sourceFilePath.getFileName().toString());
+                        targetPath.toFile().mkdir();
+                        copyMoveFolder(sourceFilePath, targetFinalPath, clipboardMode, StandardCopyOption.REPLACE_EXISTING);
+                        Files.delete(sourceFilePath);
+                    } else {
+                        //copy
+                        final Path targetFinalPath = Paths.get(targetPath.toString(), sourceFilePath.getFileName().toString());
+                        targetPath.toFile().mkdir();
+                        copyMoveFolder(sourceFilePath, targetFinalPath, clipboardMode, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+        };
+        mainController.getProgressbar().progressProperty().unbind();
+        mainController.getProgressbar().progressProperty().bind(task.progressProperty());
+        mainController.getProgressbarLabel().textProperty().unbind();
+        mainController.getProgressbarLabel().textProperty().bind(task.messageProperty());
+        task.setOnSucceeded((t) -> {
+            refreshTree();
+            treeView.getSelectionModel().clearSelection();
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+            pasteMenu.setDisable(true);
+        });
+        task.setOnFailed((t) -> {
+            treeView.getSelectionModel().clearSelection();
+            util.showError("Cannot cut/copy collection", t.getSource().getException());
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+            pasteMenu.setDisable(true);
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, "Cannot cut/copy collection!", t.getSource().getException());
+        });
+        executor.submit(task);
+    }
+
+    public void copyMoveFolder(Path source, Path target, ClipboardMode mode, CopyOption... options)
+            throws IOException {
+        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                    throws IOException {
+                Files.createDirectories(target.resolve(source.relativize(dir)));
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                if (mode == ClipboardMode.COPY) {
+                    Files.copy(file, target.resolve(source.relativize(file)), options);
+                } else {
+                    Files.move(file, target.resolve(source.relativize(file)), options);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
 }

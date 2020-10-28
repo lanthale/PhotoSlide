@@ -80,7 +80,7 @@ public class Utility {
 
         // Set content for Dialog Pane
         alert.getDialogPane().setExpandableContent(dialogPaneContent);
-        alert.showAndWait();
+        alert.show();
         //sendEmail(text+"\n\nStacktrace:\n"+stackTrace);
     }
 

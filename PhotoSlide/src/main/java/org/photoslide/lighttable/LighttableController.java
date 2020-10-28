@@ -280,7 +280,9 @@ public class LighttableController implements Initializable {
             //factory.getSelectedCell().requestFocus();
         });
         Platform.runLater(() -> {
-            imageGridPane.getChildren().add(imageGrid);
+            if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
+                imageGridPane.getChildren().add(imageGrid);
+            }
             mainController.getProgressbar().setProgress(0);
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbar().progressProperty().bind(taskEmtpy.progressProperty());
@@ -849,10 +851,10 @@ public class LighttableController implements Initializable {
         }
     }
 
-    public void saveSettings() {        
+    public void saveSettings() {
     }
 
-    public void restoreSettings() {        
+    public void restoreSettings() {
     }
 
 }

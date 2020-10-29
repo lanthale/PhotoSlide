@@ -79,6 +79,7 @@ public class PSPreloader extends Preloader {
 
     @Override
     public void start(Stage stage) throws Exception {
+        com.sun.glass.ui.Application.GetApplication().setName("PhotoSlide");
         this.stage = stage;
         stage.setAlwaysOnTop(true);
         createPreloaderScene = createPreloaderScene();

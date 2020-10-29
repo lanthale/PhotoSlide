@@ -677,6 +677,10 @@
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide</argument>
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide</argument>                                        
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>${param3}</argument>

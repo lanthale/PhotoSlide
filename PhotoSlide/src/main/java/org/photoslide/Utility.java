@@ -25,6 +25,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.javafx.StackedFontIcon;
 
 /**
  *
@@ -62,7 +64,7 @@ public class Utility {
                 viewport.getMinY() + yProportion * viewport.getHeight());
     }
 
-    public void showError(String text, Throwable e) {
+    public void showError(Node centerNode, String text, Throwable e) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error dialog");
         alert.setHeaderText(text);
@@ -78,8 +80,21 @@ public class Utility {
 
         dialogPaneContent.getChildren().addAll(label, textArea);
 
+        StackedFontIcon st = new StackedFontIcon();
+        FontIcon f1 = new FontIcon("ti-layout-width-full");
+        f1.setIconSize(50);
+        FontIcon f2 = new FontIcon("ti-close");
+        f2.setIconSize(30);
+        st.getChildren().add(f1);
+        st.getChildren().add(f2);
+        alert.setGraphic(st);
+
         // Set content for Dialog Pane
         alert.getDialogPane().setExpandableContent(dialogPaneContent);
+        alert.getDialogPane().setExpanded(false);
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) centerNode.getScene().getWindow());
         alert.show();
         //sendEmail(text+"\n\nStacktrace:\n"+stackTrace);
     }

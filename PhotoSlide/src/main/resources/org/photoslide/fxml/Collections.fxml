@@ -63,7 +63,7 @@
                      </graphic>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#deleteCollectionAction" text="Delete collection">
+                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteCollectionAction" text="Delete collection">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" />
                      </graphic>

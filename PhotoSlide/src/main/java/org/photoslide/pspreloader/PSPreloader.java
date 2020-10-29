@@ -84,6 +84,8 @@ public class PSPreloader extends Preloader {
         createPreloaderScene = createPreloaderScene();
         createPreloaderScene.getStylesheets().add(getClass().getResource("/org/photoslide/fxml/PreLoader.css").toExternalForm());
         createPreloaderScene.setFill(Color.TRANSPARENT);
+        Image iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        stage.getIcons().add(iconImage);
         stage.setScene(createPreloaderScene);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.show();

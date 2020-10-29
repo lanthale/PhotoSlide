@@ -23,6 +23,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +52,7 @@ import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
@@ -75,6 +77,8 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private MenuItem pasteMenu;
+    @FXML
+    private MenuItem deleteMenu;
 
     private enum ClipboardMode {
         CUT,
@@ -214,7 +218,7 @@ public class CollectionsController implements Initializable {
                 });
                 taskTree.setOnFailed((t2) -> {
                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
-                    util.showError("Cannot create directory tree", t2.getSource().getException());
+                    util.showError(this.accordionPane, "Cannot create directory tree", t2.getSource().getException());
                 });
                 executor.submit(taskTree);
                 //} catch (IOException ex) {
@@ -370,7 +374,7 @@ public class CollectionsController implements Initializable {
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-            util.showError("Cannot create directory tree", t.getSource().getException());
+            util.showError(this.accordionPane, "Cannot create directory tree", t.getSource().getException());
         });
         executor.submit(task);
     }
@@ -411,7 +415,7 @@ public class CollectionsController implements Initializable {
             }
         } catch (IOException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-            util.showError("Cannot create directory tree", ex);
+            util.showError(this.accordionPane, "Cannot create directory tree", ex);
         }
     }
 
@@ -528,6 +532,58 @@ public class CollectionsController implements Initializable {
         if (checkIfElementInTreeSelected("Please select an element in the tree to be deleted!")) {
             return;
         }
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        TreeItem<PathItem> item = selectedItems.get(0);
+        clipboardPath = item.getValue().getFilePath();
+
+        Alert alert = new Alert(AlertType.CONFIRMATION, "Delete '" + clipboardPath + "' ?", ButtonType.CANCEL, ButtonType.OK);
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) treeView.getScene().getWindow());
+        Optional<ButtonType> resultDiag = alert.showAndWait();
+        if (resultDiag.get() == ButtonType.OK) {
+            deleteMenu.setDisable(true);
+            mainController.getProgressPane().setVisible(true);
+            mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
+            mainController.getStatusLabelLeft().setText("Delete collection");
+            mainController.getProgressbarLabel().setText("...");
+            Task<Boolean> taskDelete = new Task<>() {
+                @Override
+                protected Boolean call() throws IOException {
+                    Files.walk(clipboardPath)
+                            .sorted(Comparator.reverseOrder())
+                            .map(Path::toFile)
+                            .forEach((t) -> {
+                                Platform.runLater(() -> {
+                                    mainController.getProgressbarLabel().setText("Delete "+t.getName());
+                                });
+                                t.delete();
+                            });
+                    return true;
+                }
+            };
+            taskDelete.setOnSucceeded((t) -> {
+                refreshTree();
+                treeView.getSelectionModel().clearSelection();
+                mainController.getProgressbar().progressProperty().unbind();
+                mainController.getProgressbarLabel().textProperty().unbind();
+                mainController.getProgressPane().setVisible(false);
+                mainController.getStatusLabelLeft().setVisible(false);
+                deleteMenu.setDisable(false);
+            });
+            taskDelete.setOnFailed((t) -> {
+                treeView.getSelectionModel().clearSelection();
+                util.showError(this.accordionPane, "Cannot delete collection", t.getSource().getException());
+                mainController.getProgressbar().progressProperty().unbind();
+                mainController.getProgressbarLabel().textProperty().unbind();
+                mainController.getProgressPane().setVisible(false);
+                mainController.getStatusLabelLeft().setVisible(false);
+                deleteMenu.setDisable(true);
+                Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, "Cannot cut/copy collection!", t.getSource().getException());
+            });
+            executor.submit(taskDelete);
+        }
     }
 
     @FXML
@@ -541,13 +597,13 @@ public class CollectionsController implements Initializable {
         mainController.getProgressPane().setVisible(true);
         mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
         mainController.getStatusLabelLeft().setText("Paste collection");
-        if (clipboardMode == clipboardMode.CUT) {
+        if (clipboardMode == ClipboardMode.CUT) {
             mainController.getProgressbarLabel().setText("Moving files...");
         } else {
             mainController.getProgressbarLabel().setText("Copying files...");
         }
         mainController.getStatusLabelLeft().setVisible(true);
-        Task<Boolean> task = new Task<>() {
+        Task<Boolean> taskPaste = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
                 try {
@@ -569,11 +625,7 @@ public class CollectionsController implements Initializable {
                 return true;
             }
         };
-        mainController.getProgressbar().progressProperty().unbind();
-        mainController.getProgressbar().progressProperty().bind(task.progressProperty());
-        mainController.getProgressbarLabel().textProperty().unbind();
-        mainController.getProgressbarLabel().textProperty().bind(task.messageProperty());
-        task.setOnSucceeded((t) -> {
+        taskPaste.setOnSucceeded((t) -> {
             refreshTree();
             treeView.getSelectionModel().clearSelection();
             mainController.getProgressbar().progressProperty().unbind();
@@ -582,9 +634,9 @@ public class CollectionsController implements Initializable {
             mainController.getStatusLabelLeft().setVisible(false);
             pasteMenu.setDisable(true);
         });
-        task.setOnFailed((t) -> {
+        taskPaste.setOnFailed((t) -> {
             treeView.getSelectionModel().clearSelection();
-            util.showError("Cannot cut/copy collection", t.getSource().getException());
+            util.showError(this.accordionPane, "Cannot cut/copy collection", t.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
@@ -592,7 +644,7 @@ public class CollectionsController implements Initializable {
             pasteMenu.setDisable(true);
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, "Cannot cut/copy collection!", t.getSource().getException());
         });
-        executor.submit(task);
+        executor.submit(taskPaste);
     }
 
     public void copyMoveFolder(Path source, Path target, ClipboardMode mode, CopyOption... options)
@@ -610,8 +662,14 @@ public class CollectionsController implements Initializable {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
                 if (mode == ClipboardMode.COPY) {
+                    Platform.runLater(() -> {
+                        mainController.getProgressbarLabel().setText("Copy " + file.toFile().getName());
+                    });
                     Files.copy(file, target.resolve(source.relativize(file)), options);
                 } else {
+                    Platform.runLater(() -> {
+                        mainController.getProgressbarLabel().setText("Move " + file.toFile().getName());
+                    });
                     Files.move(file, target.resolve(source.relativize(file)), options);
                 }
                 return FileVisitResult.CONTINUE;

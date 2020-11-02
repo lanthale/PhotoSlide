@@ -208,7 +208,7 @@
     -fx-pref-width: 145;         
     -fx-pref-height: 130;
     -fx-max-width: 145;
-    -fx-max-height: 130;
+    -fx-max-height: 130;        
 }
 
 #MediaGridCell:hover {
@@ -216,7 +216,12 @@
 }
 
 #MediaGridCellSelected {
-    -fx-background-color:white;    
+    -fx-background-color:white;      
+}
+
+#StackedRectangle {
+    -fx-fill: transparent;
+    -fx-stroke: orange;
 }
 
 #MediaLoadingProgressIndicator{

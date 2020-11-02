@@ -126,9 +126,9 @@ public class App extends Application {
             logger.setLevel(Level.ALL);
 
             handler.setFormatter(new SimpleFormatter());
-            //System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
-            //Application.launch(App.class, args);
-            com.sun.javafx.application.LauncherImpl.launchApplication(App.class, PSPreloader.class, args);
+            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
+            Application.launch(App.class, args);
+            //com.sun.javafx.application.LauncherImpl.launchApplication(App.class, PSPreloader.class, args);
         } catch (IOException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }

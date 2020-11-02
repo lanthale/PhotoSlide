@@ -60,6 +60,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
@@ -627,6 +628,9 @@ public class MetadataController implements Initializable {
         dialogPane.setContent(content);
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
@@ -643,7 +647,7 @@ public class MetadataController implements Initializable {
                 protected Boolean call() throws Exception {
 
                     // for loop through the media files
-                    ObservableList<MediaFile> mediaList = lightController.getList();
+                    ObservableList<MediaFile> mediaList = lightController.getFullMediaList();
                     int i = 0;
                     for (MediaFile actFile : mediaList) {
                         if (this.isCancelled() == false) {

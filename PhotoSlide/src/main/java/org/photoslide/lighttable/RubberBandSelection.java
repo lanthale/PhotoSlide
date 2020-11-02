@@ -5,6 +5,7 @@
  */
 package org.photoslide.lighttable;
 
+import org.photoslide.datamodel.GridCellSelectionModel;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.image.ImageView;

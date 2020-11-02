@@ -5,21 +5,19 @@
  */
 package org.photoslide.lighttable;
 
+import org.photoslide.datamodel.GridCellSelectionModel;
+import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.Utility;
 import org.photoslide.metadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.Event;
@@ -64,6 +62,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final List<Task> taskList;
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
+    private final Image dialogIcon;
 
     public MediaGridCellFactory(ExecutorService executor, LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         this.util = util;
@@ -120,6 +119,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 yMouse.set((int) t.getY());
             }
         });
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
     @Override
@@ -140,15 +140,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
         if (t.isShiftDown()) {
             //select all nodes in between
-            int indexOfStart = lightController.getList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
-            int indexOfEnd = lightController.getList().indexOf(cell.getItem());
+            int indexOfStart = lightController.getFullMediaList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
+            int indexOfEnd = lightController.getFullMediaList().indexOf(cell.getItem());
             if (indexOfStart < indexOfEnd) {
                 for (int i = indexOfStart; i <= indexOfEnd; i++) {
-                    selectionModel.add(lightController.getList().get(i));
+                    selectionModel.add(lightController.getFullMediaList().get(i));
                 }
             } else {
                 for (int i = indexOfEnd; i <= indexOfStart; i++) {
-                    selectionModel.add(lightController.getList().get(i));
+                    selectionModel.add(lightController.getFullMediaList().get(i));
                 }
             }
         } else {
@@ -159,7 +159,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     selectionModel.add(((MediaGridCell) t.getSource()).getItem());
                 }
             } else {
-                lightController.getList().stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+                lightController.getFullMediaList().stream().filter(c -> c != null && c.isSelected() == true).forEach((mfile) -> {
                     mfile.setSeleted(false);
                 });
                 selectionModel.clear();
@@ -200,7 +200,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         if (selectedMediaItem != null) {
             if (selectedMediaItem.isMediaEdited() == true) {
-                selectedMediaItem.saveEdits();
+                executor.submit(() -> {
+                    selectedMediaItem.saveEdits();
+                });                
             }
         }
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
@@ -210,7 +212,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-            Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)grid.getScene().getWindow()); 
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(dialogIcon);
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) grid.getScene().getWindow());
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);
@@ -320,7 +324,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getMediaView().setVisible(false);
                             lightController.getImageProgress().setVisible(true);
                         });
-                        String url = selectedMediaItem.getImage().getUrl();                        
+                        String url = selectedMediaItem.getImage().getUrl();
                         img = new Image(url, true);
                         Platform.runLater(() -> {
                             lightController.getDetailToolbar().setDisable(false);
@@ -415,7 +419,27 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
-        lightController.getDetailToolbar().setDisable(true);
+        if (selectionModel.getSelection().size() > 1) {
+            lightController.getDetailToolbar().setDisable(false);
+            lightController.getRotateLeftButton().setDisable(true);
+            lightController.getRotateRightButton().setDisable(true);
+            lightController.getCropButton().setDisable(true);
+            lightController.getRateButton().setDisable(true);
+            lightController.getDeleteButton().setDisable(true);
+            lightController.getCopyButton().setDisable(false);
+            lightController.getPasteButton().setDisable(true);
+            lightController.getStackButton().setDisable(false);
+        } else {
+            lightController.getDetailToolbar().setDisable(false);
+            lightController.getRotateLeftButton().setDisable(false);
+            lightController.getRotateRightButton().setDisable(false);
+            lightController.getCropButton().setDisable(false);
+            lightController.getRateButton().setDisable(false);
+            lightController.getDeleteButton().setDisable(false);
+            lightController.getCopyButton().setDisable(false);
+            lightController.getPasteButton().setDisable(true);
+            lightController.getStackButton().setDisable(false);
+        }
         lightController.getTitleLabel().textProperty().unbind();
         lightController.getCameraLabel().textProperty().unbind();
         lightController.getFilenameLabel().setText("");

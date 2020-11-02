@@ -5,6 +5,8 @@
  */
 package org.photoslide.lighttable;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.MediaFile;
 import javafx.application.Platform;
@@ -34,14 +36,16 @@ public class MediaLoadingTask extends Task<Boolean> {
     @Override
     protected Boolean call() throws Exception {
         while (list.isEmpty()) {
-            Thread.sleep(100);
+            Thread.sleep(100);            
         }
+
         Platform.runLater(() -> {
             mainController.getStatusLabelLeft().setVisible(false);
             mainController.getProgressPane().setVisible(false);
             mainController.getProgressbarLabel().setText("");
         });
-        for (MediaFile fileItem : list) {
+        List<MediaFile> newList = new ArrayList<>(list);
+        for (MediaFile fileItem : newList) {
             if (this.isCancelled() == false) {
                 MediaFile item = null;
                 switch (fileItem.getMediaType()) {
@@ -67,7 +71,7 @@ public class MediaLoadingTask extends Task<Boolean> {
                     }
 
                     case IMAGE -> {
-                        Image img = null;                        
+                        Image img = null;
                         img = new Image(fileItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 300, imageGrid.getCellHeight() + 300, true, false, false);
                         updateMessage("Retrieve image... " + fileItem.getName());
                         try {
@@ -77,8 +81,8 @@ public class MediaLoadingTask extends Task<Boolean> {
                             Platform.runLater(() -> {
                                 list.set(list.indexOf(fileItem), itemImage);
                             });
-                        } catch (IndexOutOfBoundsException e){
-                            
+                        } catch (IndexOutOfBoundsException e) {
+
                         }
                     }
 

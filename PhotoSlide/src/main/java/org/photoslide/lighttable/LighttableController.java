@@ -5,6 +5,7 @@
  */
 package org.photoslide.lighttable;
 
+import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
@@ -20,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -27,12 +29,16 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
@@ -45,7 +51,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -87,8 +92,11 @@ public class LighttableController implements Initializable {
     private ExecutorService executorParallel;
     private Task<Boolean> task;
     private Task<List<MediaFile>> taskEmtpy;
-    private ObservableList<MediaFile> list;
-    private List<MediaFile> deletedList;
+    private ObservableList<MediaFile> fullMediaList;
+    private FilteredList<MediaFile> filteredMediaList;
+    private SortedList<MediaFile> sortedMediaList;
+    private ObservableList<String> sortOptions;
+    private GridView<MediaFile> imageGrid;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
 
     @FXML
@@ -147,12 +155,11 @@ public class LighttableController implements Initializable {
     private Label mediaQTYLabel;
     @FXML
     private ComboBox<String> sortOrderComboBox;
-    private ObservableList<String> sortOptions;
-    private GridView<MediaFile> imageGrid;
     @FXML
     private Button copyButton;
     @FXML
     private Button pasteButton;
+    private Image dialogIcon;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -176,6 +183,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.getSelectionModel().selectFirst();
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableController"));
         executorParallel = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableControllerSelection"));
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -225,12 +233,60 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().textProperty().unbind();
             mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
         });
-        list = FXCollections.observableArrayList();
-        deletedList = new ArrayList<>();
-        imageGrid = new GridView<>(list);
+        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        filteredMediaList = new FilteredList<>(fullMediaList, null);
+        sortedMediaList = new SortedList<>(filteredMediaList);
+        imageGrid = new GridView<>(sortedMediaList);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
         factory = new MediaGridCellFactory(executorParallel, this, imageGrid, util, metadataController);
+
+        Platform.runLater(() -> {
+            if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
+                imageGridPane.getChildren().add(imageGrid);
+            }
+            mainController.getProgressbar().setProgress(0);
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbar().progressProperty().bind(taskEmtpy.progressProperty());
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().bind(taskEmtpy.messageProperty());
+        });
+        taskEmtpy = new EmptyMediaLoadingTask(sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
+        taskEmtpy.setOnSucceeded((WorkerStateEvent t) -> {
+            List<MediaFile> filesystemList = (List<MediaFile>) t.getSource().getValue();
+            fullMediaList.addAll(filesystemList);
+            filteredMediaList.setPredicate(standardFilter());
+            //sort if needed
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getStatusLabelRight().textProperty().unbind();
+            mainController.getStatusLabelRight().setText("Finished directory - found " + ((List<MediaFile>) t.getSource().getValue()).size());
+            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+        });
+        taskEmtpy.setOnFailed((t2) -> {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+        });
+        task = new MediaLoadingTask(fullMediaList, mainController, imageGrid);
+        task.setOnSucceeded((WorkerStateEvent t) -> {
+            sortOrderComboBox.setDisable(false);
+            mainController.getStatusLabelRight().textProperty().unbind();
+            mainController.getStatusLabelRight().setText("Finished Image Task.");
+            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+        });
+        task.setOnFailed((t2) -> {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+        });
+        mainController.getStatusLabelRight().textProperty().bind(taskEmtpy.messageProperty());
+        executor.submit(taskEmtpy);
+        mainController.getStatusLabelRight().textProperty().bind(task.messageProperty());
+        executor.submit(task);
+
         imageGrid.setCellFactory(factory);
         imageGrid.requestFocus();
         imageGrid.setOnKeyPressed((t) -> {
@@ -247,7 +303,7 @@ public class LighttableController implements Initializable {
                 clipboard.setContent(content);
             }
             if (keyMetaA.match(t)) {
-                list.forEach((mediafile) -> {
+                fullMediaList.forEach((mediafile) -> {
                     factory.getSelectionModel().add(mediafile);
                     mediafile.requestLayout();
                 });
@@ -279,56 +335,14 @@ public class LighttableController implements Initializable {
             imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
             //factory.getSelectedCell().requestFocus();
         });
-        Platform.runLater(() -> {
-            if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
-                imageGridPane.getChildren().add(imageGrid);
-            }
-            mainController.getProgressbar().setProgress(0);
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().progressProperty().bind(taskEmtpy.progressProperty());
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().bind(taskEmtpy.messageProperty());
-        });
-        taskEmtpy = new EmptyMediaLoadingTask(sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
-        taskEmtpy.setOnSucceeded((WorkerStateEvent t) -> {
-            list.addAll((List<MediaFile>) t.getSource().getValue());
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("Finished directory - found " + ((List<MediaFile>) t.getSource().getValue()).size());
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
-        });
-        taskEmtpy.setOnFailed((t2) -> {
-            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);
-        });
-        task = new MediaLoadingTask(list, mainController, imageGrid);
-        task.setOnSucceeded((WorkerStateEvent t) -> {
-            sortOrderComboBox.setDisable(false);
-            mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("Finished Image Task.");
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
-        });
-        task.setOnFailed((t2) -> {
-            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
-            mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);
-        });
-        mainController.getStatusLabelRight().textProperty().bind(taskEmtpy.messageProperty());
-        executor.submit(taskEmtpy);
-        mainController.getStatusLabelRight().textProperty().bind(task.messageProperty());
-        executor.submit(task);
     }
 
     public void selectPreviousImageInGrid() {
         MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = list.indexOf(selectedCell.getItem());
+        int actIndex = fullMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex - 1;
         if (actIndex >= 0) {
-            MediaGridCell nextCell = factory.getMediaCellForMediaFile(list.get(actIndex));
+            MediaGridCell nextCell = factory.getMediaCellForMediaFile(fullMediaList.get(actIndex));
             if (nextCell != null) {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
@@ -340,10 +354,10 @@ public class LighttableController implements Initializable {
 
     public void selectNextImageInGrid() {
         MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = list.indexOf(selectedCell.getItem());
+        int actIndex = fullMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex + 1;
-        if (actIndex < list.size()) {
-            MediaGridCell nextCell = factory.getMediaCellForMediaFile(list.get(actIndex));
+        if (actIndex < fullMediaList.size()) {
+            MediaGridCell nextCell = factory.getMediaCellForMediaFile(fullMediaList.get(actIndex));
             if (nextCell != null) {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
@@ -386,7 +400,7 @@ public class LighttableController implements Initializable {
         if (angle < -360) {
             angle = -90;
         }
-        MediaFile item = list.get(list.indexOf(factory.getSelectedCell().getItem()));
+        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
         //imageView.setRotate(angle);
         item.setRotationAngle(angle);
         switch (angle) {
@@ -415,7 +429,7 @@ public class LighttableController implements Initializable {
         if (angle > 360) {
             angle = 90;
         }
-        MediaFile item = list.get(list.indexOf(factory.getSelectedCell().getItem()));
+        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
         //imageView.setRotate(angle);
         item.setRotationAngle(angle);
         switch (angle) {
@@ -476,10 +490,9 @@ public class LighttableController implements Initializable {
         alert.showAndWait();
         if (alert.getResult() == ButtonType.YES) {*/
         //new File(factory.getSelectedCell().getItem().getName()).delete();
-        MediaFile item = list.get(list.indexOf(factory.getSelectedCell().getItem()));
+        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
         item.setDeleted(true);
-        list.set(list.indexOf(item), item);
-        deletedList.add(item);
+        fullMediaList.set(fullMediaList.indexOf(item), item);
         imageView.setImage(null);
         getTitleLabel().setVisible(false);
         getCameraLabel().setVisible(false);
@@ -492,17 +505,21 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void stackButtonAction(ActionEvent event) {
-        factory.getSelectedMediaItem().setVisible(false);
-        factory.getSelectedMediaItem().setManaged(false);
-        factory.getSelectedMediaItem().requestFocus();
-        factory.getSelectedMediaItem().requestLayout();
-        factory.getSelectedCell().setVisible(false);
-        factory.getSelectedCell().setManaged(false);
-        factory.getSelectedCell().requestLayout();
-        imageGrid.requestFocus();
-        imageGrid.layout();
-        imageGrid.requestLayout();
+    private void stackButtonAction(ActionEvent event) {                        
+        String fileName = ((MediaFile)factory.getSelectionModel().getSelection().iterator().next()).getPathStorage().toFile().getName();
+        String stackName=fileName.substring(0, fileName.lastIndexOf("."));
+        AtomicInteger i=new AtomicInteger(0);
+        Iterator<Node> iterator = factory.getSelectionModel().getSelection().iterator();
+        while (iterator.hasNext()) {
+            MediaFile mediaF = (MediaFile) iterator.next();
+            ((MediaFile)mediaF).setStacked(true);
+            ((MediaFile)mediaF).setStackName(stackName);
+            ((MediaFile)mediaF).setStackPos(i.addAndGet(1));             
+            executor.submit(() -> {
+                ((MediaFile)mediaF).saveEdits();
+            });
+        };
+        filteredMediaList.setPredicate(standardFilter());
     }
 
     @FXML
@@ -648,8 +665,16 @@ public class LighttableController implements Initializable {
         return factory;
     }
 
-    public ObservableList<MediaFile> getList() {
-        return list;
+    public ObservableList<MediaFile> getFullMediaList() {
+        return fullMediaList;
+    }
+
+    public FilteredList<MediaFile> getFilteredMediaList() {
+        return filteredMediaList;
+    }
+
+    public SortedList<MediaFile> getSortedMediaList() {
+        return sortedMediaList;
     }
 
     public VBox getInfoPane() {
@@ -676,10 +701,10 @@ public class LighttableController implements Initializable {
                     @Override
                     protected Boolean call() throws IOException {
                         int i = 0;
-                        for (MediaFile mediaFile : list) {
+                        for (MediaFile mediaFile : fullMediaList) {
                             if (this.isCancelled() == false) {
-                                updateProgress(i + 1, list.size());
-                                updateMessage("Sort " + (i + 1) + "/" + list.size());
+                                updateProgress(i + 1, fullMediaList.size());
+                                updateMessage("Sort " + (i + 1) + "/" + fullMediaList.size());
                                 try {
                                     if (mediaFile.getRecordTime() == null) {
                                         metadataController.setActualMediaFile(mediaFile);
@@ -699,7 +724,7 @@ public class LighttableController implements Initializable {
                 };
                 taskMeta.setOnSucceeded((t) -> {
                     try {
-                        list.sort(Comparator.comparing(MediaFile::getRecordTime));
+                        sortedMediaList.sort(Comparator.comparing(MediaFile::getRecordTime));
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }
@@ -718,7 +743,7 @@ public class LighttableController implements Initializable {
                 task.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                list.sort(Comparator.comparing(MediaFile::getName));
+                fullMediaList.sort(Comparator.comparing(MediaFile::getName));
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("File creation time")) {
@@ -726,7 +751,7 @@ public class LighttableController implements Initializable {
                 task.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                list.sort(Comparator.comparing(MediaFile::getCreationTime));
+                fullMediaList.sort(Comparator.comparing(MediaFile::getCreationTime));
             }
         }
     }
@@ -758,15 +783,17 @@ public class LighttableController implements Initializable {
 
         confirmDiaglog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Stage stage = (Stage) confirmDiaglog.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) stackPane.getScene().getWindow());
         Optional<ButtonType> result = confirmDiaglog.showAndWait();
         if (result.get() == ButtonType.YES) {
-            list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+            fullMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
                 filesForClipboard.add(mfile.getPathStorage().toFile());
                 filesForClipboard.add(mfile.getEditFilePath().toFile());
             });
         } else {
-            list.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+            fullMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
                 filesForClipboard.add(mfile.getPathStorage().toFile());
             });
         }
@@ -846,10 +873,52 @@ public class LighttableController implements Initializable {
     }
 
     public void resetLightTableView() {
-        if (list != null) {
-            list.clear();
+        if (fullMediaList != null) {
+            fullMediaList.clear();
         }
     }
+
+    private Predicate<MediaFile> baseFilter() {
+        return mFile -> mFile.isStacked() == false;// || mFile.getStackPos() == 1;
+    }
+    
+    public Predicate<MediaFile> standardFilter() {
+        return baseFilter().or(mFile -> mFile.getStackPos() == 1);
+    }
+
+    public Button getRotateLeftButton() {
+        return rotateLeftButton;
+    }
+
+    public Button getRotateRightButton() {
+        return rotateRightButton;
+    }
+
+    public Button getRateButton() {
+        return rateButton;
+    }
+
+    public Button getDeleteButton() {
+        return deleteButton;
+    }
+
+    public Button getStackButton() {
+        return stackButton;
+    }
+
+    public Button getCropButton() {
+        return cropButton;
+    }
+
+    public Button getCopyButton() {
+        return copyButton;
+    }
+
+    public Button getPasteButton() {
+        return pasteButton;
+    }
+    
+    
 
     public void saveSettings() {
     }

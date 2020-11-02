@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.lighttable;
+package org.photoslide.datamodel;
 
 import org.photoslide.datamodel.MediaFile;
 import java.util.Arrays;

@@ -13,7 +13,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
@@ -22,6 +21,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -29,6 +29,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -43,6 +44,7 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.Paint;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
+import javafx.scene.shape.Rectangle;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
@@ -69,6 +71,9 @@ public class MediaFile extends StackPane {
     private LocalDateTime recordTime;
     private final SimpleBooleanProperty deleted;
     private final SimpleBooleanProperty selected;
+    private final SimpleStringProperty stackName;
+    private final SimpleIntegerProperty stackPos;
+    private final SimpleBooleanProperty stacked;
     private FileTime creationTime;
 
     public enum MediaTypes {
@@ -88,6 +93,9 @@ public class MediaFile extends StackPane {
         mediaEdited = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
+        stackName = new SimpleStringProperty();
+        stackPos = new SimpleIntegerProperty(-1);
+        stacked = new SimpleBooleanProperty(false);
         deleted.addListener((ov, t, t1) -> {
             mediaEdited = true;
         });
@@ -132,7 +140,7 @@ public class MediaFile extends StackPane {
     }
 
     private void setDeletedNode() {
-        FontIcon restoreIcon = new FontIcon("ti-back-right:22");        
+        FontIcon restoreIcon = new FontIcon("ti-back-right:22");
         VBox v = new VBox();
         v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         this.getChildren().add(v);
@@ -144,15 +152,27 @@ public class MediaFile extends StackPane {
             VBox vb = new VBox();
             vb.setAlignment(Pos.BOTTOM_RIGHT);
             Stop[] stops = {new Stop(0, Color.valueOf("#f8f542")), new Stop(1, Color.valueOf("#c2b326"))};
-            RadialGradient gradient = new RadialGradient(0, 0.0, 0, 0, 0.5, true, CycleMethod.NO_CYCLE, stops);            
+            RadialGradient gradient = new RadialGradient(0, 0.0, 0, 0, 0.5, true, CycleMethod.NO_CYCLE, stops);
             HBox hb = new HBox();
             hb.setPadding(new Insets(40, 0, 0, 0));
             for (int i = 0; i < rating.getValue(); i++) {
-                FontIcon starIcon = new FontIcon("fa-star");                
+                FontIcon starIcon = new FontIcon("fa-star");
                 starIcon.setId("star-ikonli-font-icon");
                 hb.getChildren().add(starIcon);
             }
             vb.getChildren().add(hb);
+            this.getChildren().add(vb);
+        }
+    }
+    
+    private void setStacked() {
+        if (stacked.get() == true) {  
+            VBox vb = new VBox();
+            vb.setAlignment(Pos.BOTTOM_RIGHT);            
+            FontIcon layerIcon=new FontIcon("ti-layers-alt");
+            layerIcon.setIconColor(Color.ORANGE);
+            layerIcon.setIconSize(40);
+            vb.getChildren().add(layerIcon);
             this.getChildren().add(vb);
         }
     }
@@ -171,12 +191,14 @@ public class MediaFile extends StackPane {
             //imageView.setViewport(cropView);
             this.getChildren().clear();
             this.getChildren().add(imageView);
+            //setStacked();
             setRatingNode();
             if (deleted.getValue() == true) {
                 setDeletedNode();
             }
         }
     }
+    
 
     public Media getMedia() {
         return media;
@@ -188,14 +210,15 @@ public class MediaFile extends StackPane {
         } else {
             this.media = media;
             this.videoSupported = type;
+            setRatingNode();
             if (type == VideoTypes.SUPPORTED) {
-                dummyIcon = new FontIcon("fa-file-movie-o:40");                
+                dummyIcon = new FontIcon("fa-file-movie-o:40");
                 this.getChildren().clear();
                 this.getChildren().add(dummyIcon);
             } else {
-                FontIcon filmIcon = new FontIcon("fa-file-movie-o:40");                
+                FontIcon filmIcon = new FontIcon("fa-file-movie-o:40");
                 filmIcon.setOpacity(0.3);
-                dummyIcon = new FontIcon("fa-minus-circle:40");                
+                dummyIcon = new FontIcon("fa-minus-circle:40");
                 this.getChildren().clear();
                 this.getChildren().add(filmIcon);
                 this.getChildren().add(dummyIcon);
@@ -218,9 +241,9 @@ public class MediaFile extends StackPane {
     public void saveEdits() {
         //String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         //String fileNameWithExt = "Ω_" + fileNameWithOutExt + ".edit";
-                
-        String fileNameWithExt=getEditFilePath().toString();
-        
+
+        String fileNameWithExt = getEditFilePath().toString();
+
         try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
@@ -241,6 +264,15 @@ public class MediaFile extends StackPane {
             }
             if (cropView != null) {
                 prop.setProperty("crop", cropView.getMinX() + ";" + cropView.getMinY() + ";" + cropView.getWidth() + ";" + cropView.getHeight());
+            }
+            if (stacked.getValue() != null) {
+                prop.setProperty("stacked", stacked.getValue() + "");
+            }
+            if (stackName.getValue() != null) {
+                prop.setProperty("stackName", stackName.getValue());
+            }
+            if (stackPos.getValue() != null) {
+                prop.setProperty("stackPos", stackPos.getValue() + "");
             }
             prop.store(output, null);
 
@@ -285,6 +317,15 @@ public class MediaFile extends StackPane {
             }
             if (prop.getProperty("deleted") != null) {
                 deleted.setValue(Boolean.parseBoolean(prop.getProperty("deleted")));
+            }
+            if (prop.getProperty("stacked") != null) {
+                stacked.setValue(Boolean.parseBoolean(prop.getProperty("stacked")));
+            }
+            if (prop.getProperty("stackPos") != null) {
+                stackPos.setValue(Integer.parseInt(prop.getProperty("stackPos")));
+            }
+            if (prop.getProperty("stackName") != null) {
+                stackName.setValue(prop.getProperty("stackName"));
             }
             String cropValue = prop.getProperty("crop");
             if (cropValue != null) {
@@ -464,19 +505,43 @@ public class MediaFile extends StackPane {
 
     public void setCreationTime(FileTime creationTime) {
         this.creationTime = creationTime;
-    }   
-    
-    public Path getEditFilePath(){
+    }
+
+    public Path getEditFilePath() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         String fileNameWithExt = fileNameWithOutExt + ".edit";
         Path source = new File(fileNameWithExt).toPath();
-        return source.resolveSibling("Ω_" + source.toFile().getName());        
+        return source.resolveSibling("Ω_" + source.toFile().getName());
     }
-    
-    public void setSize(double height, double width){
+
+    public void setSize(double height, double width) {
         this.setHeight(height);
         this.setWidth(width);
         this.requestLayout();
     }
-        
+
+    public String getStackName() {
+        return stackName.get();
+    }
+
+    public void setStackName(String name) {
+        this.stackName.set(name);
+    }
+
+    public int getStackPos() {
+        return stackPos.get();
+    }
+
+    public void setStackPos(int pos) {
+        this.stackPos.set(pos);
+    }
+
+    public boolean isStacked() {
+        return stacked.get();
+    }
+
+    public void setStacked(boolean stValue) {
+        this.stacked.set(stValue);
+    }
+
 }

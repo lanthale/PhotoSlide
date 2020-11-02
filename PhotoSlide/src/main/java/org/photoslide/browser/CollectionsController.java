@@ -63,6 +63,7 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.Image;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -79,6 +80,7 @@ public class CollectionsController implements Initializable {
     private MenuItem pasteMenu;
     @FXML
     private MenuItem deleteMenu;
+    private Image iconImage;
 
     private enum ClipboardMode {
         CUT,
@@ -120,6 +122,7 @@ public class CollectionsController implements Initializable {
         waitPrg = new ProgressIndicator();
         waitPrg.setPrefSize(15, 15);
         placeholder.setGraphic(waitPrg);
+        iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 loadURLs();
@@ -450,6 +453,8 @@ public class CollectionsController implements Initializable {
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
             alert.setResizable(false);
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(iconImage);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
             alert.showAndWait();
             return true;
@@ -481,6 +486,8 @@ public class CollectionsController implements Initializable {
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         alert.setResizable(false);
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Optional<String> result = alert.showAndWait();
         result.ifPresent((t) -> {
@@ -540,6 +547,8 @@ public class CollectionsController implements Initializable {
         Alert alert = new Alert(AlertType.CONFIRMATION, "Delete '" + clipboardPath + "' ?", ButtonType.CANCEL, ButtonType.OK);
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) treeView.getScene().getWindow());
         Optional<ButtonType> resultDiag = alert.showAndWait();
         if (resultDiag.get() == ButtonType.OK) {
@@ -556,7 +565,7 @@ public class CollectionsController implements Initializable {
                             .map(Path::toFile)
                             .forEach((t) -> {
                                 Platform.runLater(() -> {
-                                    mainController.getProgressbarLabel().setText("Delete "+t.getName());
+                                    mainController.getProgressbarLabel().setText("Delete " + t.getName());
                                 });
                                 t.delete();
                             });

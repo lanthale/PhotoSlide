@@ -21,6 +21,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -68,7 +69,7 @@ public class Utility {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error dialog");
         alert.setHeaderText(text);
-        //alert.setContentText(text);
+        //alert.setContentText(text);        
 
         VBox dialogPaneContent = new VBox();
 
@@ -95,6 +96,9 @@ public class Utility {
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) centerNode.getScene().getWindow());
+        Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
         alert.show();
         //sendEmail(text+"\n\nStacktrace:\n"+stackTrace);
     }

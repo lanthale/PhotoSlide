@@ -125,6 +125,7 @@ public class MainViewController implements Initializable {
     private MenuItem unstackMenu;
     @FXML
     private MenuItem openMenu;
+    private Image dialogIcon;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -145,6 +146,7 @@ public class MainViewController implements Initializable {
         progressPane.setVisible(false);
         FontIcon icon = new FontIcon();
         handleMenuDisable(true);
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -189,7 +191,7 @@ public class MainViewController implements Initializable {
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
         executor.shutdownNow();
-    }    
+    }
 
     @FXML
     private void exportAction(ActionEvent event) {
@@ -201,7 +203,9 @@ public class MainViewController implements Initializable {
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
             alert.setResizable(false);
-            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());            
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(dialogIcon);
             alert.showAndWait();
             return;
         }
@@ -223,11 +227,11 @@ public class MainViewController implements Initializable {
                     String outputDir = diag.getController().getOutputDir();
                     List<MediaFile> exportList = new ArrayList<>();
                     if (diag.getController().getExportSelectedBox().isSelected() == true) {
-                        lighttablePaneController.getList().stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+                        lighttablePaneController.getFullMediaList().stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
                             exportList.add(mfile);
                         });
                     } else {
-                        exportList.addAll(lighttablePaneController.getList());
+                        exportList.addAll(lighttablePaneController.getFullMediaList());
                     }
                     int i = 0;
                     for (MediaFile mediaItem : exportList) {
@@ -374,7 +378,9 @@ public class MainViewController implements Initializable {
         alert.setResizable(false);
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());        
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
         alert.showAndWait();
     }
 
@@ -425,7 +431,7 @@ public class MainViewController implements Initializable {
     private void openMenuAction(ActionEvent event) {
         collectionsPaneController.addExistingPath();
     }
-    
+
     public void saveSettings() {
         collectionsPaneController.saveSettings();
         lighttablePaneController.saveSettings();

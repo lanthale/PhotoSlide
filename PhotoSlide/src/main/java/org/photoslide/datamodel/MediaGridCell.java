@@ -3,10 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.lighttable;
+package org.photoslide.datamodel;
 
+import javafx.scene.Node;
+import javafx.scene.paint.Color;
 import org.photoslide.datamodel.MediaFile;
 import org.controlsfx.control.GridCell;
+import org.controlsfx.tools.Borders;
 
 /**
  *
@@ -18,7 +21,9 @@ public class MediaGridCell extends GridCell<MediaFile> {
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
-        mediaFile = new MediaFile();        
+        mediaFile = new MediaFile();
+        managedProperty().bind(mediaFile.managedProperty());
+        visibleProperty().bind(mediaFile.visibleProperty());
     }
 
     /**
@@ -32,8 +37,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-            //setGraphic(item);            
-        } else {     
+
+        } else {
             mediaFile.setSize(item.getHeight(), item.getWidth());
             mediaFile.setVisible(item.isVisible());
             mediaFile.setManaged(item.isManaged());
@@ -46,10 +51,13 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setRecordTime(item.getRecordTime());
             mediaFile.setVideoSupported(item.getVideoSupported());
             mediaFile.setCreationTime(item.getCreationTime());
+            mediaFile.setStackName(item.getStackName());
+            mediaFile.setStackPos(item.getStackPos());
+            mediaFile.setStacked(item.isStacked());
             if (mediaFile.isSelected() == true) {
-                this.setId("MediaGridCellSelected");
+                this.setId("MediaGridCellSelected");                
             } else {
-                this.setId("MediaGridCell");
+                this.setId("MediaGridCell");                
             }
             switch (item.getMediaType()) {
                 case VIDEO:

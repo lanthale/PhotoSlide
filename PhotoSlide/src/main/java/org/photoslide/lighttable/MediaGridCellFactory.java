@@ -38,6 +38,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -171,7 +172,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
             } else {
                 lightController.getFullMediaList().stream().filter(c -> c != null && c.isSelected() == true).forEach((mfile) -> {
-                    mfile.setSeleted(false);
+                    mfile.setSelected(false);
                 });
                 selectionModel.clear();
                 selectionModel.add(((MediaGridCell) t.getSource()).getItem());
@@ -181,12 +182,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void handleGridCellSelection(Event t) {
-        Node target = Utility.pick((MediaFile) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
-        if (target.getClass().equals(FontIcon.class)) {
-            handleStackButtonAction(((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
-        }
-        if (selectedCell == t.getSource()) {
-            return;
+        if (t.getTarget().getClass().equals(MediaFile.class)) {
+            Node target = Utility.pick((MediaFile) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
+            if (target.getClass().equals(FontIcon.class)) {
+                handleStackButtonAction(t, ((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
+            }
         }
         setStdGUIState();
 
@@ -433,7 +433,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
     }
 
-    private void setStdGUIState() {
+    public void setStdGUIState() {
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
@@ -511,18 +511,18 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         return null;
     }
 
-    public void handleStackButtonAction(String stackName, Node anchore) {        
+    public void handleStackButtonAction(Event m, String stackName, Node anchore) {
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         sortedMediaList.setComparator(stackNameComparator);
         GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
-        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(lightController, sortedMediaList);
+        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(this, executor, lightController, sortedMediaList);
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
         imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
-        imageGrid.setCellHeight(defaultCellHight + 3 * 20);        
+        imageGrid.setCellHeight(defaultCellHight + 3 * 20);
         PopOver popOver = new PopOver();
         popOver.setDetachable(false);
         popOver.setAnimated(true);
@@ -564,13 +564,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         hb.getChildren().add(orderOneDownButton);
         hb.getChildren().add(orderOneUpButton);
         hb.getChildren().add(orderToTheButtomButton);
-        Slider zoomSlider=new Slider(0, 100, 20);
+        Slider zoomSlider = new Slider(0, 100, 20);
         zoomSlider.setScaleX(0.7);
         zoomSlider.setScaleY(0.7);
         zoomSlider.setOrientation(Orientation.HORIZONTAL);
         zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
             imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
-            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());            
+            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
         });
         hb.getChildren().add(zoomSlider);
         vbox.getChildren().add(hb);
@@ -589,6 +589,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         popOver.setHeaderAlwaysVisible(true);
         popOver.setTitle("Stack view and ordering via drag and drop");
         popOver.show(anchore);
+        popOver.setOnHidden((t) -> {
+            //fire mousevent
+            selectedCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                    0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                    false, false, false, false, false, true, null));
+        });
     }
 
 }

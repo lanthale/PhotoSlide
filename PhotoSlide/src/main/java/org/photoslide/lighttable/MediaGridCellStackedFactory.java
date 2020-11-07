@@ -6,6 +6,7 @@
 package org.photoslide.lighttable;
 
 import java.util.Comparator;
+import java.util.concurrent.ExecutorService;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -28,11 +29,15 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     private MediaGridCell selectedCell;
     private final LighttableController lighttableController;
     private Comparator<MediaFile> stackNameComparator;
+    private final MediaGridCellFactory fullMediaListFactory;
+    private final ExecutorService executor;
 
-    public MediaGridCellStackedFactory(LighttableController controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellStackedFactory(MediaGridCellFactory fullMediaListFactory, ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
+        this.executor = executor;
+        this.fullMediaListFactory=fullMediaListFactory;
     }
 
     @Override
@@ -61,33 +66,69 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
 
     }
 
-    void setOnFrontImageButtonAction(ActionEvent t) {
-        MediaFile actualTopImage = sortedMediaList.filtered(mFile -> mFile.getStackPos() == 1).get(0);
-        int actStackPos = selectedCell.getItem().getStackPos();
-        selectedCell.getItem().setStackPos(1);
-        actualTopImage.setStackPos(actStackPos);
-        actualTopImage.setSeleted(false);        
-        selectedCell.getItem().setSeleted(true);
-        Platform.runLater(() -> {
-            actualTopImage.saveEdits();
-            ObservableList<MediaFile> fullMediaList = lighttableController.getFullMediaList();
-            fullMediaList.set(fullMediaList.indexOf(selectedCell.getItem()), selectedCell.getItem());            
-            lighttableController.updateSortFiltering();            
-            sortedMediaList.setComparator(stackNameComparator);
-            selectedCell.getItem().saveEdits();
-        });        
+    void setOnFrontImageButtonAction(ActionEvent t) {        
+        if (selectedCell != null) {
+            lighttableController.getImageView().setImage(null);            
+            changeStackPosition(1, selectedCell.getItem());
+        }
     }
 
     void orderOneDownButtonAction(ActionEvent t) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (selectedCell != null) {
+            lighttableController.getImageView().setImage(null);
+            changeStackPosition(sortedMediaList.indexOf(selectedCell.getItem())+2, selectedCell.getItem());
+        }
     }
 
     void orderOneUpButtonAction(ActionEvent t) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (selectedCell != null) {
+            lighttableController.getImageView().setImage(null);
+            changeStackPosition(sortedMediaList.indexOf(selectedCell.getItem()), selectedCell.getItem());
+        }
     }
 
     void orderToTheButtomButtonAction(ActionEvent t) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (selectedCell != null) {
+            lighttableController.getImageView().setImage(null);
+            changeStackPosition(sortedMediaList.size(), selectedCell.getItem());
+        }
+    }
+
+    /**
+     * method to change the positon inside of the fullMediaList
+     *
+     * @param newPos the new position where the item should be moved
+     * @param mediaFileToBeChanged the mediafile which should be moved
+     */
+    private void changeStackPosition(int newPos, MediaFile mediaFileToBeChanged) {
+        if (mediaFileToBeChanged == null) {
+            return;
+        }
+        MediaFile actuaMediaFile = sortedMediaList.get(newPos - 1);
+        MediaFile selectedMediaFile = sortedMediaList.get(sortedMediaList.indexOf(mediaFileToBeChanged));
+        int actStackPos = selectedMediaFile.getStackPos();
+        selectedMediaFile.setStackPos(newPos);
+        actuaMediaFile.setStackPos(actStackPos);
+        if (selectedMediaFile.getStackPos() == 1) {
+            selectedMediaFile.setSelected(true);
+        } else {
+            selectedMediaFile.setSelected(false);
+        }
+        if (actuaMediaFile.getStackPos() == 1) {
+            actuaMediaFile.setSelected(true);
+        } else {
+            actuaMediaFile.setSelected(false);
+        }
+        executor.submit(() -> {
+            selectedMediaFile.saveEdits();
+            actuaMediaFile.saveEdits();
+        });
+        sortedMediaList.setComparator(stackNameComparator);
+        lighttableController.updateSortFiltering();
+        Platform.runLater(() -> {
+            ObservableList<MediaFile> fullMediaList = lighttableController.getFullMediaList();
+            fullMediaList.set(fullMediaList.indexOf(selectedMediaFile), selectedMediaFile);
+        });
     }
 
 }

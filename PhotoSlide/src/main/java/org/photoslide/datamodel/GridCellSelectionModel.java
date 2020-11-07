@@ -23,7 +23,7 @@ public class GridCellSelectionModel {
 
     public void add(Node node) {
         selection.add(node);
-        ((MediaFile) node).setSeleted(true);
+        ((MediaFile) node).setSelected(true);
     }
 
     public int selectionCount() {
@@ -32,7 +32,7 @@ public class GridCellSelectionModel {
 
     public void remove(Node node) {
         selection.remove(node);
-        ((MediaFile) node).setSeleted(false);
+        ((MediaFile) node).setSelected(false);
     }
 
     public void clear() {
@@ -40,7 +40,7 @@ public class GridCellSelectionModel {
             Iterator iter = selection.iterator();
             while (iter.hasNext()) {
                 MediaFile selCell = (MediaFile) iter.next();
-                selCell.setSeleted(false);                
+                selCell.setSelected(false);                
             }
             selection.clear();
         }

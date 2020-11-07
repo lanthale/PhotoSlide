@@ -162,12 +162,7 @@ public class MediaFile extends StackPane {
                 hb.getChildren().add(starIcon);
             }
             vb.getChildren().add(hb);
-            if (stacked.get() == true && stackPos.get() == 1) {
-                this.getChildren().add(vb);
-            }
-            if (stacked.get() == false) {
-                this.getChildren().add(vb);
-            }
+            this.getChildren().add(vb);            
         }
     }
 
@@ -492,7 +487,7 @@ public class MediaFile extends StackPane {
         return selected.get();
     }
 
-    public void setSeleted(boolean selected) {
+    public void setSelected(boolean selected) {
         this.selected.set(selected);
     }
 

@@ -5,11 +5,8 @@
  */
 package org.photoslide.datamodel;
 
-import javafx.scene.Node;
-import javafx.scene.paint.Color;
 import org.photoslide.datamodel.MediaFile;
 import org.controlsfx.control.GridCell;
-import org.controlsfx.tools.Borders;
 
 /**
  *
@@ -44,7 +41,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setManaged(item.isManaged());
             mediaFile.setName(item.getName());
             mediaFile.setDeleted(item.isDeleted());
-            mediaFile.setSeleted(item.isSelected());
+            mediaFile.setSelected(item.isSelected());
             mediaFile.setRating(item.getRatingProperty().get());
             mediaFile.setRotationAngle(item.getRotationAngleProperty().get());
             mediaFile.setCropView(item.getCropView());

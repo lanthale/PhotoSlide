@@ -11,6 +11,7 @@ import org.photoslide.MainViewController;
 import org.photoslide.datamodel.MediaFile;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
@@ -26,9 +27,11 @@ public class MediaLoadingTask extends Task<Boolean> {
     private final ObservableList<MediaFile> list;
     private final MainViewController mainController;
     private final GridView<MediaFile> imageGrid;
+    private final SortedList<MediaFile> sortedList;
 
-    public MediaLoadingTask(ObservableList<MediaFile> listParam, MainViewController mainControllerParam, GridView<MediaFile> imageGridParam) {
+    public MediaLoadingTask(ObservableList<MediaFile> listParam, SortedList<MediaFile> sortParam, MainViewController mainControllerParam, GridView<MediaFile> imageGridParam) {
         this.list = listParam;
+        this.sortedList=sortParam;
         this.mainController = mainControllerParam;
         this.imageGrid = imageGridParam;
     }

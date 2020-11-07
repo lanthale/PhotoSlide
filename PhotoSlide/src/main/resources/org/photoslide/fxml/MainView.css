@@ -211,17 +211,28 @@
     -fx-max-height: 130;        
 }
 
+#MediaGridCellStacked, #MediaGridCellSelectedStacked {
+    -fx-background-color: rgb(80, 80, 80); 
+    -fx-background-radius: 5; 
+    -fx-border-radius: 5; 
+    -fx-border-width: 0; 
+    -fx-padding: 10; 
+    -fx-pref-width: 145;         
+    -fx-pref-height: 130;
+    -fx-max-width: 145;
+    -fx-max-height: 130;        
+}
+
 #MediaGridCell:hover {
     -fx-background-color:rgb(100, 100, 100);
 }
 
-#MediaGridCellSelected {
-    -fx-background-color:white;      
+#MediaGridCellSelectedStackedDetails {
+    -fx-background-color:orange;      
 }
 
-#StackedRectangle {
-    -fx-fill: transparent;
-    -fx-stroke: orange;
+#MediaGridCellSelected, #MediaGridCellSelectedStacked {
+    -fx-background-color:white;      
 }
 
 #MediaLoadingProgressIndicator{

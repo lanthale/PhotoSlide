@@ -21,7 +21,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -29,7 +28,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Group;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -41,11 +41,10 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.Paint;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Rectangle;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.lighttable.MediaGridCellFactory;
 
 /**
  *
@@ -60,6 +59,7 @@ public class MediaFile extends StackPane {
     private final MediaView mediaview;
     private final ImageView imageView;
     private FontIcon dummyIcon;
+    private MediaGridCellFactory factory;
 
     private String name;
     private Path pathStorage;
@@ -75,6 +75,8 @@ public class MediaFile extends StackPane {
     private final SimpleIntegerProperty stackPos;
     private final SimpleBooleanProperty stacked;
     private FileTime creationTime;
+    private final FontIcon layerIcon;
+    private FontIcon restoreIcon;
 
     public enum MediaTypes {
         IMAGE,
@@ -96,6 +98,8 @@ public class MediaFile extends StackPane {
         stackName = new SimpleStringProperty();
         stackPos = new SimpleIntegerProperty(-1);
         stacked = new SimpleBooleanProperty(false);
+        layerIcon = new FontIcon("ti-view-grid");
+        restoreIcon = new FontIcon("ti-back-right:22");
         deleted.addListener((ov, t, t1) -> {
             mediaEdited = true;
         });
@@ -140,7 +144,6 @@ public class MediaFile extends StackPane {
     }
 
     private void setDeletedNode() {
-        FontIcon restoreIcon = new FontIcon("ti-back-right:22");
         VBox v = new VBox();
         v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         this.getChildren().add(v);
@@ -150,9 +153,7 @@ public class MediaFile extends StackPane {
     private void setRatingNode() {
         if (rating.getValue() > 0) {
             VBox vb = new VBox();
-            vb.setAlignment(Pos.BOTTOM_RIGHT);
-            Stop[] stops = {new Stop(0, Color.valueOf("#f8f542")), new Stop(1, Color.valueOf("#c2b326"))};
-            RadialGradient gradient = new RadialGradient(0, 0.0, 0, 0, 0.5, true, CycleMethod.NO_CYCLE, stops);
+            vb.setAlignment(Pos.BOTTOM_RIGHT);                        
             HBox hb = new HBox();
             hb.setPadding(new Insets(40, 0, 0, 0));
             for (int i = 0; i < rating.getValue(); i++) {
@@ -161,21 +162,26 @@ public class MediaFile extends StackPane {
                 hb.getChildren().add(starIcon);
             }
             vb.getChildren().add(hb);
-            this.getChildren().add(vb);
+            if (stacked.get() == true && stackPos.get() == 1) {
+                this.getChildren().add(vb);
+            }
+            if (stacked.get() == false) {
+                this.getChildren().add(vb);
+            }
         }
     }
-    
+
     private void setStacked() {
-        if (stacked.get() == true) {  
-            VBox vb = new VBox();
-            vb.setAlignment(Pos.BOTTOM_RIGHT);            
-            FontIcon layerIcon=new FontIcon("ti-layers-alt");
-            layerIcon.setIconColor(Color.ORANGE);
-            layerIcon.setIconSize(40);
+        VBox vb = new VBox();
+        if (stacked.get() == true && stackPos.get() == 1) {            
+            vb.setAlignment(Pos.BOTTOM_RIGHT);
+            vb.setPadding(new Insets(0, -3, -5, 0));
             vb.getChildren().add(layerIcon);
             this.getChildren().add(vb);
+        } else {
+            this.getChildren().remove(vb);
         }
-    }
+    }    
 
     public Image getImage() {
         return image;
@@ -190,15 +196,14 @@ public class MediaFile extends StackPane {
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);
             this.getChildren().clear();
-            this.getChildren().add(imageView);
-            //setStacked();
+            this.getChildren().add(imageView);            
             setRatingNode();
+            setStacked();
             if (deleted.getValue() == true) {
                 setDeletedNode();
             }
         }
     }
-    
 
     public Media getMedia() {
         return media;
@@ -521,7 +526,11 @@ public class MediaFile extends StackPane {
     }
 
     public String getStackName() {
-        return stackName.get();
+        if (stackName.get() == null) {
+            return "";
+        } else {
+            return stackName.get();
+        }
     }
 
     public void setStackName(String name) {
@@ -542,6 +551,10 @@ public class MediaFile extends StackPane {
 
     public void setStacked(boolean stValue) {
         this.stacked.set(stValue);
+    }
+
+    public void setFactory(MediaGridCellFactory factory) {
+        this.factory = factory;
     }
 
 }

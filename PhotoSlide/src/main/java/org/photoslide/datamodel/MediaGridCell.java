@@ -55,9 +55,17 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setStackPos(item.getStackPos());
             mediaFile.setStacked(item.isStacked());
             if (mediaFile.isSelected() == true) {
-                this.setId("MediaGridCellSelected");                
+                if (mediaFile.isStacked()) {
+                    this.setId("MediaGridCellSelectedStacked");
+                } else {
+                    this.setId("MediaGridCellSelected");
+                }
             } else {
-                this.setId("MediaGridCell");                
+                if (mediaFile.isStacked()) {
+                    this.setId("MediaGridCellStacked");
+                } else {
+                    this.setId("MediaGridCell");
+                }
             }
             switch (item.getMediaType()) {
                 case VIDEO:

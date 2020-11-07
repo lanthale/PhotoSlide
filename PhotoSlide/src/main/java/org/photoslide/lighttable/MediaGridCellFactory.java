@@ -13,32 +13,43 @@ import org.photoslide.metadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.event.Event;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
+import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
@@ -170,6 +181,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void handleGridCellSelection(Event t) {
+        Node target = Utility.pick((MediaFile) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
+        if (target.getClass().equals(FontIcon.class)) {
+            handleStackButtonAction(((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
+        }
+        if (selectedCell == t.getSource()) {
+            return;
+        }
         setStdGUIState();
 
         if (selectionModel.selectionCount() > 1) {
@@ -202,7 +220,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if (selectedMediaItem.isMediaEdited() == true) {
                 executor.submit(() -> {
                     selectedMediaItem.saveEdits();
-                });                
+                });
             }
         }
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
@@ -491,6 +509,86 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         return null;
+    }
+
+    public void handleStackButtonAction(String stackName, Node anchore) {        
+        FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
+        SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
+        Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
+        sortedMediaList.setComparator(stackNameComparator);
+        GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
+        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(lightController, sortedMediaList);
+        imageGrid.setCellFactory(factory);
+        double defaultCellWidth = imageGrid.getCellWidth();
+        double defaultCellHight = imageGrid.getCellHeight();
+        imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
+        imageGrid.setCellHeight(defaultCellHight + 3 * 20);        
+        PopOver popOver = new PopOver();
+        popOver.setDetachable(false);
+        popOver.setAnimated(true);
+        VBox vbox = new VBox();
+        vbox.setSpacing(5);
+        HBox hb = new HBox();
+        hb.setSpacing(5);
+        hb.setAlignment(Pos.CENTER);
+        hb.setPadding(new Insets(5, 0, 0, 0));
+        Button setFrontImageButton = new Button("To the Top");
+        FontIcon setFrontImageIcon = new FontIcon("ti-check-box");
+        setFrontImageButton.setId("toolbutton");
+        setFrontImageButton.setGraphic(setFrontImageIcon);
+        setFrontImageButton.setOnAction((t) -> {
+            factory.setOnFrontImageButtonAction(t);
+        });
+        Button orderOneDownButton = new Button("One down");
+        FontIcon orderOneDownIcon = new FontIcon("ti-arrow-down");
+        orderOneDownButton.setId("toolbutton");
+        orderOneDownButton.setGraphic(orderOneDownIcon);
+        orderOneDownButton.setOnAction((t) -> {
+            factory.orderOneDownButtonAction(t);
+        });
+        Button orderOneUpButton = new Button("One up");
+        FontIcon orderOneUpIcon = new FontIcon("ti-arrow-up");
+        orderOneUpButton.setId("toolbutton");
+        orderOneUpButton.setGraphic(orderOneUpIcon);
+        orderOneUpButton.setOnAction((t) -> {
+            factory.orderOneUpButtonAction(t);
+        });
+        Button orderToTheButtomButton = new Button("To the buttom");
+        FontIcon orderToTheButtomIcon = new FontIcon("ti-angle-double-down");
+        orderToTheButtomButton.setId("toolbutton");
+        orderToTheButtomButton.setGraphic(orderToTheButtomIcon);
+        orderToTheButtomButton.setOnAction((t) -> {
+            factory.orderToTheButtomButtonAction(t);
+        });
+        hb.getChildren().add(setFrontImageButton);
+        hb.getChildren().add(orderOneDownButton);
+        hb.getChildren().add(orderOneUpButton);
+        hb.getChildren().add(orderToTheButtomButton);
+        Slider zoomSlider=new Slider(0, 100, 20);
+        zoomSlider.setScaleX(0.7);
+        zoomSlider.setScaleY(0.7);
+        zoomSlider.setOrientation(Orientation.HORIZONTAL);
+        zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
+            imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
+            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());            
+        });
+        hb.getChildren().add(zoomSlider);
+        vbox.getChildren().add(hb);
+        vbox.getChildren().add(imageGrid);
+        vbox.setAlignment(Pos.TOP_LEFT);
+        int width = sortedMediaList.size() * 95 * 2;
+        if (width > 600) {
+            width = 600;
+        }
+        vbox.setPrefSize(width, 130 + 3 * 20);
+        popOver.setContentNode(vbox);
+        popOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        popOver.setFadeInDuration(new Duration(1000));
+        popOver.setCloseButtonEnabled(true);
+        popOver.setAutoFix(true);
+        popOver.setHeaderAlwaysVisible(true);
+        popOver.setTitle("Stack view and ordering via drag and drop");
+        popOver.show(anchore);
     }
 
 }

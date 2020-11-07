@@ -251,7 +251,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbarLabel().textProperty().bind(taskEmtpy.messageProperty());
         });
-        taskEmtpy = new EmptyMediaLoadingTask(sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
+        taskEmtpy = new EmptyMediaLoadingTask(factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
         taskEmtpy.setOnSucceeded((WorkerStateEvent t) -> {
             List<MediaFile> filesystemList = (List<MediaFile>) t.getSource().getValue();
             fullMediaList.addAll(filesystemList);
@@ -270,7 +270,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
         });
-        task = new MediaLoadingTask(fullMediaList, mainController, imageGrid);
+        task = new MediaLoadingTask(fullMediaList, sortedMediaList, mainController, imageGrid);
         task.setOnSucceeded((WorkerStateEvent t) -> {
             sortOrderComboBox.setDisable(false);
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -916,6 +916,10 @@ public class LighttableController implements Initializable {
 
     public Button getPasteButton() {
         return pasteButton;
+    }
+    
+    public void updateSortFiltering(){
+        filteredMediaList.setPredicate(standardFilter());
     }
     
     

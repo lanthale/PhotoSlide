@@ -34,13 +34,15 @@ public class EmptyMediaLoadingTask extends Task<List<MediaFile>> {
     private final MainViewController mainController;
     private final String sort;
     private final MetadataController metadataController;
+    private final MediaGridCellFactory factory;
 
-    public EmptyMediaLoadingTask(Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
+    public EmptyMediaLoadingTask(MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
         sort = sortParm;
         metadataController = metaControllerParam;
+        this.factory = factory;
     }
 
     @Override
@@ -75,6 +77,7 @@ public class EmptyMediaLoadingTask extends Task<List<MediaFile>> {
                     if (Files.isDirectory(fileItem) == false) {
                         if (FileTypes.isValidType(fileItem.toString())) {
                             MediaFile m = new MediaFile();
+                            m.setFactory(factory);
                             m.setName(fileItem.toString());
                             m.setPathStorage(fileItem);
                             m.readEdits();

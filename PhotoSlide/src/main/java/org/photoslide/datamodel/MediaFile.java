@@ -58,8 +58,7 @@ public class MediaFile extends StackPane {
     private MediaPlayer mediaPlayer;
     private final MediaView mediaview;
     private final ImageView imageView;
-    private FontIcon dummyIcon;
-    private MediaGridCellFactory factory;
+    private FontIcon dummyIcon;    
 
     private String name;
     private Path pathStorage;
@@ -546,10 +545,6 @@ public class MediaFile extends StackPane {
 
     public void setStacked(boolean stValue) {
         this.stacked.set(stValue);
-    }
-
-    public void setFactory(MediaGridCellFactory factory) {
-        this.factory = factory;
-    }
+    }    
 
 }

@@ -76,8 +76,7 @@ public class EmptyMediaLoadingTask extends Task<List<MediaFile>> {
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
                         if (FileTypes.isValidType(fileItem.toString())) {
-                            MediaFile m = new MediaFile();
-                            m.setFactory(factory);
+                            MediaFile m = new MediaFile();                            
                             m.setName(fileItem.toString());
                             m.setPathStorage(fileItem);
                             m.readEdits();

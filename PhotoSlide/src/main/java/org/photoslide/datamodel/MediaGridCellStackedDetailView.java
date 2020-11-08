@@ -5,18 +5,17 @@
  */
 package org.photoslide.datamodel;
 
-import org.photoslide.datamodel.MediaFile;
 import org.controlsfx.control.GridCell;
 
 /**
  *
  * @author selfemp
  */
-public class MediaGridCell extends GridCell<MediaFile> {
+public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
 
     private final MediaFile mediaFile;
 
-    public MediaGridCell() {
+    public MediaGridCellStackedDetailView() {
         this.setId("MediaGridCell");
         mediaFile = new MediaFile();
         managedProperty().bind(mediaFile.managedProperty());
@@ -50,31 +49,19 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setCreationTime(item.getCreationTime());
             mediaFile.setStackName(item.getStackName());
             mediaFile.setStackPos(item.getStackPos());
-            mediaFile.setStacked(item.isStacked());            
-            if (mediaFile.isSelected() == true) {
-                if (mediaFile.isStacked()) {
-                    this.setId("MediaGridCellSelectedStacked");
-                } else {
-                    this.setId("MediaGridCellSelected");
-                }
-            } else {
-                if (mediaFile.isStacked()) {
-                    this.setId("MediaGridCellStacked");
-                } else {
-                    this.setId("MediaGridCell");
-                }
-            }
+            mediaFile.setStacked(item.isStacked());
+            this.setId("MediaGridCellStackedDetails");            
             switch (item.getMediaType()) {
-                case VIDEO:
+                case VIDEO -> {
                     mediaFile.setMedia(item.getMedia(), item.getVideoSupported());
                     setGraphic(mediaFile);
-                    break;
-                case IMAGE:
+                }
+                case IMAGE -> {
                     mediaFile.setImage(item.getImage());
                     setGraphic(mediaFile);
-                    break;
-                default:
-                    break;
+                }
+                default -> {
+                }
             }
         }
     }

@@ -72,16 +72,16 @@
 }
 
 .context-menu {
-  -fx-background-color: rgb(80, 80, 80);
-  -fx-text-fill: #9f9f9f;
+    -fx-background-color: rgb(80, 80, 80);
+    -fx-text-fill: #9f9f9f;
 }
 
 .menu-item .label {
-  -fx-text-fill: #9f9f9f;
+    -fx-text-fill: #9f9f9f;
 }
 
 .menu-item:focused .label {
-  -fx-text-fill: white;
+    -fx-text-fill: white;
 }
 
 .menu-button > .arrow-button {
@@ -199,7 +199,7 @@
     -fx-border-color: white;
 }
 
-#MediaGridCell, #MediaGridCellSelected {
+#MediaGridCell, #MediaGridCellSelected, #MediaGridCellStackedDetails {
     -fx-background-color: rgb(80, 80, 80); 
     -fx-background-radius: 5; 
     -fx-border-radius: 5; 
@@ -227,6 +227,19 @@
 #MediaGridCell:hover {
     -fx-background-color:rgb(100, 100, 100);
 }
+
+#MediaGridCellStackedDetails {
+    -fx-background-color: rgb(80, 80, 80); 
+    -fx-background-radius: 5; 
+    -fx-border-radius: 5; 
+    -fx-border-width: 0; 
+    -fx-padding: 10; 
+    -fx-pref-width: 145;         
+    -fx-pref-height: 130;
+    -fx-max-width: 145;
+    -fx-max-height: 130;        
+}
+
 
 #MediaGridCellSelectedStackedDetails {
     -fx-background-color:orange;      
@@ -263,8 +276,12 @@
 }
 
 .popover > .content {
-    -fx-background-color: #9f9f9f; 
+    -fx-background-color: rgb(60,60,60); 
     -fx-padding: 5;    
+}
+
+.popover > .content > .titlePane > .content > .title > .text {
+    -fx-text-fill:red;
 }
 
 .dialog {

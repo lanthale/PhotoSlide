@@ -515,7 +515,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        sortedMediaList.setComparator(stackNameComparator);
+        sortedMediaList.setComparator(stackNameComparator);        
         GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
         MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(this, executor, lightController, sortedMediaList);
         imageGrid.setCellFactory(factory);
@@ -590,10 +590,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         popOver.setTitle("Stack view and ordering via drag and drop");
         popOver.show(anchore);
         popOver.setOnHidden((t) -> {
-            //fire mousevent
-            selectedCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
-                    0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
-                    false, false, false, false, false, true, null));
+            if (factory.isChanged()) {                
+                //fire mousevent
+                selectedCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                        0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                        false, false, false, false, false, true, null));
+            }
         });
     }
 

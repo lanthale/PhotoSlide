@@ -545,6 +545,6 @@ public class MediaFile extends StackPane {
 
     public void setStacked(boolean stValue) {
         this.stacked.set(stValue);
-    }    
+    }       
 
 }

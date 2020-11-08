@@ -18,6 +18,7 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaGridCell;
+import org.photoslide.datamodel.MediaGridCellStackedDetailView;
 
 /**
  *
@@ -26,23 +27,25 @@ import org.photoslide.datamodel.MediaGridCell;
 public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>, GridCell<MediaFile>> {
 
     private final SortedList<MediaFile> sortedMediaList;
-    private MediaGridCell selectedCell;
+    private MediaGridCellStackedDetailView selectedCell;
     private final LighttableController lighttableController;
     private Comparator<MediaFile> stackNameComparator;
     private final MediaGridCellFactory fullMediaListFactory;
     private final ExecutorService executor;
+    private boolean changed;
 
     public MediaGridCellStackedFactory(MediaGridCellFactory fullMediaListFactory, ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         this.executor = executor;
-        this.fullMediaListFactory=fullMediaListFactory;
+        this.fullMediaListFactory = fullMediaListFactory;
+        changed = false;
     }
 
     @Override
     public GridCell<MediaFile> call(GridView<MediaFile> p) {
-        MediaGridCell cell = new MediaGridCell();
+        MediaGridCellStackedDetailView cell = new MediaGridCellStackedDetailView();
         cell.setAlignment(Pos.CENTER);
         cell.setEditable(false);
         cell.setOnMouseClicked((t) -> {
@@ -54,7 +57,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         return cell;
     }
 
-    private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
+    private void manageGUISelection(MouseEvent t, MediaGridCellStackedDetailView cell) {
         /*sortedMediaList.forEach((mFile) -> {
             mFile.setId("MediaGridCellStacked");
         });*/
@@ -66,17 +69,19 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
 
     }
 
-    void setOnFrontImageButtonAction(ActionEvent t) {        
+    void setOnFrontImageButtonAction(ActionEvent t) {
         if (selectedCell != null) {
-            lighttableController.getImageView().setImage(null);            
+            lighttableController.getImageView().setImage(null);
             changeStackPosition(1, selectedCell.getItem());
+            changed = true;
         }
     }
 
     void orderOneDownButtonAction(ActionEvent t) {
         if (selectedCell != null) {
             lighttableController.getImageView().setImage(null);
-            changeStackPosition(sortedMediaList.indexOf(selectedCell.getItem())+2, selectedCell.getItem());
+            changeStackPosition(sortedMediaList.indexOf(selectedCell.getItem()) + 2, selectedCell.getItem());
+            changed = true;
         }
     }
 
@@ -84,6 +89,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         if (selectedCell != null) {
             lighttableController.getImageView().setImage(null);
             changeStackPosition(sortedMediaList.indexOf(selectedCell.getItem()), selectedCell.getItem());
+            changed = true;
         }
     }
 
@@ -91,6 +97,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         if (selectedCell != null) {
             lighttableController.getImageView().setImage(null);
             changeStackPosition(sortedMediaList.size(), selectedCell.getItem());
+            changed = true;
         }
     }
 
@@ -130,5 +137,11 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
             fullMediaList.set(fullMediaList.indexOf(selectedMediaFile), selectedMediaFile);
         });
     }
+
+    public boolean isChanged() {
+        return changed;
+    }
+    
+    
 
 }

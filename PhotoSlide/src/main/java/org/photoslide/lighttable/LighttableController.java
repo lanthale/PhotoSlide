@@ -505,21 +505,36 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void stackButtonAction(ActionEvent event) {                        
-        String fileName = ((MediaFile)factory.getSelectionModel().getSelection().iterator().next()).getPathStorage().toFile().getName();
-        String stackName=fileName.substring(0, fileName.lastIndexOf("."));
-        AtomicInteger i=new AtomicInteger(0);
-        Iterator<Node> iterator = factory.getSelectionModel().getSelection().iterator();
-        while (iterator.hasNext()) {
-            MediaFile mediaF = (MediaFile) iterator.next();
-            ((MediaFile)mediaF).setStacked(true);
-            ((MediaFile)mediaF).setStackName(stackName);
-            ((MediaFile)mediaF).setStackPos(i.addAndGet(1));             
-            executor.submit(() -> {
-                ((MediaFile)mediaF).saveEdits();
+    private void stackButtonAction(ActionEvent event) {
+        if (stackButton.getText().equalsIgnoreCase("stack")) {
+            String fileName = ((MediaFile) factory.getSelectionModel().getSelection().iterator().next()).getPathStorage().toFile().getName();
+            String stackName = fileName.substring(0, fileName.lastIndexOf("."));
+            AtomicInteger i = new AtomicInteger(0);
+            Iterator<Node> iterator = factory.getSelectionModel().getSelection().iterator();
+            while (iterator.hasNext()) {
+                MediaFile mediaF = (MediaFile) iterator.next();
+                ((MediaFile) mediaF).setStacked(true);
+                ((MediaFile) mediaF).setStackName(stackName);
+                ((MediaFile) mediaF).setStackPos(i.addAndGet(1));
+                executor.submit(() -> {
+                    ((MediaFile) mediaF).saveEdits();
+                });
+            };
+            filteredMediaList.setPredicate(standardFilter());
+        } else {
+            String stackname=factory.getSelectedMediaItem().getStackName();
+            FilteredList<MediaFile> stackList = fullMediaList.filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackname));
+            stackList.forEach((mediaFile) -> {
+                mediaFile.setStackPos(-1);
+                mediaFile.setStackName(null);
+                mediaFile.setStacked(false);
+                executor.submit(() -> {
+                    ((MediaFile) mediaFile).saveEdits();
+                });
             });
-        };
-        filteredMediaList.setPredicate(standardFilter());
+            filteredMediaList.setPredicate(standardFilter());
+            stackButton.setText("Stack");
+        }
     }
 
     @FXML
@@ -881,7 +896,7 @@ public class LighttableController implements Initializable {
     private Predicate<MediaFile> baseFilter() {
         return mFile -> mFile.isStacked() == false;// || mFile.getStackPos() == 1;
     }
-    
+
     public Predicate<MediaFile> standardFilter() {
         return baseFilter().or(mFile -> mFile.getStackPos() == 1);
     }
@@ -917,12 +932,10 @@ public class LighttableController implements Initializable {
     public Button getPasteButton() {
         return pasteButton;
     }
-    
-    public void updateSortFiltering(){
+
+    public void updateSortFiltering() {
         filteredMediaList.setPredicate(standardFilter());
     }
-    
-    
 
     public void saveSettings() {
     }

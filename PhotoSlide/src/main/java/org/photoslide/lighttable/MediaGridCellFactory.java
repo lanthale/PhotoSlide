@@ -195,6 +195,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
             }
         }
+        if (((MediaGridCell) t.getSource()).getItem().isStacked()){
+            lightController.getStackButton().setText("Unstack");
+        } else {
+            lightController.getStackButton().setText("Stack");
+        }
         setStdGUIState();
 
         if (selectionModel.selectionCount() > 1) {

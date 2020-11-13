@@ -58,7 +58,7 @@ public class MediaFile extends StackPane {
     private MediaPlayer mediaPlayer;
     private final MediaView mediaview;
     private final ImageView imageView;
-    private FontIcon dummyIcon;    
+    private FontIcon dummyIcon;
 
     private String name;
     private Path pathStorage;
@@ -76,6 +76,7 @@ public class MediaFile extends StackPane {
     private FileTime creationTime;
     private final FontIcon layerIcon;
     private FontIcon restoreIcon;
+    private boolean subViewSelected;
 
     public enum MediaTypes {
         IMAGE,
@@ -92,6 +93,7 @@ public class MediaFile extends StackPane {
 
     public MediaFile() {
         mediaEdited = false;
+        subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
         stackName = new SimpleStringProperty();
@@ -152,7 +154,7 @@ public class MediaFile extends StackPane {
     private void setRatingNode() {
         if (rating.getValue() > 0) {
             VBox vb = new VBox();
-            vb.setAlignment(Pos.BOTTOM_RIGHT);                        
+            vb.setAlignment(Pos.BOTTOM_RIGHT);
             HBox hb = new HBox();
             hb.setPadding(new Insets(40, 0, 0, 0));
             for (int i = 0; i < rating.getValue(); i++) {
@@ -161,13 +163,13 @@ public class MediaFile extends StackPane {
                 hb.getChildren().add(starIcon);
             }
             vb.getChildren().add(hb);
-            this.getChildren().add(vb);            
+            this.getChildren().add(vb);
         }
     }
 
     private void setStacked() {
         VBox vb = new VBox();
-        if (stacked.get() == true && stackPos.get() == 1) {            
+        if (stacked.get() == true && stackPos.get() == 1) {
             vb.setAlignment(Pos.BOTTOM_RIGHT);
             vb.setPadding(new Insets(0, -3, -5, 0));
             vb.getChildren().add(layerIcon);
@@ -175,7 +177,7 @@ public class MediaFile extends StackPane {
         } else {
             this.getChildren().remove(vb);
         }
-    }    
+    }
 
     public Image getImage() {
         return image;
@@ -190,7 +192,7 @@ public class MediaFile extends StackPane {
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);
             this.getChildren().clear();
-            this.getChildren().add(imageView);            
+            this.getChildren().add(imageView);
             setRatingNode();
             setStacked();
             if (deleted.getValue() == true) {
@@ -545,6 +547,16 @@ public class MediaFile extends StackPane {
 
     public void setStacked(boolean stValue) {
         this.stacked.set(stValue);
-    }       
+    }
+
+    public boolean isSubViewSelected() {
+        return subViewSelected;
+    }
+
+    public void setSubViewSelected(boolean subViewSelected) {
+        this.subViewSelected = subViewSelected;
+    }
+    
+    
 
 }

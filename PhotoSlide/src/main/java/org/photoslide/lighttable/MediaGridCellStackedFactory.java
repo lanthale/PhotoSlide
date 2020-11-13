@@ -58,10 +58,11 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     }
 
     private void manageGUISelection(MouseEvent t, MediaGridCellStackedDetailView cell) {
-        /*sortedMediaList.forEach((mFile) -> {
-            mFile.setId("MediaGridCellStacked");
-        });*/
-        cell.setId("MediaGridCellSelectedStackedDetails");
+        sortedMediaList.forEach((mFile) -> {
+            mFile.setSubViewSelected(false);
+        });
+        cell.getItem().setSubViewSelected(true);
+        cell.requestLayout();
         selectedCell = cell;
     }
 

@@ -212,7 +212,7 @@
 }
 
 #MediaGridCellStacked, #MediaGridCellSelectedStacked {
-    -fx-background-color: rgb(80, 80, 80), rgb(90, 90, 90), rgb(100, 100, 100); 
+    -fx-background-color: rgb(60, 60, 60), rgb(70, 70, 70), rgb(80, 80, 80); 
     -fx-background-radius: 5; 
     -fx-border-radius: 5; 
     -fx-border-width: 0; 
@@ -228,7 +228,7 @@
     -fx-background-color:rgb(100, 100, 100);
 }
 
-#MediaGridCellStackedDetails {
+#MediaGridCellStackedDetails, #MediaGridCellSelectedStackedDetails {
     -fx-background-color: rgb(80, 80, 80); 
     -fx-background-radius: 5; 
     -fx-border-radius: 5; 
@@ -240,18 +240,23 @@
     -fx-max-height: 130;        
 }
 
+#MediaGridCellStacked:hover {
+    -fx-background-color:rgb(80, 80, 80), rgb(90, 90, 90), rgb(100, 100, 100);
+}
+
 
 #MediaGridCellSelectedStackedDetails {
-    -fx-background-color:orange;      
+    -fx-border-color: default-color;      
+    -fx-border-width: 2px;
 }
 
 #MediaGridCellSelectedStacked {
-    -fx-background-color:white,white,white;
+    -fx-background-color:derive(default-color, 40%),derive(default-color, 20%),default-color;
     -fx-background-insets: 8 -8 -8 8,4 -4 -4 4,0;
 }
 
 #MediaGridCellSelected {
-    -fx-background-color:white;      
+    -fx-background-color:default-color;      
 }
 
 #MediaLoadingProgressIndicator{

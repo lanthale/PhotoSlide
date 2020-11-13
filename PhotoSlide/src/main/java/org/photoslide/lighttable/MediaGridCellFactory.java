@@ -33,9 +33,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -186,6 +188,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             Node target = Utility.pick((MediaFile) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target.getClass().equals(FontIcon.class)) {
                 handleStackButtonAction(t, ((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
+                if (lightController.getImageView().getImage() != null) {
+                    if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
+                        return;
+                    }
+                }
             }
         }
         setStdGUIState();
@@ -515,7 +522,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        sortedMediaList.setComparator(stackNameComparator);        
+        sortedMediaList.setComparator(stackNameComparator);
         GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
         MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(this, executor, lightController, sortedMediaList);
         imageGrid.setCellFactory(factory);
@@ -532,31 +539,39 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         hb.setSpacing(5);
         hb.setAlignment(Pos.CENTER);
         hb.setPadding(new Insets(5, 0, 0, 0));
-        Button setFrontImageButton = new Button("To the Top");
-        FontIcon setFrontImageIcon = new FontIcon("ti-check-box");
+        Button setFrontImageButton = new Button();
+        FontIcon setFrontImageIcon = new FontIcon("ti-check-box:20");
         setFrontImageButton.setId("toolbutton");
+        setFrontImageButton.setTooltip(new Tooltip("To the Top"));
         setFrontImageButton.setGraphic(setFrontImageIcon);
+        setFrontImageButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         setFrontImageButton.setOnAction((t) -> {
             factory.setOnFrontImageButtonAction(t);
         });
-        Button orderOneDownButton = new Button("One down");
-        FontIcon orderOneDownIcon = new FontIcon("ti-arrow-down");
+        Button orderOneDownButton = new Button();
+        FontIcon orderOneDownIcon = new FontIcon("ti-arrow-down:20");
         orderOneDownButton.setId("toolbutton");
+        orderOneDownButton.setTooltip(new Tooltip("One down"));
         orderOneDownButton.setGraphic(orderOneDownIcon);
+        orderOneDownButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderOneDownButton.setOnAction((t) -> {
             factory.orderOneDownButtonAction(t);
         });
-        Button orderOneUpButton = new Button("One up");
-        FontIcon orderOneUpIcon = new FontIcon("ti-arrow-up");
+        Button orderOneUpButton = new Button();
+        FontIcon orderOneUpIcon = new FontIcon("ti-arrow-up:20");
         orderOneUpButton.setId("toolbutton");
+        orderOneUpButton.setTooltip(new Tooltip("One up"));
         orderOneUpButton.setGraphic(orderOneUpIcon);
+        orderOneUpButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderOneUpButton.setOnAction((t) -> {
             factory.orderOneUpButtonAction(t);
         });
-        Button orderToTheButtomButton = new Button("To the buttom");
-        FontIcon orderToTheButtomIcon = new FontIcon("ti-angle-double-down");
+        Button orderToTheButtomButton = new Button();
+        FontIcon orderToTheButtomIcon = new FontIcon("ti-angle-double-down:20");
         orderToTheButtomButton.setId("toolbutton");
+        orderToTheButtomButton.setTooltip(new Tooltip("To the buttom"));
         orderToTheButtomButton.setGraphic(orderToTheButtomIcon);
+        orderToTheButtomButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderToTheButtomButton.setOnAction((t) -> {
             factory.orderToTheButtomButtonAction(t);
         });
@@ -589,8 +604,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         popOver.setHeaderAlwaysVisible(true);
         popOver.setTitle("Stack view and ordering via drag and drop");
         popOver.show(anchore);
+        popOver.requestFocus();
         popOver.setOnHidden((t) -> {
-            if (factory.isChanged()) {                
+            if (factory.isChanged()) {
                 //fire mousevent
                 selectedCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,

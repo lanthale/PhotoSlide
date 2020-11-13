@@ -50,7 +50,12 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             mediaFile.setStackName(item.getStackName());
             mediaFile.setStackPos(item.getStackPos());
             mediaFile.setStacked(item.isStacked());
-            this.setId("MediaGridCellStackedDetails");            
+            mediaFile.setSubViewSelected(item.isSubViewSelected());
+            if (mediaFile.isSubViewSelected()) {
+                this.setId("MediaGridCellSelectedStackedDetails");
+            } else {
+                this.setId("MediaGridCellStackedDetails");
+            }
             switch (item.getMediaType()) {
                 case VIDEO -> {
                     mediaFile.setMedia(item.getMedia(), item.getVideoSupported());

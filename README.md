@@ -43,11 +43,12 @@ The software is not notarized with developer accounts on OSX/Windows.
 - Have as many places to store photos/videos as you want
 - Usage of multi threads for reading image information / editing and metadata support
 - Nicer icons with (iKonli)
-- Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
+- Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
+- Stacking of photos
 
 ## Missing features
 - View of all raw data format (using libdcraw)
-- Implement stacking of photos
+- ~~Implement stacking of photos~~
 - Implement search function
 - Implement face recognizion
 - Implement GPS including a map view

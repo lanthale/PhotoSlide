@@ -195,7 +195,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
             }
         }
-        if (((MediaGridCell) t.getSource()).getItem().isStacked()){
+        if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
             lightController.getStackButton().setText("Unstack");
         } else {
             lightController.getStackButton().setText("Stack");
@@ -529,7 +529,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         sortedMediaList.setComparator(stackNameComparator);
         GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
-        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(this, executor, lightController, sortedMediaList);
+        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(executor, lightController, sortedMediaList);
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();

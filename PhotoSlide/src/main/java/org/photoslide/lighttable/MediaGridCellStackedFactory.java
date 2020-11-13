@@ -17,7 +17,6 @@ import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaGridCellStackedDetailView;
 
 /**
@@ -29,17 +28,15 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     private final SortedList<MediaFile> sortedMediaList;
     private MediaGridCellStackedDetailView selectedCell;
     private final LighttableController lighttableController;
-    private Comparator<MediaFile> stackNameComparator;
-    private final MediaGridCellFactory fullMediaListFactory;
+    private final Comparator<MediaFile> stackNameComparator;    
     private final ExecutorService executor;
     private boolean changed;
 
-    public MediaGridCellStackedFactory(MediaGridCellFactory fullMediaListFactory, ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellStackedFactory(ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        this.executor = executor;
-        this.fullMediaListFactory = fullMediaListFactory;
+        this.executor = executor;        
         changed = false;
     }
 

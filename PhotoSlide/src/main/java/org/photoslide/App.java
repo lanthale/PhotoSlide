@@ -73,8 +73,12 @@ public class App extends Application {
         if (dbFile.exists() == false) {
             initDB();
         } else {
-            Class.forName("org.h2.Driver");
-            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+            try {
+                Class.forName("org.h2.Driver");
+                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+            } catch (ClassNotFoundException | SQLException e) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
+            }
         }
         notifyPreloader(new ProgressNotification(0.6));
         setDefaultTIFFCodec();

@@ -59,7 +59,7 @@ public class SearchIndex {
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
                                 m.setName(fileItem.toString());
-                                m.setPathStorage(fileItem);                                
+                                m.setPathStorage(fileItem);
                                 if (checkIfIndexed(m) == false) {
                                     m.readEdits();
                                     m.getCreationTime();
@@ -131,6 +131,9 @@ public class SearchIndex {
     }
 
     public void insertMediaFileIntoSearchDB(MediaFile m) {
+        if (App.getSearchDBConnection() == null) {
+            return;
+        }
         try {
             String name = "'" + m.getName() + "'";
             String path = "'" + m.getPathStorage().toString() + "'";
@@ -164,6 +167,9 @@ public class SearchIndex {
     }
 
     public void updateMediaFileIntoSearchDB(MediaFile m) {
+        if (App.getSearchDBConnection() == null) {
+            return;
+        }
         if (checkIfIndexed(m) == false) {
             insertMediaFileIntoSearchDB(m);
         } else {
@@ -190,10 +196,10 @@ public class SearchIndex {
                     strb.append("RATING=").append(m.getRatingProperty().getValue()).append(",");
                 }
                 String stm = strb.toString();
-                if (stm.lastIndexOf(",")==stm.length()-1){
-                    stm=stm.substring(0,stm.length()-1);
+                if (stm.lastIndexOf(",") == stm.length() - 1) {
+                    stm = stm.substring(0, stm.length() - 1);
                 }
-                stm=stm+" WHERE NAME="+"'"+m.getName()+"'"+" AND PATHSTORAGE="+"'"+m.getPathStorage().toString()+"'";                
+                stm = stm + " WHERE NAME=" + "'" + m.getName() + "'" + " AND PATHSTORAGE=" + "'" + m.getPathStorage().toString() + "'";
                 Statement indexStatment = App.getSearchDBConnection().createStatement();
                 indexStatment.execute(stm);
             } catch (SQLException ex) {
@@ -203,6 +209,9 @@ public class SearchIndex {
     }
 
     public void removeMediaFileInSearchDB(String name) {
+        if (App.getSearchDBConnection() == null) {
+            return;
+        }
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();
             String stm = "DELETE FROM MediaFiles where NAME='" + name + "'";
@@ -213,6 +222,9 @@ public class SearchIndex {
     }
 
     public boolean checkIfIndexed(MediaFile m) {
+        if (App.getSearchDBConnection() == null) {
+            return false;
+        }
         boolean ret = false;
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();

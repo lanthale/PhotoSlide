@@ -48,14 +48,18 @@ public class SearchIndex {
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
+                final Task runTask = this;
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                            if (runTask.isCancelled()) {
+                                return FileVisitResult.TERMINATE;
+                            }
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
                                 m.setName(fileItem.toString());
-                                m.setPathStorage(fileItem);
+                                m.setPathStorage(fileItem);                                
                                 if (checkIfIndexed(m) == false) {
                                     m.readEdits();
                                     m.getCreationTime();
@@ -85,7 +89,7 @@ public class SearchIndex {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {
-            Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Error creating searchIndexDB",t.getSource().getException());
+            Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Error creating searchIndexDB", t.getSource().getException());
         });
         executorParallel.submit(task);
 
@@ -96,10 +100,14 @@ public class SearchIndex {
         Task<Boolean> taskCheck = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
+                final Task runTask = this;
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
-                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {                            
+                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                            if (runTask.isCancelled()) {
+                                return FileVisitResult.TERMINATE;
+                            }
                             if (fileItem.toFile().exists() == false) {
                                 if (FileTypes.isValidType(fileItem.toString())) {
                                     //remove from index
@@ -122,7 +130,7 @@ public class SearchIndex {
         executorParallel.shutdownNow();
     }
 
-    private void insertMediaFileIntoSearchDB(MediaFile m) {
+    public void insertMediaFileIntoSearchDB(MediaFile m) {
         try {
             String name = "'" + m.getName() + "'";
             String path = "'" + m.getPathStorage().toString() + "'";
@@ -138,9 +146,14 @@ public class SearchIndex {
             if (m.getCameraProperty().get() != null) {
                 cam = "'" + m.getCameraProperty().get() + "'";
             }
-            //SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-            String creationTime = "ts '" + m.getCreationTime() + "'";
-            String recordTime = "ts '" + m.getRecordTime().format(DateTimeFormatter.ISO_DATE) + "'";
+            String creationTime = null;
+            if (m.getCreationTime() != null) {
+                creationTime = "ts '" + m.getCreationTime() + "'";
+            }
+            String recordTime = null;
+            if (m.getRecordTime() != null) {
+                recordTime = "ts '" + m.getRecordTime().format(DateTimeFormatter.ISO_DATE) + "'";
+            }
             int rating = m.getRatingProperty().getValue();
             Statement indexStatment = App.getSearchDBConnection().createStatement();
             String stm = "INSERT INTO MediaFiles VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + ")";
@@ -150,7 +163,46 @@ public class SearchIndex {
         }
     }
 
-    private void removeMediaFileInSearchDB(String name) {
+    public void updateMediaFileIntoSearchDB(MediaFile m) {
+        if (checkIfIndexed(m) == false) {
+            insertMediaFileIntoSearchDB(m);
+        } else {
+            try {
+                StringBuilder strb = new StringBuilder();
+                strb.append("UPDATE MediaFiles SET ");
+                if (m.getTitleProperty().get() != null) {
+                    strb.append("TITLE='").append(m.getTitleProperty().get()).append("',");
+                }
+                if (m.getKeywords() != null) {
+                    strb.append("KEYWORDS='").append(m.getKeywords()).append("',");
+                }
+                if (m.getCameraProperty().get() != null) {
+                    strb.append("CAMERA='").append(m.getCameraProperty().get()).append("',");
+                }
+                //SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");                
+                if (m.getCreationTime() != null) {
+                    strb.append("CREATIONTIME=ts '").append(m.getCreationTime()).append("',");
+                }
+                if (m.getRecordTime() != null) {
+                    strb.append("RECORDTIME=ts '").append(m.getRecordTime().format(DateTimeFormatter.ISO_DATE)).append("',");
+                }
+                if (m.getRatingProperty().getValue() > 0) {
+                    strb.append("RATING=").append(m.getRatingProperty().getValue()).append(",");
+                }
+                String stm = strb.toString();
+                if (stm.lastIndexOf(",")==stm.length()-1){
+                    stm=stm.substring(0,stm.length()-1);
+                }
+                stm=stm+" WHERE NAME="+"'"+m.getName()+"'"+" AND PATHSTORAGE="+"'"+m.getPathStorage().toString()+"'";                
+                Statement indexStatment = App.getSearchDBConnection().createStatement();
+                indexStatment.execute(stm);
+            } catch (SQLException ex) {
+                Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public void removeMediaFileInSearchDB(String name) {
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();
             String stm = "DELETE FROM MediaFiles where NAME='" + name + "'";
@@ -160,7 +212,7 @@ public class SearchIndex {
         }
     }
 
-    private boolean checkIfIndexed(MediaFile m) {
+    public boolean checkIfIndexed(MediaFile m) {
         boolean ret = false;
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();

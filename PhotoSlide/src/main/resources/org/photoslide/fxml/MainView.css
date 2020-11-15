@@ -251,12 +251,12 @@
 }
 
 #MediaGridCellSelectedStacked {
-    -fx-background-color:derive(default-color, 40%),derive(default-color, 20%),default-color;
+    -fx-background-color:derive(default-color, 60%),derive(default-color, 40%),derive(default-color, 20%);
     -fx-background-insets: 8 -8 -8 8,4 -4 -4 4,0;
 }
 
 #MediaGridCellSelected {
-    -fx-background-color:default-color;      
+    -fx-background-color:derive(default-color, 20%);      
 }
 
 #MediaLoadingProgressIndicator{

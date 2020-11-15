@@ -51,6 +51,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setStackName(item.getStackName());
             mediaFile.setStackPos(item.getStackPos());
             mediaFile.setStacked(item.isStacked());            
+            mediaFile.setKeywords(item.getKeywords());
             if (mediaFile.isSelected() == true) {
                 if (mediaFile.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");

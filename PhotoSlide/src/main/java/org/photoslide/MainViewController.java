@@ -444,4 +444,10 @@ public class MainViewController implements Initializable {
         metadataPaneController.restoreSettings();
     }
 
+    public MetadataController getMetadataPaneController() {
+        return metadataPaneController;
+    }
+    
+    
+
 }

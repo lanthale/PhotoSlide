@@ -81,12 +81,14 @@ public class CollectionsController implements Initializable {
     @FXML
     private MenuItem deleteMenu;
     private Image iconImage;
+    private SearchIndex searchIndexProcess;
 
     private enum ClipboardMode {
         CUT,
         COPY
     }
     private ExecutorService executor;
+    private ExecutorService executorParallel;
     private Utility util;
     private static final String NODE_NAME = "PhotoSlide";
     private Path selectedPath;
@@ -115,6 +117,7 @@ public class CollectionsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("collectionsController"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("collectionsControllerParallel"));
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();
@@ -125,6 +128,7 @@ public class CollectionsController implements Initializable {
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
+                searchIndexProcess = new SearchIndex(mainController.getMetadataPaneController());
                 loadURLs();
             }
         });
@@ -136,6 +140,8 @@ public class CollectionsController implements Initializable {
             protected Boolean call() throws Exception {
                 collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
                     loadDirectoryTree(t.getValue());
+                    searchIndexProcess.createSearchIndex(t.getValue());
+                    searchIndexProcess.checkSearchIndex(t.getValue());
                 });
                 return true;
             }
@@ -293,6 +299,10 @@ public class CollectionsController implements Initializable {
 
     public void Shutdown() {
         executor.shutdownNow();
+        executorParallel.shutdownNow();
+        if (searchIndexProcess != null) {
+            searchIndexProcess.shutdown();
+        }
     }
 
     @FXML
@@ -379,7 +389,7 @@ public class CollectionsController implements Initializable {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
             util.showError(this.accordionPane, "Cannot create directory tree", t.getSource().getException());
         });
-        executor.submit(task);
+        executorParallel.submit(task);
     }
 
     public Path getSelectedPath() {
@@ -684,6 +694,10 @@ public class CollectionsController implements Initializable {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    public LinkedHashMap<String, String> getCollectionStorage() {
+        return collectionStorage;
     }
 
 }

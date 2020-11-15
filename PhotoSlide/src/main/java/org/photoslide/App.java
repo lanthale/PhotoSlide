@@ -8,6 +8,11 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -21,6 +26,7 @@ import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ServiceRegistry;
+import org.h2.fulltext.FullText;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
@@ -31,6 +37,7 @@ import org.photoslide.pspreloader.PSPreloader;
 public class App extends Application {
 
     public static Scene scene;
+    private static Connection searchDBConnection;
     Parent root;
 
     private static final String WINDOW_POSITION_X = "Window_Position_X";
@@ -41,6 +48,7 @@ public class App extends Application {
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
     private static final double DEFAULT_HEIGHT = 750;
+    private static boolean SEARCHINDEXFINISHED = false;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
     private Image iconImage;
@@ -53,12 +61,21 @@ public class App extends Application {
     @Override
     public void init() throws Exception {
         super.init(); //To change body of generated methods, choose Tools | Templates.            
-        notifyPreloader(new ProgressNotification(0.1));
-        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainViewBrowser.fxml"));
         notifyPreloader(new ProgressNotification(0.2));
-        root = (Parent) fxmlLoader.load();
+
+        notifyPreloader(new ProgressNotification(0.3));
+        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainViewBrowser.fxml"));
         notifyPreloader(new ProgressNotification(0.4));
+        root = (Parent) fxmlLoader.load();
+        notifyPreloader(new ProgressNotification(0.5));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        File dbFile = new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB.mv.db");
+        if (dbFile.exists() == false) {
+            initDB();
+        } else {
+            Class.forName("org.h2.Driver");
+            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+        }
         notifyPreloader(new ProgressNotification(0.6));
         setDefaultTIFFCodec();
         notifyPreloader(new ProgressNotification(0.7));
@@ -94,6 +111,7 @@ public class App extends Application {
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());
         preferences.putDouble(WINDOW_WIDTH, stage.getWidth());
         preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());
+        preferences.putBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
         try {
             preferences.flush();
         } catch (BackingStoreException ex) {
@@ -109,6 +127,7 @@ public class App extends Application {
         double y = pref.getDouble(WINDOW_POSITION_Y, DEFAULT_Y);
         double width = pref.getDouble(WINDOW_WIDTH, DEFAULT_WIDTH);
         double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);
+        SEARCHINDEXFINISHED = pref.getBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
         stage.setX(x);
         stage.setY(y);
         stage.setWidth(width);
@@ -124,7 +143,6 @@ public class App extends Application {
             Handler handler = new FileHandler(logFile.getAbsolutePath(), 50000, 1, true);
             logger.addHandler(handler);
             logger.setLevel(Level.ALL);
-
             handler.setFormatter(new SimpleFormatter());
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
@@ -133,6 +151,39 @@ public class App extends Application {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    private void initDB() {
+        try {
+            //setup search database
+            Class.forName("org.h2.Driver");
+            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+            Statement stat = searchDBConnection.createStatement();
+            stat.execute("CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
+            stat.execute("CALL FT_INIT()");
+            FullText.setIgnoreList(searchDBConnection, "to,this");
+            FullText.setWhitespaceChars(searchDBConnection, " ,.-");
+            stat = searchDBConnection.createStatement();
+            //fulltext search
+            stat.execute("""
+                         CREATE TABLE IF NOT EXISTS
+                             "PUBLIC".MediaFiles
+                             (
+                                 name CHAR NOT NULL,
+                                 pathStorage CHAR NOT NULL,
+                                 title CHAR,
+                                 keywords CHAR,
+                                 camera CHAR,
+                                 rating INTEGER,
+                                 recordTime TIMESTAMP,
+                                 creationTime TIMESTAMP,
+                                 PRIMARY KEY (name, pathStorage)
+                             )""");
+
+            stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MediaFiles', NULL)");
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private void setDefaultTIFFCodec() {
@@ -150,6 +201,14 @@ public class App extends Application {
         } catch (ClassNotFoundException ignore) {
             return null;
         }
+    }
+
+    public static Connection getSearchDBConnection() {
+        return searchDBConnection;
+    }
+
+    public static void setSearchIndexFinished(boolean finished) {
+        SEARCHINDEXFINISHED = finished;
     }
 
 }

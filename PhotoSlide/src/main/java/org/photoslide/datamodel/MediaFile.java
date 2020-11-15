@@ -28,8 +28,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,12 +37,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.RadialGradient;
-import javafx.scene.paint.Stop;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.lighttable.MediaGridCellFactory;
 
 /**
  *
@@ -63,6 +56,7 @@ public class MediaFile extends StackPane {
     private String name;
     private Path pathStorage;
     private final SimpleStringProperty title;
+    private final SimpleStringProperty keywords;
     private final SimpleStringProperty camera;
     private final SimpleDoubleProperty rotationAngle;
     private final SimpleIntegerProperty rating;
@@ -106,6 +100,7 @@ public class MediaFile extends StackPane {
         });
         mediaType = MediaTypes.NONE;
         title = new SimpleStringProperty();
+        keywords = new SimpleStringProperty();
         camera = new SimpleStringProperty();
         rotationAngle = new SimpleDoubleProperty(0.0);
         rotationAngle.addListener((ov, t, t1) -> {
@@ -556,7 +551,13 @@ public class MediaFile extends StackPane {
     public void setSubViewSelected(boolean subViewSelected) {
         this.subViewSelected = subViewSelected;
     }
-    
-    
+
+    public void setKeywords(String keywords) {
+        this.keywords.set(keywords);
+    }
+
+    public String getKeywords() {
+        return this.keywords.get();
+    }
 
 }

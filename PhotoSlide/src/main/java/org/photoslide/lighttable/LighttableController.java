@@ -53,8 +53,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -160,6 +162,18 @@ public class LighttableController implements Initializable {
     @FXML
     private Button pasteButton;
     private Image dialogIcon;
+    @FXML
+    private ToggleButton showDeletedButton;
+    @FXML
+    private MenuItem fiveStarMenuFilter;
+    @FXML
+    private MenuItem fourStarMenuFilter;
+    @FXML
+    private MenuItem threeStarMenu;
+    @FXML
+    private MenuItem twoStarMenu;
+    @FXML
+    private MenuItem oneStarMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -941,6 +955,30 @@ public class LighttableController implements Initializable {
     }
 
     public void restoreSettings() {
+    }
+
+    @FXML
+    private void showDeletedButtonAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void fiveStarMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void fourStarMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void threeStarMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void twoStarMenuAction(ActionEvent event) {
+    }
+
+    @FXML
+    private void oneStarMenuAction(ActionEvent event) {
     }
 
 }

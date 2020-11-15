@@ -6,7 +6,7 @@
     <version>1.0-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>15.0.1</javafx.version>
+        <javafx.version>16-ea+4</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -359,10 +359,37 @@
                                     </artifact>                                    
                                     <moduleInfoSource>
                                         open module common.image {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-                                            exports com.twelvemonkeys.image;
+                                        exports com.twelvemonkeys.image;
                                         }
                                     </moduleInfoSource>
-                                </module>                                                                                                                                 
+                                </module> 
+                                <module>
+                                    <artifact>
+                                        <groupId>com.h2database</groupId>
+                                        <artifactId>h2</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module com.h2database {
+                                        requires java.compiler;
+                                        requires jdk.net;
+                                        requires org.slf4j;
+		
+                                        requires transitive java.desktop;
+                                        requires transitive java.instrument;
+                                        requires transitive java.logging;
+                                        requires transitive java.management;
+                                        requires transitive java.naming;
+                                        requires transitive java.scripting;
+                                        requires transitive java.sql;
+                                        requires transitive java.transaction.xa;
+                                        requires transitive java.xml;
+		
+                                        provides java.sql.Driver with
+                                        org.h2.Driver;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module>                                                                                                                                
                             </modules>                                                                             
                             <module>                                                                   
                                 <moduleInfo>
@@ -464,8 +491,7 @@
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-core</artifactId>
             <version>3.6</version>
-        </dependency>
-        
+        </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-lang</artifactId>
@@ -507,7 +533,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>2.0.0-alpha1</version>
         </dependency>
-                                                                                          
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.200</version>            
+        </dependency>                                                                                          
     </dependencies>
     
     <profiles>
@@ -624,7 +654,8 @@
                                         <module>common.lang</module>
                                         <module>java.datatransfer</module>
                                         <module>java.sql</module>
-                                        <module>org.slf4j</module>                                       
+                                        <module>org.slf4j</module>  
+                                        <module>com.h2database</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 

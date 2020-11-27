@@ -36,24 +36,36 @@ public class SearchIndex {
 
     private final MetadataController metadataController;
     private final ExecutorService executorParallel;
+    private Task<Void> task;
+    private Task<Void> taskCheck;
+    private boolean terminateFileWalk;
+    private boolean fileWalkRunning;
 
     public SearchIndex(MetadataController metc) {
         this.metadataController = metc;
+        fileWalkRunning = false;
+        terminateFileWalk = false;
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("searchIndexExecutor"));
     }
 
     public void createSearchIndex(String searchPath) {
         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
-        Task<Boolean> task = new Task<>() {
+        task = new Task<>() {
             @Override
-            protected Boolean call() throws Exception {
-                final Task runTask = this;
+            protected Void call() throws Exception {
+                if (task.isCancelled()) {
+                    return null;
+                }
+
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
-                            if (runTask.isCancelled()) {
+                            if (terminateFileWalk == true) {
+                                return FileVisitResult.TERMINATE;
+                            }
+                            if (task.isCancelled() == true) {
                                 return FileVisitResult.TERMINATE;
                             }
                             if (FileTypes.isValidType(fileItem.toString())) {
@@ -77,15 +89,15 @@ public class SearchIndex {
                             }
                             return super.visitFile(fileItem, attrs);
                         }
-                    });
+                    });                    
                 } catch (IOException ex) {
                     Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                return true;
+                return null;
             }
         };
         task.setOnSucceeded((t) -> {
-            App.setSearchIndexFinished(true);
+            //App.setSearchIndexFinished(true);
             Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {
@@ -93,19 +105,24 @@ public class SearchIndex {
         });
         executorParallel.submit(task);
 
-    }
+    }    
 
     public void checkSearchIndex(String searchPath) {
         PathItem pathItem = new PathItem(Paths.get(searchPath));
-        Task<Boolean> taskCheck = new Task<>() {
+        taskCheck = new Task<>() {
             @Override
-            protected Boolean call() throws Exception {
-                final Task runTask = this;
+            protected Void call() throws Exception {
+                if (taskCheck.isCancelled()) {
+                    return null;
+                }
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
-                            if (runTask.isCancelled()) {
+                            if (terminateFileWalk == true) {
+                                return FileVisitResult.TERMINATE;
+                            }
+                            if (taskCheck.isCancelled() == true) {
                                 return FileVisitResult.TERMINATE;
                             }
                             if (fileItem.toFile().exists() == false) {
@@ -120,13 +137,20 @@ public class SearchIndex {
                 } catch (IOException ex) {
                     Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                return true;
+                return null;
             }
         };
         executorParallel.submit(taskCheck);
     }
 
     public void shutdown() {
+        terminateFileWalk = true;
+        if (task != null) {
+            task.cancel();
+        }
+        if (taskCheck != null) {
+            taskCheck.cancel();
+        }
         executorParallel.shutdownNow();
     }
 

@@ -39,6 +39,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -380,11 +381,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().progressProperty().bind(img.progressProperty());
                             img.progressProperty().addListener((ov, t, t1) -> {
                                 if ((Double) t1 == 1.0 && !img.isError()) {
-                                    lightController.getImageProgress().setVisible(false);
+                                    lightController.getImageProgress().setVisible(false);                                    
                                 } else {
                                     lightController.getImageProgress().setVisible(true);
                                 }
-                            });
+                            });                            
                             lightController.getImageView().setImage(img);
                             lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 

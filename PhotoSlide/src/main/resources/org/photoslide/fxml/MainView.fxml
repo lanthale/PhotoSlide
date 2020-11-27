@@ -180,7 +180,7 @@
                               <Insets bottom="10.0" top="10.0" />
                            </padding>
                         </Separator>
-                                <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
+                                <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
@@ -237,9 +237,9 @@
         </HBox>
       <SplitPane dividerPositions="0.4, 0.6" prefWidth="1280.0" VBox.vgrow="ALWAYS">
          <items>
-            <fx:include fx:id="collectionsPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="50.0" source="Collections.fxml" />
-            <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="Lighttable.fxml" />
-            <fx:include fx:id="metadataPane" minWidth="50.0" source="Metadata.fxml" />
+            <fx:include fx:id="collectionsPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="50.0" source="BrowserCollections.fxml" />
+            <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="BrowserLighttable.fxml" />
+            <fx:include fx:id="metadataPane" minWidth="50.0" source="BrowserMetadata.fxml" />
          </items>
       </SplitPane>
         

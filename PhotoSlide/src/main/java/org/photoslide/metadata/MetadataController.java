@@ -57,10 +57,14 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
@@ -68,27 +72,31 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
 import org.photoslide.Utility;
+import org.photoslide.imageops.ExposureFilter;
+import org.photoslide.imageops.SampleFilter;
+import org.photoslide.imageops.SampleFilter2;
 
 /**
  *
  * @author selfemp
  */
 public class MetadataController implements Initializable {
-    
+
     private ExecutorService executor;
     private MainViewController mainController;
     private LighttableController lightController;
     private Collection<String> keywordList;
     private MediaFile actualMediaFile;
-    
+
     private JpegExif jpegExifdata;
     private IPTC iptcdata;
     private XMP xmpdata;
     private List<String> commentsdata;
-    
+
     @FXML
     private Accordion accordionPane;
     @FXML
@@ -109,7 +117,7 @@ public class MetadataController implements Initializable {
     private TextField recordDateField;
     @FXML
     private AnchorPane anchorKeywordPane;
-    
+
     private Task<Boolean> task;
     private KeywordChangeListener keywordsChangeListener;
     private CommentsChangeListener commentsChangeListener;
@@ -124,10 +132,18 @@ public class MetadataController implements Initializable {
     private VBox progressPane;
     @FXML
     private GridPane metaDataGrid;
-    
+    @FXML
+    private Slider apertureSlider;
+    private ExecutorService executorParallel;
+    private Image shownImage;
+    private SampleFilter greyFilter;
+    private SampleFilter2 greyFilter2;
+    private ExposureFilter exposerFilter;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("metaDataController"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("metaDataControllerParallel"));
         keywordList = FXCollections.observableArrayList();
         Platform.runLater(() -> {
             anchorKeywordPane.setDisable(true);
@@ -136,17 +152,28 @@ public class MetadataController implements Initializable {
         });
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
-        captionChangeListener = new CaptionChangeListener();
+        captionChangeListener = new CaptionChangeListener();        
+        apertureSlider.valueProperty().addListener((o) -> {
+            if (exposerFilter == null) {
+                lightController.getImageView().setCache(true);                                
+                exposerFilter = new ExposureFilter();
+                lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
+            }
+            double val = apertureSlider.getValue();
+            executorParallel.submit(() -> {                                
+                exposerFilter.filter((float)val);                
+            });
+        });
     }
-    
+
     public void injectMainController(MainViewController mainController) {
         this.mainController = mainController;
     }
-    
+
     public void injectLightController(LighttableController lightController) {
         this.lightController = lightController;
     }
-    
+
     public void setSelectedFile(MediaFile file) {
         actualMediaFile = file;
         resetGUI();
@@ -183,7 +210,7 @@ public class MetadataController implements Initializable {
         });
         executor.submit(task);
     }
-    
+
     public void readBasicMetadata(Task actTask) throws IOException {
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(actualMediaFile.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
@@ -288,7 +315,7 @@ public class MetadataController implements Initializable {
             }
         }
     }
-    
+
     private void updateUIWithExtendedMetadata() {
         AtomicInteger i = new AtomicInteger(1);
         Iterator<MetadataEntry> iterator;
@@ -343,10 +370,10 @@ public class MetadataController implements Initializable {
                 });
             }
         }
-        
+
         metaDataGrid.setDisable(false);
     }
-    
+
     public void resetGUI() {
         Platform.runLater(() -> {
             metaDataGrid.getChildren().clear();
@@ -364,8 +391,10 @@ public class MetadataController implements Initializable {
         recordDateField.clear();
         progressPane.setVisible(false);
         anchorKeywordPane.setDisable(true);
+        apertureSlider.setValue(1);
+        exposerFilter=null;
     }
-    
+
     @FXML
     private void addKeywordAction(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
@@ -382,39 +411,39 @@ public class MetadataController implements Initializable {
             addKeywordTextField.clear();
         }
     }
-    
+
     private void saveAction(ActionEvent event) {
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
         try {
             bout = new ByteArrayOutputStream();
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-            
+
             List<IPTCDataSet> iptcs = new ArrayList<>();
             StringTokenizer defaultTokenizer = new StringTokenizer(keywordText.getText(), ";");
-            
+
             while (defaultTokenizer.hasMoreTokens()) {
                 iptcs.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
             }
             iptcs.add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, captionTextField.getText()));
             Metadata.insertIPTC(fin, bout, iptcs, true);
-            
+
             fin.close();
             try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             bout.close();
-            
+
             bout = new ByteArrayOutputStream();
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-            
+
             Metadata.insertComment(fin, bout, commentText.getText());
-            
+
             fin.close();
             try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
-            
+
         } catch (IOException ex) {
             Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
@@ -428,7 +457,7 @@ public class MetadataController implements Initializable {
         }
         System.out.println("Save meta data");
     }
-    
+
     private void saveComments() {
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -442,9 +471,9 @@ public class MetadataController implements Initializable {
                 try {
                     bout = new ByteArrayOutputStream();
                     fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-                    
+
                     Metadata.insertComment(fin, bout, commentText.getText());
-                    
+
                     try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
@@ -488,7 +517,7 @@ public class MetadataController implements Initializable {
                 }
                 return null;
             }
-        };        
+        };
         taskKeywordsTitle.setOnSucceeded((t) -> {
             progressPane.setVisible(false);
             lightController.getTitleLabel().textProperty().unbind();
@@ -511,9 +540,9 @@ public class MetadataController implements Initializable {
         ByteArrayOutputStream bout = null;
         try {
             bout = new ByteArrayOutputStream();
-            
+
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-            
+
             if (iptcdata == null) {
                 iptcdata = new IPTC();
             }
@@ -524,16 +553,16 @@ public class MetadataController implements Initializable {
                 dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
             }
             keywordListLocal.clear();
-            
+
             StringTokenizer defaultTokenizer = new StringTokenizer(keywords, ";");
             while (defaultTokenizer.hasMoreTokens()) {
                 keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
-            }            
-            List<IPTCDataSet> objNameList = dataSets.get(IPTCApplicationTag.OBJECT_NAME);            
+            }
+            List<IPTCDataSet> objNameList = dataSets.get(IPTCApplicationTag.OBJECT_NAME);
             List<IPTCDataSet> captionList = dataSets.get(IPTCApplicationTag.CAPTION_ABSTRACT);
             if (captionList == null) {
                 captionList = new ArrayList<>();
-                dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);                
+                dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);
             }
             if (objNameList != null) {
                 objNameList.clear();
@@ -549,7 +578,7 @@ public class MetadataController implements Initializable {
                 dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);
             }
             captionList.add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, title));
-            
+
             List<IPTCDataSet> iptcs = new ArrayList<>();
             dataSets.entrySet().forEach((t) -> {
                 List<IPTCDataSet> tagValues = t.getValue();
@@ -557,7 +586,7 @@ public class MetadataController implements Initializable {
                     iptcs.add(tagValue);
                 });
             });
-            Metadata.insertIPTC(fin, bout, iptcs, false);            
+            Metadata.insertIPTC(fin, bout, iptcs, false);
             try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
@@ -574,7 +603,7 @@ public class MetadataController implements Initializable {
             }
         }
     }
-    
+
     @FXML
     private void applyKeywordsToAllAction(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Apply Caption/Title and keywords to all mediafiles in event\n" + this.actualMediaFile.getPathStorage(), ButtonType.CANCEL, ButtonType.OK);
@@ -598,7 +627,7 @@ public class MetadataController implements Initializable {
         keywordbox.setAlignment(Pos.TOP_RIGHT);
         Label keywordLabel = new Label("Keywords");
         TextArea keywordsToAllText = new TextArea(keywordText.getText());
-        keywordsToAllText.setPrefSize(300, 100);    
+        keywordsToAllText.setPrefSize(300, 100);
         HBox addKeywordToAllbox = new HBox();
         addKeywordToAllbox.setAlignment(Pos.TOP_RIGHT);
         TextField addKeywordToAllField = new TextField();
@@ -621,27 +650,27 @@ public class MetadataController implements Initializable {
             }
         });
         keywordbox.getChildren().add(keywordLabel);
-        keywordbox.getChildren().add(keywordsToAllText);        
+        keywordbox.getChildren().add(keywordsToAllText);
         content.getChildren().add(keywordbox);
         content.getChildren().add(addKeywordToAllbox);
-        
+
         dialogPane.setContent(content);
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
-        Utility.centerChildWindowOnStage((Stage)alert.getDialogPane().getScene().getWindow(), (Stage)progressPane.getScene().getWindow()); 
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
-            
+
             resetGUI();
             mainController.getProgressPane().setVisible(true);
             mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
             mainController.getProgressbarLabel().setText("Setting metadata...");
             mainController.getStatusLabelLeft().setText("Setting metadata");
             mainController.getStatusLabelLeft().setVisible(true);
-            
+
             Task<Boolean> taskApplyToAll = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -687,47 +716,56 @@ public class MetadataController implements Initializable {
         }
     }
 
-    public void saveSettings() {        
+    public void saveSettings() {
     }
 
-    public void restoreSettings() {        
+    public void restoreSettings() {
     }
-    
+
+    @FXML
+    private void resetAction(ActionEvent event) {        
+        Platform.runLater(() -> {
+            apertureSlider.setValue(1);
+            lightController.getImageView().setImage(exposerFilter.reset());
+            exposerFilter=null;
+        });
+    }
+
     private class KeywordChangeListener implements ChangeListener<String> {
-        
+
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveKeywordsTitle();
         }
-        
+
     }
-    
+
     private class CommentsChangeListener implements ChangeListener<String> {
-        
+
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveComments();
         }
-        
+
     }
-    
+
     private class CaptionChangeListener implements ChangeListener<String> {
-        
+
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveKeywordsTitle();
         }
-        
+
     }
-    
+
     public void setActualMediaFile(MediaFile actualMediaFile) {
         this.actualMediaFile = actualMediaFile;
     }
-    
+
     public TextField getRecordDateField() {
         return recordDateField;
     }
-    
+
     public void cancelTasks() {
         if (task != null) {
             keywordText.textProperty().removeListener(keywordsChangeListener);
@@ -737,13 +775,32 @@ public class MetadataController implements Initializable {
             task.cancel();
         }
     }
-    
+
+    private static WritableImage copyImage(Image image) {
+        int height = (int) image.getHeight();
+        int width = (int) image.getWidth();
+        PixelReader pixelReader = image.getPixelReader();
+        WritableImage writableImage = new WritableImage(width, height);
+        PixelWriter pixelWriter = writableImage.getPixelWriter();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Color color = pixelReader.getColor(x, y);
+                pixelWriter.setColor(x, y, color);
+            }
+        }
+        return writableImage;
+    }
+
     public void Shutdown() {
         if (task != null) {
             task.cancel();
         }
         if (executor != null) {
             executor.shutdownNow();
+        }
+        if (executorParallel != null) {
+            executorParallel.shutdownNow();
         }
     }
 }

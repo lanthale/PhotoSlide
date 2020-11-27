@@ -9,7 +9,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -64,9 +63,9 @@ public class App extends Application {
         notifyPreloader(new ProgressNotification(0.2));
 
         notifyPreloader(new ProgressNotification(0.3));
-        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainViewBrowser.fxml"));
+        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainView.fxml"));
         notifyPreloader(new ProgressNotification(0.4));
-        root = (Parent) fxmlLoader.load();
+        root = (Parent) fxmlLoader.load();        
         notifyPreloader(new ProgressNotification(0.5));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         File dbFile = new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB.mv.db");

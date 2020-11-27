@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
@@ -17,6 +18,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <AnchorPane prefHeight="676.0" prefWidth="258.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.metadata.MetadataController">
    <children>
@@ -102,7 +104,25 @@
                   </ScrollPane>
                </content>
           </TitledPane>
-          <TitledPane fx:id="quickDevPane" animated="false" text="Quick Develop" />
+          <TitledPane fx:id="quickDevPane" alignment="TOP_LEFT" animated="false" text="Quick Develop">
+               <content>
+                  <VBox>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontIcon iconLiteral="ti-eye" iconSize="14" />
+                              <Slider fx:id="apertureSlider" blockIncrement="0.01" max="10.0" minorTickCount="1" value="1.0" />
+                              <FontIcon iconLiteral="ti-eye" iconSize="20" />
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetAction" text="Reset">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fa-undo" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </content></TitledPane>
         </panes>
       </Accordion>
    </children>

@@ -18,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +29,16 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -56,15 +59,15 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 public class MainViewController implements Initializable {
 
     private ExecutorService executor;
+    private ObservableList<Node> browserCollectionNodes;
+    private ObservableList<Node> editorMetaDataNodes;
 
     @FXML
     private AnchorPane collectionsPane;
@@ -129,6 +132,12 @@ public class MainViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/EditorMetaData.fxml"));
+            editorMetaDataNodes = ((AnchorPane)fxmlLoader.load()).getChildren();
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
         executor = Executors.newSingleThreadExecutor();
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
@@ -159,12 +168,7 @@ public class MainViewController implements Initializable {
             copyMediaMenu.setDisable(disabled);
             pasteMediaMenu.setDisable(disabled);
         });
-    }
-
-    @FXML
-    private void browseButtonAction(ActionEvent event) {
-
-    }
+    }    
 
     public StackPane getProgressPane() {
         return progressPane;
@@ -203,7 +207,7 @@ public class MainViewController implements Initializable {
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
             alert.setResizable(false);
-            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());            
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(dialogIcon);
             alert.showAndWait();
@@ -378,7 +382,7 @@ public class MainViewController implements Initializable {
         alert.setResizable(false);
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());        
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
         alert.showAndWait();
@@ -448,6 +452,18 @@ public class MainViewController implements Initializable {
         return metadataPaneController;
     }
     
-    
+    @FXML
+    private void browseButtonAction(ActionEvent event) {        
+        editorMetaDataNodes = collectionsPane.getChildren();
+        collectionsPane.getChildren().clear();
+        collectionsPane.getChildren().addAll(browserCollectionNodes);
+    }
+
+    @FXML
+    private void editButtonAction(ActionEvent event) {
+        browserCollectionNodes=collectionsPane.getChildren();
+        collectionsPane.getChildren().clear();
+        collectionsPane.getChildren().addAll(editorMetaDataNodes);
+    }
 
 }

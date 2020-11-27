@@ -33,7 +33,13 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>      
+        </repository> 
+        <repository>
+            <id>com.springsource.repository.bundles.external</id>
+            <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
+            <url>http://repository.springsource.com/maven/bundles/external</url>
+        </repository>
+           
     </repositories>        
     
     <pluginRepositories>
@@ -389,7 +395,42 @@
 		
                                         }
                                     </moduleInfoSource>
-                                </module>                                                                                                                                
+                                </module> 
+                                <module>
+                                    <artifact>
+                                        <groupId>org.ejml</groupId>
+                                        <artifactId>ejml-core</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module ejml.core {
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.ejml</groupId>
+                                        <artifactId>ejml-simple</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module ejml.simple {
+                                        requires transitive ejml.core;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module> 
+                                <module>
+                                    <artifact>
+                                        <groupId>javax.media.jai</groupId>
+                                        <artifactId>com.springsource.javax.media.jai.core</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module com.springsource.javax.media.jai.core {
+                                        requires transitive java.desktop;
+                                        requires transitive java.rmi;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module>                                                                                                                              
                             </modules>                                                                             
                             <module>                                                                   
                                 <moduleInfo>
@@ -486,7 +527,7 @@
             <groupId>com.github.jai-imageio</groupId>
             <artifactId>jai-imageio-core</artifactId>
             <version>1.4.0</version>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-core</artifactId>
@@ -506,8 +547,7 @@
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-image</artifactId>
             <version>3.6</version>
-        </dependency>
-        
+        </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
@@ -537,7 +577,45 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>1.4.200</version>            
-        </dependency>                                                                                          
+        </dependency>
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-simple</artifactId>
+            <version>0.40</version> 
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>                       
+        </dependency>
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-core</artifactId>
+            <version>0.40</version>   
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>                     
+        </dependency>        
+        <dependency>
+            <groupId>javax.media.jai</groupId>
+            <artifactId>com.springsource.javax.media.jai.core</artifactId>
+            <version>1.1.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions> 
+        </dependency>                
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.16</version>            
+        </dependency>                                                                               
     </dependencies>
     
     <profiles>
@@ -656,6 +734,10 @@
                                         <module>java.sql</module>
                                         <module>org.slf4j</module>  
                                         <module>com.h2database</module>
+                                        <module>ejml.core</module>
+                                        <module>ejml.simple</module>
+                                        <module>com.springsource.javax.media.jai.core</module>
+                                        <module>lombok</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 

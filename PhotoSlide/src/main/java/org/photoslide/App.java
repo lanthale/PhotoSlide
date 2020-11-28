@@ -46,7 +46,7 @@ public class App extends Application {
     private static final double DEFAULT_X = 100;
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
-    private static final double DEFAULT_HEIGHT = 750;
+    private static final double DEFAULT_HEIGHT = 800;
     private static boolean SEARCHINDEXFINISHED = false;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;

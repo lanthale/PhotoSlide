@@ -27,136 +27,145 @@
                 <Menu mnemonicParsing="false" text="File">
                     <items>
                         <MenuItem fx:id="openMenu" mnemonicParsing="false" onAction="#openMenuAction" text="Open…">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-folder-open-o" />
-                     </graphic></MenuItem>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-folder-open-o" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="Quit">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-power-off" />
-                     </graphic>
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
-                     </accelerator></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-power-off" />
+                            </graphic>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                            </accelerator>
+                        </MenuItem>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                     <items>
                         <MenuItem mnemonicParsing="false" text="Undo">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-undo" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-undo" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem mnemonicParsing="false" text="Redo">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-rotate-right" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-rotate-right" />
+                            </graphic>
+                        </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Cut">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-cut" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-cut" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem mnemonicParsing="false" text="Copy">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-copy" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-copy" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem mnemonicParsing="false" text="Paste">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-paste" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-paste" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem mnemonicParsing="false" text="Delete">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-trash" />
-                     </graphic></MenuItem>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-trash" />
+                            </graphic>
+                        </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Select All" />
                         <MenuItem mnemonicParsing="false" text="Unselect All" />
-                  <SeparatorMenuItem mnemonicParsing="false" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="ti-settings" />
-                     </graphic></MenuItem>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-settings" />
+                            </graphic>
+                        </MenuItem>
                     </items>
                 </Menu>
-            <Menu mnemonicParsing="false" text="MediaFile">
-              <items>
-                <MenuItem fx:id="rotateMenuLeft" mnemonicParsing="false" onAction="#rotateMenuLeftAction" text="Rotate mediafile left">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="L" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-rotate-left" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="rotateMenuRight" mnemonicParsing="false" onAction="#rotateMenuRightAction" text="Rotate mediafile right">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-rotate-right" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="cropMenu" mnemonicParsing="false" onAction="#cropMenuAction" text="Crop media file">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-crop" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="rateMenu" mnemonicParsing="false" onAction="#rateMenuAction" text="Rate mediafile">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-star" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="Mark mediafile deleted">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-trash" />
-                     </graphic>
-                  </MenuItem>
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="copyMediaMenu" mnemonicParsing="false" onAction="#copyMediaMenuAction" text="Copy mediafile">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-copy" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="pasteMediaMenu" mnemonicParsing="false" onAction="#pastMediaMenuAction" text="Paste mediafile">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="V" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-paste" />
-                     </graphic>
-                  </MenuItem>
-                  <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="stackMenu" mnemonicParsing="false" onAction="#stackMenuAction" text="Stack media files">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                     <graphic>
-                        <FontIcon iconLiteral="fa-stack-overflow" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
-                     </accelerator>
-                  </MenuItem>
-              </items>
-            </Menu>
+                <Menu mnemonicParsing="false" text="MediaFile">
+                    <items>
+                        <MenuItem fx:id="rotateMenuLeft" mnemonicParsing="false" onAction="#rotateMenuLeftAction" text="Rotate mediafile left">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="L" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-rotate-left" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="rotateMenuRight" mnemonicParsing="false" onAction="#rotateMenuRightAction" text="Rotate mediafile right">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-rotate-right" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="cropMenu" mnemonicParsing="false" onAction="#cropMenuAction" text="Crop media file">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-crop" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="rateMenu" mnemonicParsing="false" onAction="#rateMenuAction" text="Rate mediafile">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-star" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="Mark mediafile deleted">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-trash" />
+                            </graphic>
+                        </MenuItem>
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="copyMediaMenu" mnemonicParsing="false" onAction="#copyMediaMenuAction" text="Copy mediafile">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-copy" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="pasteMediaMenu" mnemonicParsing="false" onAction="#pastMediaMenuAction" text="Paste mediafile">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="V" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-paste" />
+                            </graphic>
+                        </MenuItem>
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="stackMenu" mnemonicParsing="false" onAction="#stackMenuAction" text="Stack media files">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-stack-overflow" />
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                            </accelerator>
+                        </MenuItem>
+                    </items>
+                </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
                         <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="About PhotoSlide" />
@@ -168,25 +177,25 @@
             <children>
                 <ToolBar prefHeight="67.0" prefWidth="259.0" HBox.hgrow="NEVER">
                     <items>
-                  <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
-                     <children>
+                        <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
+                            <children>
                                 <ToggleButton id="tooltoggle-button" fx:id="browseButton" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
                                 </ToggleButton>
-                        <Separator halignment="RIGHT" orientation="VERTICAL" prefHeight="45.0" prefWidth="10.0">
-                           <padding>
-                              <Insets bottom="10.0" top="10.0" />
-                           </padding>
-                        </Separator>
+                                <Separator halignment="RIGHT" orientation="VERTICAL" prefHeight="45.0" prefWidth="10.0">
+                                    <padding>
+                                        <Insets bottom="10.0" top="10.0" />
+                                    </padding>
+                                </Separator>
                                 <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
                                 </ToggleButton>
-                     </children>
-                  </HBox>
+                            </children>
+                        </HBox>
                     </items>
                     <padding>
                         <Insets left="20.0" />
@@ -195,36 +204,36 @@
                 <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-export" iconSize="24" />
-                     </graphic>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-export" iconSize="24" />
+                            </graphic>
                         </Button>
                         <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Share">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-share" iconSize="24" />
-                     </graphic>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-share" iconSize="24" />
+                            </graphic>
                         </Button>
                         <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Print">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-printer" iconSize="24" />
-                     </graphic>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-printer" iconSize="24" />
+                            </graphic>
                         </Button>
                         <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Styles">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-palette" iconSize="24" />
-                     </graphic>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-palette" iconSize="24" />
+                            </graphic>
                         </Button>
                     </items>
-               <padding>
-                  <Insets left="100.0" />
-               </padding>
+                    <padding>
+                        <Insets left="100.0" />
+                    </padding>
                 </ToolBar>
                 <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="67.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" prefWidth="62.0" text="Help">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-help" iconSize="24" />
-                     </graphic>
+                            <graphic>
+                                <FontIcon iconLiteral="ti-help" iconSize="24" />
+                            </graphic>
                         </Button>
                         <Label text="PhotoSlide" textFill="#e17c08">
                             <font>
@@ -235,15 +244,24 @@
                 </ToolBar>
             </children>
         </HBox>
-      <SplitPane dividerPositions="0.4, 0.6" prefWidth="1280.0" VBox.vgrow="ALWAYS">
-         <items>
-            <fx:include fx:id="collectionsPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="50.0" source="BrowserCollections.fxml" />
-            <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="BrowserLighttable.fxml" />
-            <fx:include fx:id="metadataPane" minWidth="50.0" source="BrowserMetadata.fxml" />
-         </items>
-      </SplitPane>
+        <SplitPane dividerPositions="0.4, 0.6" minWidth="200.0" prefWidth="1280.0" VBox.vgrow="ALWAYS">
+            <items>
+                <StackPane fx:id="leftPane" maxWidth="1.7976931348623157E308" minWidth="50.0">
+                    <fx:include fx:id="collectionsPane" maxWidth="1.7976931348623157E308" minWidth="50.0" source="BrowserCollections.fxml" />
+                    <fx:include fx:id="editorMetaDataPane" maxWidth="1.7976931348623157E308" minWidth="50.0" source="EditorMetaData.fxml" />
+                </StackPane> 
+                <StackPane fx:id="middlePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0">           
+                    <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="BrowserLighttable.fxml" />
+                    <fx:include fx:id="editorMediaViewPane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="EditorMediaView.fxml" />
+                </StackPane>
+                <StackPane fx:id="rightPane" minWidth="50.0">
+                    <fx:include fx:id="metadataPane" minWidth="50.0" source="BrowserMetadata.fxml" />
+                    <fx:include fx:id="editorToolsPane" minWidth="50.0" source="EditorTools.fxml" />
+                </StackPane>
+            </items>
+        </SplitPane>
         
-        <HBox id="HBox" alignment="CENTER_LEFT" prefWidth="1280.0" spacing="5.0" style="-fx-background-color: rgb(80, 80, 80)rgb(80, 80, 80);">
+        <HBox id="HBox" alignment="CENTER_LEFT" maxHeight="26.0" minHeight="26.0" prefHeight="26.0" prefWidth="1280.0" spacing="5.0" style="-fx-background-color: rgb(80, 80, 80)rgb(80, 80, 80);" VBox.vgrow="NEVER">
             <children>
                 <Label fx:id="statusLabelLeft" maxHeight="1.7976931348623157E308" maxWidth="-1.0" text="Left status" textFill="#9f9f9f" HBox.hgrow="ALWAYS">
                     <font>
@@ -254,9 +272,10 @@
                     <children>
                         <ProgressBar fx:id="progressbar" prefWidth="200.0" progress="0.0" />
                         <Label fx:id="progressbarLabel" alignment="CENTER" prefWidth="180.0" text="0%" textFill="#515151" textOverrun="CENTER_ELLIPSIS">
-                     <font>
-                        <Font size="11.0" />
-                     </font></Label>
+                            <font>
+                                <Font size="11.0" />
+                            </font>
+                        </Label>
                     </children>
                 </StackPane>
                 <Pane minHeight="20.0" prefHeight="20.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />

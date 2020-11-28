@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,6 +91,8 @@ public class CollectionsController implements Initializable {
     }
     private ExecutorService executor;
     private ExecutorService executorParallel;
+    private ScheduledExecutorService executorParallelTimers;
+
     private Utility util;
     private static final String NODE_NAME = "PhotoSlide";
     private Path selectedPath;
@@ -118,6 +122,7 @@ public class CollectionsController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("collectionsController"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("collectionsControllerParallel"));
+        executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("collectionsControllerParallelScheduled"));
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();
@@ -135,13 +140,25 @@ public class CollectionsController implements Initializable {
     }
 
     private void loadURLs() {
+        Task<Boolean> indexTask = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+                    if (this.isCancelled() == false) {
+                        searchIndexProcess.createSearchIndex(t.getValue());
+                        searchIndexProcess.checkSearchIndex(t.getValue());
+                    }
+                });
+                return true;
+            }
+        };
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
                 collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
-                    loadDirectoryTree(t.getValue());
-                    searchIndexProcess.createSearchIndex(t.getValue());
-                    searchIndexProcess.checkSearchIndex(t.getValue());
+                    if (this.isCancelled() == false) {
+                        loadDirectoryTree(t.getValue());
+                    }
                 });
                 return true;
             }
@@ -154,6 +171,8 @@ public class CollectionsController implements Initializable {
             });
         });
         executor.submit(task);
+        executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        //executor.submit(indexTask);
     }
 
     public void saveSettings() {
@@ -303,6 +322,7 @@ public class CollectionsController implements Initializable {
         if (searchIndexProcess != null) {
             searchIndexProcess.shutdown();
         }
+        executorParallelTimers.shutdownNow();
     }
 
     @FXML

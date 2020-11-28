@@ -7,15 +7,15 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefHeight="676.0" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormetadata.EditorMetadataController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormetadata.EditorMetadataController">
     <children>
         <Label layoutX="16.0" layoutY="14.0" text="Presets" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
             <font>
                 <Font size="24.0" />
             </font>
         </Label>
-      <ImageView fitHeight="150.0" fitWidth="180.0" layoutX="10.0" layoutY="39.0" pickOnBounds="true" preserveRatio="true" />
-      <Accordion layoutX="10.0" layoutY="206.0" prefHeight="447.0" prefWidth="180.0">
+      <ImageView fx:id="editorMetaDataImageView" fitHeight="150.0" fitWidth="180.0" layoutX="10.0" layoutY="39.0" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="39.0" />
+      <Accordion fx:id="editorAccordion" layoutX="10.0" layoutY="206.0" prefHeight="447.0" prefWidth="180.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
         <panes>
           <TitledPane animated="false" text="Black and White">
             <content>

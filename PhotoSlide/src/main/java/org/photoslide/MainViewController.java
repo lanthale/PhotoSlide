@@ -18,7 +18,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,16 +28,13 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -62,25 +58,44 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.editormedia.EditorMediaViewController;
+import org.photoslide.editormetadata.EditorMetadataController;
+import org.photoslide.editortools.EditorToolsController;
 
 public class MainViewController implements Initializable {
 
     private ExecutorService executor;
-    private ObservableList<Node> browserCollectionNodes;
-    private ObservableList<Node> editorMetaDataNodes;
 
+    @FXML
+    private StackPane leftPane;
+    @FXML
+    private StackPane middlePane;
+    @FXML
+    private StackPane rightPane;
     @FXML
     private AnchorPane collectionsPane;
     @FXML
+    private AnchorPane editorMetaDataPane;
+    @FXML
     private AnchorPane lighttablePane;
     @FXML
+    private AnchorPane editorMediaViewPane;
+    @FXML
     private AnchorPane metadataPane;
+    @FXML
+    private AnchorPane editorToolsPane;
     @FXML
     private CollectionsController collectionsPaneController;
     @FXML
     private LighttableController lighttablePaneController;
     @FXML
     private MetadataController metadataPaneController;
+    @FXML
+    private EditorMetadataController editorMetaDataPaneController;
+    @FXML
+    private EditorMediaViewController editorMediaViewPaneController;
+    @FXML
+    private EditorToolsController editorToolsPaneController;
 
     @FXML
     private StackPane progressPane;
@@ -132,12 +147,9 @@ public class MainViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/EditorMetaData.fxml"));
-            editorMetaDataNodes = ((AnchorPane)fxmlLoader.load()).getChildren();
-        } catch (IOException ex) {
-            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        editorMetaDataPane.setVisible(false);
+        editorMediaViewPane.setVisible(false);
+        editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
@@ -168,7 +180,7 @@ public class MainViewController implements Initializable {
             copyMediaMenu.setDisable(disabled);
             pasteMediaMenu.setDisable(disabled);
         });
-    }    
+    }
 
     public StackPane getProgressPane() {
         return progressPane;
@@ -194,6 +206,7 @@ public class MainViewController implements Initializable {
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
+        editorMediaViewPaneController.shutdown();
         executor.shutdownNow();
     }
 
@@ -451,19 +464,28 @@ public class MainViewController implements Initializable {
     public MetadataController getMetadataPaneController() {
         return metadataPaneController;
     }
-    
+
     @FXML
-    private void browseButtonAction(ActionEvent event) {        
-        editorMetaDataNodes = collectionsPane.getChildren();
-        collectionsPane.getChildren().clear();
-        collectionsPane.getChildren().addAll(browserCollectionNodes);
+    private void browseButtonAction(ActionEvent event) {
+        collectionsPane.setVisible(true);
+        lighttablePane.setVisible(true);
+        metadataPane.setVisible(true);        
+        editorMetaDataPane.setVisible(false);
+        editorMediaViewPane.setVisible(false);
+        editorToolsPane.setVisible(false);
+        collectionsPane.requestLayout();
     }
 
     @FXML
     private void editButtonAction(ActionEvent event) {
-        browserCollectionNodes=collectionsPane.getChildren();
-        collectionsPane.getChildren().clear();
-        collectionsPane.getChildren().addAll(editorMetaDataNodes);
+        editorMetaDataPane.setVisible(true);
+        editorMediaViewPane.setVisible(true);
+        editorToolsPane.setVisible(true);
+        collectionsPane.setVisible(false);
+        lighttablePane.setVisible(false);
+        metadataPane.setVisible(false); 
+        editorMetaDataPane.requestLayout();
+        editorMediaViewPaneController.setMediaFileForEdit(lighttablePaneController.getFactory().getSelectedMediaItem());
     }
 
 }

@@ -7,7 +7,9 @@ package org.photoslide.editortools;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.layout.VBox;
 
 /**
  *
@@ -15,9 +17,11 @@ import javafx.fxml.Initializable;
  */
 public class EditorToolsController implements Initializable{
 
+    @FXML
+    private VBox titlePaneBox;
+
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void initialize(URL url, ResourceBundle rb) {        
     }
     
 }

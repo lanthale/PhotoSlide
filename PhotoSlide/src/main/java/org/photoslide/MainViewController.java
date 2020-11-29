@@ -18,7 +18,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
@@ -58,9 +62,11 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
+import org.photoslide.lighttable.EmptyMediaLoadingTask;
 
 public class MainViewController implements Initializable {
 
@@ -206,7 +212,9 @@ public class MainViewController implements Initializable {
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
+        editorMetaDataPaneController.shutdown();
         editorMediaViewPaneController.shutdown();
+        editorToolsPaneController.shutdown();
         executor.shutdownNow();
     }
 
@@ -469,7 +477,7 @@ public class MainViewController implements Initializable {
     private void browseButtonAction(ActionEvent event) {
         collectionsPane.setVisible(true);
         lighttablePane.setVisible(true);
-        metadataPane.setVisible(true);        
+        metadataPane.setVisible(true);
         editorMetaDataPane.setVisible(false);
         editorMediaViewPane.setVisible(false);
         editorToolsPane.setVisible(false);
@@ -477,15 +485,51 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void editButtonAction(ActionEvent event) {
+    private void editButtonAction(ActionEvent event) {        
+        if (collectionsPaneController.getSelectedPath()==null){
+            browseButton.setSelected(true);
+            return;
+        }                
+        MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
+        if (selectedMediaItem == null) {
+            try {
+                Stream<Path> fileList = Files.list(collectionsPaneController.getSelectedPath()).filter((t) -> {
+                    return FileTypes.isValidType(t.getFileName().toString());
+                }).sorted();
+                Path fileItem = fileList.iterator().next();
+                if (Files.isDirectory(fileItem) == false) {
+                    if (FileTypes.isValidType(fileItem.toString())) {
+                        MediaFile m = new MediaFile();
+                        m.setName(fileItem.toString());
+                        m.setPathStorage(fileItem);
+                        m.readEdits();
+                        m.getCreationTime();
+                        if (FileTypes.isValidVideo(fileItem.toString())) {
+                            m.setMediaType(MediaFile.MediaTypes.VIDEO);
+                        } else if (FileTypes.isValidImge(fileItem.toString())) {
+                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                            Image img = null;
+                            img = new Image(m.getPathStorage().toUri().toURL().toString(), lighttablePaneController.getImageGrid().getCellWidth() + 300, lighttablePaneController.getImageGrid().getCellHeight() + 300, true, false, false);
+                            m.setImage(img);
+                        } else {
+                            m.setMediaType(MediaFile.MediaTypes.NONE);
+                        }
+                        selectedMediaItem = m;
+                    }
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
         editorMetaDataPane.setVisible(true);
         editorMediaViewPane.setVisible(true);
         editorToolsPane.setVisible(true);
         collectionsPane.setVisible(false);
         lighttablePane.setVisible(false);
-        metadataPane.setVisible(false); 
-        editorMetaDataPane.requestLayout();
-        editorMediaViewPaneController.setMediaFileForEdit(lighttablePaneController.getFactory().getSelectedMediaItem());
+        metadataPane.setVisible(false);
+        editorMetaDataPaneController.setMediaFileForEdit(selectedMediaItem);
+        editorMediaViewPaneController.setMediaFileForEdit(selectedMediaItem);
+        editorToolsPaneController.setMediaFileForEdit(selectedMediaItem);
     }
 
 }

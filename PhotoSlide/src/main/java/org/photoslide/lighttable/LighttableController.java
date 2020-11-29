@@ -981,4 +981,10 @@ public class LighttableController implements Initializable {
     private void oneStarMenuAction(ActionEvent event) {
     }
 
+    public GridView<MediaFile> getImageGrid() {
+        return imageGrid;
+    }
+    
+    
+
 }

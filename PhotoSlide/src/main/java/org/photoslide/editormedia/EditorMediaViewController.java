@@ -33,35 +33,35 @@ import org.photoslide.datamodel.MediaFile;
  */
 public class EditorMediaViewController implements Initializable {
 
-    @FXML
-    private Button zoomButton;
-
+    private ExecutorService executor;
     private MediaFile selectedMediaFile;
+    
     @FXML
-    private StackPane editorStackPane;
-    @FXML
-    private HBox editorImageStackPane;
-    @FXML
-    private ProgressIndicator editorImageProgress;
-    @FXML
-    private VBox editorInfoPane;
-    @FXML
-    private Label editorTitleLabel;
-    @FXML
-    private Label editorCameraLabel;
-    @FXML
-    private Label editorFilenameLabel;
+    private Button zoomButton;        
     @FXML
     private Rating editorRatingControl;
     @FXML
-    private ImageView editorImageView;
-    private ExecutorService executor;
+    private ImageView editorImageView;    
+    @FXML
+    private StackPane stackPane;
+    @FXML
+    private HBox imageHbox;
+    @FXML
+    private ProgressIndicator imageProgress;
+    @FXML
+    private VBox infoPane;
+    @FXML
+    private Label titleLabel;
+    @FXML
+    private Label cameraLabel;
+    @FXML
+    private Label filenameLabel;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMediaViewController"));
-        editorImageView.fitWidthProperty().bind(editorStackPane.widthProperty());
-        editorImageView.fitHeightProperty().bind(editorStackPane.heightProperty());        
+        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMediaViewController"));
+        editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
+        editorImageView.fitHeightProperty().bind(stackPane.heightProperty());        
     }
 
     public void setMediaFileForEdit(MediaFile f) {
@@ -78,20 +78,20 @@ public class EditorMediaViewController implements Initializable {
                     }
                     case IMAGE -> {
                         Platform.runLater(() -> {
-                            editorImageProgress.progressProperty().unbind();
+                            imageProgress.progressProperty().unbind();
                             editorImageView.setImage(null);
                             editorImageView.setVisible(true);
-                            editorImageProgress.setVisible(true);
+                            imageProgress.setVisible(true);
                         });
                         String url = selectedMediaFile.getImage().getUrl();
                         Image img = new Image(url, true);
                         Platform.runLater(() -> {
-                            editorImageProgress.progressProperty().bind(img.progressProperty());
+                            imageProgress.progressProperty().bind(img.progressProperty());
                             img.progressProperty().addListener((ov, t, t1) -> {
                                 if ((Double) t1 == 1.0 && !img.isError()) {
-                                    editorImageProgress.setVisible(false);
+                                    imageProgress.setVisible(false);
                                 } else {
-                                    editorImageProgress.setVisible(true);
+                                    imageProgress.setVisible(true);
                                 }
                             });
                             editorImageView.setImage(img);

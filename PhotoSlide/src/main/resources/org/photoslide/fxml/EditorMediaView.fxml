@@ -32,23 +32,23 @@
                   <Pane prefHeight="30.0" prefWidth="18.0" />
                </items>
             </ToolBar>
-            <StackPane fx:id="editorStackPane" prefHeight="605.0" prefWidth="646.0">
+            <StackPane fx:id="stackPane" prefHeight="605.0" prefWidth="646.0" VBox.vgrow="ALWAYS">
                <children>
-                  <HBox fx:id="editorImageStackPane" alignment="CENTER">
+                  <HBox fx:id="imageHbox" alignment="CENTER">
                      <children>
                         <ImageView fx:id="editorImageView" pickOnBounds="true" preserveRatio="true" />
                      </children>
                   </HBox>
-                  <ProgressIndicator fx:id="editorImageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
-                  <VBox fx:id="editorInfoPane" alignment="BOTTOM_LEFT" focusTraversable="true" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                  <ProgressIndicator fx:id="imageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
+                  <VBox fx:id="infoPane" alignment="BOTTOM_LEFT" focusTraversable="true" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                      <children>
-                        <Label fx:id="editorTitleLabel" text="Title" visible="false">
+                        <Label fx:id="titleLabel" text="Title" visible="false">
                            <font>
                               <Font size="18.0" />
                            </font>
                         </Label>
-                        <Label fx:id="editorCameraLabel" text="Camera" visible="false" />
-                        <Label fx:id="editorFilenameLabel" text="Filename" visible="false" />
+                        <Label fx:id="cameraLabel" text="Camera" visible="false" />
+                        <Label fx:id="filenameLabel" text="Filename" visible="false" />
                         <Rating fx:id="editorRatingControl" rating="0.0" scaleX="0.6" scaleY="0.6" translateX="-35.0" visible="false" />
                      </children>
                      <padding>

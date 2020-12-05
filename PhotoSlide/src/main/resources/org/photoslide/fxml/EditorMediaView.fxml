@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
@@ -17,7 +18,7 @@
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormedia.EditorMediaViewController">
    <children>
-      <VBox layoutY="14.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <VBox layoutY="14.0" prefHeight="660.0" prefWidth="646.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <ToolBar prefWidth="646.0">
                <items>
@@ -32,11 +33,11 @@
                   <Pane prefHeight="30.0" prefWidth="18.0" />
                </items>
             </ToolBar>
-            <StackPane fx:id="stackPane" prefHeight="605.0" prefWidth="646.0" VBox.vgrow="ALWAYS">
+            <StackPane fx:id="stackPane" minHeight="100.0" minWidth="100.0" prefHeight="605.0" prefWidth="646.0" VBox.vgrow="ALWAYS">
                <children>
                   <HBox fx:id="imageHbox" alignment="CENTER">
                      <children>
-                        <ImageView fx:id="editorImageView" pickOnBounds="true" preserveRatio="true" />
+                        <ImageView fx:id="editorImageView" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER" />
                      </children>
                   </HBox>
                   <ProgressIndicator fx:id="imageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
@@ -55,6 +56,29 @@
                         <Insets bottom="5.0" left="5.0" />
                      </padding>
                   </VBox>
+                  <BorderPane prefHeight="200.0" prefWidth="200.0">
+                     <left>
+                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" opacity="0.23" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-angle-left" iconSize="60" />
+                           </graphic>
+                        </Button>
+                     </left>
+                     <right>
+                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" opacity="0.23" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-angle-right" iconSize="60" />
+                           </graphic>
+                        </Button>
+                     </right>
+                     <bottom>
+                        <Button alignment="BOTTOM_CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefWidth="98.0" style="-fx-background-color: transparent;" text="Button" BorderPane.alignment="CENTER">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-layout-menu-separated" iconSize="80" />
+                           </graphic>
+                        </Button>
+                     </bottom>
+                  </BorderPane>
                </children>
             </StackPane>
          </children>

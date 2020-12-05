@@ -17,7 +17,6 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.photoslide.ThreadFactoryPS;
@@ -40,15 +39,13 @@ public class EditorToolsController implements Initializable {
     @FXML
     private Canvas drawingCanvas;
     @FXML
-    private AnchorPane histoAnchorPane;
-    @FXML
-    private HBox canvasBox;
+    private AnchorPane histoAnchorPane;    
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorToolsController"));
-        drawingCanvas.widthProperty().bind(canvasBox.widthProperty());
-        drawingCanvas.heightProperty().bind(canvasBox.heightProperty());
+        drawingCanvas.widthProperty().bind(histoAnchorPane.widthProperty());
+        drawingCanvas.heightProperty().bind(histoAnchorPane.heightProperty());
         gc = drawingCanvas.getGraphicsContext2D();
         gc.setGlobalAlpha(OPACITY);
         gc.setLineWidth(1);
@@ -58,6 +55,7 @@ public class EditorToolsController implements Initializable {
         if (f == null) {
             return;
         }
+        clearCanvas();
         selectedMediaFile = f;
         Task<Boolean> task = new Task<>() {
             @Override
@@ -83,19 +81,23 @@ public class EditorToolsController implements Initializable {
 
     private void drawHistogram() {
         clearCanvas();
-        drawCurve(histogram.getRed(), Color.RED);
-        drawCurve(histogram.getGreen(), Color.GREEN);
-        drawCurve(histogram.getBlue(), Color.BLUE);
+        double height = drawingCanvas.getHeight();
+        double width=drawingCanvas.getWidth();
+        drawCurve(histogram.getRed(), Color.RED, height,width);
+        drawCurve(histogram.getGreen(), Color.GREEN, height,width);
+        drawCurve(histogram.getBlue(), Color.BLUE, height,width);
     }
 
     /**
      * Draw lines from the bottom of the histogram to the height of each given
      * point with the given color.
      */
-    public void drawCurve(List<Integer> points, Color color) {
+    public void drawCurve(List<Integer> points, Color color, double hight, double width) {
         gc.setStroke(color);
+        double w=(double)width/points.size();
         for (int i = 0; i < points.size(); i++) {
-            gc.strokeLine(i + 0.5, 100.5, i + 0.5, 100.5 - points.get(i));
+            //gc.strokeLine(i + 0.5, 100.5, i + 0.5, 100.5 - points.get(i));
+            gc.strokeLine(w*(i), hight, w*(i), hight - points.get(i));
         }
     }
 

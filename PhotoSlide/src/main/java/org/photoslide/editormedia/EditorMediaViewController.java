@@ -35,13 +35,13 @@ public class EditorMediaViewController implements Initializable {
 
     private ExecutorService executor;
     private MediaFile selectedMediaFile;
-    
+
     @FXML
-    private Button zoomButton;        
+    private Button zoomButton;
     @FXML
     private Rating editorRatingControl;
     @FXML
-    private ImageView editorImageView;    
+    private ImageView editorImageView;
     @FXML
     private StackPane stackPane;
     @FXML
@@ -61,7 +61,7 @@ public class EditorMediaViewController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMediaViewController"));
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
-        editorImageView.fitHeightProperty().bind(stackPane.heightProperty());        
+        editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
     }
 
     public void setMediaFileForEdit(MediaFile f) {
@@ -78,6 +78,8 @@ public class EditorMediaViewController implements Initializable {
                     }
                     case IMAGE -> {
                         Platform.runLater(() -> {
+                            //editorImageView.fitWidthProperty().unbind();
+                            //editorImageView.fitHeightProperty().unbind();
                             imageProgress.progressProperty().unbind();
                             editorImageView.setImage(null);
                             editorImageView.setVisible(true);
@@ -93,7 +95,7 @@ public class EditorMediaViewController implements Initializable {
                                 } else {
                                     imageProgress.setVisible(true);
                                 }
-                            });
+                            });                            
                             editorImageView.setImage(img);
                         });
                     }

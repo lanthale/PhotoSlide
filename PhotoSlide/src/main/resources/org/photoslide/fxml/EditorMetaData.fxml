@@ -1,28 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Accordion?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.text.Font?>
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormetadata.EditorMetadataController">
     <children>
-        <Label layoutX="16.0" layoutY="14.0" text="Presets" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
-            <font>
-                <Font size="24.0" />
-            </font>
-        </Label>
-      <StackPane fx:id="stackPane" layoutX="10.0" layoutY="39.0" prefHeight="150.0" prefWidth="180.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="39.0">
+      <StackPane id="EditorMediaView" fx:id="stackPane" maxHeight="-Infinity" minHeight="10.0" minWidth="10.0" prefHeight="152.0" prefWidth="180.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <children>
-            <ImageView fx:id="imageVIew" fitHeight="150.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true" />
+            <HBox fx:id="hboxImage" alignment="CENTER" minHeight="10.0" minWidth="10.0" prefHeight="142.0" prefWidth="172.0">
+               <children>
+                  <ImageView fx:id="imageVIew" fitHeight="140.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER" />
+               </children>
+            </HBox>
             <ProgressIndicator fx:id="progressIndicator" progress="0.0" />
          </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
       </StackPane>
-      <Accordion fx:id="editorAccordion" layoutX="10.0" layoutY="206.0" prefHeight="447.0" prefWidth="180.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
+      <ScrollPane prefHeight="180.0" prefWidth="210.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="163.0">
+         <content>
+            <GridPane fx:id="gridPaneMetaInfo" alignment="CENTER_LEFT" prefHeight="65.0" prefWidth="170.0" vgap="5.0">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              </columnConstraints>
+            </GridPane>
+         </content>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </ScrollPane>
+      <Accordion fx:id="editorAccordion" layoutX="10.0" layoutY="350.0" prefHeight="194.0" prefWidth="180.0" scaleX="0.9" scaleY="0.9" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
         <panes>
           <TitledPane animated="false" text="Black and White">
             <content>

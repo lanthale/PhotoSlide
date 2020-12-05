@@ -299,4 +299,8 @@
     -fx-font-weight: bold;
 }
 
+#EditorMediaView{
+    -fx-border-color: default-color;    
+}
+
 

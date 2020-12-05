@@ -211,7 +211,7 @@ public class MetadataController implements Initializable {
         executor.submit(task);
     }
 
-    public void readBasicMetadata(Task actTask) throws IOException {
+    public synchronized void readBasicMetadata(Task actTask) throws IOException {
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(actualMediaFile.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
             if (actTask.isCancelled() == false) {
@@ -791,6 +791,20 @@ public class MetadataController implements Initializable {
         }
         return writableImage;
     }
+
+    public JpegExif getJpegExifdata() {
+        return jpegExifdata;
+    }
+
+    public IPTC getIptcdata() {
+        return iptcdata;
+    }
+
+    public XMP getXmpdata() {
+        return xmpdata;
+    }
+    
+    
 
     public void Shutdown() {
         if (task != null) {

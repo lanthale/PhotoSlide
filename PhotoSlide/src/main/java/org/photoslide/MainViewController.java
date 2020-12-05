@@ -155,7 +155,7 @@ public class MainViewController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         editorMetaDataPane.setVisible(false);
         editorMediaViewPane.setVisible(false);
-        editorToolsPane.setVisible(false);
+        editorToolsPane.setVisible(false);        
         executor = Executors.newSingleThreadExecutor();
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
@@ -168,6 +168,7 @@ public class MainViewController implements Initializable {
         metadataPaneController.injectLightController(lighttablePaneController);
         collectionsPaneController.injectLighttableController(lighttablePaneController);
         lighttablePaneController.injectMetaDataController(metadataPaneController);
+        editorMetaDataPaneController.injectMetaDataController(metadataPaneController);
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);

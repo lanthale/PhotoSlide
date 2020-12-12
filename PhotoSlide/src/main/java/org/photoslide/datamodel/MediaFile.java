@@ -5,17 +5,24 @@
  */
 package org.photoslide.datamodel;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -25,6 +32,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -38,6 +47,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.imageops.ImageFilter;
 
 /**
  *
@@ -45,7 +55,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
  */
 public class MediaFile extends StackPane {
 
-    private boolean mediaEdited;
     private Image image;
     private Media media;
     private MediaPlayer mediaPlayer;
@@ -71,6 +80,7 @@ public class MediaFile extends StackPane {
     private final FontIcon layerIcon;
     private FontIcon restoreIcon;
     private boolean subViewSelected;
+    private ObservableList<ImageFilter> filterList;
 
     public enum MediaTypes {
         IMAGE,
@@ -86,30 +96,21 @@ public class MediaFile extends StackPane {
     private MediaTypes mediaType;
 
     public MediaFile() {
-        mediaEdited = false;
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
         stackName = new SimpleStringProperty();
         stackPos = new SimpleIntegerProperty(-1);
         stacked = new SimpleBooleanProperty(false);
+        filterList = FXCollections.observableArrayList();
         layerIcon = new FontIcon("ti-view-grid");
         restoreIcon = new FontIcon("ti-back-right:22");
-        deleted.addListener((ov, t, t1) -> {
-            mediaEdited = true;
-        });
         mediaType = MediaTypes.NONE;
         title = new SimpleStringProperty();
         keywords = new SimpleStringProperty();
         camera = new SimpleStringProperty();
         rotationAngle = new SimpleDoubleProperty(0.0);
-        rotationAngle.addListener((ov, t, t1) -> {
-            mediaEdited = true;
-        });
         rating = new SimpleIntegerProperty(0);
-        rating.addListener((ov, t, t1) -> {
-            mediaEdited = true;
-        });
         this.setHeight(50);
         this.setWidth(50);
         imageView = new ImageView();
@@ -174,8 +175,21 @@ public class MediaFile extends StackPane {
         }
     }
 
+    private Image setFilters() {
+        Image imageWithFilters = this.image;
+        for (ImageFilter imageFilter : filterList) {
+            imageWithFilters = imageFilter.load(imageWithFilters);
+            imageFilter.filter(imageFilter.getValues());
+        }
+        return imageWithFilters;
+    }
+    
     public Image getImage() {
         return image;
+    }
+
+    public URL getImageUrl() throws MalformedURLException {
+        return this.getPathStorage().toUri().toURL();
     }
 
     public final void setImage(Image image) {
@@ -183,7 +197,8 @@ public class MediaFile extends StackPane {
             setLoadingNode();
         } else {
             this.image = image;
-            imageView.setImage(image);
+            this.image = setFilters();
+            imageView.setImage(this.image);
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);
             this.getChildren().clear();
@@ -270,6 +285,17 @@ public class MediaFile extends StackPane {
             if (stackPos.getValue() != null) {
                 prop.setProperty("stackPos", stackPos.getValue() + "");
             }
+            if (filterList.isEmpty() == false) {
+                ObjectMapper mapper = new ObjectMapper();
+                filterList.forEach((imgFilter) -> {
+                    try {
+                        String value = mapper.writeValueAsString(imgFilter);
+                        prop.put("ImageFilter:" + imgFilter.getName(), value);
+                    } catch (JsonProcessingException ex) {
+                        Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                });
+            }
             prop.store(output, null);
 
         } catch (IOException ex) {
@@ -335,7 +361,32 @@ public class MediaFile extends StackPane {
                 }
                 cropView = new Rectangle2D(rectValues[0], rectValues[1], rectValues[2], rectValues[3]);
             }
-
+            ObjectMapper mapper = new ObjectMapper();
+            ArrayList<ImageFilter> rawList = new ArrayList<>();
+            for (Enumeration<?> names = prop.propertyNames(); names.hasMoreElements();) {
+                String key = (String) names.nextElement();
+                if (key.contains("ImageFilter:") == true) {
+                    ImageFilter ifm = null;
+                    try {
+                        String cname = key.substring(12);
+                        ifm = (ImageFilter) mapper.readValue(prop.getProperty(key), Class.forName("org.photoslide.imageops." + cname));
+                    } catch (JsonProcessingException | ClassNotFoundException ex) {
+                        Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
+                    }
+                    if (ifm != null) {
+                        rawList.add(ifm);
+                    }
+                }
+            }
+            if (rawList.isEmpty() == false) {
+                rawList.sort(Comparator.comparing(imageFilter -> imageFilter.getPosition()));
+                filterList.addAll(rawList);
+            }
+            /*filterList.addListener((javafx.collections.ListChangeListener.Change<? extends ImageFilter> c) -> {
+                new Thread(() -> {
+                    saveEdits();
+                }).start();
+            });*/
         } catch (IOException ex) {
             //Do nothing if file not found
         }
@@ -432,7 +483,6 @@ public class MediaFile extends StackPane {
 
     public void setCropView(Rectangle2D cropView) {
         this.cropView = cropView;
-        mediaEdited = true;
     }
 
     public SimpleStringProperty getTitleProperty() {
@@ -461,10 +511,6 @@ public class MediaFile extends StackPane {
 
     public void setDeleted(boolean deleted) {
         this.deleted.set(deleted);
-    }
-
-    public boolean isMediaEdited() {
-        return mediaEdited;
     }
 
     public LocalDateTime getRecordTime() {
@@ -559,5 +605,42 @@ public class MediaFile extends StackPane {
     public String getKeywords() {
         return this.keywords.get();
     }
+
+    public ObservableList<ImageFilter> getFilterList() {
+        return filterList;
+    }
+
+    public void addImageFilter(ImageFilter ifm) {
+        filterList.add(ifm);
+        ifm.setPosition(filterList.indexOf(ifm));
+    }
+
+    public ObservableList<ImageFilter> getFilterListWithoutImageData() {
+        ObservableList<ImageFilter> newFilterList = FXCollections.observableArrayList();
+        filterList.forEach(imageFilter -> {
+            try {
+                Object o = imageFilter.clone();
+                newFilterList.add((ImageFilter) o);
+            } catch (CloneNotSupportedException ex) {
+                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        return newFilterList;
+    }
+
+    public ImageFilter getFilterForName(String s) {
+        ImageFilter retVal = null;
+        for (ImageFilter imageFilter : filterList) {
+            if (imageFilter.getName().equalsIgnoreCase(s)) {
+                retVal = imageFilter;
+                break;
+            }
+        }
+        return retVal;
+    }
+
+    public void setFilterList(ObservableList<ImageFilter> filterList) {
+        this.filterList = filterList;
+    }        
 
 }

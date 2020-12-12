@@ -15,10 +15,13 @@ import javafx.scene.image.WritableImage;
  *
  * @author selfemp
  */
-public class ExposureFilter {
+public class ExposureFilter implements ImageFilter {
 
     private Image image;
     private WritableImage filteredImage;
+    private final String name;
+    private int pos;
+    private float[] values;
     private byte[] buffer;
     private int height;
     private int width;
@@ -26,18 +29,12 @@ public class ExposureFilter {
     protected int[] rTable, gTable, bTable;
 
     public ExposureFilter() {
-        exposure = 1.0f;        
+        name = "ExposureFilter";
+        exposure = 1.0f;
         rTable = gTable = bTable = makeTable();
     }
 
-    public void setExposure(float exposure) {
-        this.exposure = exposure;        
-    }
-
-    public float getExposure() {
-        return exposure;
-    }
-
+    @Override
     public Image load(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
@@ -49,7 +46,45 @@ public class ExposureFilter {
         return filteredImage;
     }
 
-    public int filterRGB(int rgba) {
+    @Override
+    public Image reset() {
+        this.exposure = 1.0f;
+        rTable = gTable = bTable = makeTable();
+        return image;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public float[] getValues() {
+        return new float[]{exposure};
+    }
+
+    @Override
+    public void filter(float[] values) {
+        this.values = values;
+        this.exposure = values[0];
+        rTable = gTable = bTable = makeTable();
+        PixelWriter pixelWriter = filteredImage.getPixelWriter();
+        byte[] targetBuffer = new byte[width * height * 4];
+        for (int i = 0; i < buffer.length; i++) {
+            int rgba = buffer[i];
+            int res = filterRGB(rgba);
+            targetBuffer[i] = (byte) (res);
+        }
+        pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+    }
+
+    @Override
+    public void setValues(float[] values) {
+        this.values = values;
+        this.exposure = values[0];
+    }
+
+    private int filterRGB(int rgba) {
         int a = rgba & 0xff000000;
         int r = (rgba >> 16) & 0xff;
         int g = (rgba >> 8) & 0xff;
@@ -72,22 +107,31 @@ public class ExposureFilter {
         return table;
     }
 
-    public void filter(float exp) {
-        this.exposure = exp;
-        rTable = gTable = bTable = makeTable();
-        PixelWriter pixelWriter = filteredImage.getPixelWriter();
-        byte[] targetBuffer = new byte[width * height * 4];
-        for (int i = 0; i < buffer.length; i++) {
-            int rgba = buffer[i];            
-            int res = filterRGB(rgba);
-            targetBuffer[i] = (byte) (res);                        
-        }
-        pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+    @Override
+    public void setPosition(int val) {
+        this.pos = val;
     }
 
-    public Image reset() {
-        this.exposure = 1.0f;
-        rTable = gTable = bTable = makeTable();
-        return image;
+    @Override
+    public int getPosition() {
+        return pos;
     }
+
+    /**
+     *
+     * @return clone of the filter
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        ExposureFilter tmp = null;
+        try {
+            tmp = (ExposureFilter) super.clone();
+            tmp.values = values;
+            tmp.pos = pos;
+            tmp.exposure = exposure;
+        } catch (CloneNotSupportedException e) {
+        }
+        return tmp;
+    }
+
 }

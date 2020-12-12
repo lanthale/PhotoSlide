@@ -615,7 +615,22 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.16</version>            
-        </dependency>                                                                               
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.12.0</version>
+        </dependency>
     </dependencies>
     
     <profiles>
@@ -738,6 +753,9 @@
                                         <module>ejml.simple</module>
                                         <module>com.springsource.javax.media.jai.core</module>
                                         <module>lombok</module>
+                                        <module>com.fasterxml.jackson.databind</module>
+                                        <module>com.fasterxml.jackson.core</module>
+                                        <module>com.fasterxml.jackson.annotation</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 

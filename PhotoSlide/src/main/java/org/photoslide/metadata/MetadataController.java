@@ -77,6 +77,7 @@ import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
 import org.photoslide.Utility;
 import org.photoslide.imageops.ExposureFilter;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.SampleFilter;
 import org.photoslide.imageops.SampleFilter2;
 
@@ -138,7 +139,7 @@ public class MetadataController implements Initializable {
     private Image shownImage;
     private SampleFilter greyFilter;
     private SampleFilter2 greyFilter2;
-    private ExposureFilter exposerFilter;
+    private ImageFilter exposerFilter;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -152,16 +153,25 @@ public class MetadataController implements Initializable {
         });
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
-        captionChangeListener = new CaptionChangeListener();        
+        captionChangeListener = new CaptionChangeListener();
         apertureSlider.valueProperty().addListener((o) -> {
             if (exposerFilter == null) {
-                lightController.getImageView().setCache(true);                                
+                lightController.getImageView().setCache(true);
                 exposerFilter = new ExposureFilter();
+                actualMediaFile.addImageFilter(exposerFilter);
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
             }
             double val = apertureSlider.getValue();
-            executorParallel.submit(() -> {                                
-                exposerFilter.filter((float)val);                
+            executorParallel.submit(() -> {
+                exposerFilter.filter(new float[]{(float) val});
+            });
+            ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
+            if (filterForName != null) {
+                filterForName.setValues(exposerFilter.getValues());
+            }
+            actualMediaFile.requestLayout();            
+            executorParallel.submit(() -> {
+                actualMediaFile.saveEdits();
             });
         });
     }
@@ -392,7 +402,7 @@ public class MetadataController implements Initializable {
         progressPane.setVisible(false);
         anchorKeywordPane.setDisable(true);
         apertureSlider.setValue(1);
-        exposerFilter=null;
+        exposerFilter = null;
     }
 
     @FXML
@@ -723,11 +733,11 @@ public class MetadataController implements Initializable {
     }
 
     @FXML
-    private void resetAction(ActionEvent event) {        
+    private void resetAction(ActionEvent event) {
         Platform.runLater(() -> {
             apertureSlider.setValue(1);
             lightController.getImageView().setImage(exposerFilter.reset());
-            exposerFilter=null;
+            exposerFilter = null;
         });
     }
 
@@ -776,6 +786,10 @@ public class MetadataController implements Initializable {
         }
     }
 
+    public Slider getApertureSlider() {
+        return apertureSlider;
+    }
+
     private static WritableImage copyImage(Image image) {
         int height = (int) image.getHeight();
         int width = (int) image.getWidth();
@@ -803,8 +817,10 @@ public class MetadataController implements Initializable {
     public XMP getXmpdata() {
         return xmpdata;
     }
-    
-    
+
+    public void setExposerFilter(ImageFilter exposerFilter) {
+        this.exposerFilter = exposerFilter;
+    }
 
     public void Shutdown() {
         if (task != null) {

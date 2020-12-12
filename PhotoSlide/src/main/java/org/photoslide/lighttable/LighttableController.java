@@ -196,7 +196,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableController"));
-        executorParallel = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableControllerSelection"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelection"));
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
@@ -428,6 +428,9 @@ public class LighttableController implements Initializable {
             }
         }
         factory.getSelectedCell().requestLayout();
+        executorParallel.submit(() -> {
+            factory.getSelectedCell().getItem().saveEdits();
+        });
     }
 
     @FXML
@@ -457,6 +460,9 @@ public class LighttableController implements Initializable {
             }
         }
         factory.getSelectedCell().requestLayout();
+        executorParallel.submit(() -> {
+            factory.getSelectedCell().getItem().saveEdits();
+        });
     }
 
     @FXML
@@ -485,6 +491,11 @@ public class LighttableController implements Initializable {
             if (t1 == false) {
                 factory.getSelectedCell().requestLayout();
             }
+        });
+        popOver.setOnHidden((t) -> {
+            executorParallel.submit(() -> {
+                factory.getSelectedCell().getItem().saveEdits();
+            });
         });
         rate.ratingProperty().bindBidirectional(factory.getSelectedCell().getItem().getRatingProperty());
         popOver.show(rateButton);
@@ -516,6 +527,9 @@ public class LighttableController implements Initializable {
         alert.hide();
         }
         factory.getSelectedCell().requestLayout();*/
+        executorParallel.submit(() -> {
+            factory.getSelectedCell().getItem().saveEdits();
+        });
     }
 
     @FXML
@@ -536,7 +550,7 @@ public class LighttableController implements Initializable {
             };
             filteredMediaList.setPredicate(standardFilter());
         } else {
-            String stackname=factory.getSelectedMediaItem().getStackName();
+            String stackname = factory.getSelectedMediaItem().getStackName();
             FilteredList<MediaFile> stackList = fullMediaList.filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackname));
             stackList.forEach((mediaFile) -> {
                 mediaFile.setStackPos(-1);
@@ -610,6 +624,9 @@ public class LighttableController implements Initializable {
                     infoPane.setDisable(false);
                     optionPane.setDisable(false);
                     snapshotView = null;
+                    executorParallel.submit(() -> {
+                        factory.getSelectedCell().getItem().saveEdits();
+                    });
                 }
                 t.consume();
             });
@@ -984,7 +1001,5 @@ public class LighttableController implements Initializable {
     public GridView<MediaFile> getImageGrid() {
         return imageGrid;
     }
-    
-    
 
 }

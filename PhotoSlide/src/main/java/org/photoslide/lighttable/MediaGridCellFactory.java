@@ -19,8 +19,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
@@ -36,6 +40,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
@@ -55,6 +60,7 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.imageops.ImageFilter;
 
 /**
  *
@@ -78,6 +84,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
     private final Image dialogIcon;
+    private ObservableList<ImageFilter> filterList;
 
     public MediaGridCellFactory(ExecutorService executor, LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         this.util = util;
@@ -229,13 +236,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 img.cancel();
             }
         }
-        if (selectedMediaItem != null) {
-            if (selectedMediaItem.isMediaEdited() == true) {
-                executor.submit(() -> {
-                    selectedMediaItem.saveEdits();
-                });
-            }
-        }
+
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
         if (selectedMediaItem.isDeleted() == true) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
@@ -258,6 +259,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         selectedCell = (MediaGridCell) t.getSource();
 
         task = new Task<>() {
+            private Image imageWithFilters;
+
             @Override
             protected Boolean call() throws MalformedURLException {
 
@@ -353,10 +356,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getInvalidStackPane().setVisible(false);
                             lightController.getImageView().setVisible(true);
                             lightController.getMediaView().setVisible(false);
+                            lightController.getImageProgress().setProgress(0);
                             lightController.getImageProgress().setVisible(true);
                         });
-                        String url = selectedMediaItem.getImage().getUrl();
+                        String url = selectedMediaItem.getImageUrl().toString();
                         img = new Image(url, true);
+
+                        //Image fImg=img;
+                        //img = selectedMediaItem.setFilters(fImg);
                         Platform.runLater(() -> {
                             lightController.getDetailToolbar().setDisable(false);
                             lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
@@ -381,11 +388,23 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().progressProperty().bind(img.progressProperty());
                             img.progressProperty().addListener((ov, t, t1) -> {
                                 if ((Double) t1 == 1.0 && !img.isError()) {
-                                    lightController.getImageProgress().setVisible(false);                                    
+                                    lightController.getImageProgress().setVisible(false);
+                                    imageWithFilters = img;
+                                    filterList = selectedMediaItem.getFilterListWithoutImageData();
+                                    for (ImageFilter imageFilter : filterList) {
+                                        imageWithFilters = imageFilter.load(imageWithFilters);
+                                        imageFilter.filter(imageFilter.getValues());
+                                        metadataController.setExposerFilter(imageFilter);
+                                        switch(imageFilter.getName()){
+                                            case "ExposureFilter" -> metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
+                                        }
+                                    }
+                                    img = imageWithFilters;
+                                    lightController.getImageView().setImage(img);                                    
                                 } else {
                                     lightController.getImageProgress().setVisible(true);
                                 }
-                            });                            
+                            });
                             lightController.getImageView().setImage(img);
                             lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 

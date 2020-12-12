@@ -394,13 +394,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     for (ImageFilter imageFilter : filterList) {
                                         imageWithFilters = imageFilter.load(imageWithFilters);
                                         imageFilter.filter(imageFilter.getValues());
-                                        metadataController.setExposerFilter(imageFilter);
-                                        switch(imageFilter.getName()){
-                                            case "ExposureFilter" -> metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
+                                        switch (imageFilter.getName()) {
+                                            case "ExposureFilter": {
+                                                metadataController.setExposerFilter(imageFilter);
+                                                metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);                                                
+                                            }
                                         }
                                     }
                                     img = imageWithFilters;
-                                    lightController.getImageView().setImage(img);                                    
+                                    lightController.getImageView().setImage(img);
                                 } else {
                                     lightController.getImageProgress().setVisible(true);
                                 }

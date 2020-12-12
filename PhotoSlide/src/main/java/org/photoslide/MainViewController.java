@@ -31,10 +31,13 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javafx.animation.FadeTransition;
+import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -59,8 +62,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
@@ -155,7 +160,7 @@ public class MainViewController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         editorMetaDataPane.setVisible(false);
         editorMediaViewPane.setVisible(false);
-        editorToolsPane.setVisible(false);        
+        editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
@@ -476,21 +481,65 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void browseButtonAction(ActionEvent event) {
-        collectionsPane.setVisible(true);
-        lighttablePane.setVisible(true);
-        metadataPane.setVisible(true);
-        editorMetaDataPane.setVisible(false);
-        editorMediaViewPane.setVisible(false);
-        editorToolsPane.setVisible(false);
-        collectionsPane.requestLayout();
+        FadeTransition ft = new FadeTransition(Duration.millis(500), editorMetaDataPane);
+        ft.setAutoReverse(false);
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+        ft.setOnFinished((ActionEvent event1) -> {
+            collectionsPane.setOpacity(0);
+            collectionsPane.setVisible(true);
+            editorMetaDataPane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(500), collectionsPane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.play();
+        });
+        ft.play();
+        FadeTransition ft2 = new FadeTransition(Duration.millis(500), editorMediaViewPane);
+        ft2.setAutoReverse(false);
+        ft2.setFromValue(1.0);
+        ft2.setToValue(0.0);
+        ft2.setOnFinished((ActionEvent event1) -> {
+            lighttablePane.setOpacity(0);
+            lighttablePane.setVisible(true);
+            editorMediaViewPane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(500), lighttablePane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.play();
+        });
+        ft2.play();
+        FadeTransition ft3 = new FadeTransition(Duration.millis(500), editorToolsPane);
+        ft3.setAutoReverse(false);
+        ft3.setFromValue(1.0);
+        ft3.setToValue(0.0);
+        ft3.setOnFinished((ActionEvent event1) -> {
+            metadataPane.setOpacity(0);
+            metadataPane.setVisible(true);
+            editorToolsPane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(500), metadataPane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.play();
+        });
+        ft3.play();
     }
 
     @FXML
-    private void editButtonAction(ActionEvent event) {        
-        if (collectionsPaneController.getSelectedPath()==null){
+    private void editButtonAction(ActionEvent event) {
+        RotateTransition rotate = new RotateTransition();
+        rotate.setAxis(Rotate.Y_AXIS);
+        rotate.setByAngle(90);
+        rotate.setCycleCount(1);
+        rotate.setDuration(Duration.millis(1000));
+
+        if (collectionsPaneController.getSelectedPath() == null) {
             browseButton.setSelected(true);
             return;
-        }                
+        }
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
         if (selectedMediaItem == null) {
             try {
@@ -522,15 +571,64 @@ public class MainViewController implements Initializable {
                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        editorMetaDataPane.setVisible(true);
-        editorMediaViewPane.setVisible(true);
-        editorToolsPane.setVisible(true);
-        collectionsPane.setVisible(false);
-        lighttablePane.setVisible(false);
-        metadataPane.setVisible(false);
-        editorMetaDataPaneController.setMediaFileForEdit(selectedMediaItem);
-        editorMediaViewPaneController.setMediaFileForEdit(selectedMediaItem);
-        editorToolsPaneController.setMediaFileForEdit(selectedMediaItem);
+        final MediaFile selMedia = selectedMediaItem;        
+        FadeTransition ft = new FadeTransition(Duration.millis(250), collectionsPane);
+        ft.setAutoReverse(false);
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+        ft.setOnFinished((ActionEvent event1) -> {
+            editorMetaDataPane.setOpacity(0); 
+            editorMetaDataPaneController.resetImageView();        
+            editorMetaDataPane.setVisible(true);
+            collectionsPane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorMetaDataPane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.setOnFinished((t) -> {
+                editorMetaDataPaneController.setMediaFileForEdit(selMedia);
+            });
+            ft1.play();
+        });
+        ft.play();
+        FadeTransition ft2 = new FadeTransition(Duration.millis(250), lighttablePane);
+        ft2.setAutoReverse(false);
+        ft2.setFromValue(1.0);
+        ft2.setToValue(0.0);
+        ft2.setOnFinished((ActionEvent event1) -> {
+            editorMediaViewPane.setOpacity(0);
+            editorMediaViewPaneController.resetImageView();
+            editorMediaViewPane.setVisible(true);
+            lighttablePane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorMediaViewPane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.setOnFinished((t) -> {
+                editorMediaViewPaneController.setMediaFileForEdit(selMedia);
+            });
+            ft1.play();
+        });
+        ft2.play();
+        FadeTransition ft3 = new FadeTransition(Duration.millis(250), metadataPane);
+        ft3.setAutoReverse(false);
+        ft3.setFromValue(1.0);
+        ft3.setToValue(0.0);
+        ft3.setOnFinished((ActionEvent event1) -> {
+            editorToolsPane.setOpacity(0);
+            editorToolsPaneController.clearCanvas();
+            editorToolsPane.setVisible(true);
+            metadataPane.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorToolsPane);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.setOnFinished((t) -> {
+                editorToolsPaneController.setMediaFileForEdit(selMedia);
+            });
+            ft1.play();
+        });
+        ft3.play();
     }
 
 }

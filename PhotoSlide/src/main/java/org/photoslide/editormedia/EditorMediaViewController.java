@@ -10,6 +10,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -26,6 +27,7 @@ import javafx.scene.layout.VBox;
 import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.ImageFilter;
 
 /**
  *
@@ -69,7 +71,12 @@ public class EditorMediaViewController implements Initializable {
             return;
         }
         selectedMediaFile = f;
+        editorImageView.setImage(null);
         Task<Boolean> task = new Task<>() {
+            private Image imageWithFilters;
+            private ObservableList<ImageFilter> filterList;
+            private Image img;            
+
             @Override
             protected Boolean call() throws Exception {
                 switch (selectedMediaFile.getMediaType()) {
@@ -85,17 +92,25 @@ public class EditorMediaViewController implements Initializable {
                             editorImageView.setVisible(true);
                             imageProgress.setVisible(true);
                         });
-                        String url = selectedMediaFile.getImage().getUrl();
-                        Image img = new Image(url, true);
+                        String url = selectedMediaFile.getImageUrl().toString();
+                        img = new Image(url, true);
                         Platform.runLater(() -> {
                             imageProgress.progressProperty().bind(img.progressProperty());
                             img.progressProperty().addListener((ov, t, t1) -> {
                                 if ((Double) t1 == 1.0 && !img.isError()) {
                                     imageProgress.setVisible(false);
+                                    imageWithFilters = img;
+                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
+                                    for (ImageFilter imageFilter : filterList) {
+                                        imageWithFilters = imageFilter.load(imageWithFilters);
+                                        imageFilter.filter(imageFilter.getValues());
+                                    }
+                                    img = imageWithFilters;
+                                    editorImageView.setImage(img);
                                 } else {
                                     imageProgress.setVisible(true);
                                 }
-                            });                            
+                            });
                             editorImageView.setImage(img);
                         });
                     }
@@ -118,5 +133,9 @@ public class EditorMediaViewController implements Initializable {
                 100,
                 100);
         editorImageView.setViewport(newViewportRect3);
+    }
+    
+    public void resetImageView(){
+        this.editorImageView.setImage(null);
     }
 }

@@ -40,6 +40,9 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -56,6 +59,7 @@ import org.photoslide.imageops.ImageFilter;
 public class MediaFile extends StackPane {
 
     private Image image;
+    private Image unModifiyAbleImage;
     private Media media;
     private MediaPlayer mediaPlayer;
     private final MediaView mediaview;
@@ -176,14 +180,14 @@ public class MediaFile extends StackPane {
     }
 
     private Image setFilters() {
-        Image imageWithFilters = this.image;
+        Image imageWithFilters = getClonedImage(unModifiyAbleImage);
         for (ImageFilter imageFilter : filterList) {
             imageWithFilters = imageFilter.load(imageWithFilters);
             imageFilter.filter(imageFilter.getValues());
         }
         return imageWithFilters;
     }
-    
+
     public Image getImage() {
         return image;
     }
@@ -197,6 +201,9 @@ public class MediaFile extends StackPane {
             setLoadingNode();
         } else {
             this.image = image;
+            if (unModifiyAbleImage == null) {
+                this.unModifiyAbleImage = getClonedImage(image);
+            }
             this.image = setFilters();
             imageView.setImage(this.image);
             //calc cropview based on small imageview
@@ -641,6 +648,27 @@ public class MediaFile extends StackPane {
 
     public void setFilterList(ObservableList<ImageFilter> filterList) {
         this.filterList = filterList;
-    }        
+    }
+
+    private Image getClonedImage(Image img) {
+        image = img;
+        PixelReader pixelReader = image.getPixelReader();
+        int height = (int) image.getHeight();
+        int width = (int) image.getWidth();
+        byte[] buffer = new byte[width * height * 4];
+        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+        Image filteredImage = new WritableImage(pixelReader, width, height);
+        return filteredImage;
+    }
+
+    public Image getUnModifiyAbleImage() {
+        return unModifiyAbleImage;
+    }
+
+    public void setUnModifiyAbleImage(Image unModifiyAbleImage) {
+        this.unModifiyAbleImage = unModifiyAbleImage;
+    }
+    
+    
 
 }

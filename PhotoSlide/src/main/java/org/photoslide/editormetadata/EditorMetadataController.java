@@ -15,7 +15,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -27,8 +29,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.metadata.MetadataController;
 
 /**
@@ -52,6 +56,8 @@ public class EditorMetadataController implements Initializable {
     private MetadataController metadatacontroller;
     @FXML
     private HBox hboxImage;
+    @FXML
+    private ProgressIndicator progressMetaDataIndicator;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -68,9 +74,14 @@ public class EditorMetadataController implements Initializable {
         if (f == null) {
             return;
         }
+        imageVIew.setImage(null);
         selectedMediaFile = f;
         gridPaneMetaInfo.getChildren().clear();
         Task<Boolean> task = new Task<>() {
+            private ObservableList<ImageFilter> filterList;
+            private Image imageWithFilters;
+            private Image img;
+
             @Override
             protected Boolean call() throws Exception {
                 switch (selectedMediaFile.getMediaType()) {
@@ -83,13 +94,21 @@ public class EditorMetadataController implements Initializable {
                             imageVIew.setImage(null);
                             progressIndicator.setVisible(true);
                         });
-                        String url = selectedMediaFile.getImage().getUrl();
-                        Image img = new Image(url, true);
+                        String url = selectedMediaFile.getImageUrl().toString();
+                        img = new Image(url, true);
                         Platform.runLater(() -> {
                             progressIndicator.progressProperty().bind(img.progressProperty());
                             img.progressProperty().addListener((ov, t, t1) -> {
                                 if ((Double) t1 == 1.0 && !img.isError()) {
                                     progressIndicator.setVisible(false);
+                                    imageWithFilters = img;
+                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
+                                    for (ImageFilter imageFilter : filterList) {
+                                        imageWithFilters = imageFilter.load(imageWithFilters);
+                                        imageFilter.filter(imageFilter.getValues());
+                                    }
+                                    img = imageWithFilters;
+                                    imageVIew.setImage(img);
                                 } else {
                                     progressIndicator.setVisible(true);
                                 }
@@ -113,8 +132,14 @@ public class EditorMetadataController implements Initializable {
         taskMetaData.setOnFailed((t) -> {
             Logger.getLogger(EditorMetadataController.class.getName()).log(Level.SEVERE, "Cannot load metadata in editor ...", t.getSource().getException());
         });
-        taskMetaData.setOnSucceeded((t) -> {
+        taskMetaData.setOnSucceeded((t) -> {            
             updateUIWithExtendedMetadata();
+            progressMetaDataIndicator.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(500), gridPaneMetaInfo);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.play();
         });
         executor.submit(taskMetaData);
         executor.submit(task);
@@ -174,6 +199,12 @@ public class EditorMetadataController implements Initializable {
                 });
             }
         }
+    }
+
+    public void resetImageView() {
+        progressMetaDataIndicator.setVisible(true);
+        gridPaneMetaInfo.setOpacity(0);
+        this.imageVIew.setImage(null);
     }
 
     public void shutdown() {

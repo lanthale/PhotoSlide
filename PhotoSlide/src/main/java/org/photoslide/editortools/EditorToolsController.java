@@ -10,17 +10,22 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javafx.animation.FadeTransition;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.ImageFilter;
 
 /**
  *
@@ -39,7 +44,9 @@ public class EditorToolsController implements Initializable {
     @FXML
     private Canvas drawingCanvas;
     @FXML
-    private AnchorPane histoAnchorPane;    
+    private AnchorPane histoAnchorPane;
+    @FXML
+    private ProgressIndicator progressHistogramm;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -54,20 +61,29 @@ public class EditorToolsController implements Initializable {
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
-        }
-        clearCanvas();
+        }        
         selectedMediaFile = f;
         Task<Boolean> task = new Task<>() {
+            private Image imageWithFilters;
+            private ObservableList<ImageFilter> filterList;
+
             @Override
             protected Boolean call() throws Exception {
-                String url = selectedMediaFile.getImage().getUrl();
+                String url = selectedMediaFile.getImageUrl().toString();
                 Image img = new Image(url, false);
+                imageWithFilters = img;
+                filterList = selectedMediaFile.getFilterListWithoutImageData();
+                for (ImageFilter imageFilter : filterList) {
+                    imageWithFilters = imageFilter.load(imageWithFilters);
+                    imageFilter.filter(imageFilter.getValues());
+                }
+                img = imageWithFilters;
                 histogram = new Histogram(img);
                 return true;
             }
 
         };
-        task.setOnSucceeded((t) -> {
+        task.setOnSucceeded((t) -> {            
             drawHistogram();
             drawingCanvas.widthProperty().addListener((o) -> {
                 drawHistogram();
@@ -75,6 +91,12 @@ public class EditorToolsController implements Initializable {
             drawingCanvas.heightProperty().addListener((o) -> {
                 drawHistogram();
             });
+            progressHistogramm.setVisible(false);
+            FadeTransition ft1 = new FadeTransition(Duration.millis(500), drawingCanvas);
+            ft1.setAutoReverse(false);
+            ft1.setFromValue(0.0);
+            ft1.setToValue(1.0);
+            ft1.play();
         });
         executor.submit(task);
     }
@@ -82,10 +104,10 @@ public class EditorToolsController implements Initializable {
     private void drawHistogram() {
         clearCanvas();
         double height = drawingCanvas.getHeight();
-        double width=drawingCanvas.getWidth();
-        drawCurve(histogram.getRed(), Color.RED, height,width);
-        drawCurve(histogram.getGreen(), Color.GREEN, height,width);
-        drawCurve(histogram.getBlue(), Color.BLUE, height,width);
+        double width = drawingCanvas.getWidth();
+        drawCurve(histogram.getRed(), Color.RED, height, width);
+        drawCurve(histogram.getGreen(), Color.GREEN, height, width);
+        drawCurve(histogram.getBlue(), Color.BLUE, height, width);
     }
 
     /**
@@ -94,14 +116,16 @@ public class EditorToolsController implements Initializable {
      */
     public void drawCurve(List<Integer> points, Color color, double hight, double width) {
         gc.setStroke(color);
-        double w=(double)width/points.size();
+        double w = (double) width / points.size();
         for (int i = 0; i < points.size(); i++) {
             //gc.strokeLine(i + 0.5, 100.5, i + 0.5, 100.5 - points.get(i));
-            gc.strokeLine(w*(i), hight, w*(i), hight - points.get(i));
+            gc.strokeLine(w * (i), hight, w * (i), hight - points.get(i));
         }
     }
 
-    private void clearCanvas() {
+    public void clearCanvas() {
+        progressHistogramm.setVisible(true);
+        drawingCanvas.setOpacity(0);
         gc.setGlobalAlpha(1);
         gc.clearRect(0, 0, drawingCanvas.getWidth(),
                 drawingCanvas.getHeight());

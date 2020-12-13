@@ -61,7 +61,7 @@ public class EditorToolsController implements Initializable {
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
-        }        
+        }
         selectedMediaFile = f;
         Task<Boolean> task = new Task<>() {
             private Image imageWithFilters;
@@ -83,7 +83,7 @@ public class EditorToolsController implements Initializable {
             }
 
         };
-        task.setOnSucceeded((t) -> {            
+        task.setOnSucceeded((t) -> {
             drawHistogram();
             drawingCanvas.widthProperty().addListener((o) -> {
                 drawHistogram();
@@ -130,6 +130,7 @@ public class EditorToolsController implements Initializable {
         gc.clearRect(0, 0, drawingCanvas.getWidth(),
                 drawingCanvas.getHeight());
         gc.setGlobalAlpha(OPACITY);
+        selectedMediaFile = null;             
     }
 
     public void shutdown() {

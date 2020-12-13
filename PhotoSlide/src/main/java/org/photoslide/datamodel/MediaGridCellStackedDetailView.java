@@ -5,6 +5,7 @@
  */
 package org.photoslide.datamodel;
 
+import java.util.Objects;
 import org.controlsfx.control.GridCell;
 
 /**
@@ -77,4 +78,5 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
         return mediaFile;
     }
 
+    
 }

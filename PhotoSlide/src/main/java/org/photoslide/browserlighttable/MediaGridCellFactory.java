@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.lighttable;
+package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.Utility;
-import org.photoslide.metadata.MetadataController;
+import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -146,8 +146,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     @Override
     public GridCell<MediaFile> call(GridView<MediaFile> p) {
-        MediaGridCell cell = new MediaGridCell();
-        mediaCells.add(cell);
+        MediaGridCell cell = new MediaGridCell();        
+        //mediaCells.add(cell);
         cell.setAlignment(Pos.CENTER);
         cell.setEditable(false);
         cell.setOnMouseClicked((t) -> {
@@ -360,10 +360,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().setVisible(true);
                         });
                         String url = selectedMediaItem.getImageUrl().toString();
-                        img = new Image(url, true);
-
-                        //Image fImg=img;
-                        //img = selectedMediaItem.setFilters(fImg);
+                        img = new Image(url, true);                        
                         Platform.runLater(() -> {
                             lightController.getDetailToolbar().setDisable(false);
                             lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());

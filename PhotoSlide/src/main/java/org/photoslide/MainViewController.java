@@ -1,9 +1,9 @@
 package org.photoslide;
 
-import org.photoslide.browser.CollectionsController;
+import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.lighttable.LighttableController;
-import org.photoslide.metadata.MetadataController;
+import org.photoslide.browserlighttable.LighttableController;
+import org.photoslide.browsermetadata.MetadataController;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
@@ -71,7 +71,7 @@ import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.lighttable.EmptyMediaLoadingTask;
+import org.photoslide.browserlighttable.EmptyMediaLoadingTask;
 
 public class MainViewController implements Initializable {
 
@@ -481,6 +481,9 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void browseButtonAction(ActionEvent event) {
+        editorMetaDataPaneController.resetImageView();
+        editorMediaViewPaneController.resetImageView();
+        editorToolsPaneController.clearCanvas();
         FadeTransition ft = new FadeTransition(Duration.millis(500), editorMetaDataPane);
         ft.setAutoReverse(false);
         ft.setFromValue(1.0);
@@ -508,7 +511,7 @@ public class MainViewController implements Initializable {
             ft1.setAutoReverse(false);
             ft1.setFromValue(0.0);
             ft1.setToValue(1.0);
-            ft1.play();
+            ft1.play();            
         });
         ft2.play();
         FadeTransition ft3 = new FadeTransition(Duration.millis(500), editorToolsPane);

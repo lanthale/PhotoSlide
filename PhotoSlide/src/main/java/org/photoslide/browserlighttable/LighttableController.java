@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.lighttable;
+package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
-import org.photoslide.metadata.MetadataController;
+import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;

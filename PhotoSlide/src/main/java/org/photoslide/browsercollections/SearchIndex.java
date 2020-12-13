@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.browser;
+package org.photoslide.browsercollections;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -26,7 +26,7 @@ import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.metadata.MetadataController;
+import org.photoslide.browsermetadata.MetadataController;
 
 /**
  *

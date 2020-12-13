@@ -5,7 +5,6 @@
  */
 package org.photoslide.datamodel;
 
-import org.photoslide.datamodel.MediaFile;
 import org.controlsfx.control.GridCell;
 
 /**
@@ -68,16 +67,16 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 }
             }
             switch (item.getMediaType()) {
-                case VIDEO:
+                case VIDEO -> {
                     mediaFile.setMedia(item.getMedia(), item.getVideoSupported());
                     setGraphic(mediaFile);
-                    break;
-                case IMAGE:
+                }
+                case IMAGE -> {
                     mediaFile.setImage(item.getImage());
                     setGraphic(mediaFile);
-                    break;
-                default:
-                    break;
+                }
+                default -> {
+                }
             }
         }
     }
@@ -85,5 +84,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public MediaFile getMediaFile() {
         return mediaFile;
     }
+
+    
 
 }

@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.browser;
+package org.photoslide.browsercollections;
 
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
-import org.photoslide.lighttable.LighttableController;
+import org.photoslide.browserlighttable.LighttableController;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -172,7 +172,6 @@ public class CollectionsController implements Initializable {
         });
         executor.submit(task);
         executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
-        //executor.submit(indexTask);
     }
 
     public void saveSettings() {

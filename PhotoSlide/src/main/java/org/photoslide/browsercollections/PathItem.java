@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.browser;
+package org.photoslide.browsercollections;
 
 import java.nio.file.Path;
 

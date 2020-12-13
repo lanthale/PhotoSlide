@@ -204,7 +204,7 @@ public class MediaFile extends StackPane {
             if (unModifiyAbleImage == null) {
                 this.unModifiyAbleImage = getClonedImage(image);
             }
-            this.image = setFilters();
+            this.image = setFilters();            
             imageView.setImage(this.image);
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);

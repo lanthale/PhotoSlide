@@ -17,14 +17,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -32,8 +30,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.ImageFilter;
-import org.photoslide.metadata.MetadataController;
+import org.photoslide.browsermetadata.MetadataController;
 
 /**
  *
@@ -64,6 +61,7 @@ public class EditorMetadataController implements Initializable {
         executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMetadataController"));
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
     }
 
     public void injectMetaDataController(MetadataController c) {
@@ -77,10 +75,7 @@ public class EditorMetadataController implements Initializable {
         imageVIew.setImage(null);
         selectedMediaFile = f;
         gridPaneMetaInfo.getChildren().clear();
-        Task<Boolean> task = new Task<>() {
-            private ObservableList<ImageFilter> filterList;
-            private Image imageWithFilters;
-            private Image img;
+        Task<Boolean> task = new Task<>() {            
 
             @Override
             protected Boolean call() throws Exception {
@@ -89,37 +84,19 @@ public class EditorMetadataController implements Initializable {
 
                     }
                     case IMAGE -> {
-                        Platform.runLater(() -> {
-                            progressIndicator.progressProperty().unbind();
+                        Platform.runLater(() -> {                            
                             imageVIew.setImage(null);
                             progressIndicator.setVisible(true);
-                        });
-                        String url = selectedMediaFile.getImageUrl().toString();
-                        img = new Image(url, true);
-                        Platform.runLater(() -> {
-                            progressIndicator.progressProperty().bind(img.progressProperty());
-                            img.progressProperty().addListener((ov, t, t1) -> {
-                                if ((Double) t1 == 1.0 && !img.isError()) {
-                                    progressIndicator.setVisible(false);
-                                    imageWithFilters = img;
-                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
-                                    for (ImageFilter imageFilter : filterList) {
-                                        imageWithFilters = imageFilter.load(imageWithFilters);
-                                        imageFilter.filter(imageFilter.getValues());
-                                    }
-                                    img = imageWithFilters;
-                                    imageVIew.setImage(img);
-                                } else {
-                                    progressIndicator.setVisible(true);
-                                }
-                            });
-                            imageVIew.setImage(img);
-                        });
+                            imageVIew.setImage(selectedMediaFile.getImage());
+                        });                        
                     }
                 }
                 return true;
             }
         };
+        task.setOnSucceeded((t) -> {
+            progressIndicator.setVisible(false);
+        });
         Task<Boolean> taskMetaData = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
@@ -203,8 +180,10 @@ public class EditorMetadataController implements Initializable {
 
     public void resetImageView() {
         progressMetaDataIndicator.setVisible(true);
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         gridPaneMetaInfo.setOpacity(0);
         this.imageVIew.setImage(null);
+        selectedMediaFile=null;
     }
 
     public void shutdown() {

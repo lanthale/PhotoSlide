@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.metadata;
+package org.photoslide.browsermetadata;
 
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.lighttable.LighttableController;
+import org.photoslide.browserlighttable.LighttableController;
 import com.icafe4j.image.meta.Metadata;
 import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.MetadataType;
@@ -164,15 +164,13 @@ public class MetadataController implements Initializable {
             double val = apertureSlider.getValue();
             executorParallel.submit(() -> {
                 exposerFilter.filter(new float[]{(float) val});
-            });
-            ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
-            if (filterForName != null) {
-                filterForName.setValues(exposerFilter.getValues());
-            }
-            actualMediaFile.requestLayout();            
-            executorParallel.submit(() -> {
+                ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
+                if (filterForName != null) {
+                    filterForName.setValues(exposerFilter.getValues());
+                }
                 actualMediaFile.saveEdits();
-            });
+            });            
+            actualMediaFile.requestLayout();
         });
     }
 

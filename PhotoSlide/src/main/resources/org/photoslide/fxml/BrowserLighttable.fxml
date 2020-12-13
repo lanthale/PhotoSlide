@@ -23,7 +23,7 @@
 <?import org.controlsfx.control.Rating?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.lighttable.LighttableController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
       <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>

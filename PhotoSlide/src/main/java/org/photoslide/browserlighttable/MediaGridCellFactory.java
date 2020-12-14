@@ -14,16 +14,11 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -40,11 +35,10 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -73,8 +67,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
-    private final GridView<MediaFile> grid;
-    private final Set<MediaGridCell> mediaCells;
+    private final GridView<MediaFile> grid;    
     private Task<Boolean> task;
     private final ExecutorService executor;
     private MediaGridCell selectedCell;
@@ -91,8 +84,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         taskList = new ArrayList<>();
         this.metadataController = metadataController;
         this.grid = grid;
-        this.lightController = lightController;
-        this.mediaCells = new HashSet<>();
+        this.lightController = lightController;        
         selectionModel = new GridCellSelectionModel();
         //new RubberBandSelection(grid, selectionModel);
         this.executor = executor;
@@ -146,7 +138,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     @Override
     public GridCell<MediaFile> call(GridView<MediaFile> p) {
-        MediaGridCell cell = new MediaGridCell();        
+        MediaGridCell cell = new MediaGridCell();
         //mediaCells.add(cell);
         cell.setAlignment(Pos.CENTER);
         cell.setEditable(false);
@@ -360,7 +352,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageProgress().setVisible(true);
                         });
                         String url = selectedMediaItem.getImageUrl().toString();
-                        img = new Image(url, true);                        
+                        img = new Image(url, true);
                         Platform.runLater(() -> {
                             lightController.getDetailToolbar().setDisable(false);
                             lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
@@ -394,7 +386,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                         switch (imageFilter.getName()) {
                                             case "ExposureFilter": {
                                                 metadataController.setExposerFilter(imageFilter);
-                                                metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);                                                
+                                                metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
                                             }
                                         }
                                     }
@@ -512,11 +504,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     public GridCellSelectionModel getSelectionModel() {
         return selectionModel;
     }
-
-    public Set<MediaGridCell> getMediaCells() {
-        return mediaCells;
-    }
-
+    
     public void cancleTask() {
         metadataController.cancelTasks();
         taskList.forEach(taskItem -> {
@@ -534,9 +522,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
-        for (MediaGridCell mediaCell : mediaCells) {
-            if (mediaCell.getItem().getName().equalsIgnoreCase(input.getName())) {
-                return mediaCell;
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
+        for (int i = 0; i < vf.getCellCount(); i++) {
+            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
+                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
+                    return (MediaGridCell) mediaCell;
+                }
             }
         }
         return null;

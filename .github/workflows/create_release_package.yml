@@ -43,7 +43,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        pattern: PhotoSlide\target\package\*.pkg
+        pattern: PhotoSlide/target/package/*.pkg
         release-url: ${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -117,6 +117,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        pattern: PhotoSlide\target\package\*.deb
+        pattern: PhotoSlide/target/package/*.deb
         release-url: ${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
@@ -161,7 +162,7 @@ public class SearchIndex {
         if (taskCheck != null) {
             taskCheck.cancel();
         }
-        executorParallel.shutdown();
+        executorParallel.shutdown();        
     }
 
     public void insertMediaFileIntoSearchDB(MediaFile m) {
@@ -201,9 +202,9 @@ public class SearchIndex {
                 places = "'" + m.getFaces().get() + "'";
             }
             String metadata = "'" + metadataController.getMetaDataAsString() + "'";
-            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
-            PreparedStatement prepareStatement = App.getSearchDBConnection().prepareStatement(statementStr);
-            prepareStatement.execute();
+            Statement stm = App.getSearchDBConnection().createStatement();
+            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";            
+            stm.execute(statementStr);
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
         }

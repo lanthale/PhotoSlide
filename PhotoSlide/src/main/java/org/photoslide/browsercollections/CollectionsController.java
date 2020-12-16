@@ -317,11 +317,11 @@ public class CollectionsController implements Initializable {
     }
 
     public void Shutdown() {
-        executor.shutdownNow();
-        executorParallel.shutdownNow();
         if (searchIndexProcess != null) {
             searchIndexProcess.shutdown();
         }
+        executor.shutdownNow();
+        executorParallel.shutdownNow();        
         executorParallelTimers.shutdownNow();
     }
 

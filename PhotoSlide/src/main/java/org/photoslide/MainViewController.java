@@ -645,6 +645,15 @@ public class MainViewController implements Initializable {
     @FXML
     private void searchButtonAction(ActionEvent event) {
         searchtools = new SearchTools(middlePane.getScene().getWindow());
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setContentText("Not yet implemented!");
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        alert.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
+        alert.showAndWait();        
     }
 
 }

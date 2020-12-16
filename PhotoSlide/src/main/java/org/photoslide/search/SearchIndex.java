@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.browsercollections;
+package org.photoslide.search;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -22,8 +23,12 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelReader;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.browsercollections.PathItem;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
@@ -70,7 +75,7 @@ public class SearchIndex {
                             }
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
-                                m.setName(fileItem.toString());
+                                m.setName(fileItem.getFileName().toString());
                                 m.setPathStorage(fileItem);
                                 if (checkIfIndexed(m) == false) {
                                     m.readEdits();
@@ -81,6 +86,11 @@ public class SearchIndex {
                                     } else if (FileTypes.isValidImge(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.IMAGE);
                                         metadataController.setActualMediaFile(m);
+                                        try {
+                                            metadataController.readBasicMetadata(task);
+                                        } catch (IOException ex) {
+                                            Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
                                         insertMediaFileIntoSearchDB(m);
                                     } else {
                                         m.setMediaType(MediaFile.MediaTypes.NONE);
@@ -89,7 +99,7 @@ public class SearchIndex {
                             }
                             return super.visitFile(fileItem, attrs);
                         }
-                    });                    
+                    });
                 } catch (IOException ex) {
                     Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -105,7 +115,7 @@ public class SearchIndex {
         });
         executorParallel.submit(task);
 
-    }    
+    }
 
     public void checkSearchIndex(String searchPath) {
         PathItem pathItem = new PathItem(Paths.get(searchPath));
@@ -151,7 +161,7 @@ public class SearchIndex {
         if (taskCheck != null) {
             taskCheck.cancel();
         }
-        executorParallel.shutdownNow();
+        executorParallel.shutdown();
     }
 
     public void insertMediaFileIntoSearchDB(MediaFile m) {
@@ -182,9 +192,18 @@ public class SearchIndex {
                 recordTime = "ts '" + m.getRecordTime().format(DateTimeFormatter.ISO_DATE) + "'";
             }
             int rating = m.getRatingProperty().getValue();
-            Statement indexStatment = App.getSearchDBConnection().createStatement();
-            String stm = "INSERT INTO MediaFiles VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + ")";
-            indexStatment.execute(stm);
+            String places = null;
+            if (m.getPlaces().get() != null) {
+                places = "'" + m.getPlaces().get() + "'";
+            }
+            String faces = null;
+            if (m.getFaces().get() != null) {
+                places = "'" + m.getFaces().get() + "'";
+            }
+            String metadata = "'" + metadataController.getMetaDataAsString() + "'";
+            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
+            PreparedStatement prepareStatement = App.getSearchDBConnection().prepareStatement(statementStr);
+            prepareStatement.execute();
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -74,7 +74,7 @@ public class App extends Application {
         } else {
             try {
                 Class.forName("org.h2.Driver");
-                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");                
             } catch (ClassNotFoundException | SQLException e) {
                 Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
             }
@@ -108,6 +108,11 @@ public class App extends Application {
     }
 
     public static void saveSettings(Stage stage, MainViewController controller) {
+        /*try {
+            searchDBConnection.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }*/         
         controller.saveSettings();
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
@@ -160,34 +165,37 @@ public class App extends Application {
         try {
             //setup search database
             Class.forName("org.h2.Driver");
-            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB;DB_CLOSE_ON_EXIT=FALSE", "", "");
             Statement stat = searchDBConnection.createStatement();
-            stat.execute("CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
+            stat.execute("CREATE ALIAS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
             stat.execute("CALL FT_INIT()");
             FullText.setIgnoreList(searchDBConnection, "to,this");
             FullText.setWhitespaceChars(searchDBConnection, " ,.-");
             stat = searchDBConnection.createStatement();
             //fulltext search
             stat.execute("""
-                         CREATE TABLE IF NOT EXISTS
-                             "PUBLIC".MediaFiles
+                         CREATE TABLE
+                             "PUBLIC".MEDIAFILES
                              (
-                                 name CHAR NOT NULL,
-                                 pathStorage CHAR NOT NULL,
-                                 title CHAR,
-                                 keywords CHAR,
-                                 camera CHAR,
+                                 name VARCHAR(255) NOT NULL,
+                                 pathStorage VARCHAR(1000) NOT NULL,
+                                 title VARCHAR(255),
+                                 keywords VARCHAR(255),
+                                 camera VARCHAR(255),
                                  rating INTEGER,
                                  recordTime TIMESTAMP,
                                  creationTime TIMESTAMP,
+                                 places VARCHAR(255),
+                                 faces VARCHAR(255),
+                                 metadata VARCHAR(4000),
                                  PRIMARY KEY (name, pathStorage)
-                             )""");
-
-            stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MediaFiles', NULL)");
+                             )
+                         """);            
+            stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MEDIAFILES', NULL)");
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
+    }        
 
     private void setDefaultTIFFCodec() {
         IIORegistry registry = IIORegistry.getDefaultInstance();

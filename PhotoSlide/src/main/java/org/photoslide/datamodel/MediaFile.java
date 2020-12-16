@@ -71,8 +71,11 @@ public class MediaFile extends StackPane {
     private final SimpleStringProperty title;
     private final SimpleStringProperty keywords;
     private final SimpleStringProperty camera;
+    private final SimpleStringProperty comments;
     private final SimpleDoubleProperty rotationAngle;
     private final SimpleIntegerProperty rating;
+    private final SimpleStringProperty places;
+    private final SimpleStringProperty faces;    
     private Rectangle2D cropView;
     private LocalDateTime recordTime;
     private final SimpleBooleanProperty deleted;
@@ -106,6 +109,8 @@ public class MediaFile extends StackPane {
         stackName = new SimpleStringProperty();
         stackPos = new SimpleIntegerProperty(-1);
         stacked = new SimpleBooleanProperty(false);
+        places = new SimpleStringProperty();
+        faces = new SimpleStringProperty();
         filterList = FXCollections.observableArrayList();
         layerIcon = new FontIcon("ti-view-grid");
         restoreIcon = new FontIcon("ti-back-right:22");
@@ -113,6 +118,7 @@ public class MediaFile extends StackPane {
         title = new SimpleStringProperty();
         keywords = new SimpleStringProperty();
         camera = new SimpleStringProperty();
+        comments = new SimpleStringProperty();
         rotationAngle = new SimpleDoubleProperty(0.0);
         rating = new SimpleIntegerProperty(0);
         this.setHeight(50);
@@ -204,7 +210,7 @@ public class MediaFile extends StackPane {
             if (unModifiyAbleImage == null) {
                 this.unModifiyAbleImage = getClonedImage(image);
             }
-            this.image = setFilters();            
+            this.image = setFilters();
             imageView.setImage(this.image);
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);
@@ -651,6 +657,9 @@ public class MediaFile extends StackPane {
     }
 
     private Image getClonedImage(Image img) {
+        if (img == null) {
+            return null;
+        }
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         int height = (int) image.getHeight();
@@ -668,6 +677,20 @@ public class MediaFile extends StackPane {
     public void setUnModifiyAbleImage(Image unModifiyAbleImage) {
         this.unModifiyAbleImage = unModifiyAbleImage;
     }
+
+    public SimpleStringProperty getPlaces() {
+        return places;
+    }
+
+    public SimpleStringProperty getFaces() {
+        return faces;
+    }
+
+    public SimpleStringProperty getComments() {
+        return comments;
+    }
+     
+    
     
     
 

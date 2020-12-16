@@ -5,6 +5,7 @@
  */
 package org.photoslide.browsercollections;
 
+import org.photoslide.search.SearchIndex;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;

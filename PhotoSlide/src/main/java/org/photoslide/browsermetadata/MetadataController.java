@@ -169,7 +169,7 @@ public class MetadataController implements Initializable {
                     filterForName.setValues(exposerFilter.getValues());
                 }
                 actualMediaFile.saveEdits();
-            });            
+            });
             actualMediaFile.requestLayout();
         });
     }
@@ -203,6 +203,18 @@ public class MetadataController implements Initializable {
                 recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
             }
             updateUIWithExtendedMetadata();
+            keywordText.setText(actualMediaFile.getKeywords());
+            StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
+            while (defaultTokenizer.hasMoreTokens()) {
+                String nextToken = defaultTokenizer.nextToken();
+                keywordList.add(nextToken);
+            }
+            TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
+            captionTextField.setText(actualMediaFile.getTitleProperty().get());
+            if (actualMediaFile.getComments().get() != null) {
+                commentText.appendText(actualMediaFile.getComments().get());
+            }
+            
             anchorKeywordPane.setDisable(false);
             progressPane.setVisible(false);
             commentText.textProperty().addListener(commentsChangeListener);
@@ -232,8 +244,12 @@ public class MetadataController implements Initializable {
                     case COMMENT -> {
                         if (meta instanceof Comments) {
                             commentsdata = ((Comments) meta).getComments();
+                            StringBuilder sb = new StringBuilder();
                             commentsdata.forEach(comment -> {
-                                commentText.appendText(comment);
+                                sb.append(comment);
+                            });
+                            Platform.runLater(() -> {
+                                actualMediaFile.getComments().set(sb.toString());
                             });
                         }
                     }
@@ -245,20 +261,11 @@ public class MetadataController implements Initializable {
                             switch (item.getKey()) {
                                 case "Keywords" -> {
                                     Platform.runLater(() -> {
-                                        keywordText.setText(item.getValue());
-                                    });
-                                    StringTokenizer defaultTokenizer = new StringTokenizer(item.getValue(), ";");
-                                    while (defaultTokenizer.hasMoreTokens()) {
-                                        String nextToken = defaultTokenizer.nextToken();
-                                        keywordList.add(nextToken);
-                                    }
-                                    Platform.runLater(() -> {
-                                        TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
+                                        actualMediaFile.setKeywords(item.getValue());
                                     });
                                 }
                                 case "Caption Abstract" ->
                                     Platform.runLater(() -> {
-                                        captionTextField.setText(item.getValue());
                                         actualMediaFile.setTitle(item.getValue());
                                     });
                             }
@@ -275,9 +282,6 @@ public class MetadataController implements Initializable {
                                 Collection<MetadataEntry> entries = item.getMetadataEntries();
                                 for (MetadataEntry e : entries) {
                                     if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
-                                        Platform.runLater(() -> {
-                                            recordDateField.setText(e.getValue());
-                                        });
                                         if (!e.getValue().equalsIgnoreCase("")) {
                                             LocalDateTime date;
                                             DateTimeFormatter formatter;
@@ -742,7 +746,7 @@ public class MetadataController implements Initializable {
     private class KeywordChangeListener implements ChangeListener<String> {
 
         @Override
-        public void changed(ObservableValue<? extends String> ov, String t, String t1) {
+        public void changed(ObservableValue<? extends String> ov, String t, String t1) {            
             saveKeywordsTitle();
         }
 
@@ -814,6 +818,53 @@ public class MetadataController implements Initializable {
 
     public XMP getXmpdata() {
         return xmpdata;
+    }
+
+    /**
+     * Method of getting all metadata as a string for the search database
+     *
+     * @return String with all meta key/value pairs in format key:value<newline>
+     */
+    public String getMetaDataAsString() {
+        StringBuilder sb = new StringBuilder();
+        Iterator<MetadataEntry> iterator;
+
+        //read jpge exif
+        if (this.getJpegExifdata() != null) {
+            iterator = this.getJpegExifdata().iterator();
+            while (iterator.hasNext()) {
+                MetadataEntry item = iterator.next();
+                Collection<MetadataEntry> entries = item.getMetadataEntries();
+                entries.forEach(e -> {
+                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");
+                });
+            }
+        }
+
+        //read iptcdata exif
+        if (this.getIptcdata() != null) {
+            iterator = this.getIptcdata().iterator();
+            while (iterator.hasNext()) {
+                MetadataEntry item = iterator.next();
+                Collection<MetadataEntry> entries = item.getMetadataEntries();
+                entries.forEach(e -> {
+                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");
+                });
+            }
+        }
+
+        //read xmpdata
+        /*if (this.getXmpdata() != null) {
+            iterator = this.getXmpdata().iterator();
+            while (iterator.hasNext()) {
+                MetadataEntry item = iterator.next();
+                Collection<MetadataEntry> entries = item.getMetadataEntries();
+                entries.forEach(e -> {                    
+                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");                    
+                });
+            }
+        }*/
+        return sb.toString();
     }
 
     public void setExposerFilter(ImageFilter exposerFilter) {

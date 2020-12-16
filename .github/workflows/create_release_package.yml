@@ -30,13 +30,6 @@ jobs:
 
     - name: Build with Maven
       run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
-      
-    - name: Get Name of Artifact
-      run: |
-        ARTIFACT_PATHNAME=$(ls PhotoSlide/target/package/*.pkg | head -n 1)
-        ARTIFACT_NAME=$(basename $ARTIFACT_PATHNAME)
-        echo ::set-env name=ARTIFACT_NAME::${ARTIFACT_NAME}
-        echo ::set-env name=ARTIFACT_PATHNAME::${ARTIFACT_PATHNAME}
         
     - name: Get release
       id: get_release
@@ -46,14 +39,13 @@ jobs:
 
     - name: Upload Release Asset OSX
       id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
+      uses: csexton/release-asset-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: ${{ env.ARTIFACT_PATHNAME }}
-        asset_name: ${{ env.ARTIFACT_NAME }}
-        asset_content_type: application/deb
+        pattern: PhotoSlide\target\package\*.pkg
+        release-url: ${{ steps.get_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-win:
     

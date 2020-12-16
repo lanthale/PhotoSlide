@@ -12,11 +12,11 @@ import org.controlsfx.control.GridCell;
  *
  * @author selfemp
  */
-public class MediaGridCellSearchResult extends GridCell<MediaFile> {
+public class MediaGridCellSR extends GridCell<MediaFile> {
 
     private final MediaFile mediaFile;
 
-    public MediaGridCellSearchResult() {
+    public MediaGridCellSR() {
         this.setId("MediaGridCell");
         mediaFile = new MediaFile();
         managedProperty().bind(mediaFile.managedProperty());

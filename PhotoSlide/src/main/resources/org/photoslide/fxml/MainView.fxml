@@ -223,6 +223,11 @@
                                 <FontIcon iconLiteral="ti-palette" iconSize="24" />
                             </graphic>
                         </Button>
+                  <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="Search">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-search" iconSize="24" />
+                     </graphic>
+                  </Button>
                     </items>
                     <padding>
                         <Insets left="100.0" />

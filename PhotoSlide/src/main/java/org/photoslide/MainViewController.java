@@ -44,6 +44,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
@@ -72,6 +73,7 @@ import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.browserlighttable.EmptyMediaLoadingTask;
+import org.photoslide.search.SearchTools;
 
 public class MainViewController implements Initializable {
 
@@ -155,6 +157,9 @@ public class MainViewController implements Initializable {
     @FXML
     private MenuItem openMenu;
     private Image dialogIcon;
+    @FXML
+    private Button searchButton;
+    private SearchTools searchtools;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -215,6 +220,9 @@ public class MainViewController implements Initializable {
     }
 
     public void Shutdown() {
+        if (searchtools != null) {
+            searchtools.shutdown();
+        }
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
@@ -511,7 +519,7 @@ public class MainViewController implements Initializable {
             ft1.setAutoReverse(false);
             ft1.setFromValue(0.0);
             ft1.setToValue(1.0);
-            ft1.play();            
+            ft1.play();
         });
         ft2.play();
         FadeTransition ft3 = new FadeTransition(Duration.millis(500), editorToolsPane);
@@ -574,14 +582,14 @@ public class MainViewController implements Initializable {
                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        final MediaFile selMedia = selectedMediaItem;        
+        final MediaFile selMedia = selectedMediaItem;
         FadeTransition ft = new FadeTransition(Duration.millis(250), collectionsPane);
         ft.setAutoReverse(false);
         ft.setFromValue(1.0);
         ft.setToValue(0.0);
         ft.setOnFinished((ActionEvent event1) -> {
-            editorMetaDataPane.setOpacity(0); 
-            editorMetaDataPaneController.resetImageView();        
+            editorMetaDataPane.setOpacity(0);
+            editorMetaDataPaneController.resetImageView();
             editorMetaDataPane.setVisible(true);
             collectionsPane.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorMetaDataPane);
@@ -632,6 +640,11 @@ public class MainViewController implements Initializable {
             ft1.play();
         });
         ft3.play();
+    }
+
+    @FXML
+    private void searchButtonAction(ActionEvent event) {
+        searchtools = new SearchTools(middlePane.getScene().getWindow());
     }
 
 }

@@ -495,22 +495,22 @@
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-core</artifactId>
-            <version>11.5.0</version>            
+            <version>12.0.0</version>            
         </dependency>        
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
-            <version>11.5.0</version>            
+            <version>12.0.0</version>            
         </dependency>        
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-themify-pack</artifactId>
-            <version>11.5.0</version>            
+            <version>12.0.0</version>            
         </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-fontawesome-pack</artifactId>
-            <version>11.5.0</version>
+            <version>12.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.dragon66</groupId>

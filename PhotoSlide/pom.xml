@@ -728,7 +728,7 @@
                                         <module>javafx.swing</module>   
                                         <module>java.desktop</module>
                                         <module>org.controlsfx.controls</module>                                        
-                                        <module>org.kordamp.iconli.core</module>
+                                        <module>org.kordamp.ikonli.core</module>
                                         <module>org.kordamp.ikonli.javafx</module>    
                                         <module>org.kordamp.ikonli.themify</module> 
                                         <module>org.kordamp.ikonli.fontawesome</module>   

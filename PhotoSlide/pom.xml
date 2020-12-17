@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.0-SNAPSHOT</version>        
+    <version>1.0.1</version>        
     
     <properties>
         <javafx.version>16-ea+5</javafx.version>
@@ -787,7 +787,7 @@
                                         <argument>--icon</argument>
                                         <argument>${icons}</argument>                                        
                                         <argument>--app-version</argument>                                        
-                                        <argument>1.0.0</argument>
+                                        <argument>${project.version}</argument>
                                         <argument>--resource-dir</argument>
                                         <argument>${installericon}</argument>
                                         <argument>--copyright</argument>

@@ -206,7 +206,7 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setText("Scanning...");
         });
-        try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+        try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
             boolean res = true;
             if (entry.getFileName().toString().startsWith(".")) {
                 res = false;
@@ -261,7 +261,7 @@ public class CollectionsController implements Initializable {
         if (Files.isDirectory(root_file)) {
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
             parent.getChildren().add(node);
-            try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+            try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
                 boolean res = true;
                 if (entry.getFileName().toString().startsWith(".")) {
                     res = false;
@@ -321,7 +321,7 @@ public class CollectionsController implements Initializable {
             searchIndexProcess.shutdown();
         }
         executor.shutdownNow();
-        executorParallel.shutdownNow();        
+        executorParallel.shutdownNow();
         executorParallelTimers.shutdownNow();
     }
 
@@ -350,8 +350,12 @@ public class CollectionsController implements Initializable {
                     numbers.add(Integer.parseInt(key.substring(3)));
                 }
             }
-            Integer i = Collections.max(numbers);
-            return "" + (i + 1);
+            if (numbers.isEmpty()) {
+                return "1";
+            } else {
+                Integer i = Collections.max(numbers);
+                return "" + (i + 1);
+            }
         } catch (BackingStoreException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -64,6 +64,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
@@ -403,6 +404,9 @@ public class CollectionsController implements Initializable {
                     lighttablePaneController.setSelectedPath(selectedItem.getValue().getFilePath());
                 }
             });
+            FontIcon onlineIcon = new FontIcon("fa-archive");
+            onlineIcon.setStyle("-fx-icon-color: green;");
+            firstTitlePane.setGraphic(onlineIcon);
             mainController.getStatusLabelLeft().setVisible(false);
             mainController.getProgressPane().setVisible(false);
         });
@@ -410,8 +414,14 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
-            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-            util.showError(this.accordionPane, "Cannot create directory tree", t.getSource().getException());
+            FontIcon offlineIcon = new FontIcon("fa-archive");
+            offlineIcon.setStyle("-fx-icon-color: red");
+
+            Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
+            Tooltip.install(offlineIcon, tip);
+            firstTitlePane.setGraphic(offlineIcon);
+            //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
+            //util.showError(this.accordionPane, "Cannot create directory tree", t.getSource().getException());
         });
         executorParallel.submit(task);
     }

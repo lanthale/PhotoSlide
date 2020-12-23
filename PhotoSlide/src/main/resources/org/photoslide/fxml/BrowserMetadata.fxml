@@ -20,7 +20,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefWidth="258.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
+<AnchorPane prefWidth="258.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
    <children>
       <Label layoutX="21.0" layoutY="81.0" text="MetaData" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -69,7 +69,7 @@
                               <VBox layoutX="18.4" layoutY="315.4" prefHeight="147.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="305.0">
                                  <children>
                                     <Label text="Comments" />
-                                    <TextArea fx:id="commentText" prefHeight="200.0" prefWidth="200.0" />
+                                    <TextArea fx:id="commentText" prefHeight="200.0" prefWidth="200.0" wrapText="true" />
                                  </children>
                               </VBox>
                            </children>

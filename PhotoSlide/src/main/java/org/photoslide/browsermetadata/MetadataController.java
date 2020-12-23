@@ -203,18 +203,19 @@ public class MetadataController implements Initializable {
                 recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
             }
             updateUIWithExtendedMetadata();
-            keywordText.setText(actualMediaFile.getKeywords());
-            StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
-            while (defaultTokenizer.hasMoreTokens()) {
-                String nextToken = defaultTokenizer.nextToken();
-                keywordList.add(nextToken);
+            if (actualMediaFile.getKeywords() != null) {
+                keywordText.setText(actualMediaFile.getKeywords());
+                StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
+                while (defaultTokenizer.hasMoreTokens()) {
+                    String nextToken = defaultTokenizer.nextToken();
+                    keywordList.add(nextToken);
+                }
+                TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
             }
-            TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
             captionTextField.setText(actualMediaFile.getTitleProperty().get());
             if (actualMediaFile.getComments().get() != null) {
                 commentText.appendText(actualMediaFile.getComments().get());
             }
-            
             anchorKeywordPane.setDisable(false);
             progressPane.setVisible(false);
             commentText.textProperty().addListener(commentsChangeListener);
@@ -260,14 +261,23 @@ public class MetadataController implements Initializable {
                             MetadataEntry item = iterator.next();
                             switch (item.getKey()) {
                                 case "Keywords" -> {
-                                    Platform.runLater(() -> {
+                                    if (actTask.getClass().getPackageName().equalsIgnoreCase("org.photoslide.search")) {
+                                        Platform.runLater(() -> {
+                                            actualMediaFile.setKeywords(item.getValue());
+                                        });
+                                    } else {
                                         actualMediaFile.setKeywords(item.getValue());
-                                    });
+                                    }
                                 }
-                                case "Caption Abstract" ->
-                                    Platform.runLater(() -> {
+                                case "Caption Abstract" -> {
+                                    if (actTask.getClass().getPackageName().equalsIgnoreCase("org.photoslide.search")) {
+                                        Platform.runLater(() -> {
+                                            actualMediaFile.setTitle(item.getValue());
+                                        });
+                                    } else {
                                         actualMediaFile.setTitle(item.getValue());
-                                    });
+                                    }
+                                }
                             }
                         }
                     }
@@ -441,7 +451,7 @@ public class MetadataController implements Initializable {
             Metadata.insertIPTC(fin, bout, iptcs, true);
 
             fin.close();
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             bout.close();
@@ -452,7 +462,7 @@ public class MetadataController implements Initializable {
             Metadata.insertComment(fin, bout, commentText.getText());
 
             fin.close();
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
 
@@ -486,7 +496,7 @@ public class MetadataController implements Initializable {
 
                     Metadata.insertComment(fin, bout, commentText.getText());
 
-                    try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
                     fin.close();
@@ -599,7 +609,7 @@ public class MetadataController implements Initializable {
                 });
             });
             Metadata.insertIPTC(fin, bout, iptcs, false);
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -746,7 +756,7 @@ public class MetadataController implements Initializable {
     private class KeywordChangeListener implements ChangeListener<String> {
 
         @Override
-        public void changed(ObservableValue<? extends String> ov, String t, String t1) {            
+        public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveKeywordsTitle();
         }
 

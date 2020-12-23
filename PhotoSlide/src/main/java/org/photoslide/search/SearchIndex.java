@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -20,13 +19,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.PixelReader;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browsercollections.PathItem;
@@ -63,7 +58,7 @@ public class SearchIndex {
                 if (task.isCancelled()) {
                     return null;
                 }
-
+                updateTitle("createSearchIndex");
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
@@ -102,7 +97,7 @@ public class SearchIndex {
                         }
                     });
                 } catch (IOException ex) {
-                    Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+                    //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 return null;
             }
@@ -146,7 +141,7 @@ public class SearchIndex {
                         }
                     });
                 } catch (IOException ex) {
-                    Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+                    //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 return null;
             }

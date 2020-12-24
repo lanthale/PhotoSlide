@@ -48,6 +48,7 @@ public class App extends Application {
     private static final double DEFAULT_WIDTH = 1280;
     private static final double DEFAULT_HEIGHT = 800;
     private static boolean SEARCHINDEXFINISHED = false;
+    private static boolean MAXIMIZED = true;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
     private Image iconImage;
@@ -120,6 +121,7 @@ public class App extends Application {
         preferences.putDouble(WINDOW_WIDTH, stage.getWidth());
         preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());
         preferences.putBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
+        preferences.putBoolean("MAXIMIZED", stage.isMaximized());
         try {
             preferences.flush();
         } catch (BackingStoreException ex) {
@@ -136,6 +138,8 @@ public class App extends Application {
         double width = pref.getDouble(WINDOW_WIDTH, DEFAULT_WIDTH);
         double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);
         SEARCHINDEXFINISHED = pref.getBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
+        MAXIMIZED = pref.getBoolean("MAXIMIZED", MAXIMIZED);
+        stage.setMaximized(MAXIMIZED);
         stage.setX(x);
         stage.setY(y);
         stage.setWidth(width);

@@ -172,7 +172,7 @@ public class CollectionsController implements Initializable {
                 }
             });
         });
-        executor.submit(task);
+        executorParallel.submit(task);
         executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
     }
 
@@ -249,7 +249,7 @@ public class CollectionsController implements Initializable {
                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
                     util.showError(this.accordionPane, "Cannot create directory tree", t2.getSource().getException());
                 });
-                executor.submit(taskTree);
+                executorParallel.submit(taskTree);
                 //} catch (IOException ex) {
                 //    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                 //}                

@@ -84,8 +84,8 @@ public class SearchIndex {
                                         metadataController.setActualMediaFile(m);
                                         try {
                                             metadataController.readBasicMetadata(task);
-                                        } catch (IOException ex) {
-                                            Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+                                        } catch (IllegalArgumentException | IOException ex) {
+                                            //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                                         }
                                         insertMediaFileIntoSearchDB(m);
                                     } else {

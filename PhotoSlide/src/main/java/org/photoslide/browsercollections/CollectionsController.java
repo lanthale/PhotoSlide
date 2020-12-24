@@ -115,8 +115,6 @@ public class CollectionsController implements Initializable {
 
     private LighttableController lighttablePaneController;
     private Preferences pref;
-    private static TreeItem placeholder;
-    private ProgressIndicator waitPrg;
     @FXML
     private Button refreshButton;
 
@@ -128,10 +126,7 @@ public class CollectionsController implements Initializable {
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();
-        placeholder = new TreeItem("Please wait...");
-        waitPrg = new ProgressIndicator();
-        waitPrg.setPrefSize(15, 15);
-        placeholder.setGraphic(waitPrg);
+
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
@@ -261,6 +256,7 @@ public class CollectionsController implements Initializable {
     private void createTree(Path root_file, TreeItem parent) throws IOException {
         if (Files.isDirectory(root_file)) {
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
+            TreeItem placeholder = new TreeItem("Please wait...");
             parent.getChildren().add(node);
             try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
                 boolean res = true;
@@ -274,8 +270,12 @@ public class CollectionsController implements Initializable {
             })) {
                 Stream<Path> sortedStream = StreamSupport.stream(newDirectoryStream.spliterator(), false).sorted();
                 sortedStream.forEach((t) -> {
+
                     Platform.runLater(() -> {
                         if (node.getChildren().isEmpty()) {
+                            ProgressIndicator waitPrg = new ProgressIndicator();
+                            waitPrg.setPrefSize(15, 15);
+                            placeholder.setGraphic(waitPrg);
                             node.getChildren().add(placeholder);
                         }
                     });

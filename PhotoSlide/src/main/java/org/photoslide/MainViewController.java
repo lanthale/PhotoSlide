@@ -14,6 +14,8 @@ import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 import javafx.animation.FadeTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
@@ -73,6 +76,7 @@ import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.browserlighttable.EmptyMediaLoadingTask;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.search.SearchTools;
 
 public class MainViewController implements Initializable {
@@ -299,20 +303,28 @@ public class MainViewController implements Initializable {
                             if (outFile.exists() == true) {
                                 continue;
                             }
-                            String url = mediaItem.getImage().getUrl();
+                            String url = mediaItem.getImageUrl().toString();
                             Image img = new Image(url, false);
+                            ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
+                            Image imageWithFilters = img;
+                            for (ImageFilter imageFilter : filterList) {
+                                imageWithFilters = imageFilter.load(imageWithFilters);
+                                imageFilter.filter(imageFilter.getValues());
+                            }
+                            img = imageWithFilters;
                             PixelReader reader = img.getPixelReader();
                             BufferedImage fromFXImage;
                             WritableImage newImage;
                             if (mediaItem.getCropView() != null) {
                                 newImage = new WritableImage(reader, (int) (mediaItem.getCropView().getMinX()), (int) (mediaItem.getCropView().getMinY()), (int) (mediaItem.getCropView().getWidth()), (int) (mediaItem.getCropView().getHeight()));
-                                fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                             } else {
                                 newImage = new WritableImage(reader, (int) img.getWidth(), (int) img.getHeight());
-                                fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                             }
+                            fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                             // rotate image in FX or swing
-
+                            if (mediaItem.getRotationAngleProperty().get() != 0) {
+                                fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
+                            }
                             try {
                                 FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + i + "." + imageType.getExtension(), false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
@@ -372,6 +384,14 @@ public class MainViewController implements Initializable {
         } else {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
+    }
+
+    private BufferedImage getRotatedImage(BufferedImage bufferedImage, double angle) {
+        AffineTransform transform = new AffineTransform();
+        transform.rotate(angle);
+        AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
+        bufferedImage = op.filter(bufferedImage, null);
+        return bufferedImage;
     }
 
     @FXML
@@ -653,7 +673,7 @@ public class MainViewController implements Initializable {
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
-        alert.showAndWait();        
+        alert.showAndWait();
     }
 
 }

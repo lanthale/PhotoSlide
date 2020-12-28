@@ -13,6 +13,7 @@
 <?import javafx.scene.effect.Blend?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -52,7 +53,15 @@
                                     <VBox spacing="2.0">
                                        <children>
                                           <Label text="Keywords" />
-                                          <TextArea fx:id="keywordText" prefHeight="200.0" prefWidth="200.0" wrapText="true" />
+                                          <ScrollPane fitToWidth="true" minViewportHeight="90.0" minViewportWidth="100.0" prefViewportWidth="230.0">
+                                             <content>
+                                                <FlowPane fx:id="keywordText" hgap="5.0" prefHeight="100.0" prefWidth="230.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
+                                                   <padding>
+                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                   </padding>
+                                                </FlowPane>
+                                             </content>
+                                          </ScrollPane>
                                           <TextField fx:id="addKeywordTextField" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="Add Keywords..." />
                                           <HBox alignment="CENTER_RIGHT">
                                              <children>

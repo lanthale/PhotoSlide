@@ -44,9 +44,12 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
@@ -68,6 +71,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -107,7 +111,7 @@ public class MetadataController implements Initializable {
     @FXML
     private TitledPane quickDevPane;
     @FXML
-    private TextArea keywordText;
+    private FlowPane keywordText;
     @FXML
     private TextField addKeywordTextField;
     @FXML
@@ -197,35 +201,39 @@ public class MetadataController implements Initializable {
                 return null;
             }
         };
-        task.setOnSucceeded((t) -> {
-            DateTimeFormatter formatter;
-            if (actualMediaFile.getRecordTime() != null) {
-                recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
-            }
-            updateUIWithExtendedMetadata();
-            if (actualMediaFile.getKeywords() != null) {
-                keywordText.setText(actualMediaFile.getKeywords());
-                StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
-                while (defaultTokenizer.hasMoreTokens()) {
-                    String nextToken = defaultTokenizer.nextToken();
-                    keywordList.add(nextToken);
+        task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                DateTimeFormatter formatter;
+                if (actualMediaFile.getRecordTime() != null) {
+                    recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
                 }
-                TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
+                updateUIWithExtendedMetadata();
+                if (actualMediaFile.getKeywords() != null) {
+                    StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
+                    while (defaultTokenizer.hasMoreTokens()) {
+                        String nextToken = defaultTokenizer.nextToken();
+                        keywordText.getChildren().add(new Tag(nextToken));
+                        keywordList.add(nextToken);
+                    }
+                    TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
+                }
+                captionTextField.setText(actualMediaFile.getTitleProperty().get());
+                if (actualMediaFile.getComments().get() != null) {
+                    commentText.appendText(actualMediaFile.getComments().get());
+                }
+                anchorKeywordPane.setDisable(false);
+                progressPane.setVisible(false);
+                commentText.textProperty().addListener(commentsChangeListener);
+
+                keywordText.getChildren().addListener(keywordsChangeListener);
+                captionTextField.textProperty().addListener(captionChangeListener);
             }
-            captionTextField.setText(actualMediaFile.getTitleProperty().get());
-            if (actualMediaFile.getComments().get() != null) {
-                commentText.appendText(actualMediaFile.getComments().get());
-            }
-            anchorKeywordPane.setDisable(false);
-            progressPane.setVisible(false);
-            commentText.textProperty().addListener(commentsChangeListener);
-            keywordText.textProperty().addListener(keywordsChangeListener);
-            captionTextField.textProperty().addListener(captionChangeListener);
         });
         task.setOnFailed((t) -> {
             anchorKeywordPane.setDisable(false);
             progressPane.setVisible(false);
-            keywordText.textProperty().removeListener(keywordsChangeListener);
+            keywordText.getChildren().removeListener(keywordsChangeListener);
             captionTextField.textProperty().removeListener(captionChangeListener);
             commentText.textProperty().removeListener(commentsChangeListener);
         });
@@ -400,14 +408,15 @@ public class MetadataController implements Initializable {
         Platform.runLater(() -> {
             metaDataGrid.getChildren().clear();
             metaDataGrid.setDisable(true);
+            keywordText.getChildren().clear();
         });
-        keywordText.textProperty().removeListener(keywordsChangeListener);
+        keywordText.getChildren().removeListener(keywordsChangeListener);
         captionTextField.textProperty().removeListener(captionChangeListener);
         commentText.textProperty().removeListener(commentsChangeListener);
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
-        keywordText.clear();
+
         commentText.clear();
         captionTextField.clear();
         recordDateField.clear();
@@ -420,7 +429,7 @@ public class MetadataController implements Initializable {
     @FXML
     private void addKeywordAction(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
-            if (!keywordText.getText().equalsIgnoreCase("")) {
+            /*if (!keywordText.getText().equalsIgnoreCase("")) {
                 String lastChar = keywordText.getText().substring(keywordText.getText().length() - 1);
                 if (!lastChar.equalsIgnoreCase(";")) {
                     keywordText.appendText(";" + addKeywordTextField.getText());
@@ -429,7 +438,8 @@ public class MetadataController implements Initializable {
                 }
             } else {
                 keywordText.appendText(addKeywordTextField.getText());
-            }
+            }*/
+            keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
             addKeywordTextField.clear();
         }
     }
@@ -442,11 +452,17 @@ public class MetadataController implements Initializable {
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
 
             List<IPTCDataSet> iptcs = new ArrayList<>();
-            StringTokenizer defaultTokenizer = new StringTokenizer(keywordText.getText(), ";");
+            /*StringTokenizer defaultTokenizer = new StringTokenizer(keywordText.getText(), ";");
 
             while (defaultTokenizer.hasMoreTokens()) {
                 iptcs.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
-            }
+            }*/
+
+            keywordText.getChildren().forEach((tagitem) -> {
+                String text = ((Tag) tagitem).getText();
+                iptcs.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, text));
+            });
+
             iptcs.add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, captionTextField.getText()));
             Metadata.insertIPTC(fin, bout, iptcs, true);
 
@@ -523,6 +539,19 @@ public class MetadataController implements Initializable {
         executor.submit(taskSaveComments);
     }
 
+    private String getKeywordsAsString() {
+        StringBuilder sb = new StringBuilder();
+        if (keywordText.getChildren().size() != 0) {
+            keywordText.getChildren().forEach((tagitem) -> {
+                sb.append(((Tag) tagitem).getText()).append(";");
+            });
+            String substring = sb.toString().substring(0, sb.toString().length() - 1);
+            return substring;
+        } else {
+            return "";
+        }
+    }
+
     /**
      * Saves the keywords to the file
      *
@@ -535,7 +564,11 @@ public class MetadataController implements Initializable {
             @Override
             protected Boolean call() throws Exception {
                 if (this.isCancelled() == false) {
-                    updateKeywordsTitle(captionTextField.getText(), keywordText.getText());
+                    String title = captionTextField.getText();
+                    if (title == null) {
+                        title = "";
+                    }
+                    updateKeywordsTitle(title, getKeywordsAsString());
                 }
                 return null;
             }
@@ -558,6 +591,12 @@ public class MetadataController implements Initializable {
      * will be used (var actualMediaFile)
      */
     private void updateKeywordsTitle(String title, String keywords) throws Exception {
+        if (title == null) {
+            title = "";
+        }
+        if (keywords == null) {
+            keywords = "";
+        }
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
         try {
@@ -648,7 +687,7 @@ public class MetadataController implements Initializable {
         keywordbox.setSpacing(5);
         keywordbox.setAlignment(Pos.TOP_RIGHT);
         Label keywordLabel = new Label("Keywords");
-        TextArea keywordsToAllText = new TextArea(keywordText.getText());
+        TextArea keywordsToAllText = new TextArea(getKeywordsAsString());
         keywordsToAllText.setPrefSize(300, 100);
         HBox addKeywordToAllbox = new HBox();
         addKeywordToAllbox.setAlignment(Pos.TOP_RIGHT);
@@ -753,10 +792,10 @@ public class MetadataController implements Initializable {
         });
     }
 
-    private class KeywordChangeListener implements ChangeListener<String> {
+    private class KeywordChangeListener implements ListChangeListener {
 
         @Override
-        public void changed(ObservableValue<? extends String> ov, String t, String t1) {
+        public void onChanged(Change change) {
             saveKeywordsTitle();
         }
 
@@ -790,7 +829,7 @@ public class MetadataController implements Initializable {
 
     public void cancelTasks() {
         if (task != null) {
-            keywordText.textProperty().removeListener(keywordsChangeListener);
+            keywordText.getChildren().removeListener(keywordsChangeListener);
             captionTextField.textProperty().removeListener(captionChangeListener);
             commentText.textProperty().removeListener(commentsChangeListener);
             progressPane.setVisible(false);

@@ -10,12 +10,14 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.effect.Blend?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -75,7 +77,43 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <VBox layoutX="18.4" layoutY="315.4" prefHeight="147.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="305.0">
+                              <VBox prefHeight="50.0" prefWidth="226.0" spacing="5.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="290.0">
+                                 <children>
+                                    <Label text="GPS Info" />
+                                    <GridPane alignment="CENTER_LEFT" hgap="5.0" vgap="5.0">
+                                      <columnConstraints>
+                                        <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="10.0" />
+                                        <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="180.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                        <RowConstraints />
+                                        <RowConstraints vgrow="SOMETIMES" />
+                                        <RowConstraints vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                          <FontIcon iconLiteral="ti-map-alt" iconSize="12" />
+                                          <TextField fx:id="gpsPlace" editable="false" GridPane.columnIndex="1">
+                                             <tooltip>
+                                                <Tooltip text="GPS Position" />
+                                             </tooltip>
+                                          </TextField>
+                                          <FontIcon iconLiteral="ti-flag" iconSize="12" GridPane.rowIndex="1" />
+                                          <TextField fx:id="gpsHeight" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                             <tooltip>
+                                                <Tooltip text="GPS Height" />
+                                             </tooltip>
+                                          </TextField>
+                                          <FontIcon iconLiteral="ti-time" iconSize="12" GridPane.rowIndex="2" />
+                                          <TextField fx:id="gpsDateTime" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                             <tooltip>
+                                                <Tooltip text="GPS Record Date/Time" />
+                                             </tooltip>
+                                          </TextField>
+                                       </children>
+                                    </GridPane>
+                                 </children>
+                              </VBox>
+                              <VBox layoutX="18.4" layoutY="315.4" prefHeight="120.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="410.0">
                                  <children>
                                     <Label text="Comments" />
                                     <TextArea fx:id="commentText" prefHeight="200.0" prefWidth="200.0" wrapText="true" />

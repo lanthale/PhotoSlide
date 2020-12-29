@@ -157,7 +157,7 @@ public class SearchIndex {
         if (taskCheck != null) {
             taskCheck.cancel();
         }
-        executorParallel.shutdown();        
+        executorParallel.shutdown();
     }
 
     public void insertMediaFileIntoSearchDB(MediaFile m) {
@@ -194,11 +194,11 @@ public class SearchIndex {
             }
             String faces = null;
             if (m.getFaces().get() != null) {
-                places = "'" + m.getFaces().get() + "'";
+                faces = "'" + m.getFaces().get() + "'";
             }
-            String metadata = "'" + metadataController.getMetaDataAsString() + "'";
+            String metadata = "'" + metadataController.getMetaDataAsString().replace("'", "''") + "'";
             Statement stm = App.getSearchDBConnection().createStatement();
-            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";            
+            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
             stm.execute(statementStr);
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
@@ -267,9 +267,15 @@ public class SearchIndex {
         boolean ret = false;
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();
-            ResultSet rs = indexStatment.executeQuery("SELECT name from MediaFiles where NAME='" + m.getName() + "' and PATHSTORAGE='" + m.getPathStorage() + "'");
+            ResultSet rs = indexStatment.executeQuery("SELECT name, places from MediaFiles where NAME='" + m.getName() + "' and PATHSTORAGE='" + m.getPathStorage() + "'");
             if (rs.next()) {
-                ret = true;
+                String place = rs.getString("places");
+                if (place == null) {
+                    //removeMediaFileInSearchDB(m.getName());
+                    ret = true;
+                } else {
+                    ret = true;
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);

@@ -5,6 +5,7 @@
  */
 package org.photoslide.datamodel;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import org.controlsfx.control.GridCell;
 
@@ -57,6 +58,11 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             mediaFile.getPlaces().set(item.getPlaces().get());
             mediaFile.getFaces().set(item.getFaces().get());
             mediaFile.getComments().set(item.getComments().get());
+            if (item.getGpsDateTime() != null) {
+                mediaFile.setGpsDateTime(item.getGpsDateTime().format(DateTimeFormatter.ISO_DATE));
+            }
+            mediaFile.setGpsHeight(item.getGpsHeight());
+            mediaFile.setGpsPosition(item.getGpsPosition());
             if (mediaFile.isSubViewSelected()) {
                 this.setId("MediaGridCellSelectedStackedDetails");
             } else {

@@ -19,7 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -75,7 +78,7 @@ public class MediaFile extends StackPane {
     private final SimpleDoubleProperty rotationAngle;
     private final SimpleIntegerProperty rating;
     private final SimpleStringProperty places;
-    private final SimpleStringProperty faces;    
+    private final SimpleStringProperty faces;
     private Rectangle2D cropView;
     private LocalDateTime recordTime;
     private final SimpleBooleanProperty deleted;
@@ -88,6 +91,9 @@ public class MediaFile extends StackPane {
     private FontIcon restoreIcon;
     private boolean subViewSelected;
     private ObservableList<ImageFilter> filterList;
+    private String gpsPosition;
+    private LocalDateTime gpsDateTime;
+    private double gpsHeight;
 
     public enum MediaTypes {
         IMAGE,
@@ -133,6 +139,7 @@ public class MediaFile extends StackPane {
         mediaview.fitHeightProperty().bind(heightProperty());
         mediaview.fitWidthProperty().bind(widthProperty());
         mediaview.rotateProperty().bind(rotationAngle);
+        gpsHeight = -1;
     }
 
     private void setLoadingNode() {
@@ -268,7 +275,7 @@ public class MediaFile extends StackPane {
 
         String fileNameWithExt = getEditFilePath().toString();
 
-        try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
+        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
             if (title.getValue() != null) {
@@ -309,6 +316,15 @@ public class MediaFile extends StackPane {
                     }
                 });
             }
+            if (gpsDateTime != null) {
+                prop.setProperty("gpsDateTime", gpsDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            }
+            if (gpsHeight != -1) {
+                prop.setProperty("gpsHeight", "" + gpsHeight);
+            }
+            if (gpsPosition != null) {
+                prop.setProperty("gpsPosition", gpsPosition);
+            }
             prop.store(output, null);
 
         } catch (IOException ex) {
@@ -331,7 +347,7 @@ public class MediaFile extends StackPane {
 
         fileNameWithExt = getEditFilePath().toString();
 
-        try ( InputStream input = new FileInputStream(fileNameWithExt)) {
+        try (InputStream input = new FileInputStream(fileNameWithExt)) {
 
             Properties prop = new Properties();
 
@@ -395,11 +411,22 @@ public class MediaFile extends StackPane {
                 rawList.sort(Comparator.comparing(imageFilter -> imageFilter.getPosition()));
                 filterList.addAll(rawList);
             }
-            /*filterList.addListener((javafx.collections.ListChangeListener.Change<? extends ImageFilter> c) -> {
-                new Thread(() -> {
-                    saveEdits();
-                }).start();
-            });*/
+            if (prop.getProperty("gpsDateTime") != null) {
+                String propStr = prop.getProperty("gpsDateTime", null);
+                if (propStr != null) {
+                    try {
+                        gpsDateTime = LocalDateTime.parse(propStr);
+                    } catch (DateTimeParseException e) {
+                        Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert GPS date/time!", e);
+                    }
+                }
+            }
+            if (gpsHeight != -1) {
+                gpsHeight = Double.parseDouble(prop.getProperty("gpsHeight", "-1"));
+            }
+            if (gpsPosition != null) {
+                gpsPosition = prop.getProperty("gpsPosition", null);
+            }
         } catch (IOException ex) {
             //Do nothing if file not found
         }
@@ -689,9 +716,36 @@ public class MediaFile extends StackPane {
     public SimpleStringProperty getComments() {
         return comments;
     }
-     
-    
-    
-    
+
+    public String getGpsPosition() {
+        return gpsPosition;
+    }
+
+    public void setGpsPosition(String gpsPosition) {
+        this.gpsPosition = gpsPosition;
+    }
+
+    public LocalDateTime getGpsDateTime() {
+        return gpsDateTime;
+    }
+
+    public void setGpsDateTime(String dateTimeStr) {
+        LocalDateTime parse = null;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd'T'HH:m:ss','SS");
+        try {
+            parse = LocalDateTime.parse(dateTimeStr, formatter);
+        } catch (DateTimeParseException e) {
+            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert GPS date/time!", e);
+        }
+        this.gpsDateTime = parse;
+    }
+
+    public double getGpsHeight() {
+        return gpsHeight;
+    }
+
+    public void setGpsHeight(double gpsHeight) {
+        this.gpsHeight = gpsHeight;
+    }
 
 }

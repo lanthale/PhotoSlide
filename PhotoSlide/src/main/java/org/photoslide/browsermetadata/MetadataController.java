@@ -144,6 +144,12 @@ public class MetadataController implements Initializable {
     private SampleFilter greyFilter;
     private SampleFilter2 greyFilter2;
     private ImageFilter exposerFilter;
+    @FXML
+    private TextField gpsPlace;
+    @FXML
+    private TextField gpsHeight;
+    @FXML
+    private TextField gpsDateTime;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -228,6 +234,14 @@ public class MetadataController implements Initializable {
 
                 keywordText.getChildren().addListener(keywordsChangeListener);
                 captionTextField.textProperty().addListener(captionChangeListener);
+
+                gpsPlace.setText(actualMediaFile.getGpsPosition());
+                if (actualMediaFile.getGpsHeight() != -1) {
+                    gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
+                }
+                if (actualMediaFile.getGpsDateTime() != null) {
+                    gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                }
             }
         });
         task.setOnFailed((t) -> {
@@ -296,8 +310,8 @@ public class MetadataController implements Initializable {
                         iterator = meta.iterator();
                         while (iterator.hasNext()) {
                             MetadataEntry item = iterator.next();
+                            Collection<MetadataEntry> entries = item.getMetadataEntries();
                             if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
-                                Collection<MetadataEntry> entries = item.getMetadataEntries();
                                 for (MetadataEntry e : entries) {
                                     if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
                                         if (!e.getValue().equalsIgnoreCase("")) {
@@ -318,9 +332,47 @@ public class MetadataController implements Initializable {
                                     }
                                 }
                             }
+                            if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
+                                final StringBuilder gpsLatRefsb = new StringBuilder();
+                                final StringBuilder gpsLatsb = new StringBuilder();
+                                final StringBuilder gpsLongRefsb = new StringBuilder();
+                                final StringBuilder gpsLongsb = new StringBuilder();
+                                final StringBuilder gpsTimesb = new StringBuilder();
+                                final StringBuilder gpsDatesb = new StringBuilder();
+                                final StringBuilder gpsHeightsb = new StringBuilder();
+                                entries.stream().forEach((mediaEntry) -> {
+                                    switch (mediaEntry.getKey()) {
+                                        case "GPS Latitude Ref" ->
+                                            gpsLatRefsb.append(mediaEntry.getValue());
+                                        case "GPS Latitude" ->
+                                            gpsLatsb.append(mediaEntry.getValue());
+                                        case "GPS Longitude Ref" ->
+                                            gpsLongRefsb.append(mediaEntry.getValue());
+                                        case "GPS Longitude" ->
+                                            gpsLongsb.append(mediaEntry.getValue());
+                                        case "GPS Altitude" ->
+                                            gpsHeightsb.append(mediaEntry.getValue());
+                                        case "GPS Time Stamp" ->
+                                            gpsTimesb.append(mediaEntry.getValue());
+                                        case "GPS Date Stamp" ->
+                                            gpsDatesb.append(mediaEntry.getValue());
+                                    }
+                                });
+                                if (gpsHeightsb.toString() != null) {
+                                    String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
+                                    if (gpsH.contains(",")) {
+                                        gpsH = gpsH.replace(",", ".");
+                                    }
+                                    actualMediaFile.setGpsHeight(Double.parseDouble(gpsH));
+                                }
+                                if (gpsDatesb.toString() != null) {
+                                    String gpsDateStr = gpsDatesb.toString().replace(":", ".");
+                                    actualMediaFile.setGpsDateTime(gpsDateStr + "T" + gpsTimesb.toString());
+                                }
+                                actualMediaFile.setGpsPosition(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
+                            }
                             if (item.getKey().equalsIgnoreCase("IFD0")) {
-                                Collection<MetadataEntry> metadataEntries = item.getMetadataEntries();
-                                metadataEntries.stream().forEach((mediaEntry) -> {
+                                entries.stream().forEach((mediaEntry) -> {
                                     if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
                                         Platform.runLater(() -> {
                                             actualMediaFile.setCamera(mediaEntry.getValue());
@@ -417,6 +469,9 @@ public class MetadataController implements Initializable {
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
 
+        gpsDateTime.clear();
+        gpsHeight.clear();
+        gpsPlace.clear();
         commentText.clear();
         captionTextField.clear();
         recordDateField.clear();

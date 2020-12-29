@@ -5,6 +5,7 @@
  */
 package org.photoslide.datamodel;
 
+import java.time.format.DateTimeFormatter;
 import org.controlsfx.control.GridCell;
 
 /**
@@ -49,13 +50,18 @@ public class MediaGridCell extends GridCell<MediaFile> {
             mediaFile.setCreationTime(item.getCreationTime());
             mediaFile.setStackName(item.getStackName());
             mediaFile.setStackPos(item.getStackPos());
-            mediaFile.setStacked(item.isStacked());            
+            mediaFile.setStacked(item.isStacked());
             mediaFile.setKeywords(item.getKeywords());
             mediaFile.setFilterList(item.getFilterList());
             mediaFile.setUnModifiyAbleImage(item.getUnModifiyAbleImage());
             mediaFile.getPlaces().set(item.getPlaces().get());
             mediaFile.getFaces().set(item.getFaces().get());
             mediaFile.getComments().set(item.getComments().get());
+            if (item.getGpsDateTime() != null) {
+                mediaFile.setGpsDateTime(item.getGpsDateTime().format(DateTimeFormatter.ISO_DATE));
+            }
+            mediaFile.setGpsHeight(item.getGpsHeight());
+            mediaFile.setGpsPosition(item.getGpsPosition());
             if (mediaFile.isSelected() == true) {
                 if (mediaFile.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -87,7 +93,5 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public MediaFile getMediaFile() {
         return mediaFile;
     }
-
-    
 
 }

@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -176,7 +177,7 @@ public class CollectionsController implements Initializable {
             });
         });
         executorParallel.submit(task);
-        //executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
     }
 
     public void saveSettings() {
@@ -224,11 +225,8 @@ public class CollectionsController implements Initializable {
             final AtomicInteger i = new AtomicInteger(0);
             final long qty = Files.list(root_file).count();
             sortedStream.forEach((t) -> {
-                //try {
                 Platform.runLater(() -> {
                     double prgValue = ((double) (i.addAndGet(1)) / qty * 100);
-                    //System.out.println(String.format("%1$,.2f", prgValue));
-                    //mainController.getProgressbar().setProgress(prgValue);
                     mainController.getProgressbarLabel().setText(t.toString() + " " + String.format("%1$,.0f", prgValue) + "%");
                 });
 
@@ -391,7 +389,8 @@ public class CollectionsController implements Initializable {
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
-            stateIcon.setStyle("-fx-icon-color: green;");
+            //stateIcon.setStyle("-fx-icon-color: green;");
+            stateIcon.setId("CollectorGreen");
             TreeView<PathItem> dirTreeView = (TreeView<PathItem>) t.getSource().getValue();
             dirTreeView.getRoot().setExpanded(true);
             dirTreeView.setDisable(false);
@@ -409,7 +408,8 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(false);
         });
         task.setOnFailed((WorkerStateEvent t) -> {
-            stateIcon.setStyle("-fx-icon-color: red;");
+            //stateIcon.setStyle("-fx-icon-color: red;");
+            stateIcon.setId("CollectorRed");
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
@@ -732,7 +732,7 @@ public class CollectionsController implements Initializable {
         Alert alert = new Alert(AlertType.CONFIRMATION, "No Collection are defined.\nDo you want to add the storage of you mediafiles now ?", ButtonType.NO, ButtonType.YES);
         alert.setHeaderText("Add collections");
         alert.setTitle("Collection alert");
-        FontIcon ft=new FontIcon("ti-agenda:50");
+        FontIcon ft = new FontIcon("ti-agenda:50");
         alert.setGraphic(ft);
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
@@ -741,7 +741,7 @@ public class CollectionsController implements Initializable {
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Optional<ButtonType> resultDiag = alert.showAndWait();
         if (resultDiag.get() == ButtonType.YES) {
-            addExistingPath(); 
+            addExistingPath();
         }
     }
 

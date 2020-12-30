@@ -303,4 +303,12 @@
     -fx-border-color: default-color;    
 }
 
+#CollectorGreen{
+    -fx-icon-color: green;   
+}
+
+#CollectorRed{
+    -fx-icon-color: red;    
+}
+
 

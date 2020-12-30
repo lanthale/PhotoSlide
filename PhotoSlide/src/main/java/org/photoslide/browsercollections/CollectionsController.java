@@ -320,7 +320,6 @@ public class CollectionsController implements Initializable {
     @FXML
     private void plusButtonAction(ActionEvent event) {
         addExistingPath();
-        saveSettings();
     }
 
     public void addExistingPath() {
@@ -358,9 +357,11 @@ public class CollectionsController implements Initializable {
     private void loadDirectoryTree(String selectedRootPath) {
         String path = selectedRootPath;
 
-        FontIcon stateIcon = new FontIcon("ti-agenda");
+        ProgressIndicator waitPrg = new ProgressIndicator();
+        waitPrg.setPrefSize(15, 15);
+        waitPrg.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         TitledPane actCollectionTitlePane = new TitledPane();
-        actCollectionTitlePane.setGraphic(stateIcon);
+        actCollectionTitlePane.setGraphic(waitPrg);
         actCollectionTitlePane.setText(path);
         actCollectionTitlePane.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         actCollectionTitlePane.setAnimated(true);
@@ -389,8 +390,9 @@ public class CollectionsController implements Initializable {
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
-            //stateIcon.setStyle("-fx-icon-color: green;");
-            stateIcon.setId("CollectorGreen");
+            FontIcon greenIcon = new FontIcon("ti-agenda");
+            greenIcon.setId("CollectorGreen");
+            actCollectionTitlePane.setGraphic(greenIcon);
             TreeView<PathItem> dirTreeView = (TreeView<PathItem>) t.getSource().getValue();
             dirTreeView.getRoot().setExpanded(true);
             dirTreeView.setDisable(false);
@@ -408,8 +410,9 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(false);
         });
         task.setOnFailed((WorkerStateEvent t) -> {
-            //stateIcon.setStyle("-fx-icon-color: red;");
-            stateIcon.setId("CollectorRed");
+            FontIcon redIcon = new FontIcon("ti-agenda");
+            redIcon.setId("CollectorRed");
+            actCollectionTitlePane.setGraphic(redIcon);
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
@@ -461,15 +464,41 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void minusButtonAction(ActionEvent event) {
-        TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
-        PathItem value = content.getRoot().getValue();
-
-        collectionStorage.entrySet().stream().filter(c -> c.getValue().equalsIgnoreCase(value.getFilePath().toString())).forEach((t) -> {
-            pref.remove(t.getKey());
-        });
-        lighttablePaneController.resetLightTableView();
-        accordionPane.getPanes().remove(accordionPane.getExpandedPane());
-        saveSettings();
+        TitledPane expandedPane = accordionPane.getExpandedPane();
+        if (expandedPane != null) {
+            TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+            PathItem value = content.getRoot().getValue();
+            String pathToRemoveStr = value.getFilePath().toString();
+            String prefKeyForRemoving = getPrefKeyForRemoving(pathToRemoveStr);
+            pref.remove(prefKeyForRemoving);
+            lighttablePaneController.resetLightTableView();
+            accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+        } else {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setHeaderText("Please expand one pane to delete it!");
+            
+            alert.getDialogPane().getStylesheets().add(
+                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(iconImage);
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+            alert.show();
+        }
+    }
+    
+    private String getPrefKeyForRemoving(String path) {
+        try {
+            String[] keys = pref.keys();
+            for (String key : keys) {
+                String value=pref.get(key, "");
+                if (path.contains(value)) {
+                    return key;
+                }
+            }
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     private boolean checkIfElementInTreeSelected(String message) {

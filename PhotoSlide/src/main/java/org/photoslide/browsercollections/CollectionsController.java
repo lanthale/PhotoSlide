@@ -32,7 +32,6 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -152,23 +151,32 @@ public class CollectionsController implements Initializable {
         Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
-                    if (this.isCancelled() == false) {
-                        loadDirectoryTree(t.getValue());
-                    }
-                });
+                if (collectionStorage.isEmpty()) {
+                    Platform.runLater(() -> {
+                        ShowEmptyHelp();
+                    });
+                } else {
+                    collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((dTree) -> {
+                        if (this.isCancelled() == false) {
+                            loadDirectoryTree(dTree.getValue());
+                        }
+                    });
+                }
                 return true;
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
             Platform.runLater(() -> {
                 if (accordionPane.getPanes().size() > 0) {
+                    if (activeAccordionPane == -1) {
+                        activeAccordionPane = 0;
+                    }
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
                 }
             });
         });
         executorParallel.submit(task);
-        executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        //executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
     }
 
     public void saveSettings() {
@@ -223,31 +231,16 @@ public class CollectionsController implements Initializable {
                     //mainController.getProgressbar().setProgress(prgValue);
                     mainController.getProgressbarLabel().setText(t.toString() + " " + String.format("%1$,.0f", prgValue) + "%");
                 });
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                }
 
-                Task<Boolean> taskTree = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        createTree(t, parent);
-                        return null;
-                    }
-                };
-                taskTree.setOnSucceeded((k) -> {
+                try {
+                    createTree(t, parent);
                     mainController.getProgressPane().setVisible(false);
                     mainController.getStatusLabelLeft().setVisible(false);
-                });
-                taskTree.setOnFailed((t2) -> {
-                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
-                    util.showError(this.accordionPane, "Cannot create directory tree", t2.getSource().getException());
-                });
-                executorParallel.submit(taskTree);
-                //} catch (IOException ex) {
-                //    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                //}                
+                } catch (IOException ex) {
+                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    util.showError(this.accordionPane, "Cannot create directory tree!", ex);
+                }
+
             });
 
         }
@@ -329,6 +322,7 @@ public class CollectionsController implements Initializable {
     @FXML
     private void plusButtonAction(ActionEvent event) {
         addExistingPath();
+        saveSettings();
     }
 
     public void addExistingPath() {
@@ -365,36 +359,43 @@ public class CollectionsController implements Initializable {
 
     private void loadDirectoryTree(String selectedRootPath) {
         String path = selectedRootPath;
-        TreeItem<PathItem> root = new TreeItem<>(new PathItem(Paths.get(path)));
-        TreeView<PathItem> dirTreeView = new TreeView<>();
-        dirTreeView.setShowRoot(false);
-        dirTreeView.setDisable(true);
-        TitledPane firstTitlePane = new TitledPane(path, dirTreeView);
-        firstTitlePane.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-        firstTitlePane.setAnimated(true);
-        firstTitlePane.setTextAlignment(TextAlignment.LEFT);
+
+        FontIcon stateIcon = new FontIcon("ti-agenda");
+        TitledPane actCollectionTitlePane = new TitledPane();
+        actCollectionTitlePane.setGraphic(stateIcon);
+        actCollectionTitlePane.setText(path);
+        actCollectionTitlePane.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+        actCollectionTitlePane.setAnimated(true);
+        actCollectionTitlePane.setTextAlignment(TextAlignment.LEFT);
+
         Platform.runLater(() -> {
-            accordionPane.getPanes().add(firstTitlePane);
+            accordionPane.getPanes().add(actCollectionTitlePane);
         });
-        Task<TreeItem<PathItem>> task = new Task<TreeItem<PathItem>>() {
+        Task<TreeView<PathItem>> task = new Task<TreeView<PathItem>>() {
             @Override
-            protected TreeItem<PathItem> call() throws Exception {
+            protected TreeView<PathItem> call() throws Exception {
+                TreeItem<PathItem> root = new TreeItem<>(new PathItem(Paths.get(path)));
+                TreeView<PathItem> dirTreeView = new TreeView<>();
+                dirTreeView.setShowRoot(false);
+                dirTreeView.setDisable(true);
                 Platform.runLater(() -> {
+                    actCollectionTitlePane.setContent(dirTreeView);
                     dirTreeView.setRoot(root);
                     mainController.getProgressPane().setVisible(true);
                     mainController.getStatusLabelLeft().setVisible(true);
                     mainController.getStatusLabelLeft().setText("Scanning...");
                     mainController.getProgressbar().setProgress(-1);
                 });
-                Thread.sleep(100);
                 createRootTree(Paths.get(path), root);
-                return root;
+                return dirTreeView;
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
-            root.setExpanded(true);
+            stateIcon.setStyle("-fx-icon-color: green;");
+            TreeView<PathItem> dirTreeView = (TreeView<PathItem>) t.getSource().getValue();
+            dirTreeView.getRoot().setExpanded(true);
             dirTreeView.setDisable(false);
-            if (root.getChildren().isEmpty()) {
+            if (dirTreeView.getRoot().getChildren().isEmpty()) {
                 dirTreeView.setShowRoot(true);
             }
             dirTreeView.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends TreeItem<PathItem>> ov, TreeItem<PathItem> t1, TreeItem<PathItem> t2) -> {
@@ -404,24 +405,16 @@ public class CollectionsController implements Initializable {
                     lighttablePaneController.setSelectedPath(selectedItem.getValue().getFilePath());
                 }
             });
-            FontIcon onlineIcon = new FontIcon("fa-archive");
-            onlineIcon.setStyle("-fx-icon-color: green;");
-            firstTitlePane.setGraphic(onlineIcon);
             mainController.getStatusLabelLeft().setVisible(false);
             mainController.getProgressPane().setVisible(false);
         });
         task.setOnFailed((WorkerStateEvent t) -> {
+            stateIcon.setStyle("-fx-icon-color: red;");
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
-            FontIcon offlineIcon = new FontIcon("fa-archive");
-            offlineIcon.setStyle("-fx-icon-color: red");
-
             Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
-            Tooltip.install(offlineIcon, tip);
-            firstTitlePane.setGraphic(offlineIcon);
-            //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-            //util.showError(this.accordionPane, "Cannot create directory tree", t.getSource().getException());
+            actCollectionTitlePane.setTooltip(tip);
         });
         executorParallel.submit(task);
     }
@@ -476,6 +469,7 @@ public class CollectionsController implements Initializable {
         });
         lighttablePaneController.resetLightTableView();
         accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+        saveSettings();
     }
 
     private boolean checkIfElementInTreeSelected(String message) {
@@ -732,6 +726,23 @@ public class CollectionsController implements Initializable {
 
     public LinkedHashMap<String, String> getCollectionStorage() {
         return collectionStorage;
+    }
+
+    private void ShowEmptyHelp() {
+        Alert alert = new Alert(AlertType.CONFIRMATION, "No Collection are defined.\nDo you want to add the storage of you mediafiles now ?", ButtonType.NO, ButtonType.YES);
+        alert.setHeaderText("Add collections");
+        alert.setTitle("Collection alert");
+        FontIcon ft=new FontIcon("ti-agenda:50");
+        alert.setGraphic(ft);
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        Optional<ButtonType> resultDiag = alert.showAndWait();
+        if (resultDiag.get() == ButtonType.YES) {
+            addExistingPath(); 
+        }
     }
 
 }

@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
+import org.h2.fulltext.FullText;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browsercollections.PathItem;
@@ -50,6 +51,7 @@ public class SearchIndex {
     }
 
     public void createSearchIndex(String searchPath) {
+        String collectionName = searchPath.toString();
         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         task = new Task<>() {
@@ -78,7 +80,7 @@ public class SearchIndex {
                                     m.getCreationTime();
                                     if (FileTypes.isValidVideo(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                                        insertMediaFileIntoSearchDB(m);
+                                        insertMediaFileIntoSearchDB(collectionName, m);
                                     } else if (FileTypes.isValidImge(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.IMAGE);
                                         metadataController.setActualMediaFile(m);
@@ -87,13 +89,25 @@ public class SearchIndex {
                                         } catch (IllegalArgumentException | IOException ex) {
                                             //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                                         }
-                                        insertMediaFileIntoSearchDB(m);
+                                        insertMediaFileIntoSearchDB(collectionName, m);
                                     } else {
                                         m.setMediaType(MediaFile.MediaTypes.NONE);
                                     }
                                 }
                             }
                             return super.visitFile(fileItem, attrs);
+                        }
+
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                                throws IOException {
+                            if (e == null) {
+                                System.out.println("postVisistDir "+dir.toString());
+                                return FileVisitResult.CONTINUE;
+                            } else {
+                                // directory iteration failed
+                                throw e;
+                            }
                         }
                     });
                 } catch (IOException ex) {
@@ -160,11 +174,12 @@ public class SearchIndex {
         executorParallel.shutdown();
     }
 
-    public void insertMediaFileIntoSearchDB(MediaFile m) {
+    public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m) {
         if (App.getSearchDBConnection() == null) {
             return;
         }
         try {
+            String collName = "'" + collectionName + "'";
             String name = "'" + m.getName() + "'";
             String path = "'" + m.getPathStorage().toString() + "'";
             String title = null;
@@ -198,19 +213,19 @@ public class SearchIndex {
             }
             String metadata = "'" + metadataController.getMetaDataAsString().replace("'", "''") + "'";
             Statement stm = App.getSearchDBConnection().createStatement();
-            String statementStr = "INSERT INTO MediaFiles (NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
+            String statementStr = "INSERT INTO MediaFiles (COLLECTIONNAME, NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + collName + "," + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
             stm.execute(statementStr);
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void updateMediaFileIntoSearchDB(MediaFile m) {
+    public void updateMediaFileIntoSearchDB(String collectionName, MediaFile m) {
         if (App.getSearchDBConnection() == null) {
             return;
         }
         if (checkIfIndexed(m) == false) {
-            insertMediaFileIntoSearchDB(m);
+            insertMediaFileIntoSearchDB(collectionName, m);
         } else {
             try {
                 StringBuilder strb = new StringBuilder();
@@ -254,6 +269,19 @@ public class SearchIndex {
         try {
             Statement indexStatment = App.getSearchDBConnection().createStatement();
             String stm = "DELETE FROM MediaFiles where NAME='" + name + "'";
+            indexStatment.execute(stm);
+        } catch (SQLException ex) {
+            Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void removeCollectionFromSearchDB(String colname) {
+        if (App.getSearchDBConnection() == null) {
+            return;
+        }
+        try {
+            Statement indexStatment = App.getSearchDBConnection().createStatement();
+            String stm = "DELETE FROM MediaFiles where COLLECTIONNAME='" + colname + "'";
             indexStatment.execute(stm);
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);

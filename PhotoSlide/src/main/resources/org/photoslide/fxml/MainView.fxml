@@ -179,7 +179,7 @@
                     <items>
                         <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
                             <children>
-                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
+                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" minWidth="120.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
@@ -189,7 +189,7 @@
                                         <Insets bottom="10.0" top="10.0" />
                                     </padding>
                                 </Separator>
-                                <ToggleButton id="tooltoggle-button" fx:id="editButton" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
+                                <ToggleButton id="tooltoggle-button" fx:id="editButton" minWidth="120.0" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>

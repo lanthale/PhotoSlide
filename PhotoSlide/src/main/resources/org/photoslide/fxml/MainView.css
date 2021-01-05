@@ -1,6 +1,7 @@
 .root{    
     -fx-base: rgb(80, 80, 80);
-    -fx-background: rgb(50, 50, 50);    
+    -fx-background: rgb(50, 50, 50); 
+    -fx-focus-color: #e17c08;
     default-color: #e17c08;
 }
 

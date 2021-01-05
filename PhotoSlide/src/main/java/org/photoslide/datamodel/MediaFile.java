@@ -731,6 +731,12 @@ public class MediaFile extends StackPane {
 
     public void setGpsDateTime(String dateTimeStr) {
         LocalDateTime parse = null;
+        if (dateTimeStr.contains(":") == false) {
+            return;
+        }
+        if (dateTimeStr.contains(".") == false) {
+            return;
+        }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd'T'HH:m:ss','SS");
         try {
             parse = LocalDateTime.parse(dateTimeStr, formatter);

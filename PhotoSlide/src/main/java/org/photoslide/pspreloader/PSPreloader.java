@@ -74,6 +74,7 @@ public class PSPreloader extends Preloader {
         stack.getChildren().add(img);
         stack.getChildren().add(p);
         stack.getChildren().add(v1);
+        //stack.setStyle("-fx-background: transparent");
         return new Scene(stack, width, hight);
     }
 

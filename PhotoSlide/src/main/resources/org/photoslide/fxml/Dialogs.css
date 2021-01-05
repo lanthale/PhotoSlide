@@ -1,6 +1,7 @@
 .root{    
     -fx-base: rgb(80, 80, 80);
     -fx-background: rgb(100, 100, 100);
+    -fx-focus-color: #e17c08;
 }
 
 .ikonli-font-icon {
@@ -9,6 +10,39 @@
 
 .dialog {
     -fx-background-color: #9f9f9f;
+}
+
+.noheader .column-header-background {
+    -fx-max-height: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+}
+
+
+#toolbutton {
+    -fx-background-color: transparent, transparent, transparent, transparent;
+}
+
+#toolbutton:hover{
+    -fx-background-color: transparent, rgba(0,0,0,.1), rgba(0,0,0,.1), transparent;
+}
+
+#toolbutton:armed {
+    -fx-background-color: transparent, rgba(0,0,0,.1), rgba(0,0,0,.1), rgba(0,0,0,.2);
+}
+
+#searchtext-field {
+    -fx-background-color: -fx-text-box-border, -fx-background ;
+    -fx-background-insets: 0.3, 0 0 1 0 ;
+    -fx-background-radius: 0 ;        
+    -fx-text-fill: white;
+}
+#searchtext-field:focused {
+    -fx-background-color: -fx-focus-color, -fx-background ;    
+}
+
+.progress-indicator {
+    -fx-progress-color: #e17c08;
 }
 
 

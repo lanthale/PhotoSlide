@@ -9,7 +9,9 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.FileHandler;
@@ -66,7 +68,7 @@ public class App extends Application {
         notifyPreloader(new ProgressNotification(0.3));
         fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainView.fxml"));
         notifyPreloader(new ProgressNotification(0.4));
-        root = (Parent) fxmlLoader.load();        
+        root = (Parent) fxmlLoader.load();
         notifyPreloader(new ProgressNotification(0.5));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         File dbFile = new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB.mv.db");
@@ -75,7 +77,8 @@ public class App extends Application {
         } else {
             try {
                 Class.forName("org.h2.Driver");
-                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");                
+                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+                checkSearchDBStructure();
             } catch (ClassNotFoundException | SQLException e) {
                 Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
             }
@@ -113,7 +116,7 @@ public class App extends Application {
             searchDBConnection.close();
         } catch (SQLException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }*/         
+        }*/
         controller.saveSettings();
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
@@ -172,15 +175,17 @@ public class App extends Application {
             searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB;DB_CLOSE_ON_EXIT=FALSE", "", "");
             Statement stat = searchDBConnection.createStatement();
             stat.execute("CREATE ALIAS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
-            stat.execute("CALL FT_INIT()");
+            //stat.execute("CALL FT_INIT()");
+            FullText.init(searchDBConnection);
             FullText.setIgnoreList(searchDBConnection, "to,this");
-            FullText.setWhitespaceChars(searchDBConnection, " ,.-");
+            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.");            
             stat = searchDBConnection.createStatement();
             //fulltext search
             stat.execute("""
                          CREATE TABLE
                              "PUBLIC".MEDIAFILES
                              (
+                                 collectionname VARCHAR(255) NOT NULL,
                                  name VARCHAR(255) NOT NULL,
                                  pathStorage VARCHAR(1000) NOT NULL,
                                  title VARCHAR(255),
@@ -192,14 +197,38 @@ public class App extends Application {
                                  places VARCHAR(255),
                                  faces VARCHAR(255),
                                  metadata VARCHAR(4000),
-                                 PRIMARY KEY (name, pathStorage)
+                                 PRIMARY KEY (collectionname, name, pathStorage)
                              )
                          """);            
-            stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MEDIAFILES', NULL)");
+            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);
+            //stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MEDIAFILES', NULL)");
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }        
+    }
+
+    private void checkSearchDBStructure() throws SQLException {
+        String[] colNames = {"collectionname", "name", "pathStorage", "title", "keywords", "camera", "rating", "recordTime", "creationTime", "places", "faces", "metadata"};
+
+        DatabaseMetaData databaseMetaData = searchDBConnection.getMetaData();
+        ResultSet columns = databaseMetaData.getColumns(null, null, "MEDIAFILES", null);
+        int columnQTY = 0;
+        while (columns.next()) {
+            columnQTY++;
+        }
+        if (columnQTY != colNames.length) {
+            Statement stat = searchDBConnection.createStatement();
+            try {
+                stat.execute("DROP TABLE MEDIAFILES");
+            } catch (SQLException ef) {
+            }
+            try {
+                stat.execute("DROP ALIAS FT_INIT");
+            } catch (SQLException ef) {
+            }
+            initDB();
+        }
+    }
 
     private void setDefaultTIFFCodec() {
         IIORegistry registry = IIORegistry.getDefaultInstance();

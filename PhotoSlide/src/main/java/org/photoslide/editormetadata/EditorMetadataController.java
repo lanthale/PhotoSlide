@@ -127,8 +127,8 @@ public class EditorMetadataController implements Initializable {
         Iterator<MetadataEntry> iterator;
 
         //read jpge exif
-        if (metadatacontroller.getJpegExifdata() != null) {
-            iterator = metadatacontroller.getJpegExifdata().iterator();
+        if (metadatacontroller.getExifdata() != null) {
+            iterator = metadatacontroller.getExifdata().iterator();
             while (iterator.hasNext()) {
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();

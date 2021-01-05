@@ -26,9 +26,9 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
     private final Comparator<MediaFile> stackNameComparator;    
     private final ExecutorService executor;
     private boolean changed;
-    private final SearchTools searchTools;
+    private final SearchToolsController searchTools;
 
-    public MediaGridCellSearchFactory(ExecutorService executor, SearchTools controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellSearchFactory(ExecutorService executor, SearchToolsController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.searchTools = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);

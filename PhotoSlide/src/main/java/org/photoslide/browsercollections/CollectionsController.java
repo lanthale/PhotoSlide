@@ -142,8 +142,8 @@ public class CollectionsController implements Initializable {
             protected Boolean call() throws Exception {
                 collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
                     if (this.isCancelled() == false) {
-                        searchIndexProcess.createSearchIndex(t.getValue());
-                        searchIndexProcess.checkSearchIndex(t.getValue());
+                        //searchIndexProcess.createSearchIndex(t.getValue());
+                        //searchIndexProcess.checkSearchIndex(t.getValue());
                     }
                 });
                 return true;
@@ -330,6 +330,7 @@ public class CollectionsController implements Initializable {
         if (selectedDirectory != null) {
             loadDirectoryTree(selectedDirectory.getAbsolutePath());
             pref.put("URL" + getPrefKeyForSaving(), selectedDirectory.getAbsolutePath());
+            searchIndexProcess.createSearchIndex(selectedDirectory.getAbsolutePath());
         }
     }
 
@@ -473,10 +474,11 @@ public class CollectionsController implements Initializable {
             pref.remove(prefKeyForRemoving);
             lighttablePaneController.resetLightTableView();
             accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+            searchIndexProcess.removeCollectionFromSearchDB(pathToRemoveStr);
         } else {
             Alert alert = new Alert(AlertType.ERROR);
             alert.setHeaderText("Please expand one pane to delete it!");
-            
+
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -485,12 +487,12 @@ public class CollectionsController implements Initializable {
             alert.show();
         }
     }
-    
+
     private String getPrefKeyForRemoving(String path) {
         try {
             String[] keys = pref.keys();
             for (String key : keys) {
-                String value=pref.get(key, "");
+                String value = pref.get(key, "");
                 if (path.contains(value)) {
                     return key;
                 }

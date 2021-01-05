@@ -12,12 +12,14 @@ import org.photoslide.browserlighttable.LighttableController;
 import com.icafe4j.image.meta.Metadata;
 import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.MetadataType;
+import com.icafe4j.image.meta.exif.Exif;
 import com.icafe4j.image.meta.image.Comments;
 import com.icafe4j.image.meta.iptc.IPTC;
 import com.icafe4j.image.meta.iptc.IPTCApplicationTag;
 import com.icafe4j.image.meta.iptc.IPTCDataSet;
 import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.meta.jpeg.JpegExif;
+import com.icafe4j.image.meta.tiff.TiffExif;
 import com.icafe4j.image.meta.xmp.XMP;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -97,7 +99,7 @@ public class MetadataController implements Initializable {
     private Collection<String> keywordList;
     private MediaFile actualMediaFile;
 
-    private JpegExif jpegExifdata;
+    private Exif exifdata;
     private IPTC iptcdata;
     private XMP xmpdata;
     private List<String> commentsdata;
@@ -306,7 +308,12 @@ public class MetadataController implements Initializable {
                     case JPG_JFIF -> {
                     }
                     case EXIF -> {
-                        jpegExifdata = ((JpegExif) meta);
+                        if (meta instanceof JpegExif) {
+                            exifdata = ((JpegExif) meta);
+                        }
+                        if (meta instanceof TiffExif) {
+                            exifdata = ((TiffExif) meta);
+                        }
                         iterator = meta.iterator();
                         while (iterator.hasNext()) {
                             MetadataEntry item = iterator.next();
@@ -359,11 +366,13 @@ public class MetadataController implements Initializable {
                                     }
                                 });
                                 if (gpsHeightsb.toString() != null) {
-                                    String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
-                                    if (gpsH.contains(",")) {
-                                        gpsH = gpsH.replace(",", ".");
+                                    if (gpsHeightsb.toString().length() > 0) {
+                                        String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
+                                        if (gpsH.contains(",")) {
+                                            gpsH = gpsH.replace(",", ".");
+                                        }
+                                        actualMediaFile.setGpsHeight(Double.parseDouble(gpsH));
                                     }
-                                    actualMediaFile.setGpsHeight(Double.parseDouble(gpsH));
                                 }
                                 if (gpsDatesb.toString() != null) {
                                     String gpsDateStr = gpsDatesb.toString().replace(":", ".");
@@ -403,8 +412,8 @@ public class MetadataController implements Initializable {
         Iterator<MetadataEntry> iterator;
 
         //read jpge exif
-        if (jpegExifdata != null) {
-            iterator = jpegExifdata.iterator();
+        if (exifdata != null) {
+            iterator = exifdata.iterator();
             while (iterator.hasNext()) {
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();
@@ -912,8 +921,8 @@ public class MetadataController implements Initializable {
         return writableImage;
     }
 
-    public JpegExif getJpegExifdata() {
-        return jpegExifdata;
+    public Exif getExifdata() {
+        return exifdata;
     }
 
     public IPTC getIptcdata() {
@@ -934,8 +943,8 @@ public class MetadataController implements Initializable {
         Iterator<MetadataEntry> iterator;
 
         //read jpge exif
-        if (this.getJpegExifdata() != null) {
-            iterator = this.getJpegExifdata().iterator();
+        if (this.getExifdata() != null) {
+            iterator = this.getExifdata().iterator();
             while (iterator.hasNext()) {
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();

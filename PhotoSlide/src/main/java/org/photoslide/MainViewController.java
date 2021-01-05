@@ -59,6 +59,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -77,7 +78,8 @@ import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.browserlighttable.EmptyMediaLoadingTask;
 import org.photoslide.imageops.ImageFilter;
-import org.photoslide.search.SearchTools;
+import org.photoslide.search.SearchToolsController;
+import org.photoslide.search.SearchToolsDialog;
 
 public class MainViewController implements Initializable {
 
@@ -163,7 +165,8 @@ public class MainViewController implements Initializable {
     private Image dialogIcon;
     @FXML
     private Button searchButton;
-    private SearchTools searchtools;
+    private SearchToolsController searchtools;
+    private SearchToolsDialog searchDialog;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -226,6 +229,10 @@ public class MainViewController implements Initializable {
     public void Shutdown() {
         if (searchtools != null) {
             searchtools.shutdown();
+        }
+        if (searchDialog != null) {
+            searchDialog.getController().shutdown();
+            searchDialog.setResult(ButtonType.CANCEL);
         }
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
@@ -664,16 +671,27 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void searchButtonAction(ActionEvent event) {
-        searchtools = new SearchTools(middlePane.getScene().getWindow());
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setContentText("Not yet implemented!");
-        alert.getDialogPane().getStylesheets().add(
+        searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
+        searchDialog.initStyle(StageStyle.UNDECORATED);        
+        searchDialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        alert.setResizable(false);
-        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
-        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        searchDialog.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Stage stage = (Stage) searchDialog.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
-        alert.showAndWait();
+        searchDialog.getDialogPane().setOnKeyPressed((key) -> {
+            if (key.getCode() == KeyCode.ESCAPE) {
+                searchDialog.setResult(ButtonType.CANCEL);
+            }
+        });
+        searchDialog.getController().getCloseAction().setOnMouseClicked((mouse) -> {
+            searchDialog.setResult(ButtonType.CANCEL);
+        });
+        searchDialog.getController().getSearchTextField().requestFocus();
+        Optional<ButtonType> result = searchDialog.showAndWait();
+        /*if (result.get() == ButtonType.OK) {
+            
+        }*/
     }
 
 }

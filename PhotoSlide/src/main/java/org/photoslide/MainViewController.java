@@ -671,12 +671,16 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void searchButtonAction(ActionEvent event) {
+        searchAction();
+    }
+
+    private void searchAction() {
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
         searchDialog.initStyle(StageStyle.UNDECORATED);        
         searchDialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        searchDialog.setResizable(false);
-        Utility.centerChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        searchDialog.setResizable(true);        
+        Utility.centerTopChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) searchDialog.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
@@ -687,11 +691,14 @@ public class MainViewController implements Initializable {
         searchDialog.getController().getCloseAction().setOnMouseClicked((mouse) -> {
             searchDialog.setResult(ButtonType.CANCEL);
         });
+        searchDialog.getController().setDialogPane(searchDialog.getDialogPane());        
         searchDialog.getController().getSearchTextField().requestFocus();
-        Optional<ButtonType> result = searchDialog.showAndWait();
-        /*if (result.get() == ButtonType.OK) {
-            
-        }*/
+        Optional<ButtonType> result = searchDialog.showAndWait();        
+    }
+
+    @FXML
+    private void searchMenuAction(ActionEvent event) {
+        searchAction();
     }
 
 }

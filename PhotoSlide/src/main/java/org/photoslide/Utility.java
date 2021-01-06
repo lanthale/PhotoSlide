@@ -183,6 +183,42 @@ public class Utility {
         stage.setY(y);
     }
     
+    public static void centerTopChildWindowOnStage(Stage stage, Stage primaryStage) {
+        if (primaryStage == null) {
+            return;
+        }
+        double x = stage.getX();
+        double y = stage.getY();
+
+        // Firstly we need to force CSS and layout to happen, as the dialogPane
+        // may not have been shown yet (so it has no dimensions)
+        stage.getScene().getRoot().applyCss();
+        stage.getScene().getRoot().layout();
+        final Scene ownerScene = primaryStage.getScene();
+        final double titleBarHeight = ownerScene.getY();
+
+        // because Stage does not seem to centre itself over its owner, we
+        // do it here.
+        // then we can get the dimensions and position the dialog appropriately.
+        final double dialogWidth = stage.getScene().getRoot().prefWidth(-1);
+        final double dialogHeight = stage.getScene().getRoot().prefHeight(dialogWidth);
+        final double ownerWidth = primaryStage.getScene().getRoot().prefWidth(-1);
+        final double ownerHeight = primaryStage.getScene().getRoot().prefHeight(ownerWidth);
+        if (dialogWidth < ownerWidth) {
+            x = primaryStage.getX() + (ownerScene.getWidth() / 2.0) - (dialogWidth / 2.0);
+        } else {
+            x = primaryStage.getX();
+            stage.setWidth(dialogWidth);
+        }
+        if (dialogHeight < ownerHeight) {
+            y = primaryStage.getY() + titleBarHeight / 3.0 + (ownerScene.getHeight() / 3.0) - (dialogHeight / 3.0);
+        } else {
+            y = primaryStage.getY();
+        }
+        stage.setX(x);
+        stage.setY(y);
+    }
+    
     public static Node pick(Node node, double sceneX, double sceneY) {
     Point2D p = node.sceneToLocal(sceneX, sceneY, true /* rootScene */);
  

@@ -5,6 +5,7 @@
  */
 package org.photoslide.search;
 
+import java.time.format.DateTimeFormatter;
 import org.photoslide.datamodel.*;
 import org.controlsfx.control.GridCell;
 
@@ -51,16 +52,29 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
             mediaFile.setStackName(item.getStackName());
             mediaFile.setStackPos(item.getStackPos());
             mediaFile.setStacked(item.isStacked());
-            mediaFile.setSubViewSelected(item.isSubViewSelected());  
+            mediaFile.setKeywords(item.getKeywords());
             mediaFile.setFilterList(item.getFilterList());
             mediaFile.setUnModifiyAbleImage(item.getUnModifiyAbleImage());
             mediaFile.getPlaces().set(item.getPlaces().get());
             mediaFile.getFaces().set(item.getFaces().get());
             mediaFile.getComments().set(item.getComments().get());
-            if (mediaFile.isSubViewSelected()) {
-                this.setId("MediaGridCellSelectedStackedDetails");
+            if (item.getGpsDateTime() != null) {
+                mediaFile.setGpsDateTime(item.getGpsDateTime().format(DateTimeFormatter.ISO_DATE));
+            }
+            mediaFile.setGpsHeight(item.getGpsHeight());
+            mediaFile.setGpsPosition(item.getGpsPosition());
+            if (mediaFile.isSelected() == true) {
+                if (mediaFile.isStacked()) {
+                    this.setId("MediaGridCellSelectedStacked");
+                } else {
+                    this.setId("MediaGridCellSelected");
+                }
             } else {
-                this.setId("MediaGridCellStackedDetails");
+                if (mediaFile.isStacked()) {
+                    this.setId("MediaGridCellStacked");
+                } else {
+                    this.setId("MediaGridCell");
+                }
             }
             switch (item.getMediaType()) {
                 case VIDEO -> {
@@ -81,5 +95,4 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
         return mediaFile;
     }
 
-    
 }

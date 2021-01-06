@@ -80,6 +80,14 @@
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Select All" />
                         <MenuItem mnemonicParsing="false" text="Unselect All" />
+                  <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="Search">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-search" />
+                     </graphic>
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="F" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
                             <accelerator>
@@ -160,9 +168,9 @@
                             </graphic>
                         </MenuItem>
                         <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
-                            </accelerator>
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator>
                         </MenuItem>
                     </items>
                 </Menu>

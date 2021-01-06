@@ -2,6 +2,7 @@
     -fx-base: rgb(80, 80, 80);
     -fx-background: rgb(100, 100, 100);
     -fx-focus-color: #e17c08;
+    default-color: #e17c08;
 }
 
 .ikonli-font-icon {
@@ -43,6 +44,155 @@
 
 .progress-indicator {
     -fx-progress-color: #e17c08;
+}
+
+#MediaGridCell, #MediaGridCellSelected, #MediaGridCellStackedDetails {
+    -fx-background-color: rgb(80, 80, 80); 
+    -fx-background-radius: 5; 
+    -fx-border-radius: 5; 
+    -fx-border-width: 0; 
+    -fx-padding: 10; 
+    -fx-pref-width: 145;         
+    -fx-pref-height: 130;
+    -fx-max-width: 145;
+    -fx-max-height: 130;        
+}
+
+#MediaGridCellStacked, #MediaGridCellSelectedStacked {
+    -fx-background-color: rgb(60, 60, 60), rgb(70, 70, 70), rgb(80, 80, 80); 
+    -fx-background-radius: 5; 
+    -fx-border-radius: 5; 
+    -fx-border-width: 0; 
+    -fx-padding: 10; 
+    -fx-pref-width: 145;         
+    -fx-pref-height: 130;
+    -fx-max-width: 145;
+    -fx-max-height: 130;    
+    -fx-background-insets: 8 -8 -8 8,4 -4 -4 4,0;
+}
+
+#MediaGridCell:hover {
+    -fx-background-color: default-color;
+}
+
+#MediaGridCellStackedDetails, #MediaGridCellSelectedStackedDetails {
+    -fx-background-color: rgb(80, 80, 80); 
+    -fx-background-radius: 5; 
+    -fx-border-radius: 5; 
+    -fx-border-width: 0; 
+    -fx-padding: 10; 
+    -fx-pref-width: 145;         
+    -fx-pref-height: 130;
+    -fx-max-width: 145;
+    -fx-max-height: 130;        
+}
+
+#MediaGridCellStacked:hover {
+    -fx-background-color:rgb(80, 80, 80), rgb(90, 90, 90), rgb(100, 100, 100);
+}
+
+
+#MediaGridCellSelectedStackedDetails {
+    -fx-border-color: default-color;      
+    -fx-border-width: 2px;
+}
+
+#MediaGridCellSelectedStacked {
+    -fx-background-color:derive(default-color, 60%),derive(default-color, 40%),derive(default-color, 20%);
+    -fx-background-insets: 8 -8 -8 8,4 -4 -4 4,0;
+}
+
+#MediaGridCellSelected {
+    -fx-background-color:derive(default-color, 20%);      
+}
+
+#MediaLoadingProgressIndicator{
+    -fx-pref-width: 20;         
+    -fx-pref-height: 20;
+    -fx-max-width: 20;
+    -fx-max-height: 20;
+}
+
+/* The main scrollbar **track** CSS class  */
+.scroll-bar:horizontal .track,
+.scroll-bar:vertical .track{
+    -fx-background-color:transparent;
+    -fx-border-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-border-radius:2em;
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+.scroll-bar:horizontal .increment-button ,
+.scroll-bar:horizontal .decrement-button {
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 0 10 0;
+
+}
+
+/* The increment and decrement button CSS class of scrollbar */
+
+.scroll-bar:vertical .increment-button ,
+.scroll-bar:vertical .decrement-button {
+
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 10 0 0;
+
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow
+{
+    -fx-shape: " ";	
+    -fx-padding:0;
+}
+
+/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color:derive(black,90%);
+    -fx-background-insets: 2, 0, 0;
+    -fx-background-radius: 2em;
+
+}
+
+.titled-pane *.column-header-background *.show-hide-columns-button,
+.titled-pane *.scroll-bar:vertical *.increment-button,
+.titled-pane *.scroll-bar:vertical *.decrement-button,
+.titled-pane *.scroll-bar:vertical *.increment-arrow, 
+.titled-pane *.scroll-bar:vertical *.decrement-arrow {
+    -fx-background-color: null;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-shape: null;
+}
+
+.titled-pane *.scroll-bar:horizontal,
+.titled-pane *.scroll-bar:horizontal *.track,
+.titled-pane *.scroll-bar:horizontal *.track-background,
+.titled-pane *.scroll-bar:horizontal *.thumb,
+.titled-pane *.scroll-bar:horizontal *.increment-button,
+.titled-pane *.scroll-bar:horizontal *.decrement-button,
+.titled-pane *.scroll-bar:horizontal *.increment-arrow, 
+.titled-pane *.scroll-bar:horizontal *.decrement-arrow {
+    -fx-base: transparent;
+    -fx-background-color: transparent;
+}
+
+.grid-view .image-grid-cell:hover {
+    -fx-background-color:rgb(80, 80, 80);
+    -fx-background-radius: 3.0;
+    -fx-padding: 8;
+}
+
+.grid-view .image-grid-cell:selected {
+    -fx-background-color:white;
+    -fx-border-style: solid;
+    -fx-border-width: 3 3 3 3; /* its make really one-pixel-border */
+    -fx-border-color: white;
 }
 
 

@@ -72,7 +72,7 @@
 }
 
 #MediaGridCell:hover {
-    -fx-background-color: default-color;
+    -fx-background-color: rgb(120, 120, 120);
 }
 
 #MediaGridCellStackedDetails, #MediaGridCellSelectedStackedDetails {

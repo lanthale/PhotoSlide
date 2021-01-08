@@ -9,6 +9,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
@@ -40,27 +41,9 @@ public class Tag extends Label {
         initTag();
     }
     
-    private final void initTag() {
-        Path path = new Path();
-        /**
-         * you will need to increase the 5 if you want the close button to be
-         * big
-         */
-        path.getElements().addAll(
-                new MoveTo(0, 0), new LineTo(5, 5),
-                new MoveTo(5, 0), new LineTo(0, 5));
-        path.setStyle("-fx-stroke: rgb(120, 120, 120);");
-        path.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            
-            @Override
-            public void handle(MouseEvent paramT) {
-                Node n = Tag.this.getParent();
-                if (n instanceof Pane) {//of course it is
-                    ((Pane) n).getChildren().remove(Tag.this);
-                }
-            }
-        });
-        setPadding(new Insets(0, 3, 3, 5));
+    private final void initTag() {        
+        setAlignment(Pos.CENTER);
+        setPadding(new Insets(1, 1, 1, 8));
         FontIcon ics=new FontIcon("ti-close:8");
         Button bt = new Button();
         bt.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -74,16 +57,7 @@ public class Tag extends Label {
         });
         setGraphic(bt);
         setContentDisplay(ContentDisplay.RIGHT);
-        setGraphicTextGap(8);
-        graphicProperty().addListener(new ChangeListener<Node>() {
-            @Override
-            public void changed(ObservableValue<? extends Node> paramObservableValue,
-                    Node paramT1, Node paramT2) {
-                if (paramT2 != path) {
-                    setGraphic(path);
-                }
-            }
-        });
+        setGraphicTextGap(0);        
         
         setStyle("-fx-background-color: rgb(50, 50, 50); "
                 + "-fx-background-radius: 3;"

@@ -168,19 +168,15 @@ public class App extends Application {
 
     }
 
-    private void initDB() {
+    public static void initDB() {
         try {
             //setup search database
             Class.forName("org.h2.Driver");
             searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB;DB_CLOSE_ON_EXIT=FALSE", "", "");
-            Statement stat = searchDBConnection.createStatement();
-            stat.execute("CREATE ALIAS FT_INIT FOR \"org.h2.fulltext.FullText.init\"");
-            //stat.execute("CALL FT_INIT()");
+            Statement stat = searchDBConnection.createStatement();            
             FullText.init(searchDBConnection);
             FullText.setIgnoreList(searchDBConnection, "to,this");
-            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.");            
-            stat = searchDBConnection.createStatement();
-            //fulltext search
+            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.");                                    
             stat.execute("""
                          CREATE TABLE
                              "PUBLIC".MEDIAFILES
@@ -200,8 +196,7 @@ public class App extends Application {
                                  PRIMARY KEY (collectionname, name, pathStorage)
                              )
                          """);            
-            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);
-            //stat.execute("CALL FT_CREATE_INDEX('PUBLIC', 'MEDIAFILES', NULL)");
+            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);            
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }

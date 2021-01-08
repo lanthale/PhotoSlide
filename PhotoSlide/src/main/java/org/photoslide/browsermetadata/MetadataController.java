@@ -27,15 +27,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,14 +59,19 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -76,11 +86,14 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.Utility;
 import org.photoslide.imageops.ExposureFilter;
 import org.photoslide.imageops.ImageFilter;
@@ -209,41 +222,38 @@ public class MetadataController implements Initializable {
                 return null;
             }
         };
-        task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-            @Override
-            public void handle(WorkerStateEvent t) {
-                DateTimeFormatter formatter;
-                if (actualMediaFile.getRecordTime() != null) {
-                    recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+        task.setOnSucceeded((WorkerStateEvent t) -> {
+            DateTimeFormatter formatter;
+            if (actualMediaFile.getRecordTime() != null) {
+                recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+            }
+            updateUIWithExtendedMetadata();
+            if (actualMediaFile.getKeywords() != null) {
+                StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
+                while (defaultTokenizer.hasMoreTokens()) {
+                    String nextToken = defaultTokenizer.nextToken();
+                    keywordText.getChildren().add(new Tag(nextToken));
+                    keywordList.add(nextToken);
                 }
-                updateUIWithExtendedMetadata();
-                if (actualMediaFile.getKeywords() != null) {
-                    StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
-                    while (defaultTokenizer.hasMoreTokens()) {
-                        String nextToken = defaultTokenizer.nextToken();
-                        keywordText.getChildren().add(new Tag(nextToken));
-                        keywordList.add(nextToken);
-                    }
-                    TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
-                }
-                captionTextField.setText(actualMediaFile.getTitleProperty().get());
-                if (actualMediaFile.getComments().get() != null) {
-                    commentText.appendText(actualMediaFile.getComments().get());
-                }
-                anchorKeywordPane.setDisable(false);
-                progressPane.setVisible(false);
-                commentText.textProperty().addListener(commentsChangeListener);
+                TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
+            }
+            captionTextField.setText(actualMediaFile.getTitleProperty().get());
+            if (actualMediaFile.getComments().get() != null) {
+                commentText.appendText(actualMediaFile.getComments().get());
+            }
+            anchorKeywordPane.setDisable(false);
+            progressPane.setVisible(false);
+            commentText.textProperty().addListener(commentsChangeListener);
 
-                keywordText.getChildren().addListener(keywordsChangeListener);
-                captionTextField.textProperty().addListener(captionChangeListener);
+            keywordText.getChildren().addListener(keywordsChangeListener);
+            captionTextField.textProperty().addListener(captionChangeListener);
 
-                gpsPlace.setText(actualMediaFile.getGpsPosition());
-                if (actualMediaFile.getGpsHeight() != -1) {
-                    gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
-                }
-                if (actualMediaFile.getGpsDateTime() != null) {
-                    gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                }
+            gpsPlace.setText(actualMediaFile.getGpsPosition());
+            if (actualMediaFile.getGpsHeight() != -1) {
+                gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
+            }
+            if (actualMediaFile.getGpsDateTime() != null) {
+                gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
         });
         task.setOnFailed((t) -> {
@@ -273,9 +283,13 @@ public class MetadataController implements Initializable {
                             commentsdata.forEach(comment -> {
                                 sb.append(comment);
                             });
-                            Platform.runLater(() -> {
+                            if (Platform.isFxApplicationThread() == true) {
                                 actualMediaFile.getComments().set(sb.toString());
-                            });
+                            } else {
+                                Platform.runLater(() -> {
+                                    actualMediaFile.getComments().set(sb.toString());
+                                });
+                            }
                         }
                     }
                     case IPTC -> {
@@ -285,21 +299,21 @@ public class MetadataController implements Initializable {
                             MetadataEntry item = iterator.next();
                             switch (item.getKey()) {
                                 case "Keywords" -> {
-                                    if (actTask.getClass().getPackageName().equalsIgnoreCase("org.photoslide.search")) {
+                                    if (Platform.isFxApplicationThread() == true) {
+                                        actualMediaFile.setKeywords(item.getValue());
+                                    } else {
                                         Platform.runLater(() -> {
                                             actualMediaFile.setKeywords(item.getValue());
                                         });
-                                    } else {
-                                        actualMediaFile.setKeywords(item.getValue());
                                     }
                                 }
                                 case "Caption Abstract" -> {
-                                    if (actTask.getClass().getPackageName().equalsIgnoreCase("org.photoslide.search")) {
+                                    if (Platform.isFxApplicationThread() == true) {
+                                        actualMediaFile.setTitle(item.getValue());
+                                    } else {
                                         Platform.runLater(() -> {
                                             actualMediaFile.setTitle(item.getValue());
                                         });
-                                    } else {
-                                        actualMediaFile.setTitle(item.getValue());
                                     }
                                 }
                             }
@@ -368,24 +382,46 @@ public class MetadataController implements Initializable {
                                 if (gpsHeightsb.toString() != null) {
                                     if (gpsHeightsb.toString().length() > 0) {
                                         String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
-                                        if (gpsH.contains(",")) {
-                                            gpsH = gpsH.replace(",", ".");
+                                        double d = -1;
+                                        try {
+                                            DecimalFormat df = new DecimalFormat();
+                                            DecimalFormatSymbols sfs = new DecimalFormatSymbols();
+                                            sfs.setDecimalSeparator(',');
+                                            sfs.setMonetaryDecimalSeparator('.');
+                                            df.setDecimalFormatSymbols(sfs);
+                                            d = df.parse(gpsH).doubleValue();
+                                        } catch (ParseException ex) {
+                                            try {
+                                                DecimalFormat df = new DecimalFormat();
+                                                DecimalFormatSymbols sfs = new DecimalFormatSymbols();
+                                                sfs.setDecimalSeparator('.');
+                                                sfs.setMonetaryDecimalSeparator(',');
+                                                df.setDecimalFormatSymbols(sfs);
+                                                d = df.parse(gpsH).doubleValue();
+                                            } catch (ParseException ex2) {
+                                                d = -1;
+                                            }
                                         }
-                                        actualMediaFile.setGpsHeight(Double.parseDouble(gpsH));
+                                        actualMediaFile.setGpsHeight(d);
                                     }
                                 }
                                 if (gpsDatesb.toString() != null) {
                                     String gpsDateStr = gpsDatesb.toString().replace(":", ".");
-                                    actualMediaFile.setGpsDateTime(gpsDateStr + "T" + gpsTimesb.toString());
+                                    String formatTime = formatTime(gpsTimesb.toString());
+                                    actualMediaFile.setGpsDateTime(gpsDateStr + "T" + formatTime);
                                 }
                                 actualMediaFile.setGpsPosition(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
                             }
                             if (item.getKey().equalsIgnoreCase("IFD0")) {
                                 entries.stream().forEach((mediaEntry) -> {
                                     if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
-                                        Platform.runLater(() -> {
+                                        if (Platform.isFxApplicationThread() == true) {
                                             actualMediaFile.setCamera(mediaEntry.getValue());
-                                        });
+                                        } else {
+                                            Platform.runLater(() -> {
+                                                actualMediaFile.setCamera(mediaEntry.getValue());
+                                            });
+                                        }
                                     }
                                 });
                             }
@@ -405,6 +441,49 @@ public class MetadataController implements Initializable {
                 break;
             }
         }
+    }
+
+    private String formatTime(String source) {
+        if (source == null) {
+            return "";
+        }
+        if (source.contains(":") == false) {
+            return "";
+        }
+        String finalStr = "";
+        String hour = source.substring(0, source.indexOf(":"));
+        String minit = source.substring(source.indexOf(hour + ":") + hour.length() + 1, source.lastIndexOf(":"));
+        String sec = "";
+        if (source.contains(",")) {
+            sec = source.substring(source.indexOf(":" + minit + ":") + minit.length() + 2, source.lastIndexOf(","));
+            String milis = source.substring(source.lastIndexOf(",") + 1);
+            if (hour.length() < 2) {
+                hour = "0" + hour;
+            }
+            if (minit.length() < 2) {
+                minit = "0" + minit;
+            }
+            if (sec.length() < 2) {
+                sec = "0" + sec;
+            }
+            if (milis.length() < 2) {
+                milis = "0" + milis;
+            }
+            finalStr = hour + ":" + minit + ":" + sec + "," + milis;
+        } else {
+            sec = source.substring(source.indexOf(":" + minit + ":") + minit.length() + 2);
+            if (hour.length() < 2) {
+                hour = "0" + hour;
+            }
+            if (minit.length() < 2) {
+                minit = "0" + minit;
+            }
+            if (sec.length() < 2) {
+                sec = "0" + sec;
+            }
+            finalStr = hour + ":" + minit + ":" + sec;
+        }
+        return finalStr;
     }
 
     private void updateUIWithExtendedMetadata() {
@@ -493,16 +572,6 @@ public class MetadataController implements Initializable {
     @FXML
     private void addKeywordAction(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
-            /*if (!keywordText.getText().equalsIgnoreCase("")) {
-                String lastChar = keywordText.getText().substring(keywordText.getText().length() - 1);
-                if (!lastChar.equalsIgnoreCase(";")) {
-                    keywordText.appendText(";" + addKeywordTextField.getText());
-                } else {
-                    keywordText.appendText(addKeywordTextField.getText());
-                }
-            } else {
-                keywordText.appendText(addKeywordTextField.getText());
-            }*/
             keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
             addKeywordTextField.clear();
         }
@@ -531,7 +600,7 @@ public class MetadataController implements Initializable {
             Metadata.insertIPTC(fin, bout, iptcs, true);
 
             fin.close();
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             bout.close();
@@ -542,7 +611,7 @@ public class MetadataController implements Initializable {
             Metadata.insertComment(fin, bout, commentText.getText());
 
             fin.close();
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
 
@@ -576,7 +645,7 @@ public class MetadataController implements Initializable {
 
                     Metadata.insertComment(fin, bout, commentText.getText());
 
-                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+                    try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
                     fin.close();
@@ -603,10 +672,10 @@ public class MetadataController implements Initializable {
         executor.submit(taskSaveComments);
     }
 
-    private String getKeywordsAsString() {
+    private String getKeywordsAsString(FlowPane kewordPane) {
         StringBuilder sb = new StringBuilder();
-        if (keywordText.getChildren().size() != 0) {
-            keywordText.getChildren().forEach((tagitem) -> {
+        if (!kewordPane.getChildren().isEmpty()) {
+            kewordPane.getChildren().forEach((tagitem) -> {
                 sb.append(((Tag) tagitem).getText()).append(";");
             });
             String substring = sb.toString().substring(0, sb.toString().length() - 1);
@@ -632,7 +701,7 @@ public class MetadataController implements Initializable {
                     if (title == null) {
                         title = "";
                     }
-                    updateKeywordsTitle(title, getKeywordsAsString());
+                    updateKeywordsTitle(title, getKeywordsAsString(keywordText));
                 }
                 return null;
             }
@@ -712,7 +781,7 @@ public class MetadataController implements Initializable {
                 });
             });
             Metadata.insertIPTC(fin, bout, iptcs, false);
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -735,49 +804,41 @@ public class MetadataController implements Initializable {
         alert.setTitle("Confirmation");
         alert.setHeaderText("Apply Caption/Title/keywords to all mediafiles");
         DialogPane dialogPane = alert.getDialogPane();
-        VBox content = new VBox();
+        alert.setResizable(true);
+        GridPane content = new GridPane();
         content.setAlignment(Pos.CENTER_RIGHT);
-        content.setSpacing(5);
-        HBox titlebox = new HBox();
-        titlebox.setSpacing(5);
-        titlebox.setAlignment(Pos.TOP_RIGHT);
+        content.setHgap(5);
+        content.setVgap(5);
         Label title = new Label("Title/Caption");
         TextField titleText = new TextField(captionTextField.getText());
         titleText.setPrefWidth(300);
-        titlebox.getChildren().add(title);
-        titlebox.getChildren().add(titleText);
-        content.getChildren().add(titlebox);
-        HBox keywordbox = new HBox();
-        keywordbox.setSpacing(5);
-        keywordbox.setAlignment(Pos.TOP_RIGHT);
+        HBox.setHgrow(titleText, Priority.ALWAYS);
+        content.addRow(0, title, titleText, new Pane());
         Label keywordLabel = new Label("Keywords");
-        TextArea keywordsToAllText = new TextArea(getKeywordsAsString());
-        keywordsToAllText.setPrefSize(300, 100);
-        HBox addKeywordToAllbox = new HBox();
-        addKeywordToAllbox.setAlignment(Pos.TOP_RIGHT);
+        ScrollPane scrollpane = new ScrollPane();
+        scrollpane.setPrefSize(300, 150);
+        HBox.setHgrow(scrollpane, Priority.ALWAYS);
+        VBox.setVgrow(scrollpane, Priority.ALWAYS);
+        FlowPane keywordsToAllText = new FlowPane();
+        keywordsToAllText.setVgap(5);
+        keywordsToAllText.setHgap(5);
+        keywordsToAllText.setPadding(new Insets(5, 5, 5, 5));
+        scrollpane.setContent(keywordsToAllText);
+        keywordsToAllText.getChildren().addAll(keywordText.getChildren());
+        content.addRow(1, keywordLabel, scrollpane, new Pane());
         TextField addKeywordToAllField = new TextField();
-        addKeywordToAllField.setPromptText("Add keywords...");
         addKeywordToAllField.setPrefWidth(300);
-        addKeywordToAllbox.getChildren().add(addKeywordToAllField);
-        addKeywordToAllField.setOnKeyPressed((t) -> {
-            if (t.getCode() == KeyCode.ENTER) {
-                if (!keywordsToAllText.getText().equalsIgnoreCase("")) {
-                    String lastChar = keywordsToAllText.getText().substring(keywordsToAllText.getText().length() - 1);
-                    if (!lastChar.equalsIgnoreCase(";")) {
-                        keywordsToAllText.appendText(";" + addKeywordToAllField.getText());
-                    } else {
-                        keywordsToAllText.appendText(addKeywordToAllField.getText());
-                    }
-                } else {
-                    keywordsToAllText.appendText(addKeywordToAllField.getText());
-                }
-                addKeywordToAllField.clear();
-            }
+        HBox.setHgrow(addKeywordToAllField, Priority.ALWAYS);
+        addKeywordToAllField.setPromptText("Add keywords...");
+        Button addKewordButton = new Button();
+        addKewordButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        addKewordButton.setGraphic(new FontIcon("ti-plus"));
+        addKewordButton.setOnAction((t) -> {
+            keywordsToAllText.getChildren().add(new Tag(addKeywordToAllField.getText()));
+            addKeywordToAllField.clear();
+            addKeywordToAllField.requestFocus();
         });
-        keywordbox.getChildren().add(keywordLabel);
-        keywordbox.getChildren().add(keywordsToAllText);
-        content.getChildren().add(keywordbox);
-        content.getChildren().add(addKeywordToAllbox);
+        content.addRow(2, new Pane(), addKeywordToAllField, addKewordButton);
 
         dialogPane.setContent(content);
         dialogPane.getStylesheets().add(
@@ -786,6 +847,7 @@ public class MetadataController implements Initializable {
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
 
@@ -809,7 +871,7 @@ public class MetadataController implements Initializable {
                             updateMessage("" + (i + 1) + "/" + mediaList.size());
                             actualMediaFile = actFile;
                             readBasicMetadata(this);
-                            updateKeywordsTitle(titleText.getText(), keywordsToAllText.getText());
+                            updateKeywordsTitle(titleText.getText(), getKeywordsAsString(keywordsToAllText));
                             i++;
                         }
                     }
@@ -903,22 +965,6 @@ public class MetadataController implements Initializable {
 
     public Slider getApertureSlider() {
         return apertureSlider;
-    }
-
-    private static WritableImage copyImage(Image image) {
-        int height = (int) image.getHeight();
-        int width = (int) image.getWidth();
-        PixelReader pixelReader = image.getPixelReader();
-        WritableImage writableImage = new WritableImage(width, height);
-        PixelWriter pixelWriter = writableImage.getPixelWriter();
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                Color color = pixelReader.getColor(x, y);
-                pixelWriter.setColor(x, y, color);
-            }
-        }
-        return writableImage;
     }
 
     public Exif getExifdata() {

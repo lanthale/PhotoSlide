@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -27,17 +28,25 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.Utility;
+import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
 
 /**
@@ -67,22 +76,38 @@ public class SearchToolsController implements Initializable {
     private DialogPane dialogPane;
     private double diaglogHeight;
     private Button clearButton;
+    @FXML
+    private StackPane stackPane;
+    @FXML
+    private HBox toolbar;
+    private CollectionsController collectionsController;
+    @FXML
+    private Label mediaFileInfoLabel;
+    @FXML
+    private HBox infoBox;
+    private Utility util;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        util = new Utility();
         progressInd = new ProgressIndicator();
         progressInd.setVisible(false);
         progressInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         searchTextField.setRight(progressInd);
-        clearButton=new Button();
+        clearButton = new Button();
         clearButton.setId("toolbutton");
-        FontIcon clearIcon=new FontIcon("ti-close");
+        FontIcon clearIcon = new FontIcon("ti-close");
         clearButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         clearButton.setGraphic(clearIcon);
         clearButton.setOnAction((t) -> {
             searchTextField.clear();
+            toolbar.setVisible(false);
+            toolbar.setManaged(false);
+            searchResultVBox.getChildren().clear();
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
         });
+        toolbar.setVisible(false);
+        toolbar.setManaged(false);
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
@@ -100,6 +125,10 @@ public class SearchToolsController implements Initializable {
     public void shutdown() {
         executor.shutdown();
         executorParallel.shutdown();
+    }
+
+    public void injectCollectionsController(CollectionsController controller) {
+        this.collectionsController = controller;
     }
 
     private void searchTextFieldAction(ActionEvent event) {
@@ -120,7 +149,7 @@ public class SearchToolsController implements Initializable {
     }
 
     @FXML
-    private void searchTextFieldAction(KeyEvent event) {        
+    private void searchTextFieldAction(KeyEvent event) {
         //if (event.getCode() != KeyCode.BACK_SPACE) {
         if (searchTextField.getText().length() > 2) {
             searchTextField.setRight(progressInd);
@@ -133,33 +162,40 @@ public class SearchToolsController implements Initializable {
                     Thread.sleep(500);
                     Platform.runLater(() -> {
                         searchTextField.setRight(clearButton);
-                    });                    
-                    dialogPane.getScene().getWindow().setHeight(300);
+                    });
                     performSearch(keyword);
                     return null;
                 }
             };
-            task.setOnFailed((t) -> {                
+            task.setOnFailed((t) -> {
                 progressInd.setVisible(false);
+                infoBox.setVisible(false);
             });
-            task.setOnSucceeded((t) -> {
-                progressInd.setVisible(false);
+            task.setOnSucceeded((t) -> {                
+                toolbar.setVisible(true);
+                toolbar.setManaged(true);
+                progressInd.setVisible(false);                
+            });
+            task.setOnRunning((t) -> {
             });
             executor.submit(task);
+            dialogPane.getScene().getWindow().setHeight(300);            
+            mediaFileInfoLabel.setText("");
         }
         //}
         if (event.getCode() == KeyCode.BACK_SPACE) {
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
+            infoBox.setVisible(false);
             if (searchTextField.getText().length() < 1) {
                 progressInd.setVisible(false);
             }
         }
     }
 
-    private void performSearch(String keyword) {        
+    private void performSearch(String keyword) {
         try {
             ArrayList<String> queryList = new ArrayList<>();
-            try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
+            try ( ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
                     queryList.add("SELECT * FROM " + searchRS.getString("QUERY"));
                 }
@@ -176,14 +212,13 @@ public class SearchToolsController implements Initializable {
                 Platform.runLater(() -> {
                     searchResultVBox.getChildren().add(imageGrid);
                 });
-                for (String query : queryList) {                    
-                    try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {
+                for (String query : queryList) {
+                    try ( Statement stm = App.getSearchDBConnection().createStatement();  ResultSet rs = stm.executeQuery(query)) {
                         rs.next();
                         String pathStorage = rs.getString("pathStorage");
                         //loading mediafiles
                         SRMediaLoadingTask task = new SRMediaLoadingTask(pathStorage, this, fullMediaList, imageGrid);
                         task.setOnFailed((t) -> {
-                            t.getSource().getException().printStackTrace();
                             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
                         });
                         executorParallel.submit(task);
@@ -199,5 +234,44 @@ public class SearchToolsController implements Initializable {
         this.dialogPane = pane;
         this.diaglogHeight = dialogPane.getHeight();
     }
+
+    public ObservableList<MediaFile> getFullMediaList() {
+        return fullMediaList;
+    }
+
+    @FXML
+    private void linkToCollectionAction(ActionEvent event) {
+        if (factory.getSelectedMediaFile() != null) {
+            collectionsController.highlightCollection(factory.getSelectedMediaFile().getPathStorage());
+        }
+    }
+
+    public Label getMediaFileInfoLabel() {
+        return mediaFileInfoLabel;
+    }
+
+    @FXML
+    private void copyFilePathToClipboardAction(ActionEvent event) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();        
+        content.putString(factory.getSelectedMediaFile().getEditFilePath().getParent().toString());        
+        clipboard.setContent(content);
+        String text = mediaFileInfoLabel.getText();
+        mediaFileInfoLabel.setText("Copied path to clipboard successfully!");        
+        PauseTransition pause=new PauseTransition(Duration.millis(5000));
+        pause.setOnFinished((t) -> {
+            mediaFileInfoLabel.setVisible(true);
+            mediaFileInfoLabel.setText(text);
+        });
+        pause.play();
+    }
+
+    public HBox getInfoBox() {
+        return infoBox;
+    }
+    
+    
+    
+    
 
 }

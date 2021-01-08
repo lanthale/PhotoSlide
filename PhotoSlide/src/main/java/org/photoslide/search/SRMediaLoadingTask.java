@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
@@ -43,6 +44,7 @@ public class SRMediaLoadingTask extends Task<Void> {
         mediaItem.readEdits();
         mediaItem.getCreationTime();
         MediaFile item = null;
+        Tooltip t = new Tooltip(mediaItem.getName());        
         if (FileTypes.isValidVideo(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
             Platform.runLater(() -> {
@@ -50,7 +52,7 @@ public class SRMediaLoadingTask extends Task<Void> {
             });
             Media video = null;
             try {
-                video = new Media(mediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                video = new Media(mediaItem.getPathStorage().toUri().toURL().toExternalForm());                
                 item = fullMediaList.get(fullMediaList.indexOf(mediaItem));
                 item.setVideoSupported(MediaFile.VideoTypes.SUPPORTED);
                 item.setMedia(video, MediaFile.VideoTypes.SUPPORTED);
@@ -71,13 +73,13 @@ public class SRMediaLoadingTask extends Task<Void> {
                 fullMediaList.add(mediaItem);
             });
 
-            Image img = new Image(mediaItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 100, imageGrid.getCellHeight() + 100, true, false, false);
+            Image img = new Image(mediaItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 100, imageGrid.getCellHeight() + 100, true, false, false);           
             try {
                 item = fullMediaList.get(fullMediaList.indexOf(mediaItem));
                 item.setImage(img);
                 final MediaFile itemImage = item;
                 Platform.runLater(() -> {
-                    fullMediaList.set(fullMediaList.indexOf(mediaItem), itemImage);
+                    fullMediaList.set(fullMediaList.indexOf(mediaItem), itemImage);                    
                 });
             } catch (IndexOutOfBoundsException e) {
 

@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,6 +41,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -71,6 +73,7 @@ import javafx.scene.image.Image;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
 
@@ -99,6 +102,7 @@ public class CollectionsController implements Initializable {
     private static final String NODE_NAME = "PhotoSlide";
     private Path selectedPath;
     private LinkedHashMap<String, String> collectionStorage;
+    private LinkedHashMap<String, String> collectionStorageSearchIndex;
     private int activeAccordionPane;
     private Path clipboardPath;
     private ClipboardMode clipboardMode;
@@ -126,6 +130,7 @@ public class CollectionsController implements Initializable {
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();
+        collectionStorageSearchIndex = new LinkedHashMap<>();
 
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -140,10 +145,10 @@ public class CollectionsController implements Initializable {
         Task<Boolean> indexTask = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+                collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
                     if (this.isCancelled() == false) {
-                        //searchIndexProcess.createSearchIndex(t.getValue());
-                        //searchIndexProcess.checkSearchIndex(t.getValue());
+                        searchIndexProcess.createSearchIndex(t.getValue());
+                        searchIndexProcess.checkSearchIndex(t.getValue());
                     }
                 });
                 return true;
@@ -192,6 +197,9 @@ public class CollectionsController implements Initializable {
                 if (key.contains("URL")) {
                     collectionStorage.put(key, pref.get(key, null));
                 }
+                if (key.contains("INDEX")) {
+                    collectionStorageSearchIndex.put(key, pref.get(key, null));
+                }
             }
         } catch (BackingStoreException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
@@ -211,7 +219,7 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setText("Scanning...");
         });
-        try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+        try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
             boolean res = true;
             if (entry.getFileName().toString().startsWith(".")) {
                 res = false;
@@ -249,7 +257,7 @@ public class CollectionsController implements Initializable {
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
             TreeItem placeholder = new TreeItem("Please wait...");
             parent.getChildren().add(node);
-            try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+            try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
                 boolean res = true;
                 if (entry.getFileName().toString().startsWith(".")) {
                     res = false;
@@ -329,8 +337,30 @@ public class CollectionsController implements Initializable {
         File selectedDirectory = directoryChooser.showDialog(stage);
         if (selectedDirectory != null) {
             loadDirectoryTree(selectedDirectory.getAbsolutePath());
-            pref.put("URL" + getPrefKeyForSaving(), selectedDirectory.getAbsolutePath());
-            searchIndexProcess.createSearchIndex(selectedDirectory.getAbsolutePath());
+            String prefKeyForSaving = getPrefKeyForSaving();
+            pref.put("URL" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
+            if (createSearchIndex(selectedDirectory.getAbsolutePath()) == true) {
+                pref.put("INDEX" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
+                searchIndexProcess.createSearchIndex(selectedDirectory.getAbsolutePath());
+            }
+        }
+    }
+
+    private boolean createSearchIndex(String p) {
+        Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+        alert = Utility.setDefaultButton(alert, ButtonType.YES);
+        alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        alert.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.YES) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -470,11 +500,17 @@ public class CollectionsController implements Initializable {
             TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
             PathItem value = content.getRoot().getValue();
             String pathToRemoveStr = value.getFilePath().toString();
-            String prefKeyForRemoving = getPrefKeyForRemoving(pathToRemoveStr);
-            pref.remove(prefKeyForRemoving);
-            lighttablePaneController.resetLightTableView();
-            accordionPane.getPanes().remove(accordionPane.getExpandedPane());
-            searchIndexProcess.removeCollectionFromSearchDB(pathToRemoveStr);
+            String prefKeyForRemoving = getPrefKeyForRemoving(pathToRemoveStr, "URL");
+            if (prefKeyForRemoving != null) {
+                pref.remove(prefKeyForRemoving);
+                lighttablePaneController.resetLightTableView();
+                accordionPane.getPanes().remove(accordionPane.getExpandedPane());
+            }
+            String prefKeyForRemovingIndex = getPrefKeyForRemoving(pathToRemoveStr, "INDEX");
+            if (prefKeyForRemovingIndex != null) {
+                pref.remove(prefKeyForRemovingIndex);
+                searchIndexProcess.removeCollectionFromSearchDB(pathToRemoveStr);
+            }
         } else {
             Alert alert = new Alert(AlertType.ERROR);
             alert.setHeaderText("Please expand one pane to delete it!");
@@ -488,13 +524,15 @@ public class CollectionsController implements Initializable {
         }
     }
 
-    private String getPrefKeyForRemoving(String path) {
+    private String getPrefKeyForRemoving(String path, String prefix) {
         try {
             String[] keys = pref.keys();
             for (String key : keys) {
                 String value = pref.get(key, "");
                 if (path.contains(value)) {
-                    return key;
+                    if (key.contains(prefix)) {
+                        return key;
+                    }
                 }
             }
         } catch (BackingStoreException ex) {
@@ -759,6 +797,10 @@ public class CollectionsController implements Initializable {
         return collectionStorage;
     }
 
+    public LinkedHashMap<String, String> getCollectionStorageSearchIndex() {
+        return collectionStorageSearchIndex;
+    }
+
     private void ShowEmptyHelp() {
         Alert alert = new Alert(AlertType.CONFIRMATION, "No Collection are defined.\nDo you want to add the storage of you mediafiles now ?", ButtonType.NO, ButtonType.YES);
         alert.setHeaderText("Add collections");
@@ -773,6 +815,42 @@ public class CollectionsController implements Initializable {
         Optional<ButtonType> resultDiag = alert.showAndWait();
         if (resultDiag.get() == ButtonType.YES) {
             addExistingPath();
+        }
+    }
+
+    public void highlightCollection(Path p) {
+        //System.out.println("path was " + p);
+        AtomicBoolean found = new AtomicBoolean(false);
+        Path parent = p.getParent();
+        ObservableList<TitledPane> allPanes = accordionPane.getPanes();
+        for (TitledPane titlePane : allPanes) {
+            TreeView<PathItem> treeView = (TreeView<PathItem>) titlePane.getContent();
+            ObservableList<TreeItem<PathItem>> treeViewChilds = treeView.getRoot().getChildren();
+            for (TreeItem<PathItem> treeViewChild : treeViewChilds) {
+                if (parent.toString().contains(treeViewChild.getValue().getFilePath().toString())) {
+                    treeViewChild.setExpanded(true);
+                    PauseTransition pause = new PauseTransition();
+                    pause.setDuration(Duration.millis(500));
+                    pause.play();
+                    pause.setOnFinished((t) -> {
+                        ObservableList<TreeItem<PathItem>> children = treeViewChild.getChildren();
+                        for (TreeItem<PathItem> treeItem : children) {
+                            if (parent.toString().contains(treeItem.getValue().getFilePath().toString())) {
+                                treeItem.setExpanded(true);
+                                treeView.getSelectionModel().select(treeItem);
+                                found.set(true);
+                                break;
+                            }
+                            if (found.get() == true) {
+                                break;
+                            }
+                        }
+                    });
+                }
+                if (found.get() == true) {
+                    break;
+                }
+            }
         }
     }
 

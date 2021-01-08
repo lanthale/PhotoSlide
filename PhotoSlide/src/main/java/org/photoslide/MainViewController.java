@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +66,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -71,6 +74,7 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
@@ -676,10 +680,10 @@ public class MainViewController implements Initializable {
 
     private void searchAction() {
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
-        searchDialog.initStyle(StageStyle.UNDECORATED);        
+        searchDialog.initStyle(StageStyle.UNDECORATED);
         searchDialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
-        searchDialog.setResizable(true);        
+        searchDialog.setResizable(true);
         Utility.centerTopChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) searchDialog.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
@@ -691,14 +695,50 @@ public class MainViewController implements Initializable {
         searchDialog.getController().getCloseAction().setOnMouseClicked((mouse) -> {
             searchDialog.setResult(ButtonType.CANCEL);
         });
-        searchDialog.getController().setDialogPane(searchDialog.getDialogPane());        
+        searchDialog.getController().setDialogPane(searchDialog.getDialogPane());
         searchDialog.getController().getSearchTextField().requestFocus();
-        Optional<ButtonType> result = searchDialog.showAndWait();        
+        searchDialog.getController().injectCollectionsController(collectionsPaneController);
+        Optional<ButtonType> result = searchDialog.showAndWait();
     }
 
     @FXML
     private void searchMenuAction(ActionEvent event) {
         searchAction();
+    }
+
+    @FXML
+    private void resetFTSearchIndex(ActionEvent event) {
+        Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+        alert = Utility.setDefaultButton(alert, ButtonType.NO);
+        alert.setHeaderText("Do you want to reset the search index ?");
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        alert.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.YES) {
+            try {
+                Statement stat = App.getSearchDBConnection().createStatement();
+                stat.execute("DROP TABLE MEDIAFILES");
+            } catch (SQLException ef) {
+            }
+            try {                
+                FullText.dropAll(App.getSearchDBConnection());                
+            } catch (SQLException ef) {
+            }
+            App.initDB();
+            Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
+            msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the search index.");
+            msg.getDialogPane().getStylesheets().add(
+                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+            msg.setResizable(false);
+            Utility.centerChildWindowOnStage((Stage) msg.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+            stage = (Stage) msg.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(dialogIcon);
+            msg.show();
+        }
     }
 
 }

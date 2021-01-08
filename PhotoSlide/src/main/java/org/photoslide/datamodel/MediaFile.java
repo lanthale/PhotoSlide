@@ -275,7 +275,7 @@ public class MediaFile extends StackPane {
 
         String fileNameWithExt = getEditFilePath().toString();
 
-        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
+        try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
             if (title.getValue() != null) {
@@ -347,7 +347,7 @@ public class MediaFile extends StackPane {
 
         fileNameWithExt = getEditFilePath().toString();
 
-        try (InputStream input = new FileInputStream(fileNameWithExt)) {
+        try ( InputStream input = new FileInputStream(fileNameWithExt)) {
 
             Properties prop = new Properties();
 
@@ -737,11 +737,16 @@ public class MediaFile extends StackPane {
         if (dateTimeStr.contains(".") == false) {
             return;
         }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd'T'HH:m:ss','SS");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd'T'HH:mm:ss','SS");
         try {
             parse = LocalDateTime.parse(dateTimeStr, formatter);
         } catch (DateTimeParseException e) {
-            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert GPS date/time!", e);
+            try {
+                formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd'T'HH:mm:ss");
+                parse = LocalDateTime.parse(dateTimeStr, formatter);
+            } catch (DateTimeParseException e2) {
+                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot parse date/time: " + dateTimeStr, e);
+            }
         }
         this.gpsDateTime = parse;
     }
@@ -751,7 +756,9 @@ public class MediaFile extends StackPane {
     }
 
     public void setGpsHeight(double gpsHeight) {
-        this.gpsHeight = gpsHeight;
+        if (gpsHeight != -1) {
+            this.gpsHeight = gpsHeight;
+        }
     }
 
 }

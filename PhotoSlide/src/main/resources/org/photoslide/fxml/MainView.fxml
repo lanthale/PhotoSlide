@@ -89,6 +89,7 @@
                      </accelerator>
                   </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="Reset full text search index" />
                         <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />

@@ -102,7 +102,7 @@ public class SearchIndex {
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
                                 throws IOException {
                             if (e == null) {
-                                System.out.println("postVisistDir "+dir.toString());
+                                //System.out.println("postVisistDir "+dir.toString());
                                 return FileVisitResult.CONTINUE;
                             } else {
                                 // directory iteration failed

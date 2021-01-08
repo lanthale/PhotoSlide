@@ -823,33 +823,41 @@ public class CollectionsController implements Initializable {
         AtomicBoolean found = new AtomicBoolean(false);
         Path parent = p.getParent();
         ObservableList<TitledPane> allPanes = accordionPane.getPanes();
+        AtomicBoolean finishSearch = new AtomicBoolean(false);
         for (TitledPane titlePane : allPanes) {
+            titlePane.setExpanded(true);
             TreeView<PathItem> treeView = (TreeView<PathItem>) titlePane.getContent();
-            ObservableList<TreeItem<PathItem>> treeViewChilds = treeView.getRoot().getChildren();
-            for (TreeItem<PathItem> treeViewChild : treeViewChilds) {
-                if (parent.toString().contains(treeViewChild.getValue().getFilePath().toString())) {
-                    treeViewChild.setExpanded(true);
-                    PauseTransition pause = new PauseTransition();
-                    pause.setDuration(Duration.millis(500));
-                    pause.play();
-                    pause.setOnFinished((t) -> {
-                        ObservableList<TreeItem<PathItem>> children = treeViewChild.getChildren();
-                        for (TreeItem<PathItem> treeItem : children) {
-                            if (parent.toString().contains(treeItem.getValue().getFilePath().toString())) {
-                                treeItem.setExpanded(true);
-                                treeView.getSelectionModel().select(treeItem);
-                                found.set(true);
-                                break;
-                            }
-                            if (found.get() == true) {
-                                break;
-                            }
-                        }
-                    });
-                }
-                if (found.get() == true) {
+            ObservableList<TreeItem<PathItem>> children = treeView.getRoot().getChildren();
+            for (TreeItem<PathItem> treeItem : children) {                
+                selectPath(treeItem, parent.toString(), treeView, finishSearch);
+                if (finishSearch.get()) {
                     break;
                 }
+            }
+            if (finishSearch.get()) {
+                break;
+            }
+        }
+    }
+
+    private void selectPath(TreeItem<PathItem> treeViewChild, String parent, TreeView<PathItem> treeView, AtomicBoolean finishSearch) {
+        if (parent.equalsIgnoreCase(treeViewChild.getValue().getFilePath().toString())) {
+            treeView.getSelectionModel().select(treeViewChild);
+            finishSearch.set(true);
+            return;
+        } else {
+            if (parent.contains(treeViewChild.getValue().getFilePath().toString())) {
+                treeViewChild.setExpanded(true);
+                PauseTransition pause = new PauseTransition(Duration.millis(500));
+                pause.setOnFinished((t) -> {
+                    ObservableList<TreeItem<PathItem>> children = treeViewChild.getChildren();
+                    for (TreeItem<PathItem> treeItem : children) {
+                        if (parent.contains(treeItem.getValue().getFilePath().toString())) {
+                            selectPath(treeItem, parent, treeView, finishSearch);
+                        }
+                    }
+                });
+                pause.play();
             }
         }
     }

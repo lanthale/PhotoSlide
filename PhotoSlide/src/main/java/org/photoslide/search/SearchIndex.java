@@ -71,6 +71,13 @@ public class SearchIndex {
                             if (task.isCancelled() == true) {
                                 return FileVisitResult.TERMINATE;
                             }
+                            //filter invalid directories
+                            if (fileItem.getFileName().toString().startsWith(".")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+                            if (fileItem.getFileName().toString().startsWith("@")) {
+                                return FileVisitResult.CONTINUE;
+                            }
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
                                 m.setName(fileItem.getFileName().toString());

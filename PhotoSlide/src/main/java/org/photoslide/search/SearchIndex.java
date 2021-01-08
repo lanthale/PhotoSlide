@@ -22,7 +22,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
-import org.h2.fulltext.FullText;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browsercollections.PathItem;

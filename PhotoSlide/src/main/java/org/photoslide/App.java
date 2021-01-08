@@ -176,7 +176,7 @@ public class App extends Application {
             Statement stat = searchDBConnection.createStatement();            
             FullText.init(searchDBConnection);
             FullText.setIgnoreList(searchDBConnection, "to,this");
-            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.\\");                                    
+            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.");                                    
             stat.execute("""
                          CREATE TABLE
                              "PUBLIC".MEDIAFILES

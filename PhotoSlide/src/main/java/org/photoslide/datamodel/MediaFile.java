@@ -193,12 +193,16 @@ public class MediaFile extends StackPane {
     }
 
     private Image setFilters() {
-        Image imageWithFilters = getClonedImage(unModifiyAbleImage);
-        for (ImageFilter imageFilter : filterList) {
-            imageWithFilters = imageFilter.load(imageWithFilters);
-            imageFilter.filter(imageFilter.getValues());
+        if (this.unModifiyAbleImage != null) {
+            Image imageWithFilters = getClonedImage(unModifiyAbleImage);
+            for (ImageFilter imageFilter : filterList) {
+                imageWithFilters = imageFilter.load(imageWithFilters);
+                imageFilter.filter(imageFilter.getValues());
+            }
+            return imageWithFilters;
+        } else {
+            return this.image;
         }
-        return imageWithFilters;
     }
 
     public Image getImage() {
@@ -692,9 +696,13 @@ public class MediaFile extends StackPane {
         int height = (int) image.getHeight();
         int width = (int) image.getWidth();
         byte[] buffer = new byte[width * height * 4];
-        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
-        Image filteredImage = new WritableImage(pixelReader, width, height);
-        return filteredImage;
+        try {
+            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+            Image filteredImage = new WritableImage(pixelReader, width, height);
+            return filteredImage;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Image getUnModifiyAbleImage() {

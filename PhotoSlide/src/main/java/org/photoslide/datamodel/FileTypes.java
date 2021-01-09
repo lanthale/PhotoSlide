@@ -27,28 +27,36 @@ public class FileTypes {
         } else {
             return false;
         }
-        return (imageTypes + "," + videoTypes).toUpperCase().contains(fileEndingStr.toUpperCase());
+        boolean isValid = (imageTypes + "," + videoTypes).toUpperCase().contains(fileEndingStr.toUpperCase());
+        if (isValid == true) {
+            if (fileName.startsWith(".")) {
+                isValid = false;
+            } else if (fileName.startsWith("@")) {
+                isValid = false;
+            }
+        }
+        return isValid;
     }
 
-    public static boolean isValidVideo(String fileName) {        
+    public static boolean isValidVideo(String fileName) {
         int lastIndexOf = fileName.lastIndexOf('.');
         String fileEndingStr = "";
         if (lastIndexOf != -1) {
             fileEndingStr = fileName.substring(lastIndexOf + 1);
-        } else {            
+        } else {
             return false;
-        }        
+        }
         return videoTypes.toUpperCase().contains(fileEndingStr.toUpperCase());
     }
-    
-    public static boolean isValidImge(String fileName) {        
+
+    public static boolean isValidImge(String fileName) {
         int lastIndexOf = fileName.lastIndexOf('.');
         String fileEndingStr = "";
         if (lastIndexOf != -1) {
             fileEndingStr = fileName.substring(lastIndexOf + 1);
-        } else {            
+        } else {
             return false;
-        }        
+        }
         return imageTypes.toUpperCase().contains(fileEndingStr.toUpperCase());
     }
 

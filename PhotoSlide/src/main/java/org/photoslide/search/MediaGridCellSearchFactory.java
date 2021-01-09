@@ -5,6 +5,9 @@
  */
 package org.photoslide.search;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import javafx.collections.transformation.SortedList;
@@ -27,7 +30,6 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
     private MediaFile selectedMediaFile;
     private final Comparator<MediaFile> stackNameComparator;
     private final ExecutorService executor;
-    private boolean changed;
     private final SearchToolsController searchTools;
     private final GridCellSelectionModel selectionModel;
 
@@ -35,8 +37,7 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
         this.sortedMediaList = sortedMediaList;
         this.searchTools = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        this.executor = executor;
-        changed = false;
+        this.executor = executor;        
         selectionModel = new GridCellSelectionModel();
     }
 
@@ -59,7 +60,7 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
         });
         selectedMediaFile = ((MediaGridCellSR) t.getSource()).getItem();
         searchTools.getInfoBox().setVisible(true);
-        searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName());
+        searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName());        
         selectionModel.clear();
         selectionModel.add(((MediaGridCellSR) t.getSource()).getItem());
         selectedCell = cell;
@@ -73,7 +74,5 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
     public MediaFile getSelectedMediaFile() {
         return selectedMediaFile;
     }
-    
-    
 
 }

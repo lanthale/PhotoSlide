@@ -36,7 +36,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
@@ -77,8 +76,6 @@ public class SearchToolsController implements Initializable {
     private double diaglogHeight;
     private Button clearButton;
     @FXML
-    private StackPane stackPane;
-    @FXML
     private HBox toolbar;
     private CollectionsController collectionsController;
     @FXML
@@ -103,6 +100,7 @@ public class SearchToolsController implements Initializable {
             searchTextField.clear();
             toolbar.setVisible(false);
             toolbar.setManaged(false);
+            infoBox.setVisible(false);
             searchResultVBox.getChildren().clear();
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
         });
@@ -171,15 +169,15 @@ public class SearchToolsController implements Initializable {
                 progressInd.setVisible(false);
                 infoBox.setVisible(false);
             });
-            task.setOnSucceeded((t) -> {                
+            task.setOnSucceeded((t) -> {
                 toolbar.setVisible(true);
                 toolbar.setManaged(true);
-                progressInd.setVisible(false);                
+                progressInd.setVisible(false);
             });
             task.setOnRunning((t) -> {
             });
             executor.submit(task);
-            dialogPane.getScene().getWindow().setHeight(300);            
+            dialogPane.getScene().getWindow().setHeight(300);
             mediaFileInfoLabel.setText("");
         }
         //}
@@ -188,6 +186,10 @@ public class SearchToolsController implements Initializable {
             infoBox.setVisible(false);
             if (searchTextField.getText().length() < 1) {
                 progressInd.setVisible(false);
+                toolbar.setVisible(false);
+                toolbar.setManaged(false);
+                infoBox.setVisible(false);
+                searchResultVBox.getChildren().clear();
             }
         }
     }
@@ -253,12 +255,12 @@ public class SearchToolsController implements Initializable {
     @FXML
     private void copyFilePathToClipboardAction(ActionEvent event) {
         final Clipboard clipboard = Clipboard.getSystemClipboard();
-        final ClipboardContent content = new ClipboardContent();        
-        content.putString(factory.getSelectedMediaFile().getEditFilePath().getParent().toString());        
+        final ClipboardContent content = new ClipboardContent();
+        content.putString(factory.getSelectedMediaFile().getEditFilePath().getParent().toString());
         clipboard.setContent(content);
         String text = mediaFileInfoLabel.getText();
-        mediaFileInfoLabel.setText("Copied path to clipboard successfully!");        
-        PauseTransition pause=new PauseTransition(Duration.millis(5000));
+        mediaFileInfoLabel.setText("Copied path to clipboard successfully!");
+        PauseTransition pause = new PauseTransition(Duration.millis(5000));
         pause.setOnFinished((t) -> {
             mediaFileInfoLabel.setVisible(true);
             mediaFileInfoLabel.setText(text);
@@ -269,9 +271,5 @@ public class SearchToolsController implements Initializable {
     public HBox getInfoBox() {
         return infoBox;
     }
-    
-    
-    
-    
 
 }

@@ -95,6 +95,7 @@ import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.Utility;
+import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.imageops.ExposureFilter;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.SampleFilter;
@@ -870,8 +871,10 @@ public class MetadataController implements Initializable {
                             updateProgress(i + 1, mediaList.size());
                             updateMessage("" + (i + 1) + "/" + mediaList.size());
                             actualMediaFile = actFile;
-                            readBasicMetadata(this);
-                            updateKeywordsTitle(titleText.getText(), getKeywordsAsString(keywordsToAllText));
+                            if (actFile.getMediaType() == MediaTypes.IMAGE) {
+                                readBasicMetadata(this);
+                                updateKeywordsTitle(titleText.getText(), getKeywordsAsString(keywordsToAllText));
+                            }
                             i++;
                         }
                     }

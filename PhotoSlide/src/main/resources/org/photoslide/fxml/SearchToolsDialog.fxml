@@ -6,7 +6,6 @@
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.textfield.CustomTextField?>
@@ -19,7 +18,7 @@
             <FontIcon iconLiteral="ti-close" />
          </graphic>
       </Button>
-      <VBox layoutX="21.0" layoutY="19.875" prefHeight="70.0" prefWidth="511.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0">
+      <VBox layoutX="21.0" layoutY="19.875" prefHeight="70.0" prefWidth="511.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="25.0">
          <children>
             <HBox alignment="CENTER_LEFT" minHeight="45.0" prefHeight="45.0" spacing="5.0" VBox.vgrow="NEVER">
                <children>
@@ -30,46 +29,42 @@
                      </font></CustomTextField>
                </children>
             </HBox>
-            <StackPane fx:id="stackPane" alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+            <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                <children>
-                  <VBox spacing="5.0">
+                  <HBox fx:id="toolbar" fillHeight="false" prefHeight="50.0" prefWidth="200.0" visible="false" VBox.vgrow="NEVER">
                      <children>
-                        <HBox fx:id="toolbar" fillHeight="false" prefHeight="50.0" prefWidth="200.0" visible="false" VBox.vgrow="NEVER">
-                           <children>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#linkToCollectionAction" text="Button">
-                                 <graphic>
-                                    <FontIcon iconLiteral="ti-link" iconSize="18" />
-                                 </graphic>
-                                 <tooltip>
-                                    <Tooltip text="Jump to collection of the media file" />
-                                 </tooltip>
-                              </Button>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#copyFilePathToClipboardAction" text="Button">
-                                 <graphic>
-                                    <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
-                                 </graphic>
-                                 <tooltip>
-                                    <Tooltip text="Copy file path to clipboard" />
-                                 </tooltip>
-                              </Button>
-                           </children>
-                        </HBox>
-                        <VBox fx:id="searchResultVBox" prefHeight="400.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />
-                        <HBox fx:id="infoBox" alignment="CENTER_LEFT" opacity="0.2" prefHeight="100.0" prefWidth="200.0" spacing="5.0" style="-fx-background-color: black;" visible="false" VBox.vgrow="NEVER">
-                           <children>
-                              <Label fx:id="mediaFileInfoLabel" text="Label" />
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </HBox>
+                        <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#linkToCollectionAction" text="Button">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-link" iconSize="18" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="Jump to collection of the media file" />
+                           </tooltip>
+                        </Button>
+                        <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#copyFilePathToClipboardAction" text="Button">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="Copy file path to clipboard" />
+                           </tooltip>
+                        </Button>
                      </children>
-                  </VBox>
+                  </HBox>
+                  <VBox fx:id="searchResultVBox" prefHeight="400.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />
+                  <HBox fx:id="infoBox" alignment="CENTER_LEFT" opacity="0.2" prefHeight="100.0" prefWidth="200.0" spacing="5.0" style="-fx-background-color: black;" visible="false" VBox.vgrow="NEVER">
+                     <children>
+                        <Label fx:id="mediaFileInfoLabel" text="Label" />
+                     </children>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </HBox>
                </children>
-            </StackPane>
+            </VBox>
          </children>
          <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" />
+            <Insets bottom="-20.0" />
          </padding>
       </VBox>
    </children>

@@ -233,7 +233,7 @@ public class LighttableController implements Initializable {
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;
         Platform.runLater(() -> {
-            detailToolbar.setDisable(true);
+            detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             mainController.handleMenuDisable(true);
             pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             //sortOrderComboBox.setDisable(true);
@@ -878,6 +878,7 @@ public class LighttableController implements Initializable {
                         }
                     }
                 });
+                clipboard.clear();                
                 return "Successfully!";
             }
 
@@ -894,6 +895,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setVisible(false);
         });
         pasteTask.setOnSucceeded((t) -> {
+            pasteButton.setDisable(true);
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressPane().setVisible(false);

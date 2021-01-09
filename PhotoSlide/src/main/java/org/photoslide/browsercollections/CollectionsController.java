@@ -600,10 +600,9 @@ public class CollectionsController implements Initializable {
         result.ifPresent((t) -> {
             Path filePath = selectedItems.get(0).getValue().getFilePath();
             String newPath = filePath.toString() + File.separator + t;
-            //Paths.get(newPath).toFile().mkdir();                 
+            Paths.get(newPath).toFile().mkdir();                 
             TreeItem<PathItem> newChild = new TreeItem<>(new PathItem(Paths.get(newPath)));
-            parent.getChildren().add(newChild);
-            System.out.println("newPath " + newPath);
+            parent.getChildren().add(newChild);            
         });
     }
 

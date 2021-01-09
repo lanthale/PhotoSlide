@@ -61,6 +61,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -206,7 +207,7 @@ public class MainViewController implements Initializable {
             rateMenu.setDisable(disabled);
             deleteMenu.setDisable(disabled);
             copyMediaMenu.setDisable(disabled);
-            pasteMediaMenu.setDisable(disabled);
+            pasteMediaMenu.setDisable(!Clipboard.getSystemClipboard().hasFiles());
         });
     }
 

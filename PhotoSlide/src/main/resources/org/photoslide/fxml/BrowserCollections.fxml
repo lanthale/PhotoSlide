@@ -12,7 +12,7 @@
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <?import org.kordamp.ikonli.javafx.StackedFontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
     <children>
         <Label layoutX="16.0" layoutY="14.0" text="Photo store" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
             <font>
@@ -38,7 +38,7 @@
             </Button>
             <MenuButton fx:id="menuButton" mnemonicParsing="false">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#createCollectionAction" text="Create a new collection">
+                <MenuItem mnemonicParsing="false" onAction="#createCollectionAction" text="Create a new event">
                      <graphic>
                         <StackedFontIcon>
                            <children>
@@ -48,16 +48,16 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#cutCollectionAction" text="Cut collection">
+                  <MenuItem mnemonicParsing="false" onAction="#cutCollectionAction" text="Cut event">
                      <graphic>
                         <FontIcon iconLiteral="ti-cut" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#copyCollectionAction" text="Copy collection">
+                  <MenuItem mnemonicParsing="false" onAction="#copyCollectionAction" text="Copy event">
                      <graphic>
                         <FontIcon iconLiteral="ti-files" />
                      </graphic></MenuItem>
-                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteCollectionAction" text="Paste collection">
+                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteCollectionAction" text="Paste event">
                      <graphic>
                         <FontIcon iconLiteral="ti-stamp" />
                      </graphic>

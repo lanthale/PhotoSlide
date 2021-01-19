@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -49,6 +50,16 @@
                               <Tooltip text="Copy file path to clipboard" />
                            </tooltip>
                         </Button>
+                        <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label fx:id="searchLabel" text="Populating results...">
+                                 <font>
+                                    <Font size="8.0" />
+                                 </font>
+                              </Label>
+                              <ProgressIndicator fx:id="searchProgress" maxHeight="15.0" maxWidth="15.0" HBox.hgrow="NEVER" />
+                           </children>
+                        </HBox>
                      </children>
                   </HBox>
                   <VBox fx:id="searchResultVBox" prefHeight="400.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />

@@ -8,9 +8,7 @@ package org.photoslide.search;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,14 +81,20 @@ public class SearchToolsController implements Initializable {
     private Label mediaFileInfoLabel;
     @FXML
     private HBox infoBox;
-    private Utility util;    
+    private Utility util;
     private SRMediaLoadingTask task;
+    @FXML
+    private ProgressIndicator searchProgress;
+    @FXML
+    private Label searchLabel;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        util = new Utility();        
+        util = new Utility();
         progressInd = new ProgressIndicator();
         progressInd.setVisible(false);
+        searchProgress.setVisible(false);
+        searchLabel.setVisible(false);
         progressInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         searchTextField.setRight(progressInd);
         clearButton = new Button();
@@ -102,6 +106,7 @@ public class SearchToolsController implements Initializable {
             searchTextField.clear();
             toolbar.setVisible(false);
             toolbar.setManaged(false);
+            searchProgress.setVisible(false);
             infoBox.setVisible(false);
             searchResultVBox.getChildren().clear();
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
@@ -122,8 +127,8 @@ public class SearchToolsController implements Initializable {
         imageGrid.setCellHeight(defaultCellHight + 3 * 20);
     }
 
-    public void shutdown() {        
-        if (task!=null){
+    public void shutdown() {
+        if (task != null) {
             task.cancel();
         }
         executor.shutdown();
@@ -131,7 +136,7 @@ public class SearchToolsController implements Initializable {
     }
 
     private void cancleSRTasks() {
-        if (task!=null){
+        if (task != null) {
             task.cancel();
         }
     }
@@ -163,42 +168,42 @@ public class SearchToolsController implements Initializable {
         if (searchTextField.getText().length() > 2) {
             searchTextField.setRight(progressInd);
             progressInd.setVisible(true);
+            searchProgress.setVisible(true);
+            searchLabel.setVisible(true);
             searchResultVBox.getChildren().clear();
             String keyword = searchTextField.getText() + event.getText();
-            Task<Void> task = new Task<>() {
+            Task<Void> srTask = new Task<>() {
                 @Override
                 protected Void call() throws Exception {
                     Thread.sleep(500);
                     Platform.runLater(() -> {
                         searchTextField.setRight(clearButton);
                     });
-                    cancleSRTasks();                    
+                    cancleSRTasks();
                     performSearch(keyword);
                     return null;
                 }
             };
-            task.setOnFailed((t) -> {
-                progressInd.setVisible(false);
+            srTask.setOnFailed((t) -> {
+                progressInd.setVisible(false);                
                 infoBox.setVisible(false);
                 cancleSRTasks();
             });
-            task.setOnSucceeded((t) -> {
+            srTask.setOnSucceeded((t) -> {
                 toolbar.setVisible(true);
-                toolbar.setManaged(true);
+                toolbar.setManaged(true);                
                 progressInd.setVisible(false);
             });
-            executor.submit(task);
-            dialogPane.getScene().getWindow().setHeight(300);
+            executor.submit(srTask);
+            dialogPane.getScene().getWindow().setHeight(400);
             mediaFileInfoLabel.setText("");
         }
         //}
         if (event.getCode() == KeyCode.BACK_SPACE) {
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
             infoBox.setVisible(false);
-            cancleSRTasks();
-            if (imageGrid.getHeight() < 50) {
-                System.out.println("no search results");
-            }
+            toolbar.setVisible(false);
+            cancleSRTasks();            
             if (searchTextField.getText().length() < 1) {
                 progressInd.setVisible(false);
                 toolbar.setVisible(false);
@@ -232,7 +237,15 @@ public class SearchToolsController implements Initializable {
                 task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid);
                 task.setOnFailed((t) -> {
                     Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-                });                
+                });
+                task.setOnSucceeded((t) -> {
+                    searchProgress.setVisible(false);
+                    searchLabel.setVisible(false);
+                });
+                task.setOnFailed((t) -> {
+                    searchProgress.setVisible(false);
+                    searchLabel.setVisible(false);
+                });
                 executorParallel.submit(task);
             }
         } catch (SQLException ex) {

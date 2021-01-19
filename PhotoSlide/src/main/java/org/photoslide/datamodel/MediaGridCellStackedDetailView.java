@@ -39,8 +39,8 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
         imageView.setPreserveRatio(true);
-        imageView.fitHeightProperty().bind(heightProperty().subtract(10));
-        imageView.fitWidthProperty().bind(widthProperty().subtract(10));
+        imageView.fitHeightProperty().bind(heightProperty().subtract(15));
+        imageView.fitWidthProperty().bind(widthProperty().subtract(15));
         imageView.rotateProperty().bind(rotationAngle);
         mediaview = new MediaView();
         mediaview.setPreserveRatio(true);

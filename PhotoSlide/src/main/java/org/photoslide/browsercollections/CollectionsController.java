@@ -70,6 +70,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -356,6 +357,7 @@ public class CollectionsController implements Initializable {
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.YES) {
             return true;
@@ -520,6 +522,7 @@ public class CollectionsController implements Initializable {
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(iconImage);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+            alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
             alert.show();
         }
     }
@@ -563,6 +566,7 @@ public class CollectionsController implements Initializable {
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(iconImage);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+            alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
             alert.showAndWait();
             return true;
         }
@@ -596,6 +600,7 @@ public class CollectionsController implements Initializable {
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<String> result = alert.showAndWait();
         result.ifPresent((t) -> {
             Path filePath = selectedItems.get(0).getValue().getFilePath();
@@ -656,6 +661,7 @@ public class CollectionsController implements Initializable {
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) treeView.getScene().getWindow());
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> resultDiag = alert.showAndWait();
         if (resultDiag.get() == ButtonType.OK) {
             deleteMenu.setDisable(true);
@@ -811,6 +817,7 @@ public class CollectionsController implements Initializable {
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> resultDiag = alert.showAndWait();
         if (resultDiag.get() == ButtonType.YES) {
             addExistingPath();

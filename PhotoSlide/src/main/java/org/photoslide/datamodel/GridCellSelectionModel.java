@@ -5,13 +5,11 @@
  */
 package org.photoslide.datamodel;
 
-import org.photoslide.datamodel.MediaFile;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
-import javafx.scene.Node;
 
 /**
  *
@@ -19,9 +17,9 @@ import javafx.scene.Node;
  */
 public class GridCellSelectionModel {
 
-    Set<Node> selection = new HashSet<>();    
+    Set<MediaFile> selection = new HashSet<>();    
 
-    public void add(Node node) {
+    public void add(MediaFile node) {
         selection.add(node);
         ((MediaFile) node).setSelected(true);
     }
@@ -30,7 +28,7 @@ public class GridCellSelectionModel {
         return selection.size();
     }
 
-    public void remove(Node node) {
+    public void remove(MediaFile node) {
         selection.remove(node);
         ((MediaFile) node).setSelected(false);
     }
@@ -47,7 +45,7 @@ public class GridCellSelectionModel {
 
     }
 
-    public boolean contains(Node node) {
+    public boolean contains(MediaFile node) {
         return selection.contains(node);
     }
 
@@ -55,7 +53,7 @@ public class GridCellSelectionModel {
         Logger.getLogger(GridCellSelectionModel.class.getName()).log(java.util.logging.Level.SEVERE, "Selected nodes", Arrays.asList(selection.toArray()));
     }
 
-    public Set<Node> getSelection() {
+    public Set<MediaFile> getSelection() {
         return selection;
     }
 

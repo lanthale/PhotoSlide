@@ -91,6 +91,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -196,7 +197,7 @@ public class MetadataController implements Initializable {
                 }
                 actualMediaFile.saveEdits();
             });
-            actualMediaFile.requestLayout();
+            //actualMediaFile.requestLayout();
         });
     }
 
@@ -849,6 +850,7 @@ public class MetadataController implements Initializable {
         stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
 

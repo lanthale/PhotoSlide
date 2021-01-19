@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -37,40 +36,31 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
-import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.imageops.ImageFilter;
 
 /**
  *
  * @author selfemp
  */
-public class MediaFile extends StackPane {
+public class MediaFile {
+
+    private String name;
+    private Path pathStorage;
+    private boolean loading;
 
     private Image image;
     private Image unModifiyAbleImage;
     private Media media;
     private MediaPlayer mediaPlayer;
-    private final MediaView mediaview;
-    private final ImageView imageView;
-    private FontIcon dummyIcon;
 
-    private String name;
-    private Path pathStorage;
     private final SimpleStringProperty title;
     private final SimpleStringProperty keywords;
     private final SimpleStringProperty camera;
@@ -87,8 +77,6 @@ public class MediaFile extends StackPane {
     private final SimpleIntegerProperty stackPos;
     private final SimpleBooleanProperty stacked;
     private FileTime creationTime;
-    private final FontIcon layerIcon;
-    private FontIcon restoreIcon;
     private boolean subViewSelected;
     private ObservableList<ImageFilter> filterList;
     private String gpsPosition;
@@ -109,6 +97,7 @@ public class MediaFile extends StackPane {
     private MediaTypes mediaType;
 
     public MediaFile() {
+        loading = true;
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
@@ -118,8 +107,7 @@ public class MediaFile extends StackPane {
         places = new SimpleStringProperty();
         faces = new SimpleStringProperty();
         filterList = FXCollections.observableArrayList();
-        layerIcon = new FontIcon("ti-view-grid");
-        restoreIcon = new FontIcon("ti-back-right:22");
+
         mediaType = MediaTypes.NONE;
         title = new SimpleStringProperty();
         keywords = new SimpleStringProperty();
@@ -127,72 +115,10 @@ public class MediaFile extends StackPane {
         comments = new SimpleStringProperty();
         rotationAngle = new SimpleDoubleProperty(0.0);
         rating = new SimpleIntegerProperty(0);
-        this.setHeight(50);
-        this.setWidth(50);
-        imageView = new ImageView();
-        imageView.setPreserveRatio(true);
-        imageView.fitHeightProperty().bind(heightProperty());
-        imageView.fitWidthProperty().bind(widthProperty());
-        imageView.rotateProperty().bind(rotationAngle);
-        mediaview = new MediaView();
-        mediaview.setPreserveRatio(true);
-        mediaview.fitHeightProperty().bind(heightProperty());
-        mediaview.fitWidthProperty().bind(widthProperty());
-        mediaview.rotateProperty().bind(rotationAngle);
         gpsHeight = -1;
     }
 
-    private void setLoadingNode() {
-        ProgressIndicator prgInd = new ProgressIndicator();
-        prgInd.setId("MediaLoadingProgressIndicator");
-        prgInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-        if (mediaType == MediaTypes.IMAGE) {
-            prgInd.maxHeightProperty().bind(imageView.fitHeightProperty().multiply(0.6));
-            prgInd.maxWidthProperty().bind(imageView.fitWidthProperty().multiply(0.6));
-        } else {
-            prgInd.maxHeightProperty().bind(mediaview.fitHeightProperty().multiply(0.6));
-            prgInd.maxWidthProperty().bind(mediaview.fitWidthProperty().multiply(0.6));
-        }
-        this.getChildren().clear();
-        this.getChildren().add(prgInd);
-    }
-
-    private void setDeletedNode() {
-        VBox v = new VBox();
-        v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
-        this.getChildren().add(v);
-        this.getChildren().add(restoreIcon);
-    }
-
-    private void setRatingNode() {
-        if (rating.getValue() > 0) {
-            VBox vb = new VBox();
-            vb.setAlignment(Pos.BOTTOM_RIGHT);
-            HBox hb = new HBox();
-            hb.setPadding(new Insets(40, 0, 0, 0));
-            for (int i = 0; i < rating.getValue(); i++) {
-                FontIcon starIcon = new FontIcon("fa-star");
-                starIcon.setId("star-ikonli-font-icon");
-                hb.getChildren().add(starIcon);
-            }
-            vb.getChildren().add(hb);
-            this.getChildren().add(vb);
-        }
-    }
-
-    private void setStacked() {
-        VBox vb = new VBox();
-        if (stacked.get() == true && stackPos.get() == 1) {
-            vb.setAlignment(Pos.BOTTOM_RIGHT);
-            vb.setPadding(new Insets(0, -3, -5, 0));
-            vb.getChildren().add(layerIcon);
-            this.getChildren().add(vb);
-        } else {
-            this.getChildren().remove(vb);
-        }
-    }
-
-    private Image setFilters() {
+    public Image setFilters() {
         if (this.unModifiyAbleImage != null) {
             Image imageWithFilters = getClonedImage(unModifiyAbleImage);
             for (ImageFilter imageFilter : filterList) {
@@ -205,6 +131,15 @@ public class MediaFile extends StackPane {
         }
     }
 
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+    public void setMedia(Media video, VideoTypes videoTypes) {
+        this.media = media;
+        this.videoSupported = videoTypes;
+    }
+
     public Image getImage() {
         return image;
     }
@@ -213,52 +148,8 @@ public class MediaFile extends StackPane {
         return this.getPathStorage().toUri().toURL();
     }
 
-    public final void setImage(Image image) {
-        if (image == null) {
-            setLoadingNode();
-        } else {
-            this.image = image;
-            if (unModifiyAbleImage == null) {
-                this.unModifiyAbleImage = getClonedImage(image);
-            }
-            this.image = setFilters();
-            imageView.setImage(this.image);
-            //calc cropview based on small imageview
-            //imageView.setViewport(cropView);
-            this.getChildren().clear();
-            this.getChildren().add(imageView);
-            setRatingNode();
-            setStacked();
-            if (deleted.getValue() == true) {
-                setDeletedNode();
-            }
-        }
-    }
-
     public Media getMedia() {
         return media;
-    }
-
-    public final void setMedia(Media media, VideoTypes type) {
-        if (media == null && videoSupported == null) {
-            setLoadingNode();
-        } else {
-            this.media = media;
-            this.videoSupported = type;
-            setRatingNode();
-            if (type == VideoTypes.SUPPORTED) {
-                dummyIcon = new FontIcon("fa-file-movie-o:40");
-                this.getChildren().clear();
-                this.getChildren().add(dummyIcon);
-            } else {
-                FontIcon filmIcon = new FontIcon("fa-file-movie-o:40");
-                filmIcon.setOpacity(0.3);
-                dummyIcon = new FontIcon("fa-minus-circle:40");
-                this.getChildren().clear();
-                this.getChildren().add(filmIcon);
-                this.getChildren().add(dummyIcon);
-            }
-        }
     }
 
     public MediaPlayer getMediaPlayer() {
@@ -497,14 +388,6 @@ public class MediaFile extends StackPane {
         this.videoSupported = videoSupported;
     }
 
-    public MediaView getMediaview() {
-        return mediaview;
-    }
-
-    public ImageView getImageView() {
-        return imageView;
-    }
-
     public SimpleDoubleProperty getRotationAngleProperty() {
         return rotationAngle;
     }
@@ -600,12 +483,6 @@ public class MediaFile extends StackPane {
         return source.resolveSibling("Ω_" + source.toFile().getName());
     }
 
-    public void setSize(double height, double width) {
-        this.setHeight(height);
-        this.setWidth(width);
-        this.requestLayout();
-    }
-
     public String getStackName() {
         if (stackName.get() == null) {
             return "";
@@ -687,7 +564,7 @@ public class MediaFile extends StackPane {
         this.filterList = filterList;
     }
 
-    private Image getClonedImage(Image img) {
+    public Image getClonedImage(Image img) {
         if (img == null) {
             return null;
         }
@@ -767,6 +644,14 @@ public class MediaFile extends StackPane {
         if (gpsHeight != -1) {
             this.gpsHeight = gpsHeight;
         }
+    }
+
+    public boolean isLoading() {
+        return loading;
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading = loading;
     }
 
 }

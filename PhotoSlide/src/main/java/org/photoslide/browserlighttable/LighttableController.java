@@ -74,6 +74,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
+import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
@@ -91,9 +92,8 @@ public class LighttableController implements Initializable {
     private MainViewController mainController;
     private Path selectedPath;
     private ExecutorService executor;
-    private ExecutorService executorParallel;
-    private Task<Boolean> task;
-    private Task<List<MediaFile>> taskEmtpy;
+    private ExecutorService executorParallel;    
+    private MediaLoadingTask taskMLoading;
     private ObservableList<MediaFile> fullMediaList;
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
@@ -173,7 +173,7 @@ public class LighttableController implements Initializable {
     @FXML
     private MenuItem twoStarMenu;
     @FXML
-    private MenuItem oneStarMenu;
+    private MenuItem oneStarMenu;    
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -214,12 +214,9 @@ public class LighttableController implements Initializable {
      */
     public void setSelectedPath(Path sPath) {
         imageGridPane.getChildren().clear();
-        if (taskEmtpy != null) {
-            taskEmtpy.cancel();
-        }
-        if (task != null) {
-            task.cancel();
-        }
+        if (taskMLoading!=null){
+            taskMLoading.cancel();
+        }        
         if (factory != null) {
             factory.cancleTask();
         }
@@ -261,45 +258,35 @@ public class LighttableController implements Initializable {
             }
             mainController.getProgressbar().setProgress(0);
             mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().progressProperty().bind(taskEmtpy.progressProperty());
+            mainController.getProgressbar().progressProperty().bind(taskMLoading.progressProperty());
             mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().bind(taskEmtpy.messageProperty());
+            mainController.getProgressbarLabel().textProperty().bind(taskMLoading.messageProperty());
         });
-        taskEmtpy = new EmptyMediaLoadingTask(factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
-        taskEmtpy.setOnSucceeded((WorkerStateEvent t) -> {
-            List<MediaFile> filesystemList = (List<MediaFile>) t.getSource().getValue();
-            fullMediaList.addAll(filesystemList);
+
+        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
+        taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
+
             filteredMediaList.setPredicate(standardFilter());
             //sort if needed
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("Finished directory - found " + ((List<MediaFile>) t.getSource().getValue()).size());
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+            sortOrderComboBox.setDisable(false);
+            mainController.getStatusLabelRight().setText("Finished Image Task.");
+            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
         });
-        taskEmtpy.setOnFailed((t2) -> {
+        taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
         });
-        task = new MediaLoadingTask(fullMediaList, sortedMediaList, mainController, imageGrid);
-        task.setOnSucceeded((WorkerStateEvent t) -> {
-            sortOrderComboBox.setDisable(false);
-            mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("Finished Image Task.");
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
-        });
-        task.setOnFailed((t2) -> {
-            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
-            mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);
-        });
-        mainController.getStatusLabelRight().textProperty().bind(taskEmtpy.messageProperty());
-        executor.submit(taskEmtpy);
-        mainController.getStatusLabelRight().textProperty().bind(task.messageProperty());
-        executor.submit(task);
+        mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
+        executor.submit(taskMLoading);
 
         imageGrid.setCellFactory(factory);
         imageGrid.requestFocus();
@@ -309,7 +296,7 @@ public class LighttableController implements Initializable {
                 final ClipboardContent content = new ClipboardContent();
 
                 List<File> fileList = new ArrayList<>();
-                Set<Node> selection = factory.getSelectionModel().getSelection();
+                Set<MediaFile> selection = factory.getSelectionModel().getSelection();
                 selection.forEach((k) -> {
                     fileList.add(new File(((MediaFile) k).getName()));
                 });
@@ -319,7 +306,7 @@ public class LighttableController implements Initializable {
             if (keyMetaA.match(t)) {
                 fullMediaList.forEach((mediafile) -> {
                     factory.getSelectionModel().add(mediafile);
-                    mediafile.requestLayout();
+                    //mediafile.requestLayout();
                 });
             }
             if (KeyCode.RIGHT == t.getCode()) {
@@ -335,7 +322,7 @@ public class LighttableController implements Initializable {
             Dragboard db = imageGrid.startDragAndDrop(TransferMode.ANY);
             final ClipboardContent content = new ClipboardContent();
             List<File> fileList = new ArrayList<>();
-            Set<Node> selection = factory.getSelectionModel().getSelection();
+            Set<MediaFile> selection = factory.getSelectionModel().getSelection();
             /*selection.forEach((k) -> {                
                 fileList.add(new File(((MediaGridCell) k).getItem().getName()));                
             });*/
@@ -387,12 +374,9 @@ public class LighttableController implements Initializable {
                 imageGridPane.getChildren().remove(0);
             }
         });
-        if (task != null) {
-            task.cancel();
-        }
-        if (taskEmtpy != null) {
-            taskEmtpy.cancel();
-        }
+        if (taskMLoading != null) {
+            taskMLoading.cancel();
+        }        
         if (executorParallel != null) {
             executorParallel.shutdownNow();
         }
@@ -538,7 +522,7 @@ public class LighttableController implements Initializable {
             String fileName = ((MediaFile) factory.getSelectionModel().getSelection().iterator().next()).getPathStorage().toFile().getName();
             String stackName = fileName.substring(0, fileName.lastIndexOf("."));
             AtomicInteger i = new AtomicInteger(0);
-            Iterator<Node> iterator = factory.getSelectionModel().getSelection().iterator();
+            Iterator<MediaFile> iterator = factory.getSelectionModel().getSelection().iterator();
             while (iterator.hasNext()) {
                 MediaFile mediaF = (MediaFile) iterator.next();
                 ((MediaFile) mediaF).setStacked(true);
@@ -734,8 +718,8 @@ public class LighttableController implements Initializable {
     @FXML
     private void selectSortOrderAction(ActionEvent event) {
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("Capture time")) {
-            if (task.isRunning() == true) {
-                task.cancel();
+            if (taskMLoading.isRunning() == true) {
+                taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
                 mainController.getStatusLabelLeft().setVisible(true);
@@ -785,16 +769,16 @@ public class LighttableController implements Initializable {
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("Filename")) {
-            if (task.isRunning() == true) {
-                task.cancel();
+            if (taskMLoading.isRunning() == true) {
+                taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
                 fullMediaList.sort(Comparator.comparing(MediaFile::getName));
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("File creation time")) {
-            if (task.isRunning() == true) {
-                task.cancel();
+            if (taskMLoading.isRunning() == true) {
+                taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
                 fullMediaList.sort(Comparator.comparing(MediaFile::getCreationTime));
@@ -832,6 +816,7 @@ public class LighttableController implements Initializable {
         Stage stage = (Stage) confirmDiaglog.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) stackPane.getScene().getWindow());
+        confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> result = confirmDiaglog.showAndWait();
         if (result.get() == ButtonType.YES) {
             fullMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
@@ -878,7 +863,7 @@ public class LighttableController implements Initializable {
                         }
                     }
                 });
-                clipboard.clear();                
+                clipboard.clear();
                 return "Successfully!";
             }
 

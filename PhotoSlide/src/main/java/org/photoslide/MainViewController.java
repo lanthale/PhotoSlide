@@ -81,7 +81,6 @@ import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.browserlighttable.EmptyMediaLoadingTask;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
@@ -268,6 +267,7 @@ public class MainViewController implements Initializable {
         diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());
         diag.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) diag.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        diag.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> result = diag.showAndWait();
         if (result.get() == ButtonType.OK) {
             // ... user chose OK
@@ -451,6 +451,7 @@ public class MainViewController implements Initializable {
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         alert.showAndWait();
     }
@@ -687,6 +688,7 @@ public class MainViewController implements Initializable {
         searchDialog.setResizable(true);
         Utility.centerTopChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) searchDialog.getDialogPane().getScene().getWindow();
+        searchDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
             if (key.getCode() == KeyCode.ESCAPE) {
@@ -717,6 +719,7 @@ public class MainViewController implements Initializable {
         alert.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.YES) {

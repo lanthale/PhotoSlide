@@ -5,8 +5,18 @@
  */
 package org.photoslide.datamodel;
 
-import java.time.format.DateTimeFormatter;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.media.MediaView;
 import org.controlsfx.control.GridCell;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.datamodel.MediaFile.MediaTypes;
 
 /**
  *
@@ -14,13 +24,30 @@ import org.controlsfx.control.GridCell;
  */
 public class MediaGridCell extends GridCell<MediaFile> {
 
-    private final MediaFile mediaFile;
+    private final StackPane rootPane;
+    private final MediaView mediaview;
+    private final ImageView imageView;
+    private final FontIcon layerIcon;
+    private final FontIcon restoreIcon;
+    private final SimpleDoubleProperty rotationAngle;    
+    private FontIcon dummyIcon;
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
-        mediaFile = new MediaFile();
-        managedProperty().bind(mediaFile.managedProperty());
-        visibleProperty().bind(mediaFile.visibleProperty());
+        rootPane = new StackPane();        
+        rotationAngle = new SimpleDoubleProperty(0.0);
+        imageView = new ImageView();
+        imageView.setPreserveRatio(true);
+        imageView.fitHeightProperty().bind(heightProperty().subtract(10));
+        imageView.fitWidthProperty().bind(widthProperty().subtract(10));
+        imageView.rotateProperty().bind(rotationAngle);
+        mediaview = new MediaView();
+        mediaview.setPreserveRatio(true);
+        mediaview.fitHeightProperty().bind(heightProperty());
+        mediaview.fitWidthProperty().bind(widthProperty());
+        mediaview.rotateProperty().bind(rotationAngle);
+        layerIcon = new FontIcon("ti-view-grid");
+        restoreIcon = new FontIcon("ti-back-right:22");
     }
 
     /**
@@ -36,53 +63,27 @@ public class MediaGridCell extends GridCell<MediaFile> {
         if (empty || item == null) {
 
         } else {
-            mediaFile.setSize(item.getHeight(), item.getWidth());
-            mediaFile.setVisible(item.isVisible());
-            mediaFile.setManaged(item.isManaged());
-            mediaFile.setName(item.getName());
-            mediaFile.setDeleted(item.isDeleted());
-            mediaFile.setSelected(item.isSelected());
-            mediaFile.setRating(item.getRatingProperty().get());
-            mediaFile.setRotationAngle(item.getRotationAngleProperty().get());
-            mediaFile.setCropView(item.getCropView());
-            mediaFile.setRecordTime(item.getRecordTime());
-            mediaFile.setVideoSupported(item.getVideoSupported());
-            mediaFile.setCreationTime(item.getCreationTime());
-            mediaFile.setStackName(item.getStackName());
-            mediaFile.setStackPos(item.getStackPos());
-            mediaFile.setStacked(item.isStacked());
-            mediaFile.setKeywords(item.getKeywords());
-            mediaFile.setFilterList(item.getFilterList());
-            mediaFile.setUnModifiyAbleImage(item.getUnModifiyAbleImage());
-            mediaFile.getPlaces().set(item.getPlaces().get());
-            mediaFile.getFaces().set(item.getFaces().get());
-            mediaFile.getComments().set(item.getComments().get());
-            if (item.getGpsDateTime() != null) {
-                mediaFile.setGpsDateTime(item.getGpsDateTime().format(DateTimeFormatter.ISO_DATE));
-            }
-            mediaFile.setGpsHeight(item.getGpsHeight());
-            mediaFile.setGpsPosition(item.getGpsPosition());
-            if (mediaFile.isSelected() == true) {
-                if (mediaFile.isStacked()) {
+            if (item.isSelected() == true) {
+                if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
                 } else {
                     this.setId("MediaGridCellSelected");
                 }
             } else {
-                if (mediaFile.isStacked()) {
+                if (item.isStacked()) {
                     this.setId("MediaGridCellStacked");
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }
+            }            
             switch (item.getMediaType()) {
                 case VIDEO -> {
-                    mediaFile.setMedia(item.getMedia(), item.getVideoSupported());
-                    setGraphic(mediaFile);
+                    setMedia(item);
+                    setGraphic(rootPane);
                 }
                 case IMAGE -> {
-                    mediaFile.setImage(item.getImage());
-                    setGraphic(mediaFile);
+                    setImage(item);
+                    setGraphic(rootPane);
                 }
                 default -> {
                 }
@@ -90,8 +91,95 @@ public class MediaGridCell extends GridCell<MediaFile> {
         }
     }
 
-    public MediaFile getMediaFile() {
-        return mediaFile;
+    public final void setImage(MediaFile item) {
+        if (item.getImage() == null) {
+            setLoadingNode(item.getMediaType());
+        } else {
+            if (item.getUnModifiyAbleImage() == null) {
+                item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
+            }
+            item.setImage(item.setFilters());
+            imageView.setImage(item.getImage());
+            //calc cropview based on small imageview
+            //imageView.setViewport(cropView);
+            rootPane.getChildren().clear();
+            rootPane.getChildren().add(imageView);
+            setRatingNode(item.getRatingProperty().get());
+            setStacked(item.isStacked(), item.getStackPos());
+            if (item.getDeletedProperty().getValue() == true) {
+                setDeletedNode();
+            }
+        }
+    }
+
+    public final void setMedia(MediaFile item) {
+        if (item.isLoading() == true && item.getVideoSupported() == null) {
+            setLoadingNode(item.getMediaType());
+        } else {
+            setRatingNode(item.getRatingProperty().get());
+            if (item.getVideoSupported() == MediaFile.VideoTypes.SUPPORTED) {
+                dummyIcon = new FontIcon("fa-file-movie-o:40");
+                rootPane.getChildren().clear();
+                rootPane.getChildren().add(dummyIcon);
+            } else {
+                FontIcon filmIcon = new FontIcon("fa-file-movie-o:40");
+                filmIcon.setOpacity(0.3);
+                dummyIcon = new FontIcon("fa-minus-circle:40");
+                rootPane.getChildren().clear();
+                rootPane.getChildren().add(filmIcon);
+                rootPane.getChildren().add(dummyIcon);
+            }
+        }
+    }
+
+    public void setLoadingNode(MediaTypes mediaType) {
+        ProgressIndicator prgInd = new ProgressIndicator();
+        prgInd.setId("MediaLoadingProgressIndicator");
+        prgInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        if (mediaType == MediaFile.MediaTypes.IMAGE) {
+            prgInd.maxHeightProperty().bind(imageView.fitHeightProperty().multiply(0.6));
+            prgInd.maxWidthProperty().bind(imageView.fitWidthProperty().multiply(0.6));
+        } else {
+            prgInd.maxHeightProperty().bind(mediaview.fitHeightProperty().multiply(0.6));
+            prgInd.maxWidthProperty().bind(mediaview.fitWidthProperty().multiply(0.6));
+        }
+        rootPane.getChildren().clear();
+        rootPane.getChildren().add(prgInd);
+    }
+
+    private void setDeletedNode() {
+        VBox v = new VBox();
+        v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
+        rootPane.getChildren().add(v);
+        rootPane.getChildren().add(restoreIcon);
+    }
+
+    private void setRatingNode(int rating) {
+        if (rating > 0) {
+            VBox vb = new VBox();
+            vb.setAlignment(Pos.BOTTOM_RIGHT);
+            HBox hb = new HBox();
+            hb.setPadding(new Insets(40, 0, 0, 0));
+            for (int i = 0; i < rating; i++) {
+                FontIcon starIcon = new FontIcon("fa-star");
+                starIcon.setId("star-ikonli-font-icon");
+                hb.getChildren().add(starIcon);
+            }
+            vb.getChildren().add(hb);
+            rootPane.getChildren().add(vb);
+        }
+    }
+
+    private void setStacked(boolean stacked, int stackPos) {
+        VBox vb = new VBox();
+        if (stacked == true && stackPos == 1) {
+            vb.setAlignment(Pos.BOTTOM_RIGHT);
+            vb.setPadding(new Insets(0, -3, -5, 0));
+            vb.getChildren().add(layerIcon);
+            rootPane.getChildren().add(vb);
+        } else {
+            rootPane.getChildren().remove(vb);
+        }
     }
 
 }

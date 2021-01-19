@@ -23,6 +23,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Paint;
 import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
@@ -104,7 +105,7 @@ public class App extends Application {
 
         scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.getStylesheets().add(getClass().getResource("/org/photoslide/fxml/MainView.css").toExternalForm());
-
+        scene.setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
         stage.show();

@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -82,11 +83,12 @@ public class SearchToolsController implements Initializable {
     private Label mediaFileInfoLabel;
     @FXML
     private HBox infoBox;
-    private Utility util;
+    private Utility util;    
+    private SRMediaLoadingTask task;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        util = new Utility();
+        util = new Utility();        
         progressInd = new ProgressIndicator();
         progressInd.setVisible(false);
         progressInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -120,9 +122,18 @@ public class SearchToolsController implements Initializable {
         imageGrid.setCellHeight(defaultCellHight + 3 * 20);
     }
 
-    public void shutdown() {
+    public void shutdown() {        
+        if (task!=null){
+            task.cancel();
+        }
         executor.shutdown();
         executorParallel.shutdown();
+    }
+
+    private void cancleSRTasks() {
+        if (task!=null){
+            task.cancel();
+        }
     }
 
     public void injectCollectionsController(CollectionsController controller) {
@@ -161,6 +172,7 @@ public class SearchToolsController implements Initializable {
                     Platform.runLater(() -> {
                         searchTextField.setRight(clearButton);
                     });
+                    cancleSRTasks();                    
                     performSearch(keyword);
                     return null;
                 }
@@ -168,13 +180,12 @@ public class SearchToolsController implements Initializable {
             task.setOnFailed((t) -> {
                 progressInd.setVisible(false);
                 infoBox.setVisible(false);
+                cancleSRTasks();
             });
             task.setOnSucceeded((t) -> {
                 toolbar.setVisible(true);
                 toolbar.setManaged(true);
                 progressInd.setVisible(false);
-            });
-            task.setOnRunning((t) -> {
             });
             executor.submit(task);
             dialogPane.getScene().getWindow().setHeight(300);
@@ -184,6 +195,10 @@ public class SearchToolsController implements Initializable {
         if (event.getCode() == KeyCode.BACK_SPACE) {
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
             infoBox.setVisible(false);
+            cancleSRTasks();
+            if (imageGrid.getHeight() < 50) {
+                System.out.println("no search results");
+            }
             if (searchTextField.getText().length() < 1) {
                 progressInd.setVisible(false);
                 toolbar.setVisible(false);
@@ -214,18 +229,11 @@ public class SearchToolsController implements Initializable {
                 Platform.runLater(() -> {
                     searchResultVBox.getChildren().add(imageGrid);
                 });
-                for (String query : queryList) {
-                    try ( Statement stm = App.getSearchDBConnection().createStatement();  ResultSet rs = stm.executeQuery(query)) {
-                        rs.next();
-                        String pathStorage = rs.getString("pathStorage");
-                        //loading mediafiles
-                        SRMediaLoadingTask task = new SRMediaLoadingTask(pathStorage, this, fullMediaList, imageGrid);
-                        task.setOnFailed((t) -> {
-                            Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-                        });
-                        executorParallel.submit(task);
-                    }
-                }
+                task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid);
+                task.setOnFailed((t) -> {
+                    Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
+                });                
+                executorParallel.submit(task);
             }
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);

@@ -167,7 +167,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         } else {
             if (t.isShortcutDown()) {
-                if (selectionModel.contains(cell)) {
+                if (selectionModel.contains(cell.getItem())) {
                     selectionModel.remove(((MediaGridCell) t.getSource()).getItem());
                 } else {
                     selectionModel.add(((MediaGridCell) t.getSource()).getItem());
@@ -185,7 +185,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     private void handleGridCellSelection(Event t) {
         if (t.getTarget().getClass().equals(MediaFile.class)) {
-            Node target = Utility.pick((MediaFile) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
+            Node target = Utility.pick((MediaGridCell) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target.getClass().equals(FontIcon.class)) {
                 handleStackButtonAction(t, ((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
                 if (lightController.getImageView().getImage() != null) {

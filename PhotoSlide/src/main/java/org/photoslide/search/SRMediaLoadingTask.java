@@ -7,6 +7,11 @@ package org.photoslide.search;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -15,8 +20,10 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.controlsfx.control.GridView;
+import org.photoslide.App;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaFileLoader;
 
 /**
  *
@@ -24,68 +31,66 @@ import org.photoslide.datamodel.MediaFile;
  */
 public class SRMediaLoadingTask extends Task<Void> {
 
-    private final String mediaURL;
     private final SearchToolsController searchController;
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
+    private final MediaFileLoader fileLoader;
+    private final ArrayList<String> queryList;
 
-    public SRMediaLoadingTask(String mediaURL, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
-        this.mediaURL = mediaURL;
+    public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.searchController = control;
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
+        fileLoader = new MediaFileLoader();
+        this.queryList = queryList;
     }
 
     @Override
     protected Void call() throws Exception {
-        MediaFile mediaItem = new MediaFile();
-        mediaItem.setName(mediaURL);
-        mediaItem.setPathStorage(Path.of(mediaURL));
-        mediaItem.readEdits();
-        mediaItem.getCreationTime();
-        MediaFile item = null;
-        Tooltip t = new Tooltip(mediaItem.getName());        
-        if (FileTypes.isValidVideo(mediaURL)) {
-            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
-            Platform.runLater(() -> {
-                fullMediaList.add(mediaItem);
-            });
-            Media video = null;
-            try {
-                video = new Media(mediaItem.getPathStorage().toUri().toURL().toExternalForm());                
-                item = fullMediaList.get(fullMediaList.indexOf(mediaItem));
-                item.setVideoSupported(MediaFile.VideoTypes.SUPPORTED);
-                item.setMedia(video, MediaFile.VideoTypes.SUPPORTED);
-            } catch (MediaException e) {
-                if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
-                    item = fullMediaList.get(fullMediaList.indexOf(mediaItem));
-                    item.setVideoSupported(MediaFile.VideoTypes.UNSUPPORTED);
-                    item.setMedia(video, MediaFile.VideoTypes.UNSUPPORTED);
+        for (String query : queryList) {
+            if (this.isCancelled()) {
+                return null;
+            }
+            try ( Statement stm = App.getSearchDBConnection().createStatement();  ResultSet rs = stm.executeQuery(query)) {
+                rs.next();
+                String mediaURL = rs.getString("pathStorage");
+                MediaFile mediaItem = new MediaFile();
+                mediaItem.setName(mediaURL);
+                mediaItem.setPathStorage(Path.of(mediaURL));
+                if (this.isCancelled() == true) {
+                    return null;
+                }
+                mediaItem.readEdits();
+                mediaItem.getCreationTime();
+                if (this.isCancelled() == true) {
+                    return null;
+                }
+                Tooltip t = new Tooltip(mediaItem.getName());
+                if (FileTypes.isValidVideo(mediaURL)) {
+                    if (this.isCancelled() == true) {
+                        return null;
+                    }
+                    mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
+                    Platform.runLater(() -> {
+                        fullMediaList.add(mediaItem);
+                    });
+                    mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
+                } else if (FileTypes.isValidImge(mediaURL)) {
+                    mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
+                    Platform.runLater(() -> {
+                        fullMediaList.add(mediaItem);
+                    });
+                    if (this.isCancelled() == true) {
+                        return null;
+                    }
+                    mediaItem.setImage(fileLoader.loadImage(mediaItem));
+                    if (this.isCancelled() == true) {
+                        return null;
+                    }
+                } else {
+                    mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
                 }
             }
-            final MediaFile itemVideo = item;
-            Platform.runLater(() -> {
-                fullMediaList.set(fullMediaList.indexOf(mediaItem), itemVideo);
-            });
-        } else if (FileTypes.isValidImge(mediaURL)) {
-            mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
-            Platform.runLater(() -> {
-                fullMediaList.add(mediaItem);
-            });
-
-            Image img = new Image(mediaItem.getPathStorage().toUri().toURL().toString(), imageGrid.getCellWidth() + 100, imageGrid.getCellHeight() + 100, true, false, false);           
-            try {
-                item = fullMediaList.get(fullMediaList.indexOf(mediaItem));
-                item.setImage(img);
-                final MediaFile itemImage = item;
-                Platform.runLater(() -> {
-                    fullMediaList.set(fullMediaList.indexOf(mediaItem), itemImage);                    
-                });
-            } catch (IndexOutOfBoundsException e) {
-
-            }
-        } else {
-            mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
         }
         return null;
     }

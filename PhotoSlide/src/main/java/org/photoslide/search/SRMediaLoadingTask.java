@@ -55,7 +55,7 @@ public class SRMediaLoadingTask extends Task<Void> {
                 rs.next();
                 String mediaURL = rs.getString("pathStorage");
                 MediaFile mediaItem = new MediaFile();
-                mediaItem.setName(mediaURL);
+                mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
                 if (this.isCancelled() == true) {
                     return null;

@@ -92,7 +92,7 @@ public class LighttableController implements Initializable {
     private MainViewController mainController;
     private Path selectedPath;
     private ExecutorService executor;
-    private ExecutorService executorParallel;    
+    private ExecutorService executorParallel;
     private MediaLoadingTask taskMLoading;
     private ObservableList<MediaFile> fullMediaList;
     private FilteredList<MediaFile> filteredMediaList;
@@ -173,7 +173,7 @@ public class LighttableController implements Initializable {
     @FXML
     private MenuItem twoStarMenu;
     @FXML
-    private MenuItem oneStarMenu;    
+    private MenuItem oneStarMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -214,9 +214,9 @@ public class LighttableController implements Initializable {
      */
     public void setSelectedPath(Path sPath) {
         imageGridPane.getChildren().clear();
-        if (taskMLoading!=null){
+        if (taskMLoading != null) {
             taskMLoading.cancel();
-        }        
+        }
         if (factory != null) {
             factory.cancleTask();
         }
@@ -376,7 +376,7 @@ public class LighttableController implements Initializable {
         });
         if (taskMLoading != null) {
             taskMLoading.cancel();
-        }        
+        }
         if (executorParallel != null) {
             executorParallel.shutdownNow();
         }
@@ -734,7 +734,7 @@ public class LighttableController implements Initializable {
                         for (MediaFile mediaFile : fullMediaList) {
                             if (this.isCancelled() == false) {
                                 updateProgress(i + 1, fullMediaList.size());
-                                updateMessage("Sort " + (i + 1) + "/" + fullMediaList.size());
+                                updateMessage("Read record time "+(i + 1) + "/" + fullMediaList.size());
                                 try {
                                     if (mediaFile.getRecordTime() == null) {
                                         metadataController.setActualMediaFile(mediaFile);
@@ -754,12 +754,25 @@ public class LighttableController implements Initializable {
                 };
                 taskMeta.setOnSucceeded((t) -> {
                     try {
-                        sortedMediaList.sort(Comparator.comparing(MediaFile::getRecordTime));
+                        Comparator<MediaFile> byRecordTime = (MediaFile c1, MediaFile c2) -> {
+                            if (c1.getRecordTime().isBefore(c2.getRecordTime())) {
+                                return -1;
+                            } else {
+                                return 1;
+                            }
+                        };
+                        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));                        
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }
                     mainController.getProgressPane().setVisible(false);
                     mainController.getStatusLabelLeft().setText("");
+                    mainController.getProgressbar().progressProperty().unbind();
+                    mainController.getProgressbarLabel().textProperty().unbind();
+                });
+                taskMeta.setOnFailed((t) -> {
+                    mainController.getProgressbar().progressProperty().unbind();
+                    mainController.getProgressbarLabel().textProperty().unbind();
                 });
                 mainController.getProgressbar().progressProperty().unbind();
                 mainController.getProgressbar().progressProperty().bind(taskMeta.progressProperty());
@@ -773,7 +786,7 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                fullMediaList.sort(Comparator.comparing(MediaFile::getName));
+                sortedMediaList.setComparator(Comparator.comparing(MediaFile::getName));
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("File creation time")) {
@@ -781,7 +794,7 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                fullMediaList.sort(Comparator.comparing(MediaFile::getCreationTime));
+                sortedMediaList.setComparator(Comparator.comparing(MediaFile::getCreationTime));
             }
         }
     }

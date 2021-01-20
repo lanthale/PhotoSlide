@@ -753,14 +753,7 @@ public class LighttableController implements Initializable {
                     }
                 };
                 taskMeta.setOnSucceeded((t) -> {
-                    try {
-                        Comparator<MediaFile> byRecordTime = (MediaFile c1, MediaFile c2) -> {
-                            if (c1.getRecordTime().isBefore(c2.getRecordTime())) {
-                                return -1;
-                            } else {
-                                return 1;
-                            }
-                        };
+                    try {                        
                         sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));                        
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
@@ -832,7 +825,7 @@ public class LighttableController implements Initializable {
         confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> result = confirmDiaglog.showAndWait();
         if (result.get() == ButtonType.YES) {
-            fullMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+            filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
                 filesForClipboard.add(mfile.getPathStorage().toFile());
                 filesForClipboard.add(mfile.getEditFilePath().toFile());
             });

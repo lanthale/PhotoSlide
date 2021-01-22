@@ -18,6 +18,12 @@ During my vacation time in spring I could not travel and therefore I decided to 
 ## Screenshot of the application
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 
+Screenshot of the fulltext search feature:
+![PhotoSlide Screenshot](/PhotoSlide-Shot2.png)
+
+Screenshot of the editor feature:
+![PhotoSlide Screenshot](/PhotoSlide-Shot3.png)
+
 ## Download of installers:
 https://github.com/lanthale/PhotoSlide/releases/latest
 The software is not notarized with developer accounts on OSX/Windows.

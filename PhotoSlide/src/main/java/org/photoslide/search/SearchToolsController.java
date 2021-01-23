@@ -59,6 +59,7 @@ public class SearchToolsController implements Initializable {
     private GridView<MediaFile> imageGrid;
     private ExecutorService executor;
     private ExecutorService executorParallel;
+    private SRMediaLoadingTask task;
     @FXML
     private CustomTextField searchTextField;
     private ProgressIndicator progressInd;
@@ -82,7 +83,6 @@ public class SearchToolsController implements Initializable {
     @FXML
     private HBox infoBox;
     private Utility util;
-    private SRMediaLoadingTask task;
     @FXML
     private ProgressIndicator searchProgress;
     @FXML
@@ -128,17 +128,8 @@ public class SearchToolsController implements Initializable {
     }
 
     public void shutdown() {
-        if (task != null) {
-            task.cancel();
-        }
         executor.shutdown();
         executorParallel.shutdown();
-    }
-
-    private void cancleSRTasks() {
-        if (task != null) {
-            task.cancel();
-        }
     }
 
     public void injectCollectionsController(CollectionsController controller) {
@@ -164,52 +155,62 @@ public class SearchToolsController implements Initializable {
 
     @FXML
     private void searchTextFieldAction(KeyEvent event) {
-        //if (event.getCode() != KeyCode.BACK_SPACE) {
-        if (searchTextField.getText().length() > 2) {
-            searchTextField.setRight(progressInd);
-            progressInd.setVisible(true);
-            searchProgress.setVisible(true);
-            searchLabel.setVisible(true);
-            searchResultVBox.getChildren().clear();
-            String keyword = searchTextField.getText() + event.getText();
-            Task<Void> srTask = new Task<>() {
-                @Override
-                protected Void call() throws Exception {
-                    Thread.sleep(500);
-                    Platform.runLater(() -> {
-                        searchTextField.setRight(clearButton);
-                    });
-                    cancleSRTasks();
-                    performSearch(keyword);
-                    return null;
+        if (event.getCode().isModifierKey() == false || event.getCode().isNavigationKey() == false) {
+            if ((searchTextField.getText() + event.getText()).length() > 2) {
+                searchTextField.setRight(progressInd);
+                progressInd.setVisible(true);
+                searchProgress.setVisible(true);
+                searchLabel.setVisible(true);
+                searchResultVBox.getChildren().clear();
+                String keyword = searchTextField.getText() + event.getText();
+                if (event.getCode() == KeyCode.ENTER) {
+                    keyword = searchTextField.getText();
                 }
-            };
-            srTask.setOnFailed((t) -> {
-                progressInd.setVisible(false);                
-                infoBox.setVisible(false);
-                cancleSRTasks();
-            });
-            srTask.setOnSucceeded((t) -> {
-                toolbar.setVisible(true);
-                toolbar.setManaged(true);                
-                progressInd.setVisible(false);
-            });
-            executor.submit(srTask);
-            dialogPane.getScene().getWindow().setHeight(400);
-            mediaFileInfoLabel.setText("");
+                if (event.getCode() == KeyCode.SPACE) {
+                    keyword = searchTextField.getText();
+                }
+                final String searchKeyword = keyword;
+                Task<Void> srTask = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        Thread.sleep(500);
+                        Platform.runLater(() -> {
+                            searchTextField.setRight(clearButton);
+                        });
+                        performSearch(searchKeyword);
+                        return null;
+                    }
+                };
+                srTask.setOnFailed((t) -> {
+                    progressInd.setVisible(false);
+                    infoBox.setVisible(false);
+                });
+                srTask.setOnSucceeded((t) -> {
+                    toolbar.setVisible(true);
+                    toolbar.setManaged(true);
+                    progressInd.setVisible(false);
+                });
+                executor.submit(srTask);
+                dialogPane.getScene().getWindow().setHeight(400);
+                mediaFileInfoLabel.setText("");
+            }
         }
-        //}
         if (event.getCode() == KeyCode.BACK_SPACE) {
+            if (task != null) {
+                if (task.isRunning()) {
+                    task.cancel();
+                }
+            }
             dialogPane.getScene().getWindow().setHeight(diaglogHeight);
             infoBox.setVisible(false);
             toolbar.setVisible(false);
-            cancleSRTasks();            
+            toolbar.setManaged(false);
+            searchResultVBox.getChildren().clear();
             if (searchTextField.getText().length() < 1) {
                 progressInd.setVisible(false);
                 toolbar.setVisible(false);
                 toolbar.setManaged(false);
                 infoBox.setVisible(false);
-                searchResultVBox.getChildren().clear();
             }
         }
     }
@@ -234,6 +235,9 @@ public class SearchToolsController implements Initializable {
                 Platform.runLater(() -> {
                     searchResultVBox.getChildren().add(imageGrid);
                 });
+                if (task != null) {
+                    task.cancel();
+                }
                 task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid);
                 task.setOnFailed((t) -> {
                     Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());

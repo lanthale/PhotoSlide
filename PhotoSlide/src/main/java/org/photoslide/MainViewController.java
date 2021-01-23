@@ -679,7 +679,7 @@ public class MainViewController implements Initializable {
         searchAction();
     }
 
-    private void searchAction() {
+    private void searchAction() {        
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
         searchDialog.initStyle(StageStyle.UNDECORATED);
         searchDialog.getDialogPane().getStylesheets().add(
@@ -690,7 +690,7 @@ public class MainViewController implements Initializable {
         searchDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
-            if (key.getCode() == KeyCode.ESCAPE) {
+            if (key.getCode() == KeyCode.ESCAPE) {                
                 searchDialog.setResult(ButtonType.CANCEL);
             }
         });

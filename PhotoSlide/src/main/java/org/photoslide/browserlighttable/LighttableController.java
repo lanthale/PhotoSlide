@@ -333,8 +333,7 @@ public class LighttableController implements Initializable {
         });
         zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
             imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
-            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
-            //factory.getSelectedCell().requestFocus();
+            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());            
         });
     }
 

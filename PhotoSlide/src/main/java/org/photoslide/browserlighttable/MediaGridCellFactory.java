@@ -144,8 +144,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.setEditable(false);
         cell.setOnMouseClicked((t) -> {
             manageGUISelection(t, cell);
-            handleGridCellSelection(t);
-            //cell.requestFocus();
+            handleGridCellSelection(t);            
             t.consume();
         });
         return cell;

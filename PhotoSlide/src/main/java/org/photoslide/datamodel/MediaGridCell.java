@@ -5,6 +5,7 @@
  */
 package org.photoslide.datamodel;
 
+import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,6 +15,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
+import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
@@ -50,15 +52,23 @@ public class MediaGridCell extends GridCell<MediaFile> {
         mediaview.fitHeightProperty().bind(heightProperty());
         mediaview.fitWidthProperty().bind(widthProperty());
         mediaview.rotateProperty().bind(rotationAngle);
+        prgInd = new ProgressIndicator();
+        prgInd.setId("MediaLoadingProgressIndicator");
+        prgInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        prgInd.setMaxSize(50 * 0.6, 50 * 0.6);
         layerIcon = new FontIcon("ti-view-grid");
         restoreIcon = new FontIcon("ti-back-right");
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
-        dummyIcon = new FontIcon("fa-file-movie-o");        
-        layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
-        restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
-        dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));        
-        filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+        dummyIcon = new FontIcon("fa-file-movie-o");
+        PauseTransition pause = new PauseTransition(Duration.millis(100));
+        pause.setOnFinished((t) -> {
+            layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
+            restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
+            dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+            filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+        });
+        pause.play();
     }
 
     /**
@@ -146,9 +156,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public void setLoadingNode(MediaTypes mediaType) {
-        prgInd = new ProgressIndicator();
-        prgInd.setId("MediaLoadingProgressIndicator");
-        prgInd.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        prgInd.maxHeightProperty().unbind();
+        prgInd.maxWidthProperty().unbind();
         if (mediaType == MediaFile.MediaTypes.IMAGE) {
             prgInd.maxHeightProperty().bind(imageView.fitHeightProperty().multiply(0.6));
             prgInd.maxWidthProperty().bind(imageView.fitWidthProperty().multiply(0.6));

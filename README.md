@@ -51,16 +51,21 @@ The software is not notarized with developer accounts on OSX/Windows.
 - Nicer icons with (iKonli)
 - Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Stacking of photos
+- Full text search using a H2 database (will be created automatically in the background)
+- Implemented multithreading for media loading (depends on the operating system - try to create threads as much as possible from the OS)
+- First implementation of an edit view (actually only an exposure filter is added)
+- Support for GPS information in meta data of image files
+
 
 ## Missing features
 - View of all raw data format (using libdcraw)
 - ~~Implement stacking of photos~~
-- Implement search function
-- Implement face recognizion
-- Implement GPS including a map view
-- Implement multi threading for loading images (actually only one image after the other is loaded)
+- ~~Implement search function~~
+- ~~Implement multi threading for loading images (actually only one image after the other is loaded)~~
 - ~~Replace icons with iKonli icons~~
 - ~~Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS~~
+- Implement face recognizion
+- Implement GPS including a map view
 - Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
 
 

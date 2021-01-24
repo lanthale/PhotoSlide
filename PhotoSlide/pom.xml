@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>0.6.5-SNAPSHOT</version>        
+    <version>1.0.12</version>        
     
     <properties>
         <javafx.version>16-ea+5</javafx.version>
@@ -11,8 +11,7 @@
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>15</maven.compiler.source>
-        <maven.compiler.target>15</maven.compiler.target>
-        <semanticVersion>1.0.12</semanticVersion>
+        <maven.compiler.target>15</maven.compiler.target>        
     </properties>
     
     <repositories>
@@ -788,7 +787,7 @@
                                         <argument>--icon</argument>
                                         <argument>${icons}</argument>                                        
                                         <argument>--app-version</argument>                                        
-                                        <argument>${semanticVersion}</argument>
+                                        <argument>${version}</argument>
                                         <argument>--resource-dir</argument>
                                         <argument>${installericon}</argument>
                                         <argument>--copyright</argument>

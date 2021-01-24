@@ -5,18 +5,24 @@
  */
 package org.photoslide;
 
+import com.icafe4j.image.ImageType;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Point2D;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  *
@@ -40,6 +46,10 @@ public class ExportDialogController implements Initializable {
     private CheckBox exportSelectedBox;
     @FXML
     private CheckBox exportDeletedFileBox;
+    @FXML
+    private Slider qualitySlider;
+    @FXML
+    private Tooltip qSliderToolTip;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -47,6 +57,38 @@ public class ExportDialogController implements Initializable {
         fileFormatCombo.getItems().add("PNG");
         fileFormatCombo.getItems().add("TIFF");
         fileFormatCombo.getSelectionModel().select("JPG");
+        fileFormatCombo.getSelectionModel().selectedItemProperty().addListener((o) -> {
+            switch (fileFormatCombo.getSelectionModel().getSelectedItem()) {
+                case "JPG":
+                    qualitySlider.setDisable(false);
+                    qualitySlider.setMin(40);
+                    qualitySlider.setMax(100);                    
+                    qualitySlider.setValue(96);
+                    qualitySlider.setMajorTickUnit(1);
+                    qualitySlider.setMinorTickCount(0);
+                    qualitySlider.setBlockIncrement(1);
+                    break;
+                case "PNG":
+                    qualitySlider.setDisable(false);
+                    qualitySlider.setMin(1);
+                    qualitySlider.setMax(9);                    
+                    qualitySlider.setValue(6);
+                    qualitySlider.setMajorTickUnit(1);
+                    qualitySlider.setMinorTickCount(0);
+                    qualitySlider.setBlockIncrement(1);
+                    break;
+                case "TIFF":
+                    qualitySlider.setDisable(true);
+                    break;
+            }
+        });
+        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1."+fileFormatCombo.getSelectionModel().getSelectedItem()));
+        qualitySlider.valueChangingProperty().addListener((o) -> {
+            
+        });        
+        qSliderToolTip.textProperty().bind(qualitySlider.valueProperty().asString());
+        qSliderToolTip.textProperty().bind(Bindings.format("%.0f",qualitySlider.valueProperty()));
+        qSliderToolTip.setShowDelay(Duration.ZERO);
         fileSequenceCombo.getItems().add("Title/Caption based");
         fileSequenceCombo.getItems().add("Orginial filename");
         fileSequenceCombo.getItems().add("Custom filname");
@@ -79,7 +121,7 @@ public class ExportDialogController implements Initializable {
     }
 
     public String getFilename() {
-        return filenamePrefixText.getText()+"_";
+        return filenamePrefixText.getText() + "_";
     }
 
     public String getOutputDir() {
@@ -93,7 +135,7 @@ public class ExportDialogController implements Initializable {
     public void setTitel(String titel) {
         if (titel != null) {
             filenamePrefixText.setText(titel);
-            exampleLabel.setText(filenamePrefixText.getText() + "_1" + "." + fileFormatCombo.getSelectionModel().getSelectedItem());
+            //exampleLabel.setText(filenamePrefixText.getText() + "_1" + "." + fileFormatCombo.getSelectionModel().getSelectedItem());
         } else {
             fileSequenceCombo.getSelectionModel().select("Custom filname");
         }
@@ -106,8 +148,5 @@ public class ExportDialogController implements Initializable {
     public CheckBox getExportDeletedFileBox() {
         return exportDeletedFileBox;
     }
-    
-    
-    
 
 }

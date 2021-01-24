@@ -4,12 +4,14 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="243.0" prefWidth="511.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="284.0" prefWidth="511.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="161.0" />
@@ -26,11 +28,16 @@
       <Label fx:id="exampleLabel" layoutX="392.0" layoutY="106.0" text="wildeben_1.jpg" textFill="#a8a4a4" />
       <Label layoutX="102.0" layoutY="36.0" text="Fileformat" />
       <ComboBox fx:id="fileFormatCombo" layoutX="164.0" layoutY="31.0" prefHeight="27.0" prefWidth="161.0" />
-      <VBox layoutX="162.0" layoutY="179.0" spacing="10.0">
+      <VBox layoutX="162.0" layoutY="213.0" spacing="10.0">
          <children>
             <CheckBox fx:id="exportSelectedBox" mnemonicParsing="false" text="Export only selected" />
             <CheckBox fx:id="exportDeletedFileBox" mnemonicParsing="false" text="Export deleted files as well" />
          </children>
       </VBox>
+      <Slider fx:id="qualitySlider" blockIncrement="1.0" layoutX="164.0" layoutY="174.0" majorTickUnit="1.0" min="40.0" minorTickCount="0" prefHeight="16.0" prefWidth="161.0" showTickLabels="true" snapToTicks="true" value="96.0">
+         <tooltip>
+            <Tooltip fx:id="qSliderToolTip" text="Empty Tooltip" />
+         </tooltip>
+      </Slider>
    </children>
 </AnchorPane>

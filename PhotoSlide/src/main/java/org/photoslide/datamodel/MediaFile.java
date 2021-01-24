@@ -210,6 +210,13 @@ public class MediaFile {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 });
+            } else {
+                for (Enumeration<?> names = prop.propertyNames(); names.hasMoreElements();) {
+                    String key = (String) names.nextElement();
+                    if (key.contains("ImageFilter:") == true) {
+                        prop.remove(key);
+                    }
+                }
             }
             if (gpsDateTime != null) {
                 prop.setProperty("gpsDateTime", gpsDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -534,6 +541,10 @@ public class MediaFile {
     public void addImageFilter(ImageFilter ifm) {
         filterList.add(ifm);
         ifm.setPosition(filterList.indexOf(ifm));
+    }
+
+    public void removeImageFilter(ImageFilter ifm) {
+        filterList.remove(ifm);        
     }
 
     public ObservableList<ImageFilter> getFilterListWithoutImageData() {

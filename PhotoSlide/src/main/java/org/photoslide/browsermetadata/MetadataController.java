@@ -35,12 +35,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,12 +54,10 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -77,9 +73,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
@@ -90,7 +83,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import org.controlsfx.control.textfield.TextFields;
@@ -183,7 +175,6 @@ public class MetadataController implements Initializable {
         captionChangeListener = new CaptionChangeListener();
         apertureSlider.valueProperty().addListener((o) -> {
             if (exposerFilter == null) {
-                lightController.getImageView().setCache(true);
                 exposerFilter = new ExposureFilter();
                 actualMediaFile.addImageFilter(exposerFilter);
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
@@ -916,11 +907,14 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void resetAction(ActionEvent event) {
+        actualMediaFile.removeImageFilter(exposerFilter);
+        actualMediaFile.saveEdits();
         Platform.runLater(() -> {
             apertureSlider.setValue(1);
             lightController.getImageView().setImage(exposerFilter.reset());
+            actualMediaFile.setImage(exposerFilter.reset());
             exposerFilter = null;
-        });
+        });                        
     }
 
     private class KeywordChangeListener implements ListChangeListener {

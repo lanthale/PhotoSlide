@@ -5,6 +5,8 @@
  */
 package org.photoslide.imageops;
 
+import java.util.Arrays;
+import java.util.Objects;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
@@ -133,5 +135,44 @@ public class ExposureFilter implements ImageFilter {
         }
         return tmp;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 79 * hash + Objects.hashCode(this.name);
+        hash = 79 * hash + this.pos;
+        hash = 79 * hash + Arrays.hashCode(this.values);
+        hash = 79 * hash + Float.floatToIntBits(this.exposure);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ExposureFilter other = (ExposureFilter) obj;
+        if (this.pos != other.pos) {
+            return false;
+        }
+        if (Float.floatToIntBits(this.exposure) != Float.floatToIntBits(other.exposure)) {
+            return false;
+        }
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        if (!Arrays.equals(this.values, other.values)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 
 }

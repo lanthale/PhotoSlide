@@ -210,6 +210,7 @@
                         <Insets left="20.0" />
                     </padding>
                 </ToolBar>
+            <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS" />
                 <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
@@ -238,9 +239,6 @@
                      </graphic>
                   </Button>
                     </items>
-                    <padding>
-                        <Insets left="100.0" />
-                    </padding>
                 </ToolBar>
                 <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="67.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                     <items>

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.search;
+package org.photoslide.print;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -19,32 +19,36 @@ import javafx.stage.Stage;
  *
  * @author selfemp
  */
-public class SearchToolsDialog extends Alert {
+public class PrintDialog extends Alert {
 
-    private SearchToolsController controller;
-    
-    public SearchToolsDialog(AlertType at) {
+    private PrintController controller;
+
+    public PrintDialog(AlertType at) {
         super(at);
+        initDialog();
+    }
+    
+    public PrintDialog(AlertType at, String string, ButtonType... bts) {
+        super(at, string, bts);
+        initDialog();
+    }
+
+    private void initDialog() {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/SearchToolsDialog.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/PrintDialog.fxml"));
             Parent root = (Parent) fxmlLoader.load();
-            controller = fxmlLoader.<SearchToolsController>getController();            
-            getDialogPane().setContent(root);             
+            controller = fxmlLoader.<PrintController>getController();            
+            getDialogPane().setContent(root);
             Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
             Stage stage = (Stage) this.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(dialogIcon);            
+            stage.getIcons().add(dialogIcon);
         } catch (IOException e) {
-            Logger.getLogger(SearchToolsDialog.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(PrintDialog.class.getName()).log(Level.SEVERE, null, e);
         }
-    }
-    
-    
-    public SearchToolsDialog(AlertType at, String string, ButtonType... bts) {
-        super(at, string, bts);
+    }    
+
+    public PrintController getController() {
+        return controller;
     }
 
-    public SearchToolsController getController() {
-        return controller;
-    }    
-    
 }

@@ -103,8 +103,7 @@ public class App extends Application {
             controller.Shutdown();
         });
 
-        scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        scene.getStylesheets().add(getClass().getResource("/org/photoslide/fxml/MainView.css").toExternalForm());
+        scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);        
         scene.setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
@@ -112,12 +111,7 @@ public class App extends Application {
 
     }
 
-    public static void saveSettings(Stage stage, MainViewController controller) {
-        /*try {
-            searchDBConnection.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
+    public static void saveSettings(Stage stage, MainViewController controller) {        
         controller.saveSettings();
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());

@@ -81,6 +81,7 @@ import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
 
@@ -170,6 +171,7 @@ public class MainViewController implements Initializable {
     private Button searchButton;
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
+    private PrintDialog printDialog;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -679,7 +681,7 @@ public class MainViewController implements Initializable {
         searchAction();
     }
 
-    private void searchAction() {        
+    private void searchAction() {
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
         searchDialog.initStyle(StageStyle.UNDECORATED);
         searchDialog.getDialogPane().getStylesheets().add(
@@ -690,7 +692,7 @@ public class MainViewController implements Initializable {
         searchDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
-            if (key.getCode() == KeyCode.ESCAPE) {                
+            if (key.getCode() == KeyCode.ESCAPE) {
                 searchDialog.setResult(ButtonType.CANCEL);
             }
         });
@@ -727,8 +729,8 @@ public class MainViewController implements Initializable {
                 stat.execute("DROP TABLE MEDIAFILES");
             } catch (SQLException ef) {
             }
-            try {                
-                FullText.dropAll(App.getSearchDBConnection());                
+            try {
+                FullText.dropAll(App.getSearchDBConnection());
             } catch (SQLException ef) {
             }
             App.initDB();
@@ -742,6 +744,23 @@ public class MainViewController implements Initializable {
             stage.getIcons().add(dialogIcon);
             msg.show();
         }
+    }
+
+    @FXML
+    private void printMediaAction(ActionEvent event) {
+        printDialog = new PrintDialog(Alert.AlertType.INFORMATION,"", ButtonType.OK, ButtonType.CANCEL);        
+        printDialog.setGraphic(new FontIcon("ti-printer:40"));
+        printDialog.setTitle("Print dialog");
+        printDialog.setHeaderText("Print settings");
+        printDialog.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        printDialog.setResizable(true);
+        Utility.centerChildWindowOnStage((Stage) printDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Stage stage = (Stage) printDialog.getDialogPane().getScene().getWindow();
+        printDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+        stage.getIcons().add(dialogIcon);
+        printDialog.getController().setDialogPane(printDialog.getDialogPane());
+        Optional<ButtonType> result = printDialog.showAndWait();
     }
 
 }

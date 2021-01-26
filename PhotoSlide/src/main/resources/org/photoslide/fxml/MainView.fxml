@@ -184,7 +184,7 @@
         </MenuBar>
         <HBox>
             <children>
-                <ToolBar prefHeight="67.0" prefWidth="259.0" HBox.hgrow="NEVER">
+                <ToolBar prefHeight="70.0" prefWidth="259.0" HBox.hgrow="NEVER">
                     <items>
                         <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
                             <children>
@@ -210,8 +210,8 @@
                         <Insets left="20.0" />
                     </padding>
                 </ToolBar>
-            <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS" />
-                <ToolBar prefHeight="67.0" HBox.hgrow="ALWAYS">
+            <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS" />
+                <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
                             <graphic>
@@ -223,7 +223,7 @@
                                 <FontIcon iconLiteral="ti-share" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Print">
+                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#printMediaAction" text="Print">
                             <graphic>
                                 <FontIcon iconLiteral="ti-printer" iconSize="24" />
                             </graphic>
@@ -240,7 +240,7 @@
                   </Button>
                     </items>
                 </ToolBar>
-                <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="67.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="70.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" prefWidth="62.0" text="Help">
                             <graphic>

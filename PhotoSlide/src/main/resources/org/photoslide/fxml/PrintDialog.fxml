@@ -1,6 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.paint.Color?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.print.PrintController" />
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.print.PrintController">
+   <children>
+      <GridPane hgap="10.0" layoutX="300.0" layoutY="25.0" prefHeight="350.0" prefWidth="277.0" vgap="5.0">
+         <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="94.0" minWidth="10.0" prefWidth="94.0" />
+            <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="214.0" minWidth="10.0" prefWidth="178.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="80.0" minHeight="10.0" prefHeight="53.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="72.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="104.0" minHeight="10.0" prefHeight="104.0" valignment="TOP" vgrow="SOMETIMES" />
+         </rowConstraints>
+         <children>
+            <ComboBox fx:id="printerCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+            <Label text="Printer" />
+            <ComboBox fx:id="paperSizeCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+            <Label text="Paper size" GridPane.rowIndex="1" />
+            <Label text="Copies" GridPane.rowIndex="2" />
+            <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <children>
+                  <TextField fx:id="copyQTY" prefHeight="27.0" prefWidth="34.0" text="1" HBox.hgrow="NEVER" />
+                  <CheckBox fx:id="greyscaleChoice" mnemonicParsing="false" text="Greyscale" />
+               </children>
+            </HBox>
+            <Label text="Pages" GridPane.rowIndex="3" />
+            <RadioButton fx:id="allPagesRadio" mnemonicParsing="false" onAction="#allPagesRadioAction" selected="true" text="All" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <HBox alignment="CENTER_LEFT" prefWidth="206.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+               <children>
+                  <RadioButton fx:id="rangeRadio" disable="true" mnemonicParsing="false" onAction="#rangeRadioAction" text="From" />
+                  <TextField fx:id="pageFromText" disable="true" onAction="#pageFormTextAction" prefHeight="27.0" prefWidth="29.0" />
+                  <Label disable="true" text="To" />
+                  <TextField fx:id="pageToText" disable="true" onAction="#pageToTextAction" prefHeight="27.0" prefWidth="36.0" />
+               </children>
+            </HBox>
+            <Label text="Copies per page" GridPane.rowIndex="5" />
+            <ComboBox fx:id="copyiesPerPageCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <Label text="Orientation" GridPane.rowIndex="6" />
+            <HBox spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
+               <children>
+                  <ToggleButton fx:id="portraitButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" selected="true" text="ToggleButton">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-image" iconSize="25" />
+                     </graphic>
+                  </ToggleButton>
+                  <ToggleButton fx:id="landscapeButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="ToggleButton">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-image" iconSize="25" rotate="90.0" />
+                     </graphic>
+                  </ToggleButton>
+               </children>
+            </HBox>
+         </children>
+      </GridPane>
+      <Pagination fx:id="paganinationControl" disable="true" layoutX="23.0" layoutY="345.0" pageCount="1" prefHeight="35.0" prefWidth="265.0" />
+      <StackPane layoutX="23.0" layoutY="25.0" prefHeight="314.0" prefWidth="252.0" style="-fx-background-color: white;">
+         <effect>
+            <DropShadow offsetX="5.0" offsetY="5.0">
+               <color>
+                  <Color red="0.2631579041481018" green="0.25462964177131653" blue="0.25462964177131653" />
+               </color>
+            </DropShadow>
+         </effect>
+         <children>
+            <ImageView fx:id="previewPane" fitHeight="297.0" fitWidth="235.0" pickOnBounds="true" preserveRatio="true" />
+         </children>
+      </StackPane>
+   </children>
+</AnchorPane>

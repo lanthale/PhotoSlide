@@ -23,7 +23,7 @@
 <?import org.controlsfx.control.Rating?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
       <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -134,6 +134,22 @@
                               <FontIcon iconLiteral="fa-stack-overflow" iconSize="17" />
                            </graphic>
                         </Button>
+                        <Pane prefHeight="30.0" prefWidth="80.0" />
+                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
+                           <graphic>
+                              <FontIcon iconLiteral="fa-street-view" iconSize="17" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="Show deleted items">
+                                 <graphic>
+                                    <Button mnemonicParsing="false" text="Button" />
+                                 </graphic>
+                              </Tooltip>
+                           </tooltip>
+                           <font>
+                              <Font size="11.0" />
+                           </font>
+                        </ToggleButton>
                      </items>
                   </ToolBar>
                   <VBox fx:id="imageGridPane" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />
@@ -155,7 +171,7 @@
                                     <Insets left="20.0" />
                                  </padding>
                               </HBox>
-                              <ToggleButton fx:id="showDeletedButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#showDeletedButtonAction" prefHeight="14.0" selected="true" text="ToggleButton">
+                              <ToggleButton id="tooltoggle-button" fx:id="showDeletedButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#showDeletedButtonAction" prefHeight="14.0" selected="true" text="ToggleButton">
                                  <font>
                                     <Font size="8.0" />
                                  </font>

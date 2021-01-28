@@ -174,6 +174,8 @@ public class LighttableController implements Initializable {
     private MenuItem twoStarMenu;
     @FXML
     private MenuItem oneStarMenu;
+    @FXML
+    private ToggleButton facesButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -992,6 +994,10 @@ public class LighttableController implements Initializable {
 
     public GridView<MediaFile> getImageGrid() {
         return imageGrid;
+    }
+
+    @FXML
+    private void faceRecognitationAction(ActionEvent event) {
     }
 
 }

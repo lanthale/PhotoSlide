@@ -239,6 +239,9 @@ public class MainViewController implements Initializable {
             searchDialog.getController().shutdown();
             searchDialog.setResult(ButtonType.CANCEL);
         }
+        if (printDialog != null) {
+            printDialog.getController().shutdown();
+        }
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
@@ -748,7 +751,7 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void printMediaAction(ActionEvent event) {
-        printDialog = new PrintDialog(Alert.AlertType.INFORMATION,"", ButtonType.OK, ButtonType.CANCEL);        
+        printDialog = new PrintDialog(Alert.AlertType.INFORMATION, "", ButtonType.OK, ButtonType.CANCEL);
         printDialog.setGraphic(new FontIcon("ti-printer:40"));
         printDialog.setTitle("Print dialog");
         printDialog.setHeaderText("Print settings");
@@ -760,7 +763,20 @@ public class MainViewController implements Initializable {
         printDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         printDialog.getController().setDialogPane(printDialog.getDialogPane());
+        statusLabelLeft.setVisible(true);
+        statusLabelLeft.textProperty().unbind();
+        statusLabelLeft.setText("");
+        printDialog.getController().setAllPrintItems(lighttablePaneController.getFactory().getSelectionModel().getSelection());
+        printDialog.setOnShown((t) -> {
+            printDialog.getController().showPreview();
+        });
         Optional<ButtonType> result = printDialog.showAndWait();
+        if (result.get() == ButtonType.OK) {
+            //printDialog.getController().print(statusLabelLeft, lighttablePaneController.getFactory().getSelectionModel().getSelection());
+            //statusLabelLeft.setVisible(true);
+            //statusLabelLeft.textProperty().unbind();
+            //statusLabelLeft.setText("");
+        }
     }
 
 }

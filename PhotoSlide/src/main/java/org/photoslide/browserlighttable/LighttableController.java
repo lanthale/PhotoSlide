@@ -47,7 +47,6 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -82,6 +81,11 @@ import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.openimaj.image.FImage;
+import org.openimaj.image.colour.Transforms;
+import org.openimaj.image.processing.face.detection.DetectedFace;
+import org.openimaj.image.processing.face.detection.FaceDetector;
+import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
 
 /**
  *
@@ -335,7 +339,7 @@ public class LighttableController implements Initializable {
         });
         zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
             imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
-            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());            
+            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
         });
     }
 
@@ -735,7 +739,7 @@ public class LighttableController implements Initializable {
                         for (MediaFile mediaFile : fullMediaList) {
                             if (this.isCancelled() == false) {
                                 updateProgress(i + 1, fullMediaList.size());
-                                updateMessage("Read record time "+(i + 1) + "/" + fullMediaList.size());
+                                updateMessage("Read record time " + (i + 1) + "/" + fullMediaList.size());
                                 try {
                                     if (mediaFile.getRecordTime() == null) {
                                         metadataController.setActualMediaFile(mediaFile);
@@ -754,8 +758,8 @@ public class LighttableController implements Initializable {
                     }
                 };
                 taskMeta.setOnSucceeded((t) -> {
-                    try {                        
-                        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));                        
+                    try {
+                        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }
@@ -998,6 +1002,12 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
+        /*FaceDetector<DetectedFace, FImage> fd = new HaarCascadeDetector(40);
+        List<DetectedFace> faces = fd.detectFaces(Transforms.calculateIntensity(frame));
+
+        for (DetectedFace face : faces) {
+            frame.drawShape(face.getBounds(), RGBColour.RED);
+        }*/
     }
 
 }

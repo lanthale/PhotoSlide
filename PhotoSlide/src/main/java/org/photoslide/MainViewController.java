@@ -763,19 +763,18 @@ public class MainViewController implements Initializable {
         printDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         printDialog.getController().setDialogPane(printDialog.getDialogPane());
+        printDialog.getController().setStage(stage);
         statusLabelLeft.setVisible(true);
         statusLabelLeft.textProperty().unbind();
         statusLabelLeft.setText("");
         printDialog.getController().setAllPrintItems(lighttablePaneController.getFactory().getSelectionModel().getSelection());
-        printDialog.setOnShown((t) -> {
-            printDialog.getController().showPreview();
-        });
+        
         Optional<ButtonType> result = printDialog.showAndWait();
         if (result.get() == ButtonType.OK) {
-            //printDialog.getController().print(statusLabelLeft, lighttablePaneController.getFactory().getSelectionModel().getSelection());
-            //statusLabelLeft.setVisible(true);
-            //statusLabelLeft.textProperty().unbind();
-            //statusLabelLeft.setText("");
+            printDialog.getController().print(statusLabelLeft, lighttablePaneController.getFactory().getSelectionModel().getSelection());
+            statusLabelLeft.setVisible(true);
+            statusLabelLeft.textProperty().unbind();
+            statusLabelLeft.setText("");
         }
     }
 

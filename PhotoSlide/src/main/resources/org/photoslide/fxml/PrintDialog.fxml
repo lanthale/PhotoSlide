@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
@@ -19,82 +20,90 @@
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.print.PrintController">
    <children>
-      <GridPane hgap="10.0" layoutX="300.0" layoutY="25.0" prefHeight="350.0" prefWidth="277.0" vgap="5.0">
-         <columnConstraints>
-            <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="94.0" minWidth="10.0" prefWidth="94.0" />
-            <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="214.0" minWidth="10.0" prefWidth="178.0" />
-         </columnConstraints>
-         <rowConstraints>
-            <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints maxHeight="80.0" minHeight="10.0" prefHeight="53.0" valignment="BOTTOM" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints maxHeight="86.0" minHeight="10.0" prefHeight="84.0" vgrow="SOMETIMES" />
-            <RowConstraints maxHeight="139.0" minHeight="10.0" prefHeight="48.0" valignment="TOP" vgrow="SOMETIMES" />
-            <RowConstraints maxHeight="104.0" minHeight="10.0" prefHeight="49.0" valignment="TOP" vgrow="SOMETIMES" />
-         </rowConstraints>
+      <HBox alignment="CENTER_LEFT" layoutX="48.585784912109375" layoutY="23.585784912109375" prefHeight="361.0" prefWidth="555.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
          <children>
-            <ComboBox fx:id="printerCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
-            <Label text="Printer" />
-            <ComboBox fx:id="paperSizeCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
-            <Label text="Paper size" GridPane.rowIndex="1" />
-            <Label text="Copies" GridPane.rowIndex="2" />
-            <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <VBox alignment="CENTER" spacing="10.0" HBox.hgrow="ALWAYS">
                <children>
-                  <TextField fx:id="copyQTY" prefHeight="27.0" prefWidth="34.0" text="1" HBox.hgrow="NEVER" />
-                  <CheckBox fx:id="greyscaleChoice" mnemonicParsing="false" text="Greyscale" />
+                  <HBox fx:id="pageBox" alignment="CENTER" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
+                     <children>
+                        <GridPane fx:id="previewPane" gridLinesVisible="true" prefHeight="310.0" prefWidth="206.0" style="-fx-background-color: white; -fx-border-color: grey; -fx-border-style: dashed;" HBox.hgrow="ALWAYS">
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="ALWAYS" />
+                          </rowConstraints>
+                           <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </HBox.margin>
+                        </GridPane>
+                     </children>
+                     <effect>
+                        <DropShadow offsetX="5.0" offsetY="5.0">
+                           <color>
+                              <Color red="0.30263158679008484" green="0.29842835664749146" blue="0.29842835664749146" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </HBox>
+                  <Pagination fx:id="paganinationControl" disable="true" pageCount="1" prefHeight="47.0" prefWidth="219.0" />
                </children>
-            </HBox>
-            <Label text="Pages" GridPane.rowIndex="3" />
-            <RadioButton fx:id="allPagesRadio" mnemonicParsing="false" onAction="#allPagesRadioAction" selected="true" text="All" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <HBox alignment="CENTER_LEFT" prefWidth="206.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+            </VBox>
+            <GridPane hgap="10.0" prefHeight="350.0" prefWidth="277.0" vgap="5.0" HBox.hgrow="NEVER">
+               <columnConstraints>
+                  <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="94.0" minWidth="10.0" prefWidth="94.0" />
+                  <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="214.0" minWidth="10.0" prefWidth="178.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="40.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="80.0" minHeight="10.0" prefHeight="53.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="86.0" minHeight="10.0" prefHeight="84.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="139.0" minHeight="10.0" prefHeight="48.0" valignment="TOP" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="104.0" minHeight="10.0" prefHeight="49.0" valignment="TOP" vgrow="SOMETIMES" />
+               </rowConstraints>
                <children>
-                  <RadioButton fx:id="rangeRadio" disable="true" mnemonicParsing="false" onAction="#rangeRadioAction" text="From" />
-                  <TextField fx:id="pageFromText" disable="true" onAction="#pageFormTextAction" prefHeight="27.0" prefWidth="29.0" />
-                  <Label disable="true" text="To" />
-                  <TextField fx:id="pageToText" disable="true" onAction="#pageToTextAction" prefHeight="27.0" prefWidth="36.0" />
+                  <ComboBox fx:id="printerCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+                  <Label text="Printer" />
+                  <ComboBox fx:id="paperSizeCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                  <Label text="Paper size" GridPane.rowIndex="1" />
+                  <Label text="Copies" GridPane.rowIndex="2" />
+                  <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <children>
+                        <TextField fx:id="copyQTY" prefHeight="27.0" prefWidth="34.0" text="1" HBox.hgrow="NEVER" />
+                        <CheckBox fx:id="greyscaleChoice" mnemonicParsing="false" text="Greyscale" />
+                     </children>
+                  </HBox>
+                  <Label text="Pages" GridPane.rowIndex="3" />
+                  <RadioButton fx:id="allPagesRadio" mnemonicParsing="false" onAction="#allPagesRadioAction" selected="true" text="All" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <HBox alignment="CENTER_LEFT" prefWidth="206.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                     <children>
+                        <RadioButton fx:id="rangeRadio" disable="true" mnemonicParsing="false" onAction="#rangeRadioAction" text="From" />
+                        <TextField fx:id="pageFromText" disable="true" onAction="#pageFormTextAction" prefHeight="27.0" prefWidth="29.0" />
+                        <Label disable="true" text="To" />
+                        <TextField fx:id="pageToText" disable="true" onAction="#pageToTextAction" prefHeight="27.0" prefWidth="36.0" />
+                     </children>
+                  </HBox>
+                  <Label text="Copies per page" GridPane.rowIndex="5" />
+                  <ComboBox fx:id="copyiesPerPageCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                  <Label text="Orientation" GridPane.rowIndex="6" />
+                  <HBox spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
+                     <children>
+                        <ToggleButton fx:id="portraitButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" selected="true" text="ToggleButton">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-image" iconSize="25" />
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="landscapeButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="ToggleButton">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-image" iconSize="25" rotate="90.0" />
+                           </graphic>
+                        </ToggleButton>
+                     </children>
+                  </HBox>
+                  <CheckBox fx:id="borderLessBox" mnemonicParsing="false" text="Borderless printing" GridPane.columnIndex="1" GridPane.rowIndex="7" />
                </children>
-            </HBox>
-            <Label text="Copies per page" GridPane.rowIndex="5" />
-            <ComboBox fx:id="copyiesPerPageCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-            <Label text="Orientation" GridPane.rowIndex="6" />
-            <HBox spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
-               <children>
-                  <ToggleButton fx:id="portraitButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" selected="true" text="ToggleButton">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-image" iconSize="25" />
-                     </graphic>
-                  </ToggleButton>
-                  <ToggleButton fx:id="landscapeButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="ToggleButton">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-image" iconSize="25" rotate="90.0" />
-                     </graphic>
-                  </ToggleButton>
-               </children>
-            </HBox>
-            <CheckBox fx:id="borderLessBox" mnemonicParsing="false" text="Borderless printing" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-         </children>
-      </GridPane>
-      <VBox alignment="TOP_CENTER" fillWidth="false" layoutX="23.0" layoutY="25.0" spacing="10.0" AnchorPane.leftAnchor="23.0" AnchorPane.topAnchor="25.0">
-         <children>
-            <GridPane fx:id="previewPane" prefHeight="310.0" prefWidth="219.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="ALWAYS" />
-              </rowConstraints>
-               <effect>
-                  <DropShadow offsetX="10.0" offsetY="10.0">
-                     <color>
-                        <Color red="0.25" green="0.24537037312984467" blue="0.24537037312984467" />
-                     </color>
-                  </DropShadow>
-               </effect>
             </GridPane>
-            <Pagination fx:id="paganinationControl" disable="true" pageCount="1" prefHeight="35.0" prefWidth="265.0" />
          </children>
-      </VBox>
+      </HBox>
    </children>
 </AnchorPane>

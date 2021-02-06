@@ -56,6 +56,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - Implemented multithreading for media loading (depends on the operating system - try to create threads as much as possible from the OS)
 - First implementation of an edit view (actually only an exposure filter is added)
 - Support for GPS information in meta data of image files
+- Printing support inclusive borderless printing (experimntal)
 
 
 ## Missing features
@@ -66,7 +67,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - ~~Replace icons with iKonli icons~~
 - ~~Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS~~
 - Implement face recognizion
-- Implement GPS including a map view
+- Map view
 - Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
 
 

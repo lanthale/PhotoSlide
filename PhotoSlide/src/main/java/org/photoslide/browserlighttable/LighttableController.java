@@ -13,6 +13,7 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,11 +82,6 @@ import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.openimaj.image.FImage;
-import org.openimaj.image.colour.Transforms;
-import org.openimaj.image.processing.face.detection.DetectedFace;
-import org.openimaj.image.processing.face.detection.FaceDetector;
-import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
 
 /**
  *
@@ -1002,12 +998,8 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
-        /*FaceDetector<DetectedFace, FImage> fd = new HaarCascadeDetector(40);
-        List<DetectedFace> faces = fd.detectFaces(Transforms.calculateIntensity(frame));
-
-        for (DetectedFace face : faces) {
-            frame.drawShape(face.getBounds(), RGBColour.RED);
-        }*/
+       //HaarCascadeDetector detector = new HaarCascadeDetector(100); 
+       
     }
 
 }

@@ -266,10 +266,10 @@ public class MetadataController implements Initializable {
                 Metadata meta = entry.getValue();
                 Iterator<MetadataEntry> iterator;
                 switch (meta.getType()) {
-                    case XMP ->
+                    case XMP:
                         xmpdata = ((XMP) meta);
                     //XMP.showXMP(xmpdata);
-                    case COMMENT -> {
+                    case COMMENT:
                         if (meta instanceof Comments) {
                             commentsdata = ((Comments) meta).getComments();
                             StringBuilder sb = new StringBuilder();
@@ -284,14 +284,14 @@ public class MetadataController implements Initializable {
                                 });
                             }
                         }
-                    }
-                    case IPTC -> {
+                        break;
+                    case IPTC:
                         iptcdata = ((IPTC) meta);
                         iterator = meta.iterator();
                         while (iterator.hasNext()) {
                             MetadataEntry item = iterator.next();
                             switch (item.getKey()) {
-                                case "Keywords" -> {
+                                case "Keywords":
                                     if (Platform.isFxApplicationThread() == true) {
                                         actualMediaFile.setKeywords(item.getValue());
                                     } else {
@@ -299,8 +299,8 @@ public class MetadataController implements Initializable {
                                             actualMediaFile.setKeywords(item.getValue());
                                         });
                                     }
-                                }
-                                case "Caption Abstract" -> {
+                                    break;
+                                case "Caption Abstract":
                                     if (Platform.isFxApplicationThread() == true) {
                                         actualMediaFile.setTitle(item.getValue());
                                     } else {
@@ -308,13 +308,13 @@ public class MetadataController implements Initializable {
                                             actualMediaFile.setTitle(item.getValue());
                                         });
                                     }
-                                }
+                                    break;
                             }
                         }
-                    }
-                    case JPG_JFIF -> {
-                    }
-                    case EXIF -> {
+                        break;
+                    case JPG_JFIF:
+                        break;
+                    case EXIF:
                         if (meta instanceof JpegExif) {
                             exifdata = ((JpegExif) meta);
                         }
@@ -356,20 +356,27 @@ public class MetadataController implements Initializable {
                                 final StringBuilder gpsHeightsb = new StringBuilder();
                                 entries.stream().forEach((mediaEntry) -> {
                                     switch (mediaEntry.getKey()) {
-                                        case "GPS Latitude Ref" ->
+                                        case "GPS Latitude Ref":
                                             gpsLatRefsb.append(mediaEntry.getValue());
-                                        case "GPS Latitude" ->
+                                            break;
+                                        case "GPS Latitude":
                                             gpsLatsb.append(mediaEntry.getValue());
-                                        case "GPS Longitude Ref" ->
+                                            break;
+                                        case "GPS Longitude Ref":
                                             gpsLongRefsb.append(mediaEntry.getValue());
-                                        case "GPS Longitude" ->
+                                            break;
+                                        case "GPS Longitude":
                                             gpsLongsb.append(mediaEntry.getValue());
-                                        case "GPS Altitude" ->
+                                            break;
+                                        case "GPS Altitude":
                                             gpsHeightsb.append(mediaEntry.getValue());
-                                        case "GPS Time Stamp" ->
+                                            break;
+                                        case "GPS Time Stamp":
                                             gpsTimesb.append(mediaEntry.getValue());
-                                        case "GPS Date Stamp" ->
+                                            break;
+                                        case "GPS Date Stamp":
                                             gpsDatesb.append(mediaEntry.getValue());
+                                            break;
                                     }
                                 });
                                 if (gpsHeightsb.toString() != null) {
@@ -419,11 +426,11 @@ public class MetadataController implements Initializable {
                                 });
                             }
                         }
-                    }
-                    case ICC_PROFILE -> {
-                    }
-                    default -> {
-                    }
+                        break;
+                    case ICC_PROFILE:
+                        break;
+                    default:
+                        break;
                 }
                 //XMP.showXMP((XMP) meta);
                 //XMP.showXMP((XMP) meta);
@@ -914,7 +921,7 @@ public class MetadataController implements Initializable {
             lightController.getImageView().setImage(exposerFilter.reset());
             actualMediaFile.setImage(exposerFilter.reset());
             exposerFilter = null;
-        });                        
+        });
     }
 
     private class KeywordChangeListener implements ListChangeListener {

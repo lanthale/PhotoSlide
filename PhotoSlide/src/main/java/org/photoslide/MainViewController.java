@@ -346,7 +346,7 @@ public class MainViewController implements Initializable {
                                 ImageWriter writer = ImageIO.getWriter(imageType);
                                 ImageParam.ImageParamBuilder builder = ImageParam.getBuilder();
                                 switch (imageType) {
-                                    case TIFF -> {
+                                    case TIFF:
                                         // Set TIFF-specific options
                                         TIFFOptions tiffOptions = new TIFFOptions();
                                         tiffOptions.setApplyPredictor(true);
@@ -354,23 +354,23 @@ public class MainViewController implements Initializable {
                                         tiffOptions.setPhotoMetric(PhotoMetric.SEPARATED);
                                         tiffOptions.setWriteICCProfile(true);
                                         builder.imageOptions(tiffOptions);
-                                    }
-                                    case PNG -> {
+                                        break;
+                                    case PNG:
                                         PNGOptions pngOptions = new PNGOptions();
                                         pngOptions.setApplyAdaptiveFilter(true);
                                         pngOptions.setCompressionLevel(6);
                                         pngOptions.setFilterType(Filter.NONE);
                                         builder.imageOptions(pngOptions);
-                                    }
-                                    case JPG -> {
+                                        break;
+                                    case JPG:
                                         JPGOptions jpegOptions = new JPGOptions();
                                         jpegOptions.setQuality(96);
                                         jpegOptions.setColorSpace(JPGOptions.COLOR_SPACE_RGB);
                                         jpegOptions.setWriteICCProfile(true);
                                         builder.imageOptions(jpegOptions);
-                                    }
-                                    default -> {
-                                    }
+                                        break;
+                                    default:
+                                        break;
                                 }
                                 writer.setImageParam(builder.build());
                                 writer.write(fromFXImage, fo);
@@ -768,7 +768,7 @@ public class MainViewController implements Initializable {
         statusLabelLeft.textProperty().unbind();
         statusLabelLeft.setText("");
         printDialog.getController().setAllPrintItems(lighttablePaneController.getFactory().getSelectionModel().getSelection());
-        
+
         Optional<ButtonType> result = printDialog.showAndWait();
         if (result.get() == ButtonType.OK) {
             printDialog.getController().print(statusLabelLeft, lighttablePaneController.getFactory().getSelectionModel().getSelection());

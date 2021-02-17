@@ -75,6 +75,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
@@ -82,6 +83,14 @@ import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.openimaj.image.FImage;
+import org.openimaj.image.ImageUtilities;
+import org.openimaj.image.MBFImage;
+import org.openimaj.image.colour.RGBColour;
+import org.openimaj.image.colour.Transforms;
+import org.openimaj.image.processing.face.detection.DetectedFace;
+import org.openimaj.image.processing.face.detection.FaceDetector;
+import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
 
 /**
  *
@@ -403,14 +412,42 @@ public class LighttableController implements Initializable {
         //imageView.setRotate(angle);
         item.setRotationAngle(angle);
         switch (angle) {
-            case 0,180,360,-180,-360 -> {
+            case 0:
                 imageView.fitWidthProperty().bind(stackPane.widthProperty());
                 imageView.fitHeightProperty().bind(stackPane.heightProperty());
-            }
-            case 90,270,-90,-270 -> {
+                break;
+            case 180:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case 360:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case -180:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case -360:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case 90:
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
-            }
+                break;
+            case 270:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
+            case -90:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
+            case -270:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
         }
         factory.getSelectedCell().requestLayout();
         executorParallel.submit(() -> {
@@ -435,14 +472,42 @@ public class LighttableController implements Initializable {
         //imageView.setRotate(angle);
         item.setRotationAngle(angle);
         switch (angle) {
-            case 0,180,360,-180,-360 -> {
+            case 0:
                 imageView.fitWidthProperty().bind(stackPane.widthProperty());
                 imageView.fitHeightProperty().bind(stackPane.heightProperty());
-            }
-            case 90,270,-90,-270 -> {
+                break;
+            case 180:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case 360:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case -180:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case -360:
+                imageView.fitWidthProperty().bind(stackPane.widthProperty());
+                imageView.fitHeightProperty().bind(stackPane.heightProperty());
+                break;
+            case 90:
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
-            }
+                break;
+            case 270:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
+            case -90:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
+            case -270:
+                imageView.fitWidthProperty().bind(stackPane.heightProperty());
+                imageView.fitHeightProperty().bind(stackPane.widthProperty());
+                break;
         }
         factory.getSelectedCell().requestLayout();
         executorParallel.submit(() -> {
@@ -998,8 +1063,23 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
-       //HaarCascadeDetector detector = new HaarCascadeDetector(100); 
-       
+        try {
+            final FImage image1 = ImageUtilities.readF(factory.getSelectedMediaItem().getImageUrl());
+            MBFImage frame = new MBFImage(image1);
+            FaceDetector<DetectedFace, FImage> fd = new HaarCascadeDetector(40);
+            List<DetectedFace> faces = fd.detectFaces(Transforms.calculateIntensity(frame));
+
+            for (DetectedFace face : faces) {
+                face.getBounds();
+                face.getFacePatch();
+                Rectangle rect = new Rectangle();
+                frame.drawShape(face.getBounds(), RGBColour.RED);
+            }
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

@@ -99,16 +99,16 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
             loading = item.isLoading();
             switch (item.getMediaType()) {
-                case VIDEO -> {
+                case VIDEO:
                     setMedia(item);
                     setGraphic(rootPane);
-                }
-                case IMAGE -> {
+                    break;
+                case IMAGE:
                     setImage(item);
                     setGraphic(rootPane);
-                }
-                default -> {
-                }
+                    break;
+                default:
+                    break;
             }
         }
     }

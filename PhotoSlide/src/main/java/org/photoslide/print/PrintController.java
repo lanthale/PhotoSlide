@@ -63,7 +63,7 @@ import org.photoslide.datamodel.MediaFile;
  * @author selfemp
  */
 public class PrintController implements Initializable {
-    
+
     private ExecutorService executor;
     private ExecutorService executorParallel;
     private DialogPane dialogPane;
@@ -105,7 +105,7 @@ public class PrintController implements Initializable {
     private PageLayout pageLayout;
     @FXML
     private HBox pageBox;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
@@ -143,7 +143,7 @@ public class PrintController implements Initializable {
                     return item.getName() + " (" + item.getWidth() + " x " + item.getHeight() + ")";
                 }
             }
-            
+
             @Override
             public Paper fromString(String string) {
                 PrinterAttributes printerAttributes = printerCombo.getSelectionModel().getSelectedItem().getPrinterAttributes();
@@ -220,51 +220,51 @@ public class PrintController implements Initializable {
             }
         });
     }
-    
+
     public void shutdown() {
         executor.shutdown();
         executorParallel.shutdown();
     }
-    
+
     public void setDialogPane(DialogPane pane) {
         this.dialogPane = pane;
     }
-    
+
     @FXML
     private void allPagesRadioAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void rangeRadioAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void pageFormTextAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void pageToTextAction(ActionEvent event) {
     }
-    
+
     public void print(Label jobStatus, Set<MediaFile> allPrintItems) {
-        
+
         jobStatus.textProperty().unbind();
         jobStatus.setText("Creating print job...");
 
         // Create a printer job for the default printer
         PrinterJob job = PrinterJob.createPrinterJob(selectedPrinter);
-        
+
         if (job != null) {
             // Show the printer job status
             jobStatus.textProperty().bind(job.jobStatusProperty().asString());
             job.getJobSettings().setPageLayout(pageLayout);
-            
+
             boolean openPrintDialog = job.showPrintDialog(stage);
-            
+
             previewPane.setEffect(null);
             previewPane.getStyleClass().clear();
             previewPane.setStyle("-fx-background-color:white");
-            
+
             final double scaleX = pageLayout.getPrintableWidth() / pageBox.getWidth();
             final double scaleY = pageLayout.getPrintableHeight() / pageBox.getHeight();
             final double scale = Math.min(scaleX, scaleY);
@@ -276,14 +276,14 @@ public class PrintController implements Initializable {
                 jobStatus.textProperty().unbind();
                 jobStatus.setText("Finished.");
             } else {
-                
+
             }
         } else {
             // Write Error Message
             jobStatus.setText("Not possible to create print job!");
         }
     }
-    
+
     public void showPreview() {
         int correctVal = 0;
         if (borderLessBox.isSelected()) {
@@ -293,7 +293,7 @@ public class PrintController implements Initializable {
         while (previewPane.getRowConstraints().size() > 0) {
             previewPane.getRowConstraints().remove(0);
         }
-        
+
         while (previewPane.getColumnConstraints().size() > 0) {
             previewPane.getColumnConstraints().remove(0);
         }
@@ -313,7 +313,7 @@ public class PrintController implements Initializable {
         int row = 0;
         int col = 0;
         for (Image image : pageList) {
-            ProgressIndicator prg = new ProgressIndicator();            
+            ProgressIndicator prg = new ProgressIndicator();
             prg.progressProperty().bind(image.progressProperty());
             ImageView view = new ImageView();
             view.setPreserveRatio(true);
@@ -335,7 +335,7 @@ public class PrintController implements Initializable {
                             view.setFitHeight((previewPane.getHeight()) / 2);
                             view.setFitWidth((previewPane.getWidth()) / 2);
                         }
-                        
+
                     }
                 }
             });
@@ -357,42 +357,42 @@ public class PrintController implements Initializable {
             view.setFitWidth(50);
             previewPane.add(prg, col, row);
             view.setImage(image);
-            
+
             switch (pageList.indexOf(image) + 1) {
-                case 1 -> {
+                case 1:
                     row++;
-                }
-                case 2 -> {
+                    break;
+                case 2:
                     col++;
                     row = 0;
-                }
-                case 3 -> {
+                    break;
+                case 3:
                     row++;
-                }
-                case 4 -> {
+                    break;
+                case 4:
                     col = 0;
                     row++;
-                }
-                case 5 -> {
+                    break;
+                case 5:
                     col++;
-                }
-                case 6 -> {
+                    break;
+                case 6:
                     row++;
                     col = 0;
-                }
+                    break;
             }
             if (qtyPerPage == pageList.indexOf(image) + 1) {
                 return;
             }
         }
     }
-    
+
     public void setAllPrintItems(Set<MediaFile> allPrintItems) {
         this.allPrintItems = allPrintItems;
     }
-    
+
     public void setStage(Stage stage) {
         this.stage = stage;
     }
-    
+
 }

@@ -103,7 +103,7 @@ public class App extends Application {
             controller.Shutdown();
         });
 
-        scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);        
+        scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
@@ -111,7 +111,7 @@ public class App extends Application {
 
     }
 
-    public static void saveSettings(Stage stage, MainViewController controller) {        
+    public static void saveSettings(Stage stage, MainViewController controller) {
         controller.saveSettings();
         Preferences preferences = Preferences.userRoot().node(NODE_NAME);
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
@@ -168,30 +168,27 @@ public class App extends Application {
             //setup search database
             Class.forName("org.h2.Driver");
             searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB;DB_CLOSE_ON_EXIT=FALSE", "", "");
-            Statement stat = searchDBConnection.createStatement();            
+            Statement stat = searchDBConnection.createStatement();
             FullText.init(searchDBConnection);
             FullText.setIgnoreList(searchDBConnection, "to,this");
-            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.\\");                                    
-            stat.execute("""
-                         CREATE TABLE
-                             "PUBLIC".MEDIAFILES
-                             (
-                                 collectionname VARCHAR(255) NOT NULL,
-                                 name VARCHAR(255) NOT NULL,
-                                 pathStorage VARCHAR(1000) NOT NULL,
-                                 title VARCHAR(255),
-                                 keywords VARCHAR(255),
-                                 camera VARCHAR(255),
-                                 rating INTEGER,
-                                 recordTime TIMESTAMP,
-                                 creationTime TIMESTAMP,
-                                 places VARCHAR(255),
-                                 faces VARCHAR(255),
-                                 metadata VARCHAR(4000),
-                                 PRIMARY KEY (collectionname, name, pathStorage)
-                             )
-                         """);            
-            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);            
+            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.\\");
+            stat.execute("CREATE TABLE \"PUBLIC\".MEDIAFILES"
+                    + "("
+                    + "collectionname VARCHAR(255) NOT NULL,"
+                    + "name VARCHAR(255) NOT NULL,"
+                    + "pathStorage VARCHAR(1000) NOT NULL,"
+                    + "title VARCHAR(255),"
+                    + "keywords VARCHAR(255),"
+                    + "camera VARCHAR(255),"
+                    + "rating INTEGER,"
+                    + "recordTime TIMESTAMP,"
+                    + "creationTime TIMESTAMP,"
+                    + "places VARCHAR(255),"
+                    + "faces VARCHAR(255),"
+                    + "metadata VARCHAR(4000),"
+                    + "PRIMARY KEY (collectionname, name, pathStorage)"
+                    + ")");
+            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);
         } catch (SQLException | ClassNotFoundException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }

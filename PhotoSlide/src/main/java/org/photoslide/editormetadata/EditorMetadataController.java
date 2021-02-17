@@ -75,21 +75,20 @@ public class EditorMetadataController implements Initializable {
         imageVIew.setImage(null);
         selectedMediaFile = f;
         gridPaneMetaInfo.getChildren().clear();
-        Task<Boolean> task = new Task<>() {            
+        Task<Boolean> task = new Task<>() {
 
             @Override
             protected Boolean call() throws Exception {
                 switch (selectedMediaFile.getMediaType()) {
-                    case VIDEO -> {
-
-                    }
-                    case IMAGE -> {
-                        Platform.runLater(() -> {                            
+                    case VIDEO:
+                        break;
+                    case IMAGE:
+                        Platform.runLater(() -> {
                             imageVIew.setImage(null);
                             progressIndicator.setVisible(true);
                             imageVIew.setImage(selectedMediaFile.getImage());
-                        });                        
-                    }
+                        });
+                        break;
                 }
                 return true;
             }
@@ -109,7 +108,7 @@ public class EditorMetadataController implements Initializable {
         taskMetaData.setOnFailed((t) -> {
             Logger.getLogger(EditorMetadataController.class.getName()).log(Level.SEVERE, "Cannot load metadata in editor ...", t.getSource().getException());
         });
-        taskMetaData.setOnSucceeded((t) -> {            
+        taskMetaData.setOnSucceeded((t) -> {
             updateUIWithExtendedMetadata();
             progressMetaDataIndicator.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(500), gridPaneMetaInfo);
@@ -183,7 +182,7 @@ public class EditorMetadataController implements Initializable {
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         gridPaneMetaInfo.setOpacity(0);
         this.imageVIew.setImage(null);
-        selectedMediaFile=null;
+        selectedMediaFile = null;
     }
 
     public void shutdown() {

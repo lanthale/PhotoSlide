@@ -67,7 +67,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
-    private final GridView<MediaFile> grid;    
+    private final GridView<MediaFile> grid;
     private Task<Boolean> task;
     private final ExecutorService executor;
     private MediaGridCell selectedCell;
@@ -84,7 +84,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         taskList = new ArrayList<>();
         this.metadataController = metadataController;
         this.grid = grid;
-        this.lightController = lightController;        
+        this.lightController = lightController;
         selectionModel = new GridCellSelectionModel();
         //new RubberBandSelection(grid, selectionModel);
         this.executor = executor;
@@ -144,7 +144,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.setEditable(false);
         cell.setOnMouseClicked((t) -> {
             manageGUISelection(t, cell);
-            handleGridCellSelection(t);            
+            handleGridCellSelection(t);
             t.consume();
         });
         return cell;
@@ -261,39 +261,49 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     lightController.getMediaView().setMediaPlayer(null);
                 });
                 switch (selectedMediaItem.getMediaType()) {
-                    case VIDEO -> {
+                    case VIDEO:
                         try {
-                            Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                        Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                        Platform.runLater(() -> {
+                            lightController.getImageView().setVisible(false);
+                            lightController.getMediaView().setVisible(true);
+                            lightController.getImageProgress().setVisible(false);
+                            lightController.getInvalidStackPane().setVisible(false);
+                            lightController.getPlayIcon().setVisible(true);
+                            lightController.getMediaView().toFront();
+                            lightController.getPlayIcon().toFront();
+                            lightController.getMediaView().requestFocus();
+                        });
+                        MediaPlayer mp = new MediaPlayer(media);
+                        if (lightController.getMediaView().getMediaPlayer() != null) {
+                            lightController.getMediaView().getMediaPlayer().stop();
+                        }
+                        lightController.getMediaView().setMediaPlayer(mp);
+                        lightController.getMediaView().setOnMouseMoved((t) -> {
                             Platform.runLater(() -> {
-                                lightController.getImageView().setVisible(false);
-                                lightController.getMediaView().setVisible(true);
-                                lightController.getImageProgress().setVisible(false);
-                                lightController.getInvalidStackPane().setVisible(false);
                                 lightController.getPlayIcon().setVisible(true);
-                                lightController.getMediaView().toFront();
-                                lightController.getPlayIcon().toFront();
-                                lightController.getMediaView().requestFocus();
                             });
-                            MediaPlayer mp = new MediaPlayer(media);
-                            if (lightController.getMediaView().getMediaPlayer() != null) {
-                                lightController.getMediaView().getMediaPlayer().stop();
-                            }
-                            lightController.getMediaView().setMediaPlayer(mp);
-                            lightController.getMediaView().setOnMouseMoved((t) -> {
+                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
                                 Platform.runLater(() -> {
                                     lightController.getPlayIcon().setVisible(true);
                                 });
-                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                    Platform.runLater(() -> {
-                                        lightController.getPlayIcon().setVisible(true);
-                                    });
-                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                } else {
-                                    lightController.getPlayIcon().setIconLiteral("fa-play");
-                                }
-                                util.hideNodeAfterTime(lightController.getPlayIcon(), 2);
-                            });
-                            lightController.getPlayIcon().setOnMouseClicked((t) -> {
+                                lightController.getPlayIcon().setIconLiteral("fa-pause");
+                            } else {
+                                lightController.getPlayIcon().setIconLiteral("fa-play");
+                            }
+                            util.hideNodeAfterTime(lightController.getPlayIcon(), 2);
+                        });
+                        lightController.getPlayIcon().setOnMouseClicked((t) -> {
+                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                                lightController.getMediaView().getMediaPlayer().pause();
+                            } else {
+                                lightController.getMediaView().getMediaPlayer().play();
+                                lightController.getPlayIcon().setIconLiteral("fa-pause");
+                                util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
+                            }
+                        });
+                        lightController.getMediaView().setOnKeyPressed((t) -> {
+                            if (t.getCode() == KeyCode.SPACE) {
                                 if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
                                     lightController.getMediaView().getMediaPlayer().pause();
                                 } else {
@@ -301,45 +311,35 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     lightController.getPlayIcon().setIconLiteral("fa-pause");
                                     util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
                                 }
-                            });
-                            lightController.getMediaView().setOnKeyPressed((t) -> {
-                                if (t.getCode() == KeyCode.SPACE) {
-                                    if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                        lightController.getMediaView().getMediaPlayer().pause();
-                                    } else {
-                                        lightController.getMediaView().getMediaPlayer().play();
-                                        lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                        util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
-                                    }
-                                }
-                            });
-                        } catch (MediaException e) {
-                            if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
-                                VBox vb = new VBox();
-                                vb.setAlignment(Pos.CENTER);
-                                FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
-                                filmIcon.setOpacity(0.3);
-                                FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
-                                Label lb = new Label("Filtype not supported!");
-                                lb.setStyle("-fx-font-size: 20px;");
-                                Platform.runLater(() -> {
-                                    lightController.getPlayIcon().setVisible(false);
-                                    lightController.getImageView().setVisible(false);
-                                    lightController.getMediaView().setVisible(false);
-                                    lightController.getImageProgress().setVisible(false);
-                                    vb.getChildren().clear();
-                                    vb.getChildren().add(filmIcon);
-                                    vb.getChildren().add(lb);
-                                    lightController.getInvalidStackPane().getChildren().clear();
-                                    lightController.getInvalidStackPane().getChildren().add(vb);
-                                    lightController.getInvalidStackPane().getChildren().add(controlIcon);
-                                    lightController.getInvalidStackPane().setVisible(true);
-                                });
                             }
+                        });
+                    } catch (MediaException e) {
+                        if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
+                            VBox vb = new VBox();
+                            vb.setAlignment(Pos.CENTER);
+                            FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
+                            filmIcon.setOpacity(0.3);
+                            FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
+                            Label lb = new Label("Filtype not supported!");
+                            lb.setStyle("-fx-font-size: 20px;");
+                            Platform.runLater(() -> {
+                                lightController.getPlayIcon().setVisible(false);
+                                lightController.getImageView().setVisible(false);
+                                lightController.getMediaView().setVisible(false);
+                                lightController.getImageProgress().setVisible(false);
+                                vb.getChildren().clear();
+                                vb.getChildren().add(filmIcon);
+                                vb.getChildren().add(lb);
+                                lightController.getInvalidStackPane().getChildren().clear();
+                                lightController.getInvalidStackPane().getChildren().add(vb);
+                                lightController.getInvalidStackPane().getChildren().add(controlIcon);
+                                lightController.getInvalidStackPane().setVisible(true);
+                            });
                         }
                     }
+                    break;
 
-                    case IMAGE -> {
+                    case IMAGE:
                         metadataController.setSelectedFile(selectedMediaItem);
                         Platform.runLater(() -> {
                             lightController.getImageProgress().progressProperty().unbind();
@@ -360,14 +360,42 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
                             lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
                             switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
-                                case 0,180,360,-180,-360 -> {
+                                case 0:
                                     lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
                                     lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                }
-                                case 90,270,-90,-270 -> {
+                                    break;
+                                case 180:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                                    break;
+                                case 360:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                                    break;
+                                case -180:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                                    break;
+                                case -360:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                                    break;
+                                case 90:
                                     lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
                                     lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                                }
+                                    break;
+                                case 270:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                                    break;
+                                case -90:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                                    break;
+                                case -270:
+                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                                    break;
                             }
                             lightController.getTitleLabel().setVisible(true);
                             lightController.getCameraLabel().setVisible(true);
@@ -420,9 +448,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                 });
                             }
                         });
-                    }
-                    default -> {
-                    }
+                        break;
+                    default:
                 }
                 return null;
             }
@@ -503,7 +530,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     public GridCellSelectionModel getSelectionModel() {
         return selectionModel;
     }
-    
+
     public void cancleTask() {
         metadataController.cancelTasks();
         taskList.forEach(taskItem -> {
@@ -521,7 +548,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         for (int i = 0; i < vf.getCellCount(); i++) {
             for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
                 if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {

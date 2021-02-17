@@ -75,15 +75,14 @@ public class EditorMediaViewController implements Initializable {
         Task<Boolean> task = new Task<>() {
             private Image imageWithFilters;
             private ObservableList<ImageFilter> filterList;
-            private Image img;            
+            private Image img;
 
             @Override
             protected Boolean call() throws Exception {
                 switch (selectedMediaFile.getMediaType()) {
-                    case VIDEO -> {
-
-                    }
-                    case IMAGE -> {
+                    case VIDEO:
+                        break;
+                    case IMAGE:
                         Platform.runLater(() -> {
                             //editorImageView.fitWidthProperty().unbind();
                             //editorImageView.fitHeightProperty().unbind();
@@ -113,7 +112,7 @@ public class EditorMediaViewController implements Initializable {
                             });
                             editorImageView.setImage(img);
                         });
-                    }
+                        break;
                 }
                 return true;
             }
@@ -134,8 +133,8 @@ public class EditorMediaViewController implements Initializable {
                 100);
         editorImageView.setViewport(newViewportRect3);
     }
-    
-    public void resetImageView(){
+
+    public void resetImageView() {
         this.editorImageView.setImage(null);
     }
 }

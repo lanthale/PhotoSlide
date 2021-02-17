@@ -1063,7 +1063,7 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
-        try {
+        /*try {
             final FImage image1 = ImageUtilities.readF(factory.getSelectedMediaItem().getImageUrl());
             MBFImage frame = new MBFImage(image1);
             FaceDetector<DetectedFace, FImage> fd = new HaarCascadeDetector(40);
@@ -1079,7 +1079,7 @@ public class LighttableController implements Initializable {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }*/
     }
 
 }

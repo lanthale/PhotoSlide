@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.boofcv</groupId>
+  <artifactId>Boofcv-fatjar</artifactId>
+  <versioning>
+    <release>0.37</release>
+    <versions>
+      <version>0.37</version>
+    </versions>
+    <lastUpdated>20210218155036</lastUpdated>
+  </versioning>
+</metadata>

@@ -135,7 +135,7 @@
                            </graphic>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="80.0" />
-                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
+                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
                            <graphic>
                               <FontIcon iconLiteral="fa-street-view" iconSize="17" />
                            </graphic>

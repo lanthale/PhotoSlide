@@ -38,12 +38,12 @@
             <id>com.springsource.repository.bundles.external</id>
             <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
             <url>http://repository.springsource.com/maven/bundles/external</url>
-        </repository>        
+        </repository> 
         <repository>
             <id>local-maven-repo</id>
             <name>local-maven-repo for boofcv fatjar</name>
             <url>file://${project.basedir}/src/main/resources/org/photoslide/fatjars/</url>            
-        </repository>           
+        </repository>                  
     </repositories>        
     
     <pluginRepositories>
@@ -434,17 +434,7 @@
 		
                                         }
                                     </moduleInfoSource>
-                                </module>                                 
-                                <module>
-                                    <artifact>
-                                        <groupId>org.boofcv</groupId>
-                                        <artifactId>boofcv-fatjar</artifactId>
-                                    </artifact>
-                                    <moduleInfoSource>
-                                        open module boofcv.fatjar {
-                                        }
-                                    </moduleInfoSource>
-                                </module>                                
+                                </module>                                                                                              
                                                                                                                                                                                                                                                 
                             </modules>                                                                             
                             <module>                                                                   
@@ -646,13 +636,7 @@
             <artifactId>jackson-core</artifactId>
             <version>2.12.0</version>
         </dependency>        
-        <dependency>
-            <groupId>org.boofcv</groupId>
-            <artifactId>boofcv-fatjar</artifactId>
-            <version>0.37</version>            
-        </dependency>
-                                
-                                                                        
+        
     </dependencies>
     
     <profiles>

@@ -13,7 +13,6 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,7 +74,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
@@ -1055,22 +1053,24 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
-        /*try {
-            final FImage image1 = ImageUtilities.readF(factory.getSelectedMediaItem().getImageUrl());
-            MBFImage frame = new MBFImage(image1);
-            FaceDetector<DetectedFace, FImage> fd = new HaarCascadeDetector(40);
-            List<DetectedFace> faces = fd.detectFaces(Transforms.calculateIntensity(frame));
-
-            for (DetectedFace face : faces) {
-                face.getBounds();
-                face.getFacePatch();
-                Rectangle rect = new Rectangle();
-                frame.drawShape(face.getBounds(), RGBColour.RED);
-            }
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+        /*HaarCascadeDetector detector = new HaarCascadeDetector(100);
+        List<DetectedFace> faces = null;
+        MediaManager media = DefaultMediaManager.INSTANCE;
+        String fileName = "file.jpg";
+        
+        BufferedImage img = null;
+        
+        faces = detector.detectFaces(ImageUtilities.createFImage(img));
+        System.out.println("detect faces size = " + faces.size());
+        Quadrilateral_F64 location = new Quadrilateral_F64();
+        for (DetectedFace f : faces) {
+        System.out.println("bounds: " + f.getBounds());
+        location = new Quadrilateral_F64(
+        f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY(),
+        f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight(),
+        f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY(),
+        f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight());
+        break;
         }*/
     }
 

@@ -550,9 +550,11 @@ public class MetadataController implements Initializable {
             metaDataGrid.setDisable(true);
             keywordText.getChildren().clear();
         });
-        keywordText.getChildren().removeListener(keywordsChangeListener);
-        captionTextField.textProperty().removeListener(captionChangeListener);
-        commentText.textProperty().removeListener(commentsChangeListener);
+        if (keywordText.getChildren().size() > 0) {
+            keywordText.getChildren().removeListener(keywordsChangeListener);
+            captionTextField.textProperty().removeListener(captionChangeListener);
+            commentText.textProperty().removeListener(commentsChangeListener);
+        }
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();

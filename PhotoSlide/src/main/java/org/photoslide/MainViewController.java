@@ -191,6 +191,9 @@ public class MainViewController implements Initializable {
         collectionsPaneController.injectLighttableController(lighttablePaneController);
         lighttablePaneController.injectMetaDataController(metadataPaneController);
         editorMetaDataPaneController.injectMetaDataController(metadataPaneController);
+        editorMediaViewPaneController.injectLightController(lighttablePaneController);
+        editorMediaViewPaneController.injectEditorMetaDataController(editorMetaDataPaneController);
+        editorMediaViewPaneController.injectEditorToolsController(editorToolsPaneController);
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);

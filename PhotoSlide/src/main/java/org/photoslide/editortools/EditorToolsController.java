@@ -62,13 +62,14 @@ public class EditorToolsController implements Initializable {
         if (f == null) {
             return;
         }
+        clearCanvas();        
         selectedMediaFile = f;
         Task<Boolean> task = new Task<>() {
             private Image imageWithFilters;
             private ObservableList<ImageFilter> filterList;
 
             @Override
-            protected Boolean call() throws Exception {
+            protected Boolean call() throws Exception {                
                 String url = selectedMediaFile.getImageUrl().toString();
                 Image img = new Image(url, false);
                 imageWithFilters = img;

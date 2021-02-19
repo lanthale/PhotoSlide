@@ -26,7 +26,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.editormetadata.EditorMetadataController;
+import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -58,12 +61,27 @@ public class EditorMediaViewController implements Initializable {
     private Label cameraLabel;
     @FXML
     private Label filenameLabel;
+    private LighttableController lightTableController;
+    private EditorMetadataController editMetadataController;
+    private EditorToolsController editorToolsController;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMediaViewController"));
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
+    }
+
+    public void injectLightController(LighttableController c) {
+        this.lightTableController = c;
+    }
+
+    public void injectEditorMetaDataController(EditorMetadataController c) {
+        this.editMetadataController = c;
+    }
+    
+    public void injectEditorToolsController(EditorToolsController c){
+        this.editorToolsController=c;
     }
 
     public void setMediaFileForEdit(MediaFile f) {
@@ -83,9 +101,7 @@ public class EditorMediaViewController implements Initializable {
                     case VIDEO:
                         break;
                     case IMAGE:
-                        Platform.runLater(() -> {
-                            //editorImageView.fitWidthProperty().unbind();
-                            //editorImageView.fitHeightProperty().unbind();
+                        Platform.runLater(() -> {                            
                             imageProgress.progressProperty().unbind();
                             editorImageView.setImage(null);
                             editorImageView.setVisible(true);
@@ -136,5 +152,23 @@ public class EditorMediaViewController implements Initializable {
 
     public void resetImageView() {
         this.editorImageView.setImage(null);
+    }
+
+    @FXML
+    private void selectPreviousButtonAction(ActionEvent event) {
+        lightTableController.selectPreviousImageInGrid();
+        MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
+        editMetadataController.setMediaFileForEdit(selectedMediaItem);
+        editorToolsController.setMediaFileForEdit(selectedMediaItem);
+        setMediaFileForEdit(selectedMediaItem);
+    }
+
+    @FXML
+    private void selectNextButtonAction(ActionEvent event) {
+        lightTableController.selectNextImageInGrid();
+        MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
+        editMetadataController.setMediaFileForEdit(selectedMediaItem);
+        editorToolsController.setMediaFileForEdit(selectedMediaItem);
+        setMediaFileForEdit(selectedMediaItem);
     }
 }

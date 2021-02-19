@@ -73,6 +73,7 @@ public class EditorMetadataController implements Initializable {
             return;
         }
         imageVIew.setImage(null);
+        progressMetaDataIndicator.setVisible(true);
         selectedMediaFile = f;
         gridPaneMetaInfo.getChildren().clear();
         Task<Boolean> task = new Task<>() {

@@ -366,7 +366,7 @@ public class LighttableController implements Initializable {
                 nextCell.requestLayout();
             }
         }
-    }
+    }        
 
     public void Shutdown() {
         Platform.runLater(() -> {

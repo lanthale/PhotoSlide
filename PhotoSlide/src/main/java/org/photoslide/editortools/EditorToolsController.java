@@ -50,7 +50,7 @@ public class EditorToolsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorToolsController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorToolsController"));
         drawingCanvas.widthProperty().bind(histoAnchorPane.widthProperty());
         drawingCanvas.heightProperty().bind(histoAnchorPane.heightProperty());
         gc = drawingCanvas.getGraphicsContext2D();

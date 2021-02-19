@@ -58,7 +58,7 @@ public class EditorMetadataController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMetadataController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMetadataController"));
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);

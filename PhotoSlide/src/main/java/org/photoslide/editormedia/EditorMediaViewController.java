@@ -67,7 +67,7 @@ public class EditorMediaViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMediaViewController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMediaViewController"));
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
     }

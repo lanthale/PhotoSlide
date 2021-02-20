@@ -21,6 +21,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -71,6 +72,14 @@ public class EditorMediaViewController implements Initializable {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMediaViewController"));
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
+        stackPane.setOnKeyPressed((t) -> {
+            if (t.getCode().equals(KeyCode.RIGHT)) {
+                nextMediaItem();
+            }
+            if (t.getCode().equals(KeyCode.LEFT)) {
+                previousMediaItem();
+            }
+        });
     }
 
     public void injectLightController(LighttableController c) {
@@ -89,6 +98,7 @@ public class EditorMediaViewController implements Initializable {
         if (f == null) {
             return;
         }
+        stackPane.requestFocus();
         selectedMediaFile = f;
         editorImageView.setImage(null);
         task = new Task<>() {
@@ -123,8 +133,10 @@ public class EditorMediaViewController implements Initializable {
                                     }
                                     img = imageWithFilters;
                                     editorImageView.setImage(img);
+                                    stackPane.requestFocus();
                                 } else {
                                     imageProgress.setVisible(true);
+                                    stackPane.requestFocus();
                                 }
                             });
                             editorImageView.setImage(img);
@@ -169,6 +181,10 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void selectPreviousButtonAction(ActionEvent event) {
+        previousMediaItem();
+    }
+
+    private void previousMediaItem() {
         cancleTask();
         lightTableController.selectPreviousImageInGrid();
         MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
@@ -179,15 +195,15 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void selectNextButtonAction(ActionEvent event) {
+        nextMediaItem();
+    }
+
+    private void nextMediaItem() {
         cancleTask();
-        lightTableController.selectNextImageInGrid();
-        //MediaFile selectedMediaItem=lightTableController.getNextImageInGrid(selectedMediaFile);
+        lightTableController.selectNextImageInGrid();        
         MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
         editMetadataController.setMediaFileForEdit(selectedMediaItem);
         editorToolsController.setMediaFileForEdit(selectedMediaItem);
-        Platform.runLater(() -> {
-            setMediaFileForEdit(selectedMediaItem);
-        });
-
+        setMediaFileForEdit(selectedMediaItem);        
     }
 }

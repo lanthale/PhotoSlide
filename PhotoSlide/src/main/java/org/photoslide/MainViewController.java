@@ -656,7 +656,7 @@ public class MainViewController implements Initializable {
             ft1.setFromValue(0.0);
             ft1.setToValue(1.0);
             ft1.setOnFinished((t) -> {
-                editorMediaViewPaneController.setMediaFileForEdit(selMedia);
+                editorMediaViewPaneController.setMediaFileForEdit(selMedia);                
             });
             ft1.play();
         });

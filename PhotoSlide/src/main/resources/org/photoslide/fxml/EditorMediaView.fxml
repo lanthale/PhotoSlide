@@ -58,23 +58,23 @@
                   </VBox>
                   <BorderPane prefHeight="200.0" prefWidth="200.0">
                      <left>
-                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#selectPreviousButtonAction" opacity="0.23" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
+                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#selectPreviousButtonAction" opacity="0.4" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
                            <graphic>
                               <FontIcon iconLiteral="ti-angle-left" iconSize="60" />
                            </graphic>
                         </Button>
                      </left>
                      <right>
-                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#selectNextButtonAction" opacity="0.23" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
+                        <Button contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#selectNextButtonAction" opacity="0.4" prefHeight="100.0" prefWidth="50.0" text="Button" BorderPane.alignment="CENTER">
                            <graphic>
                               <FontIcon iconLiteral="ti-angle-right" iconSize="60" />
                            </graphic>
                         </Button>
                      </right>
                      <bottom>
-                        <Button alignment="BOTTOM_CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefWidth="98.0" style="-fx-background-color: transparent;" text="Button" BorderPane.alignment="CENTER">
+                        <Button fx:id="showGridViewButton" alignment="BOTTOM_CENTER" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#showGridViewAction" opacity="0.4" prefWidth="98.0" text="Button" BorderPane.alignment="CENTER">
                            <graphic>
-                              <FontIcon iconLiteral="ti-layout-menu-separated" iconSize="80" />
+                              <FontIcon iconLiteral="ti-layout-menu-separated" iconSize="40" />
                            </graphic>
                         </Button>
                      </bottom>

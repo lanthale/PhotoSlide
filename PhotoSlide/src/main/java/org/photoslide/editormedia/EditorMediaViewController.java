@@ -15,6 +15,7 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -25,6 +26,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+import org.controlsfx.control.GridView;
+import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.LighttableController;
@@ -66,6 +70,8 @@ public class EditorMediaViewController implements Initializable {
     private EditorMetadataController editMetadataController;
     private EditorToolsController editorToolsController;
     private Task<Boolean> task;
+    @FXML
+    private Button showGridViewButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -206,10 +212,31 @@ public class EditorMediaViewController implements Initializable {
 
     private void nextMediaItem() {
         cancleTask();
-        lightTableController.selectNextImageInGrid();        
+        lightTableController.selectNextImageInGrid();
         MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
         editMetadataController.setMediaFileForEdit(selectedMediaItem);
         editorToolsController.setMediaFileForEdit(selectedMediaItem);
-        setMediaFileForEdit(selectedMediaItem);        
+        setMediaFileForEdit(selectedMediaItem);
+    }
+
+    @FXML
+    private void showGridViewAction(ActionEvent event) {
+        PopOver po = new PopOver();
+        po.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        po.setAnimated(true);
+        po.setCloseButtonEnabled(true);
+        po.setFadeInDuration(Duration.millis(50));
+        po.setFadeOutDuration(Duration.millis(50));
+        po.setAutoHide(true);
+        VBox box = new VBox();
+        box.setPrefSize(700, 100);
+        box.setMaxSize(700, 100);
+        box.setAlignment(Pos.CENTER);
+        GridView<MediaFile> imageGrid = new GridView<>(lightTableController.getSortedMediaList());
+        imageGrid.setCellFactory(lightTableController.getFactory());
+        //subscribe to selectedMediaItem in Factory        
+        box.getChildren().add(imageGrid);
+        po.setContentNode(box);
+        po.show(showGridViewButton);
     }
 }

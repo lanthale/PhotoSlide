@@ -64,6 +64,7 @@ public class EditorMediaViewController implements Initializable {
     private LighttableController lightTableController;
     private EditorMetadataController editMetadataController;
     private EditorToolsController editorToolsController;
+    private Task<Boolean> task;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -79,9 +80,9 @@ public class EditorMediaViewController implements Initializable {
     public void injectEditorMetaDataController(EditorMetadataController c) {
         this.editMetadataController = c;
     }
-    
-    public void injectEditorToolsController(EditorToolsController c){
-        this.editorToolsController=c;
+
+    public void injectEditorToolsController(EditorToolsController c) {
+        this.editorToolsController = c;
     }
 
     public void setMediaFileForEdit(MediaFile f) {
@@ -90,7 +91,7 @@ public class EditorMediaViewController implements Initializable {
         }
         selectedMediaFile = f;
         editorImageView.setImage(null);
-        Task<Boolean> task = new Task<>() {
+        task = new Task<>() {
             private Image imageWithFilters;
             private ObservableList<ImageFilter> filterList;
             private Image img;
@@ -101,7 +102,7 @@ public class EditorMediaViewController implements Initializable {
                     case VIDEO:
                         break;
                     case IMAGE:
-                        Platform.runLater(() -> {                            
+                        Platform.runLater(() -> {
                             imageProgress.progressProperty().unbind();
                             editorImageView.setImage(null);
                             editorImageView.setVisible(true);
@@ -150,12 +151,25 @@ public class EditorMediaViewController implements Initializable {
         editorImageView.setViewport(newViewportRect3);
     }
 
-    public void resetImageView() {
-        this.editorImageView.setImage(null);
+    public void resetUI() {
+        imageProgress.progressProperty().unbind();
+        imageProgress.setProgress(0);
+        editorImageView.setImage(null);
+    }
+
+    private void cancleTask() {
+        if (task != null) {
+            task.cancel();
+            editorImageView.getImage().cancel();
+            resetUI();
+            editMetadataController.cancleTask();
+            editorToolsController.cancleTask();
+        }
     }
 
     @FXML
     private void selectPreviousButtonAction(ActionEvent event) {
+        cancleTask();
         lightTableController.selectPreviousImageInGrid();
         MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
         editMetadataController.setMediaFileForEdit(selectedMediaItem);
@@ -165,10 +179,15 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void selectNextButtonAction(ActionEvent event) {
+        cancleTask();
         lightTableController.selectNextImageInGrid();
+        //MediaFile selectedMediaItem=lightTableController.getNextImageInGrid(selectedMediaFile);
         MediaFile selectedMediaItem = lightTableController.getFactory().getSelectedMediaItem();
         editMetadataController.setMediaFileForEdit(selectedMediaItem);
         editorToolsController.setMediaFileForEdit(selectedMediaItem);
-        setMediaFileForEdit(selectedMediaItem);
+        Platform.runLater(() -> {
+            setMediaFileForEdit(selectedMediaItem);
+        });
+
     }
 }

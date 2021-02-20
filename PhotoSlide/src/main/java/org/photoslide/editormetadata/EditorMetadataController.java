@@ -20,12 +20,16 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.photoslide.ThreadFactoryPS;
@@ -55,10 +59,12 @@ public class EditorMetadataController implements Initializable {
     private HBox hboxImage;
     @FXML
     private ProgressIndicator progressMetaDataIndicator;
+    private Task<Boolean> task;
+    private Task<Boolean> taskMetaData;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMetadataController"));
+        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMetadataController"));
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -68,6 +74,16 @@ public class EditorMetadataController implements Initializable {
         this.metadatacontroller = c;
     }
 
+    public void cancleTask() {
+        if (task != null) {
+            task.cancel();
+            if (taskMetaData != null) {
+                taskMetaData.cancel();
+            }
+            resetUI();
+        }
+    }
+
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
@@ -75,8 +91,8 @@ public class EditorMetadataController implements Initializable {
         imageVIew.setImage(null);
         progressMetaDataIndicator.setVisible(true);
         selectedMediaFile = f;
-        gridPaneMetaInfo.getChildren().clear();
-        Task<Boolean> task = new Task<>() {
+        gridPaneMetaInfo.getChildren().clear();        
+        task = new Task<>() {
 
             @Override
             protected Boolean call() throws Exception {
@@ -86,6 +102,7 @@ public class EditorMetadataController implements Initializable {
                     case IMAGE:
                         Platform.runLater(() -> {
                             imageVIew.setImage(null);
+                            gridPaneMetaInfo.getChildren().clear();
                             progressIndicator.setVisible(true);
                             imageVIew.setImage(selectedMediaFile.getImage());
                         });
@@ -97,10 +114,10 @@ public class EditorMetadataController implements Initializable {
         task.setOnSucceeded((t) -> {
             progressIndicator.setVisible(false);
         });
-        Task<Boolean> taskMetaData = new Task<>() {
+        taskMetaData = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                metadatacontroller.setSelectedFile(selectedMediaFile);
+                metadatacontroller.setActualMediaFile(selectedMediaFile);
                 metadatacontroller.readBasicMetadata(this);
                 return true;
             }
@@ -130,6 +147,9 @@ public class EditorMetadataController implements Initializable {
         if (metadatacontroller.getExifdata() != null) {
             iterator = metadatacontroller.getExifdata().iterator();
             while (iterator.hasNext()) {
+                if (taskMetaData.isCancelled()) {
+                    return;
+                }
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();
                 entries.forEach(e -> {
@@ -137,6 +157,7 @@ public class EditorMetadataController implements Initializable {
                     Label value = new Label(e.getValue());
                     key.setStyle("-fx-font-size:8pt;");
                     value.setStyle("-fx-font-size:8pt;");
+                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
                     gridPaneMetaInfo.addRow(i.get(), key, value);
                     i.addAndGet(1);
                 });
@@ -147,6 +168,9 @@ public class EditorMetadataController implements Initializable {
         if (metadatacontroller.getIptcdata() != null) {
             iterator = metadatacontroller.getIptcdata().iterator();
             while (iterator.hasNext()) {
+                if (taskMetaData.isCancelled()) {
+                    return;
+                }
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();
                 entries.forEach(e -> {
@@ -154,6 +178,7 @@ public class EditorMetadataController implements Initializable {
                     Label value = new Label(e.getValue());
                     key.setStyle("-fx-font-size:8pt;");
                     value.setStyle("-fx-font-size:8pt;");
+                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
                     gridPaneMetaInfo.addRow(i.get(), key, value);
                     i.addAndGet(1);
                 });
@@ -164,6 +189,9 @@ public class EditorMetadataController implements Initializable {
         if (metadatacontroller.getXmpdata() != null) {
             iterator = metadatacontroller.getXmpdata().iterator();
             while (iterator.hasNext()) {
+                if (taskMetaData.isCancelled()) {
+                    return;
+                }
                 MetadataEntry item = iterator.next();
                 Collection<MetadataEntry> entries = item.getMetadataEntries();
                 entries.forEach(e -> {
@@ -171,6 +199,7 @@ public class EditorMetadataController implements Initializable {
                     Label value = new Label(e.getValue());
                     key.setStyle("-fx-font-size:8pt;");
                     value.setStyle("-fx-font-size:8pt;");
+                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
                     gridPaneMetaInfo.addRow(i.get(), key, value);
                     i.addAndGet(1);
                 });
@@ -178,12 +207,17 @@ public class EditorMetadataController implements Initializable {
         }
     }
 
-    public void resetImageView() {
+    public void resetUI() {
         progressMetaDataIndicator.setVisible(true);
+        progressMetaDataIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         gridPaneMetaInfo.setOpacity(0);
         this.imageVIew.setImage(null);
         selectedMediaFile = null;
+        gridPaneMetaInfo.getChildren().clear();
+        while (gridPaneMetaInfo.getRowConstraints().size() > 0) {
+            gridPaneMetaInfo.getRowConstraints().remove(0);
+        }        
     }
 
     public void shutdown() {

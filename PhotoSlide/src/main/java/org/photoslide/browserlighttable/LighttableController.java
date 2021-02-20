@@ -366,7 +366,16 @@ public class LighttableController implements Initializable {
                 nextCell.requestLayout();
             }
         }
-    }        
+    }
+
+    public MediaFile getNextImageInGrid(MediaFile f) {        
+        int actIndex = fullMediaList.indexOf(f);
+        actIndex = actIndex + 1;
+        if (actIndex < fullMediaList.size()) {
+            return fullMediaList.get(actIndex);
+        }
+        return null;
+    }
 
     public void Shutdown() {
         Platform.runLater(() -> {

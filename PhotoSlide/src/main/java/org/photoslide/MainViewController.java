@@ -529,9 +529,9 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void browseButtonAction(ActionEvent event) {
-        editorMetaDataPaneController.resetImageView();
-        editorMediaViewPaneController.resetImageView();
-        editorToolsPaneController.clearCanvas();
+        editorMetaDataPaneController.resetUI();
+        editorMediaViewPaneController.resetUI();
+        editorToolsPaneController.resetUI();
         FadeTransition ft = new FadeTransition(Duration.millis(500), editorMetaDataPane);
         ft.setAutoReverse(false);
         ft.setFromValue(1.0);
@@ -629,7 +629,7 @@ public class MainViewController implements Initializable {
         ft.setToValue(0.0);
         ft.setOnFinished((ActionEvent event1) -> {
             editorMetaDataPane.setOpacity(0);
-            editorMetaDataPaneController.resetImageView();
+            editorMetaDataPaneController.resetUI();
             editorMetaDataPane.setVisible(true);
             collectionsPane.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorMetaDataPane);
@@ -648,7 +648,7 @@ public class MainViewController implements Initializable {
         ft2.setToValue(0.0);
         ft2.setOnFinished((ActionEvent event1) -> {
             editorMediaViewPane.setOpacity(0);
-            editorMediaViewPaneController.resetImageView();
+            editorMediaViewPaneController.resetUI();
             editorMediaViewPane.setVisible(true);
             lighttablePane.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorMediaViewPane);
@@ -667,7 +667,7 @@ public class MainViewController implements Initializable {
         ft3.setToValue(0.0);
         ft3.setOnFinished((ActionEvent event1) -> {
             editorToolsPane.setOpacity(0);
-            editorToolsPaneController.clearCanvas();
+            editorToolsPaneController.resetUI();
             editorToolsPane.setVisible(true);
             metadataPane.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(250), editorToolsPane);

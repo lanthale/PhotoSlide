@@ -199,7 +199,7 @@ public class MetadataController implements Initializable {
     public void injectLightController(LighttableController lightController) {
         this.lightController = lightController;
     }
-
+    
     public void setSelectedFile(MediaFile file) {
         actualMediaFile = file;
         resetGUI();

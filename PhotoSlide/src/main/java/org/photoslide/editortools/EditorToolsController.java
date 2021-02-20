@@ -47,6 +47,7 @@ public class EditorToolsController implements Initializable {
     private AnchorPane histoAnchorPane;
     @FXML
     private ProgressIndicator progressHistogramm;
+    private Task<Boolean> task;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -58,18 +59,25 @@ public class EditorToolsController implements Initializable {
         gc.setLineWidth(1);
     }
 
+    public void cancleTask() {
+        if (task != null) {
+            task.cancel();
+            resetUI();
+        }
+    }
+
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
         }
-        clearCanvas();        
+        resetUI();
         selectedMediaFile = f;
-        Task<Boolean> task = new Task<>() {
+        task = new Task<>() {
             private Image imageWithFilters;
             private ObservableList<ImageFilter> filterList;
 
             @Override
-            protected Boolean call() throws Exception {                
+            protected Boolean call() throws Exception {
                 String url = selectedMediaFile.getImageUrl().toString();
                 Image img = new Image(url, false);
                 imageWithFilters = img;
@@ -103,7 +111,7 @@ public class EditorToolsController implements Initializable {
     }
 
     private void drawHistogram() {
-        clearCanvas();
+        resetUI();
         double height = drawingCanvas.getHeight();
         double width = drawingCanvas.getWidth();
         drawCurve(histogram.getRed(), Color.RED, height, width);
@@ -124,14 +132,14 @@ public class EditorToolsController implements Initializable {
         }
     }
 
-    public void clearCanvas() {
+    public void resetUI() {
         progressHistogramm.setVisible(true);
         drawingCanvas.setOpacity(0);
         gc.setGlobalAlpha(1);
         gc.clearRect(0, 0, drawingCanvas.getWidth(),
                 drawingCanvas.getHeight());
         gc.setGlobalAlpha(OPACITY);
-        selectedMediaFile = null;             
+        selectedMediaFile = null;
     }
 
     public void shutdown() {

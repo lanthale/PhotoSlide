@@ -80,6 +80,12 @@ public class EditorMediaViewController implements Initializable {
                 previousMediaItem();
             }
         });
+        stackPane.setOnSwipeRight((t) -> {
+            nextMediaItem();
+        });
+        stackPane.setOnSwipeLeft((t) -> {
+            previousMediaItem();
+        });
     }
 
     public void injectLightController(LighttableController c) {

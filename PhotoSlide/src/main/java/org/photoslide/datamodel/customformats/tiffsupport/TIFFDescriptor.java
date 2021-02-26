@@ -18,7 +18,7 @@ public class TIFFDescriptor extends ImageDescriptor {
     private static final String[] extensions = {"tif", "tiff"};
 
     private static final Signature[] signatures = {
-        new Signature(hexStringToByteArray("492049")), new Signature(hexStringToByteArray("49492A00")), new Signature(hexStringToByteArray("4D4D002A")), new Signature(hexStringToByteArray("4D4D002B"))};
+        new Signature(hexStringToByteArray("492049")), new Signature(hexStringToByteArray("49492A00")), new Signature(hexStringToByteArray("49492B00")), new Signature(hexStringToByteArray("4D4D002A")), new Signature(hexStringToByteArray("4D4D002B"))};
 
     private static ImageDescriptor theInstance = null;
 

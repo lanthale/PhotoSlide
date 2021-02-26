@@ -40,9 +40,9 @@
             <url>http://repository.springsource.com/maven/bundles/external</url>
         </repository> 
         <repository>
-            <id>local-maven-repo</id>
-            <name>local-maven-repo for boofcv fatjar</name>
-            <url>file://${project.basedir}/src/main/resources/org/photoslide/fatjars/</url>            
+            <id>jcenter</id>
+            <name>jcenter</name>
+            <url>https://jcenter.bintray.com</url>
         </repository>                  
     </repositories>        
     
@@ -434,7 +434,50 @@
 		
                                         }
                                     </moduleInfoSource>
-                                </module>                                                                                              
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>earth.worldwind</groupId>
+                                        <artifactId>worldwind</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module worldwind {
+                                        requires gluegen.rt;
+		
+                                        requires transitive java.desktop;
+                                        requires transitive java.logging;
+                                        requires transitive java.xml;
+                                        requires transitive jogl.all;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.jogamp.jogl</groupId>
+                                        <artifactId>jogl-all</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module jogl.all {
+                                        requires transitive gluegen.rt;
+                                        requires transitive java.desktop;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.jogamp.gluegen</groupId>
+                                        <artifactId>gluegen-rt</artifactId>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module gluegen.rt {
+                                        requires java.desktop;
+		
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                                                                              
                                                                                                                                                                                                                                                 
                             </modules>                                                                             
                             <module>                                                                   
@@ -635,7 +678,28 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>2.12.0</version>
-        </dependency>        
+        </dependency> 
+        <dependency>
+            <groupId>earth.worldwind</groupId>
+            <artifactId>worldwind</artifactId>
+            <version>2.2.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency> 
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt</artifactId>
+            <version>2.3.2</version>
+        </dependency>
         
     </dependencies>
     
@@ -761,7 +825,10 @@
                                         <module>lombok</module>
                                         <module>com.fasterxml.jackson.databind</module>
                                         <module>com.fasterxml.jackson.core</module>
-                                        <module>com.fasterxml.jackson.annotation</module>                                          
+                                        <module>com.fasterxml.jackson.annotation</module> 
+                                        <module>worldwind</module>                                         
+                                        <module>jogl.all</module>
+                                        <module>gluegen.rt</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 

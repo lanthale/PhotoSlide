@@ -8,17 +8,25 @@ package org.photoslide.datamodel.customformats.tiffsupport;
 import com.sun.javafx.iio.ImageFrame;
 import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.common.ImageLoaderImpl;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.stage.Screen;
 import javax.imageio.ImageIO;
+import javax.imageio.stream.FileCacheImageInputStream;
+import org.photoslide.Utility;
 import org.photoslide.datamodel.customformats.dimension.Dimension;
 import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
 
 /**
  * Class to load the image requested by the file
+ *
  * @author selfemp
  */
 public class TIFFImageLoader extends ImageLoaderImpl {
@@ -91,9 +99,20 @@ public class TIFFImageLoader extends ImageLoaderImpl {
     }
 
     private BufferedImage getTranscodedImage(float width, float height)
-            throws IOException {
-
-        return ImageIO.read(input);
+            throws IOException {        
+        BufferedImage read;
+        try {
+            FileCacheImageInputStream fileCache = new FileCacheImageInputStream​(input, new File(Utility.getAppData()));
+            if (width <= 300) {                
+                read = resize(ImageIO.read(fileCache), (int) width, (int) height);
+            } else {                
+                read = ImageIO.read(fileCache);
+            }
+        } catch (IOException e) {
+            Logger.getLogger(TIFFImageLoader.class.getName()).log(Level.FINE, "Error reading TIFF file format!");
+            throw new IOException(e);
+        }
+        return read;
     }
 
     private int getStride(BufferedImage bufferedImage) {
@@ -128,6 +147,24 @@ public class TIFFImageLoader extends ImageLoaderImpl {
 
             byteBuffer.clear();
         }
+    }
+
+    private BufferedImage resize(BufferedImage image, int scaledWidth, int scaledHeight) {
+        double imageHeight = image.getHeight();
+        double imageWidth = image.getWidth();
+
+        if (imageHeight / scaledHeight > imageWidth / scaledWidth) {
+            scaledWidth = (int) (scaledHeight * imageWidth / imageHeight);
+        } else {
+            scaledHeight = (int) (scaledWidth * imageHeight / imageWidth);
+        }
+
+        Image tmp = image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_FAST);
+        BufferedImage resized = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = resized.createGraphics();
+        g2d.drawImage(tmp, 0, 0, null);
+        g2d.dispose();
+        return resized;
     }
 
 }

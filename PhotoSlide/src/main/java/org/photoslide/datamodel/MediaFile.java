@@ -129,7 +129,7 @@ public class MediaFile {
         } else {
             return this.image;
         }
-    }
+    }        
 
     public void setImage(Image image) {
         this.image = image;

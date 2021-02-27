@@ -162,8 +162,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
             prgInd.maxHeightProperty().bind(imageView.fitHeightProperty().multiply(0.6));
             prgInd.maxWidthProperty().bind(imageView.fitWidthProperty().multiply(0.6));
         } else {
-            prgInd.maxHeightProperty().bind(mediaview.fitHeightProperty().multiply(0.6));
-            prgInd.maxWidthProperty().bind(mediaview.fitWidthProperty().multiply(0.6));
+            prgInd.maxHeightProperty().bind(mediaview.fitHeightProperty().multiply(0.5));
+            prgInd.maxWidthProperty().bind(mediaview.fitWidthProperty().multiply(0.5));
         }
         rootPane.getChildren().clear();
         rootPane.getChildren().add(prgInd);

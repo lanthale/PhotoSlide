@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_11">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-base:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-base:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-fxml:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-fxml:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-graphics:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-graphics:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-media:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-media:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-controls:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-controls:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-swing:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.openjfx:javafx-swing:mac:16-ea+7" level="project" />
+    <orderEntry type="library" name="Maven: org.controlsfx:controlsfx:11.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.kordamp.ikonli:ikonli-core:12.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.kordamp.ikonli:ikonli-javafx:12.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.kordamp.ikonli:ikonli-themify-pack:12.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.kordamp.ikonli:ikonli-fontawesome-pack:12.1.0" level="project" />
+    <orderEntry type="library" name="Maven: com.github.dragon66:icafe:1.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: com.github.jai-imageio:jai-imageio-core:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.imageio:imageio-core:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.common:common-lang:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.common:common-io:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.common:common-image:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.imageio:imageio-tiff:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.imageio:imageio-psd:3.6" level="project" />
+    <orderEntry type="library" name="Maven: com.twelvemonkeys.imageio:imageio-metadata:3.6" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-simple:2.0.0-alpha1" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:2.0.0-alpha1" level="project" />
+    <orderEntry type="library" name="Maven: com.h2database:h2:1.4.200" level="project" />
+    <orderEntry type="library" name="Maven: org.ejml:ejml-simple:0.40" level="project" />
+    <orderEntry type="library" name="Maven: org.ejml:ejml-core:0.40" level="project" />
+    <orderEntry type="library" name="Maven: javax.media.jai:com.springsource.javax.media.jai.core:1.1.3" level="project" />
+    <orderEntry type="library" name="Maven: org.projectlombok:lombok:1.18.16" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.12.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.12.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.12.0" level="project" />
+    <orderEntry type="library" name="Maven: earth.worldwind:worldwind:2.2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.jogamp.jogl:jogl-all:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: org.jogamp.gluegen:gluegen-rt:2.3.2" level="project" />
+  </component>
+</module>

@@ -1,0 +1,29 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PhotoSlide [process-classes...]" type="MavenRunConfiguration" factoryName="Maven" nameIsGenerated="true">
+    <MavenSettings>
+      <option name="myGeneralSettings" />
+      <option name="myRunnerSettings" />
+      <option name="myRunnerParameters">
+        <MavenRunnerParameters>
+          <option name="profiles">
+            <set />
+          </option>
+          <option name="goals">
+            <list>
+              <option value="process-classes" />
+              <option value="org.codehaus.mojo:exec-maven-plugin:1.5.0:exec" />
+              <option value="-Dexec.args=--add-exports=java.desktop/sun.awt.image=PhotoSlide --add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls --add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls --add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls --module-path ${project.build.directory}/modules --module ${moduleName}/${mainClass}" />
+            </list>
+          </option>
+          <option name="pomFileName" />
+          <option name="profilesMap">
+            <map />
+          </option>
+          <option name="resolveToWorkspace" value="false" />
+          <option name="workingDirPath" value="$PROJECT_DIR$" />
+        </MavenRunnerParameters>
+      </option>
+    </MavenSettings>
+    <method v="2" />
+  </configuration>
+</component>

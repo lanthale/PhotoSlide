@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.github.dragon66:icafe:1.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/dragon66/icafe/1.1-SNAPSHOT/icafe-1.1-20190902.150913-102.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/dragon66/icafe/1.1-SNAPSHOT/icafe-1.1-20190902.150913-102-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/dragon66/icafe/1.1-SNAPSHOT/icafe-1.1-20190902.150913-102-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,39 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="MavenRunConfiguration" factoryName="Maven">
+    <MavenSettings>
+      <option name="myGeneralSettings" />
+      <option name="myRunnerSettings" />
+      <option name="myRunnerParameters">
+        <MavenRunnerParameters>
+          <option name="profiles">
+            <set />
+          </option>
+          <option name="goals">
+            <list>
+              <option value="--add-exports=java.desktop/sun.awt.image=PhotoSlide" />
+              <option value="--add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide" />
+              <option value="--add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide" />
+              <option value="--add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide" />
+              <option value="--add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide" />
+              <option value="--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls" />
+              <option value="--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls" />
+              <option value="--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls" />
+              <option value="--add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls" />
+              <option value="--module-path" />
+              <option value="${project.build.directory}/modules" />
+              <option value="--module" />
+              <option value="${moduleName}/${mainClass} -Dexec.executable=/Library/Java/JavaVirtualMachines/adoptopenjdk-15.jdk/Contents/Home/bin/java --errors -e process-classes org.codehaus.mojo:exec-maven-plugin:1.5.0:exec" />
+            </list>
+          </option>
+          <option name="pomFileName" />
+          <option name="profilesMap">
+            <map />
+          </option>
+          <option name="resolveToWorkspace" value="false" />
+          <option name="workingDirPath" value="" />
+        </MavenRunnerParameters>
+      </option>
+    </MavenSettings>
+    <method v="2" />
+  </configuration>
+</component>

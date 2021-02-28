@@ -18,27 +18,29 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
-
+    
     public Image loadImage(MediaFile fileItem) {
         Image retImage = null;
-        try {
+        try {            
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 300, 300, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
                 if ((Double) t1 == 1.0 && !iImage.isError()) {
                     fileItem.setLoading(false);
                 }
-                if (iImage.isError()) {
-                    System.out.println("Error");
+                if (iImage.isError()) {                    
                     fileItem.setLoading(false);
                 }
             });
+            if (fileItem.getPathStorage().toUri().toURL().toString().contains(".tif")) {                
+                fileItem.setLoading(false);
+            }            
             return iImage;
         } catch (MalformedURLException ex) {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
             return retImage;
         }
     }
-
+    
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;
         try {

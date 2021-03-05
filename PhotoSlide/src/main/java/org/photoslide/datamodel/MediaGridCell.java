@@ -33,13 +33,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;
-    private boolean loading;
+    private ProgressIndicator prgInd;    
     private FontIcon filmIcon;
 
     public MediaGridCell() {
-        this.setId("MediaGridCell");
-        loading = true;
+        this.setId("MediaGridCell");        
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -61,6 +59,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
         dummyIcon = new FontIcon("fa-file-movie-o");
+        rootPane.getChildren().add(prgInd);
         PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished((t) -> {
             layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
@@ -96,8 +95,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }
-            loading = item.isLoading();
+            }            
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);
@@ -114,16 +112,16 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public final void setImage(MediaFile item) {
-        if (item.isLoading() == true) {
-            setLoadingNode(item.getMediaType());
-        } else {
+        if (item.isLoading() == true) {            
+            setLoadingNode(item.getMediaType());            
+        } else {            
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
             item.setImage(item.setFilters());
 
             //calc cropview based on small imageview
-            //imageView.setViewport(cropView);
+            //imageView.setViewport(cropView);            
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
             imageView.setImage(item.getImage());
@@ -132,7 +130,6 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (item.getDeletedProperty().getValue() == true) {
                 setDeletedNode();
             }
-            item.setLoading(false);
         }
     }
 
@@ -151,7 +148,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
-            item.setLoading(false);
+            //item.setLoading(false);
         }
     }
 

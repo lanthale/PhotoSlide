@@ -5,6 +5,7 @@
  */
 package org.photoslide.browserlighttable;
 
+import java.awt.image.BufferedImage;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
@@ -82,6 +83,19 @@ import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+/*import org.openimaj.image.ImageUtilities;
+import org.openimaj.image.processing.face.detection.DetectedFace;
+import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
+import boofcv.abst.tracker.TrackerObjectQuad;
+import boofcv.factory.tracker.FactoryTrackerObjectQuad;
+import boofcv.io.MediaManager;
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.io.image.SimpleImageSequence;
+import boofcv.io.wrapper.DefaultMediaManager;
+import boofcv.misc.BoofMiscOps;
+import boofcv.struct.image.GrayU8;
+import boofcv.struct.image.ImageBase;
+import georegression.struct.shapes.Quadrilateral_F64;*/
 /**
  *
  * @author selfemp
@@ -214,7 +228,13 @@ public class LighttableController implements Initializable {
      * @param sPath The root path where all collections via directories exists
      */
     public void setSelectedPath(Path sPath) {
-        imageGridPane.getChildren().clear();
+        if (Platform.isFxApplicationThread()) {
+            imageGridPane.getChildren().clear();
+        } else {
+            Platform.runLater(() -> {
+                imageGridPane.getChildren().clear();
+            });
+        }
         if (taskMLoading != null) {
             taskMLoading.cancel();
         }
@@ -290,7 +310,9 @@ public class LighttableController implements Initializable {
         executor.submit(taskMLoading);
 
         imageGrid.setCellFactory(factory);
-        imageGrid.requestFocus();
+        Platform.runLater(() -> {
+            imageGrid.requestFocus();
+        });        
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -366,7 +388,7 @@ public class LighttableController implements Initializable {
                 nextCell.requestLayout();
             }
         }
-    }    
+    }
 
     public void Shutdown() {
         Platform.runLater(() -> {

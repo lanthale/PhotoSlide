@@ -661,8 +661,8 @@ public class MediaFile {
         return loading;
     }
 
-    public void setLoading(boolean loading) {
-        this.loading = loading;
+    public void setLoading(boolean value) {        
+        this.loading = value;
     }
 
 }

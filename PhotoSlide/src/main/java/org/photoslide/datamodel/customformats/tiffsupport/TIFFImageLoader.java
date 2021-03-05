@@ -6,6 +6,7 @@
 package org.photoslide.datamodel.customformats.tiffsupport;
 
 import com.sun.javafx.iio.ImageFrame;
+import com.sun.javafx.iio.ImageMetadata;
 import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.common.ImageLoaderImpl;
 import java.awt.Graphics2D;
@@ -14,14 +15,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.stage.Screen;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.FileCacheImageInputStream;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.customformats.dimension.Dimension;
@@ -45,14 +49,28 @@ public class TIFFImageLoader extends ImageLoaderImpl {
 
         if (input == null) {
             throw new IllegalArgumentException("input == null!");
-        }
-
+        }                
         this.input = input;
         this.dimensionProvider = dimensionProvider;
     }
 
     @Override
     public void dispose() {
+    }
+
+    @Override
+    protected void updateImageMetadata(ImageMetadata im) {
+        super.updateImageMetadata(im);
+    }
+
+    @Override
+    protected void updateImageProgress(float f) {        
+        super.updateImageProgress(f);
+    }
+
+    @Override
+    protected void emitWarning(String string) {
+        super.emitWarning(string); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -66,16 +84,19 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         float imageWidth = width > 0 ? width : (float) fallbackDimension.getWidth();
         float imageHeight = height > 0 ? height : (float) fallbackDimension.getHeight();
 
+        ImageMetadata md = new ImageMetadata(null, true,
+                null, null, null, null, null,
+                width, height, null, null, null);
+
+        updateImageMetadata(md);
+        
         try {
             return createImageFrame(imageWidth, imageHeight, getPixelScale());
         } catch (IOException ex) {
             throw new IOException(ex);
         }
     }
-
-    /*private Document createDocument() throws IOException {
-        return new TIFFImageLoaderFactory(XMLResourceDescriptor.getXMLParserClassName()).createDocument(null, this.input);
-    }*/
+    
     public float getPixelScale() {
         if (maxPixelScale == 0) {
             maxPixelScale = calculateMaxRenderScale();
@@ -93,7 +114,7 @@ public class TIFFImageLoader extends ImageLoaderImpl {
     }
 
     private ImageFrame createImageFrame(float width, float height, float pixelScale)
-            throws IOException {
+            throws IOException {        
         BufferedImage bufferedImage = getTranscodedImage(width * pixelScale, height * pixelScale);
         ByteBuffer imageData = getImageData(bufferedImage);
 
@@ -106,12 +127,12 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         BufferedImage read;
         try {
             FileCacheImageInputStream fileCache = new FileCacheImageInputStream​(input, new File(Utility.getAppData()));
-            if (width <= 300) {                
-                BufferedImage rBufImg = readFile(fileCache);                
-                read = resize(rBufImg, (int) width, (int) height);                
+            if (width <= 300) {
+                BufferedImage rBufImg = readFile(fileCache);
+                read = resize(rBufImg, (int) width, (int) height);
             } else {
-                BufferedImage rBufImg = readFile(fileCache);                
-                read = resize(rBufImg, (int) width*4, (int) height*4);
+                BufferedImage rBufImg = readFile(fileCache);
+                read = resize(rBufImg, (int) width * 4, (int) height * 4);
             }
         } catch (IOException e) {
             Logger.getLogger(TIFFImageLoader.class.getName()).log(Level.FINE, "Error reading TIFF file format!");
@@ -156,7 +177,48 @@ public class TIFFImageLoader extends ImageLoaderImpl {
             //param.setDestination(image);
             param.setSourceSubsampling(sub, sub, 0, 0);
 
-            image = reader.read(0, param);            
+            reader.addIIOReadProgressListener(new IIOReadProgressListener() {
+                @Override
+                public void imageComplete(ImageReader source) {
+                    //updateImageProgress(1.0f);
+                }
+
+                @Override
+                public void imageProgress(ImageReader source, float percentageDone) {                    
+                    updateImageProgress(percentageDone/100);
+                }
+
+                @Override
+                public void imageStarted(ImageReader source, int imageIndex) {
+                    //updateImageProgress(0f);
+                }
+
+                @Override
+                public void readAborted(ImageReader source) {                    
+                }
+
+                @Override
+                public void sequenceComplete(ImageReader source) {                    
+                }
+
+                @Override
+                public void sequenceStarted(ImageReader source, int minIndex) {                
+                }
+
+                @Override
+                public void thumbnailComplete(ImageReader source) {                    
+                }
+
+                @Override
+                public void thumbnailProgress(ImageReader source, float percentageDone) {                    
+                }
+
+                @Override
+                public void thumbnailStarted(ImageReader source, int imageIndex, int thumbnailIndex) {                    
+                }
+            });
+
+            image = reader.read(0, param);
         } finally {
             // Dispose reader in finally block to avoid memory leaks
             reader.dispose();
@@ -219,6 +281,33 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         g2d.drawImage(tmp, 0, 0, null);
         g2d.dispose();*/
         return resized;
+    }
+
+    private static class Lock {
+
+        private boolean locked;
+
+        public Lock() {
+            locked = false;
+        }
+
+        public synchronized boolean isLocked() {
+            return locked;
+        }
+
+        public synchronized void lock() {
+            if (locked) {
+                throw new IllegalStateException("Recursive loading is not allowed.");
+            }
+            locked = true;
+        }
+
+        public synchronized void unlock() {
+            if (!locked) {
+                throw new IllegalStateException("Invalid loader state.");
+            }
+            locked = false;
+        }
     }
 
 }

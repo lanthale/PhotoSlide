@@ -95,8 +95,8 @@ public class MediaLoadingTask extends Task<Void> {
                                 m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                 Platform.runLater(() -> {
                                     fullMediaList.add(m);
-                                });                                
-                                m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());                                
+                                });
+                                m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());
                             } else if (FileTypes.isValidImge(fileItem.toString())) {
                                 m.setMediaType(MediaFile.MediaTypes.IMAGE);
                                 if (sort.equalsIgnoreCase("Capture time")) {
@@ -106,11 +106,11 @@ public class MediaLoadingTask extends Task<Void> {
                                     } catch (IOException ex) {
                                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                                     }
-                                }  
+                                }
+                                m.setImage(fileLoader.loadImage(m));
                                 Platform.runLater(() -> {
                                     fullMediaList.add(m);
-                                });
-                                m.setImage(fileLoader.loadImage(m));                                
+                                });                                                                
                             } else {
                                 m.setMediaType(MediaFile.MediaTypes.NONE);
                             }
@@ -133,7 +133,5 @@ public class MediaLoadingTask extends Task<Void> {
         }
         return null;
     }
-
-    
 
 }

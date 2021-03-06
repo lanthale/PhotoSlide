@@ -237,6 +237,13 @@ public class LighttableController implements Initializable {
         }
         if (taskMLoading != null) {
             taskMLoading.cancel();
+            if (fullMediaList != null) {
+                for (MediaFile mediaFile : fullMediaList) {
+                    if (mediaFile.getImage() != null) {
+                        mediaFile.getImage().cancel();
+                    }
+                }
+            }
         }
         if (factory != null) {
             factory.cancleTask();
@@ -312,7 +319,7 @@ public class LighttableController implements Initializable {
         imageGrid.setCellFactory(factory);
         Platform.runLater(() -> {
             imageGrid.requestFocus();
-        });        
+        });
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();

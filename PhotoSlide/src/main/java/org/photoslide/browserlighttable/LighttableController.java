@@ -228,6 +228,15 @@ public class LighttableController implements Initializable {
      * @param sPath The root path where all collections via directories exists
      */
     public void setSelectedPath(Path sPath) {
+        Platform.runLater(() -> {
+            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getStatusLabelLeft().setText("Scanning...");
+            mainController.getProgressPane().setVisible(true);
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressbarLabel().setText("Retrieving files...");
+        });
         if (Platform.isFxApplicationThread()) {
             imageGridPane.getChildren().clear();
         } else {
@@ -261,14 +270,7 @@ public class LighttableController implements Initializable {
             detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             mainController.handleMenuDisable(true);
             pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
-            //sortOrderComboBox.setDisable(true);
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Scanning...");
-            mainController.getProgressPane().setVisible(true);
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().setText("Retrieving files...");
+            //sortOrderComboBox.setDisable(true);            
             mainController.getStatusLabelRight().textProperty().unbind();
             mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
         });

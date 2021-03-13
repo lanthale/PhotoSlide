@@ -6,7 +6,7 @@
     <version>1.0.15-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>16-ea+7</javafx.version>
+        <javafx.version>16</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

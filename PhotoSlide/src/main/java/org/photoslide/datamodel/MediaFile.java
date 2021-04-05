@@ -337,10 +337,9 @@ public class MediaFile {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + Objects.hashCode(this.name);
-        hash = 79 * hash + Objects.hashCode(this.pathStorage);
-        hash = 79 * hash + Objects.hashCode(this.videoSupported);
-        hash = 79 * hash + Objects.hashCode(this.mediaType);
+        hash = 23 * hash + Objects.hashCode(this.name);
+        hash = 23 * hash + Objects.hashCode(this.pathStorage);
+        hash = 23 * hash + Objects.hashCode(this.videoSupported);
         return hash;
     }
 
@@ -365,11 +364,12 @@ public class MediaFile {
         if (this.videoSupported != other.videoSupported) {
             return false;
         }
-        if (this.mediaType != other.mediaType) {
-            return false;
-        }
         return true;
     }
+
+    
+
+    
 
     public MediaTypes getMediaType() {
         return mediaType;

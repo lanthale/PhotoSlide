@@ -10,7 +10,6 @@ import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,9 +23,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaException;
 import org.photoslide.datamodel.MediaFileLoader;
 
 /**
@@ -46,7 +42,7 @@ public class MediaLoadingTask extends Task<Void> {
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
-        fileLoader = new MediaFileLoader();
+        fileLoader = new MediaFileLoader(factory);
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
         sort = sortParm;

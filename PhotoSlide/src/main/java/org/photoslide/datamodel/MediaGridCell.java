@@ -33,11 +33,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;    
+    private ProgressIndicator prgInd;
     private FontIcon filmIcon;
 
     public MediaGridCell() {
-        this.setId("MediaGridCell");        
+        this.setId("MediaGridCell");
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -95,7 +95,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }            
+            }
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);
@@ -112,13 +112,14 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public final void setImage(MediaFile item) {
-        if (item.isLoading() == true) {            
-            setLoadingNode(item.getMediaType());            
+        if (item.isLoading() == true) {
+            setLoadingNode(item.getMediaType());
         } else {            
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
-            }
-            item.setImage(item.setFilters());
+            }            
+
+            item.setImage(item.setFilters());                       
 
             //calc cropview based on small imageview
             //imageView.setViewport(cropView);            

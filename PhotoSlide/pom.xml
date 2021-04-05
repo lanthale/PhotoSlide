@@ -10,8 +10,8 @@
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>        
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>        
     </properties>
     
     <repositories>
@@ -92,22 +92,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>${maven.compiler.target}</release>                    
-                </configuration>
-                <!--<executions>
-                    <execution>
-                        <id>patch-compile</id>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <compilerArgs>                                
-                                <arg>patch-module=boofcv-core=boofcv-feature,boofcv-geo,boofcv-io,boofcv-ip,boofcv-ip-multiview,boofcv-learning,boofcv-recognition,boofcv-sfm,boofcv-types</arg>                                
-                            </compilerArgs>
-                        </configuration>
-                    </execution>
-                </executions>-->
+                    <release>${maven.compiler.target}</release>   
+                    <fork>true</fork>
+                    <compilerArgs>
+                        <arg>-J--illegal-access=permit</arg>   
+                        <arg>--add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx</arg>                                
+                        <arg>--add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx</arg>                     
+                    </compilerArgs>                                     
+                </configuration>                
+                
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -714,7 +707,11 @@
             <artifactId>gluegen-rt</artifactId>
             <version>2.3.2</version>
         </dependency>
-        
+        <dependency>
+            <groupId>org.librawfx</groupId>
+            <artifactId>LibRawFX</artifactId>
+            <version>1.0.2</version>
+        </dependency>
         
         
     </dependencies>
@@ -845,6 +842,7 @@
                                         <module>worldwind</module>                                         
                                         <module>jogl.all</module>
                                         <module>gluegen.rt</module>
+                                        <module>org.librawfx</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 
@@ -884,7 +882,7 @@
                                         <argument>--name</argument>
                                         <argument>${project.name}</argument>
                                         <argument>--runtime-image</argument>
-                                        <argument>${project.build.directory}/jlink-image</argument>
+                                        <argument>${project.build.directory}/jlink-image</argument>                                        
                                         <argument>--java-options</argument>
                                         <argument>--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls</argument>                                        
                                         <argument>--java-options</argument>    

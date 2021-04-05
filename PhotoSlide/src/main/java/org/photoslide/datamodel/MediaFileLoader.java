@@ -8,9 +8,12 @@ package org.photoslide.datamodel;
 import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.PauseTransition;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
+import javafx.util.Duration;
+import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
 /**
@@ -19,13 +22,35 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  */
 public class MediaFileLoader {
 
+    private final MediaGridCellFactory factory;
+
+    public MediaFileLoader(MediaGridCellFactory factory) {
+        this.factory = factory;
+    }
+
+    public MediaFileLoader() {
+        this.factory = null;
+    }
+
     public Image loadImage(MediaFile fileItem) {
         Image retImage = null;
         try {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 300, 300, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
-                if (t1.doubleValue() > 0.98) {
-                    fileItem.setLoading(false);
+                if (t1.doubleValue() == 1.0) {
+                    fileItem.setLoading(false);                    
+                    /*System.out.println("ITEM: " + fileItem.getName());                    
+                    System.out.println("error loading: " + iImage.errorProperty().toString());
+                    if (iImage.getException() != null) {
+                        System.out.println("exceptions loading: " + iImage.getException().getMessage());
+                        iImage.getException().printStackTrace();
+                    }*/
+                    if (factory != null) {                        
+                        MediaGridCell mediaCellForMediaFile = factory.getMediaCellForMediaFile(fileItem);
+                        if (mediaCellForMediaFile != null) {
+                            mediaCellForMediaFile.requestLayout();
+                        }                        
+                    }
                 }
             });
             return iImage;

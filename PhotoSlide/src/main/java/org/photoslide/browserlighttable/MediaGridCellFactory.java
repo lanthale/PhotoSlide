@@ -146,7 +146,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             manageGUISelection(t, cell);
             handleGridCellSelection(t);
             t.consume();
-        });
+        });        
         return cell;
     }
 

@@ -12,7 +12,7 @@
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <?import org.kordamp.ikonli.javafx.StackedFontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
     <children>
         <Label layoutX="16.0" layoutY="14.0" text="Photo store" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
             <font>
@@ -46,6 +46,11 @@
                               <FontIcon iconLiteral="ti-plus" iconSize="6" />
                            </children>
                         </StackedFontIcon>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#renameEventAction" text="Rename event">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-edit" />
                      </graphic>
                   </MenuItem>
                   <MenuItem mnemonicParsing="false" onAction="#cutCollectionAction" text="Cut event">

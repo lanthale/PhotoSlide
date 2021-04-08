@@ -69,6 +69,7 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.TextAlignment;
@@ -220,7 +221,7 @@ public class CollectionsController implements Initializable {
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setText("Scanning...");
         });
-        try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+        try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
             boolean res = true;
             if (entry.getFileName().toString().startsWith(".")) {
                 res = false;
@@ -256,9 +257,9 @@ public class CollectionsController implements Initializable {
     private void createTree(Path root_file, TreeItem parent) throws IOException {
         if (Files.isDirectory(root_file)) {
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
-            TreeItem placeholder = new TreeItem("Please wait...");
+            TreeItem placeholder = new TreeItem(new PathItem(Paths.get("Please wait...")));
             parent.getChildren().add(node);
-            try ( DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+            try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
                 boolean res = true;
                 if (entry.getFileName().toString().startsWith(".")) {
                     res = false;
@@ -408,6 +409,17 @@ public class CollectionsController implements Initializable {
             protected TreeView<PathItem> call() throws Exception {
                 TreeItem<PathItem> root = new TreeItem<>(new PathItem(Paths.get(path)));
                 TreeView<PathItem> dirTreeView = new TreeView<>();
+                dirTreeView.setEditable(true);
+                dirTreeView.setCellFactory(TreeCellTextField.forTreeView(new PathItemConverter()));
+                dirTreeView.setOnEditCommit((t) -> {
+                    PathItem newValue = t.getNewValue();                    
+                    PathItem oldValue = t.getOldValue();                    
+                    try {
+                        Files.move(oldValue.getFilePath(), oldValue.getFilePath().resolve(newValue.getFilePath()));
+                    } catch (IOException ex) {                        
+                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                });
                 dirTreeView.setShowRoot(false);
                 dirTreeView.setDisable(true);
                 Platform.runLater(() -> {
@@ -605,9 +617,9 @@ public class CollectionsController implements Initializable {
         result.ifPresent((t) -> {
             Path filePath = selectedItems.get(0).getValue().getFilePath();
             String newPath = filePath.toString() + File.separator + t;
-            Paths.get(newPath).toFile().mkdir();                 
+            Paths.get(newPath).toFile().mkdir();
             TreeItem<PathItem> newChild = new TreeItem<>(new PathItem(Paths.get(newPath)));
-            parent.getChildren().add(newChild);            
+            parent.getChildren().add(newChild);
         });
     }
 
@@ -834,7 +846,7 @@ public class CollectionsController implements Initializable {
             titlePane.setExpanded(true);
             TreeView<PathItem> treeView = (TreeView<PathItem>) titlePane.getContent();
             ObservableList<TreeItem<PathItem>> children = treeView.getRoot().getChildren();
-            for (TreeItem<PathItem> treeItem : children) {                
+            for (TreeItem<PathItem> treeItem : children) {
                 selectPath(treeItem, parent.toString(), treeView, finishSearch);
                 if (finishSearch.get()) {
                     break;
@@ -866,6 +878,26 @@ public class CollectionsController implements Initializable {
                 pause.play();
             }
         }
+    }
+
+    @FXML
+    private void renameEventAction(ActionEvent event) {
+        /*Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+        alert = Utility.setDefaultButton(alert, ButtonType.YES);
+        alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        alert.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.YES) {
+            return true;
+        } else {
+            return false;
+        }*/
     }
 
 }

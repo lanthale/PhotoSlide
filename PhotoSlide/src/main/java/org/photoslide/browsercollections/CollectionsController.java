@@ -415,8 +415,9 @@ public class CollectionsController implements Initializable {
                     PathItem newValue = t.getNewValue();                    
                     PathItem oldValue = t.getOldValue();                    
                     try {
-                        Files.move(oldValue.getFilePath(), oldValue.getFilePath().resolve(newValue.getFilePath()));
-                    } catch (IOException ex) {                        
+                        Files.move(oldValue.getFilePath(), oldValue.getFilePath().resolveSibling(newValue.getFilePath()));
+                    } catch (IOException ex) {                                                                        
+                        ((TreeCellTextField)dirTreeView.getCellFactory()).cancelEdit();
                         Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 });

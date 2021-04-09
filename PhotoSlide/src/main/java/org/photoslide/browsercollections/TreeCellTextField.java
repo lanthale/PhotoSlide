@@ -36,8 +36,9 @@ public class TreeCellTextField extends TextFieldTreeCell<PathItem> {
         setText(null);
         setGraphic(textField);
         textField.selectAll();
-    }     
-
+    }   
+    
+    
     private void createTextField() {
         textField = new TextField(getString());
         textField.setOnKeyReleased((KeyEvent t) -> {

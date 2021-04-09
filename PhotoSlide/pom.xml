@@ -707,11 +707,11 @@
             <artifactId>gluegen-rt</artifactId>
             <version>2.3.2</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
             <version>1.0.2</version>
-        </dependency>
+        </dependency>-->
         
         
     </dependencies>
@@ -726,7 +726,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>pkg</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
@@ -842,7 +842,7 @@
                                         <module>worldwind</module>                                         
                                         <module>jogl.all</module>
                                         <module>gluegen.rt</module>
-                                        <module>org.librawfx</module>
+                                        <!--<module>org.librawfx</module>-->
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 

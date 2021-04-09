@@ -726,7 +726,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>app-image</bundle.type>
+                <bundle.type>pkg</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                

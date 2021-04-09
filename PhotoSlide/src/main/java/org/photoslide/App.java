@@ -90,7 +90,8 @@ public class App extends Application {
         notifyPreloader(new ProgressNotification(0.7));        
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();        
-        RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
+        //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
+        RAWImageLoaderFactory.install();
         notifyPreloader(new ProgressNotification(0.8));
     }
 

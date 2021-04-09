@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.0.15</version>        
+    <version>1.0.16-SNAPSHOT</version>        
     
     <properties>
         <javafx.version>16</javafx.version>
@@ -707,11 +707,11 @@
             <artifactId>gluegen-rt</artifactId>
             <version>2.3.2</version>
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
             <version>1.0.2</version>
-        </dependency>-->
+        </dependency>
         
         
     </dependencies>
@@ -726,7 +726,7 @@
                 </os>
             </activation>
             <properties>
-                <bundle.type>pkg</bundle.type>
+                <bundle.type>app-image</bundle.type>
                 <exec.executable>${java.home}/bin/java</exec.executable>
                 <installericon>${project.resources[0].directory}/org/photoslide/img/osx/pkgresource</installericon>
                 <icons>${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns</icons>                
@@ -842,7 +842,8 @@
                                         <module>worldwind</module>                                         
                                         <module>jogl.all</module>
                                         <module>gluegen.rt</module>
-                                        <!--<module>org.librawfx</module>-->
+                                        <module>jdk.incubator.foreign</module>
+                                        <module>org.librawfx</module>
                                     </modules>                                                                                                          
                                 </configuration>
                             </execution> 
@@ -884,6 +885,8 @@
                                         <argument>--runtime-image</argument>
                                         <argument>${project.build.directory}/jlink-image</argument>                                        
                                         <argument>--java-options</argument>
+                                        <argument>--add-modules jdk.incubator.foreign -Dforeign.restricted=permit</argument>
+                                        <argument>--java-options</argument>
                                         <argument>--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls</argument>                                        
                                         <argument>--java-options</argument>    
                                         <argument>--add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls</argument>                                        
@@ -899,6 +902,10 @@
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide</argument>
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide</argument>                                        
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx</argument>                                        
+                                        <argument>--java-options</argument>
+                                        <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx</argument>                                                                                
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>${param3}</argument>

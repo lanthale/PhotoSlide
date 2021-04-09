@@ -29,6 +29,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ServiceRegistry;
 import org.h2.fulltext.FullText;
+import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
@@ -88,8 +89,8 @@ public class App extends Application {
         setDefaultTIFFCodec();
         notifyPreloader(new ProgressNotification(0.7));        
         TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install();
-        //RAWImageLoaderFactory.install();
+        PSDImageLoaderFactory.install();        
+        RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
         notifyPreloader(new ProgressNotification(0.8));
     }
 

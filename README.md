@@ -29,7 +29,7 @@ https://github.com/lanthale/PhotoSlide/releases/latest
 The software is not notarized with developer accounts on OSX/Windows.
 
 - Windows: Execute the installer. If defender is poping up please click on "more info" and then on "run anyway"
-- OSX: Execute the installer. The first time right click on the icon in Application folder and select "open"
+- OSX: Goto in the download folder in Finder and right click on the installer file and click "Open". 
 On OSX 11.x open the app and afterwards goto system settings - general tab in the Security & Privacy pane to instruct macOS to ignore its lack of notarization - click on "open anyway"
 - Linux: 
   - Download the deb package

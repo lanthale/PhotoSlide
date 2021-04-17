@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.0.16</version>        
+    <version>1.0.17</version>        
     
     <properties>
-        <javafx.version>16</javafx.version>
+        <javafx.version>17-ea+7</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -710,7 +710,7 @@
         <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
-            <version>1.0.2</version>
+            <version>1.1</version>
         </dependency>
         
         

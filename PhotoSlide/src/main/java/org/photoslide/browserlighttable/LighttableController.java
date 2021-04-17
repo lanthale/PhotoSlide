@@ -355,10 +355,14 @@ public class LighttableController implements Initializable {
             final ClipboardContent content = new ClipboardContent();
             List<File> fileList = new ArrayList<>();
             Set<MediaFile> selection = factory.getSelectionModel().getSelection();
-            /*selection.forEach((k) -> {                
-                fileList.add(new File(((MediaGridCell) k).getItem().getName()));                
-            });*/
-            fileList.add(new File(((MediaFile) selection.iterator().next()).getName()));
+            String os = System.getProperty("os.name").toUpperCase();
+            if (os.contains("MAC")) {
+                fileList.add(((MediaFile) selection.iterator().next()).getPathStorage().toFile());
+            } else {
+                selection.forEach((k) -> {
+                    fileList.add(((MediaFile) selection.iterator().next()).getPathStorage().toFile());
+                });
+            }
             content.putFiles(fileList);
             db.setContent(content);
             t.consume();

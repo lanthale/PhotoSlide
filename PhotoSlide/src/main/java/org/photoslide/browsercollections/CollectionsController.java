@@ -53,6 +53,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -71,7 +72,10 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.image.Image;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -111,7 +115,7 @@ public class CollectionsController implements Initializable {
 
     private MainViewController mainController;
     @FXML
-    private Button minusButton;
+    private Button renameButton;
     @FXML
     private Button plusButton;
     @FXML
@@ -328,7 +332,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void plusButtonAction(ActionEvent event) {
+    private void addCollectionAction(ActionEvent event) {
         addExistingPath();
     }
 
@@ -412,12 +416,12 @@ public class CollectionsController implements Initializable {
                 dirTreeView.setEditable(true);
                 dirTreeView.setCellFactory(TreeCellTextField.forTreeView(new PathItemConverter()));
                 dirTreeView.setOnEditCommit((t) -> {
-                    PathItem newValue = t.getNewValue();                    
-                    PathItem oldValue = t.getOldValue();                    
+                    PathItem newValue = t.getNewValue();
+                    PathItem oldValue = t.getOldValue();
                     try {
                         Files.move(oldValue.getFilePath(), oldValue.getFilePath().resolveSibling(newValue.getFilePath()));
-                    } catch (IOException ex) {                                                                        
-                        ((TreeCellTextField)dirTreeView.getCellFactory()).cancelEdit();
+                    } catch (IOException ex) {
+                        ((TreeCellTextField) dirTreeView.getCellFactory()).cancelEdit();
                         Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 });
@@ -509,7 +513,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void minusButtonAction(ActionEvent event) {
+    private void removeCollectionAction(ActionEvent event) {
         TitledPane expandedPane = accordionPane.getExpandedPane();
         if (expandedPane != null) {
             TreeView<PathItem> content = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -587,7 +591,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void createCollectionAction(ActionEvent event) {
+    private void createEventAction(ActionEvent event) {
         if (checkIfElementInTreeSelected("Please select an element in tree first to create a child collection!")) {
             return;
         }
@@ -625,7 +629,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void cutCollectionAction(ActionEvent event) {
+    private void cutEventAction(ActionEvent event) {
         if (checkIfElementInTreeSelected("Please select an element in the tree to be cut!")) {
             return;
         }
@@ -642,7 +646,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void copyCollectionAction(ActionEvent event) {
+    private void copyEventAction(ActionEvent event) {
         if (checkIfElementInTreeSelected("Please select an element in the tree to be copied!")) {
             return;
         }
@@ -659,7 +663,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void deleteCollectionAction(ActionEvent event) {
+    private void deleteEventAction(ActionEvent event) {
         if (checkIfElementInTreeSelected("Please select an element in the tree to be deleted!")) {
             return;
         }
@@ -667,8 +671,19 @@ public class CollectionsController implements Initializable {
         ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
         TreeItem<PathItem> item = selectedItems.get(0);
         clipboardPath = item.getValue().getFilePath();
+        System.out.println("clipboardPath " + clipboardPath);
 
-        Alert alert = new Alert(AlertType.CONFIRMATION, "Delete '" + clipboardPath + "' ?", ButtonType.CANCEL, ButtonType.OK);
+        Alert alert = new Alert(AlertType.CONFIRMATION, "Delete event", ButtonType.CANCEL, ButtonType.OK);
+        alert.setGraphic(new FontIcon("ti-trash:40"));
+//alert.setHeaderText("Delete '" + clipboardPath + "' ?");
+        //alert.setContentText("Delete '" + clipboardPath + "' ?");   
+        alert.setHeaderText("Delete event");
+        Text text = new Text("Delete '" + clipboardPath + "' ?");
+        text.setWrappingWidth(400);
+        text.setFill(Color.WHITE);
+        FlowPane pane=new FlowPane(text);
+        pane.setPadding(new Insets(10,10,10,10));        
+        alert.getDialogPane().setContent(pane);
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -721,7 +736,7 @@ public class CollectionsController implements Initializable {
     }
 
     @FXML
-    private void pasteCollectionAction(ActionEvent event) {
+    private void pasteEventAction(ActionEvent event) {
         Path sourceFilePath = clipboardPath;
 
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -898,7 +913,7 @@ public class CollectionsController implements Initializable {
             return true;
         } else {
             return false;
-        }*/
+        }*/        
     }
 
 }

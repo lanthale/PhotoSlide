@@ -21,12 +21,7 @@
         </Label>
         <HBox alignment="CENTER_RIGHT" layoutX="235.0" layoutY="9.0" prefHeight="27.0" prefWidth="146.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="40.0">
             <children>
-                <Button id="toolbutton" fx:id="minusButton" mnemonicParsing="false" onAction="#minusButtonAction">
-               <graphic>
-                  <FontIcon iconLiteral="ti-minus" />
-               </graphic>
-                </Button>
-                <Button id="toolbutton" fx:id="plusButton" mnemonicParsing="false" onAction="#plusButtonAction">
+                <Button id="toolbutton" fx:id="plusButton" mnemonicParsing="false" onAction="#createEventAction">
                <graphic>
                   <FontIcon iconLiteral="ti-plus" />
                </graphic>
@@ -38,7 +33,28 @@
             </Button>
             <MenuButton fx:id="menuButton" mnemonicParsing="false">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#createCollectionAction" text="Create a new event">
+                  <MenuItem mnemonicParsing="false" onAction="#addCollectionAction" text="Add collection">
+                     <graphic>
+                        <StackedFontIcon alignment="CENTER_LEFT">
+                           <children>
+                              <FontIcon iconLiteral="ti-book" />
+                              <FontIcon iconLiteral="ti-plus" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="Remove collection">
+                     <graphic>
+                        <StackedFontIcon alignment="CENTER_RIGHT">
+                           <children>
+                              <FontIcon iconLiteral="ti-book" />
+                              <FontIcon iconLiteral="ti-minus" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
+                     </graphic>
+                  </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                <MenuItem mnemonicParsing="false" onAction="#createEventAction" text="Create a new event">
                      <graphic>
                         <StackedFontIcon>
                            <children>
@@ -48,27 +64,27 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#renameEventAction" text="Rename event">
+                  <MenuItem mnemonicParsing="false" onAction="#renameEventAction" text="Rename event" visible="false">
                      <graphic>
                         <FontIcon iconLiteral="fa-edit" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#cutCollectionAction" text="Cut event">
+                  <MenuItem mnemonicParsing="false" onAction="#cutEventAction" text="Cut event">
                      <graphic>
                         <FontIcon iconLiteral="ti-cut" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#copyCollectionAction" text="Copy event">
+                  <MenuItem mnemonicParsing="false" onAction="#copyEventAction" text="Copy event">
                      <graphic>
                         <FontIcon iconLiteral="ti-files" />
                      </graphic></MenuItem>
-                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteCollectionAction" text="Paste event">
+                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteEventAction" text="Paste event">
                      <graphic>
                         <FontIcon iconLiteral="ti-stamp" />
                      </graphic>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteCollectionAction" text="Delete collection">
+                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteEventAction" text="Delete event">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" />
                      </graphic>

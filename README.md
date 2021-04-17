@@ -38,6 +38,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 ## Features
 - Viewing of JPG/TIFF/PNG/PSD images
+- Viewing of RAW files for Canon/Nikon/Fuji/Leica/Sigma/Adobe DNG
 - Viewing of movies with MP4/h264 codec
 - Lossles editing: Rotated / Crop images / rate images
 - Add keywords and tags to images
@@ -60,15 +61,9 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 
 ## Missing features
-- ~~View of all raw data format (using libdcraw)
-- ~~Implement stacking of photos~~
-- ~~Implement search function~~
-- ~~Implement multi threading for loading images (actually only one image after the other is loaded)~~
-- ~~Replace icons with iKonli icons~~
-- ~~Implement Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS~~
 - Implement face recognizion
 - Map view
-- Porting the photo edit capabilities over from LightZone (edit module is not implemented yet)
+- Porting the photo edit capabilities over from LightZone (edit module is now implemented but editing algorithms are not ported over)
 
 
 ## Steps to create your own build

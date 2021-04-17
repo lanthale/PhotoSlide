@@ -60,7 +60,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 
 ## Missing features
-- View of all raw data format (using libdcraw)
+- ~~View of all raw data format (using libdcraw)
 - ~~Implement stacking of photos~~
 - ~~Implement search function~~
 - ~~Implement multi threading for loading images (actually only one image after the other is loaded)~~
@@ -72,10 +72,12 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 
 ## Steps to create your own build
-- Install AdoptOpenJDK 11 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 14 or later.
+- Install AdoptOpenJDK 16 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 14 or later.
 - Set env var JAVA_HOME
 - Install maven
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools
 - Run maven with: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
+
+If you are stuck at JDK 11 than remove in pom.xml the dependency for librawfx and comment in App.java out the line `RAWImageLoaderFactory.install();` and you are ready to build it under JDK11.
 
 The maven file is downloading every dependency automatically in the background.

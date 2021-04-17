@@ -39,12 +39,6 @@ public class MediaFileLoader {
             iImage.progressProperty().addListener((ov, t, t1) -> {
                 if (t1.doubleValue() == 1.0) {
                     fileItem.setLoading(false);                    
-                    /*System.out.println("ITEM: " + fileItem.getName());                    
-                    System.out.println("error loading: " + iImage.errorProperty().toString());
-                    if (iImage.getException() != null) {
-                        System.out.println("exceptions loading: " + iImage.getException().getMessage());
-                        iImage.getException().printStackTrace();
-                    }*/
                     if (factory != null) {                        
                         MediaGridCell mediaCellForMediaFile = factory.getMediaCellForMediaFile(fileItem);
                         if (mediaCellForMediaFile != null) {

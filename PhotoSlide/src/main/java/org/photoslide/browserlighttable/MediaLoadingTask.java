@@ -102,7 +102,7 @@ public class MediaLoadingTask extends Task<Void> {
                                     } catch (IOException ex) {
                                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                                     }
-                                }
+                                }                                
                                 m.setImage(fileLoader.loadImage(m));
                                 Platform.runLater(() -> {
                                     fullMediaList.add(m);

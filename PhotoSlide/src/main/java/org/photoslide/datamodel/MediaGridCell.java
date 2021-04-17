@@ -122,10 +122,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
             item.setImage(item.setFilters());                       
 
             //calc cropview based on small imageview
-            //imageView.setViewport(cropView);            
+            //imageView.setViewport(item.getCropView());            
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
             imageView.setImage(item.getImage());
+            rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());
             setStacked(item.isStacked(), item.getStackPos());
             if (item.getDeletedProperty().getValue() == true) {
@@ -201,5 +202,5 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().remove(vb);
         }
     }
-
+    
 }

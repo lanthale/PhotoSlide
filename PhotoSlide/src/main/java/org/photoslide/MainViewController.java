@@ -865,13 +865,16 @@ public class MainViewController implements Initializable {
         popOver.setDetachable(false);
         popOver.setAnimated(true);
         //popOver.setId("bookmarksboard");
-        popOver.setCloseButtonEnabled(true);
+        popOver.setCloseButtonEnabled(true);        
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"));
         Parent root;
         try {
             root = (Parent) fxmlLoader.load();
             bookmarksController = fxmlLoader.<BookmarkBoardController>getController();
+            popOver.setOnHidden((t) -> {
+                bookmarksController.shutdown();
+            });
             bookmarksController.setMediaFileList(getBookmarks());
             bookmarksController.readBookmarks();
             popOver.setContentNode(root);

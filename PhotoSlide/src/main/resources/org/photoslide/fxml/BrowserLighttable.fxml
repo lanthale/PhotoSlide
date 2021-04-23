@@ -23,7 +23,7 @@
 <?import org.controlsfx.control.Rating?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
       <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -134,7 +134,15 @@
                               <FontIcon iconLiteral="fa-stack-overflow" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Pane prefHeight="30.0" prefWidth="80.0" />
+                        <Pane prefHeight="30.0" prefWidth="60.0" />
+                        <Button id="toolbutton" fx:id="bookmarkButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarkButtonAction" text="Bookmark">
+                           <font>
+                              <Font size="11.0" />
+                           </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fa-bookmark" iconSize="17" />
+                           </graphic>
+                        </Button>
                         <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
                            <graphic>
                               <FontIcon iconLiteral="fa-street-view" iconSize="17" />

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.bookmarksboard.BookmarkBoardController">
+   <children>
+      <VBox layoutX="162.0" layoutY="213.0" prefHeight="284.0" prefWidth="511.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox spacing="30.0">
+               <children>
+                <Button id="toolbutton" mnemonicParsing="false" onAction="#copyClipboardAction" text="Copy to clipboard">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
+                     </graphic>
+                  </Button>
+                  <Button id="toolbutton" mnemonicParsing="false" onAction="#removeMediaFileAction" text="Remove Mediafile">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-close" iconSize="18" />
+                     </graphic>
+                  </Button>
+                  <Button id="toolbutton" mnemonicParsing="false" onAction="#clearBoardAction" text="Clear board">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-trash" iconSize="18" />
+                     </graphic>
+                  </Button>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </HBox>
+            <VBox fx:id="boardcontentBox" prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />
+            <HBox fx:id="messageBox" prefHeight="30.0" prefWidth="200.0" VBox.vgrow="NEVER" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

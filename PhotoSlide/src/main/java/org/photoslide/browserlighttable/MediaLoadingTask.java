@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import org.photoslide.datamodel.MediaFileLoader;
 
 /**
  *
@@ -38,11 +37,11 @@ public class MediaLoadingTask extends Task<Void> {
     private final MetadataController metadataController;
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
-    private final MediaFileLoader fileLoader;
+    private final MediaFileLoaderLT fileLoader;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
-        fileLoader = new MediaFileLoader(factory);
+        fileLoader = new MediaFileLoaderLT(factory);
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
         sort = sortParm;
@@ -87,6 +86,9 @@ public class MediaLoadingTask extends Task<Void> {
                             m.setPathStorage(fileItem);
                             m.readEdits();
                             m.getCreationTime();
+                            if (mainController.isMediaFileBookmarked(m)) {
+                                m.setBookmarked(true);
+                            }
                             if (FileTypes.isValidVideo(fileItem.toString())) {
                                 m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                 Platform.runLater(() -> {
@@ -102,11 +104,11 @@ public class MediaLoadingTask extends Task<Void> {
                                     } catch (IOException ex) {
                                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                                     }
-                                }                                
+                                }
                                 m.setImage(fileLoader.loadImage(m));
                                 Platform.runLater(() -> {
                                     fullMediaList.add(m);
-                                });                                                                
+                                });
                             } else {
                                 m.setMediaType(MediaFile.MediaTypes.NONE);
                             }

@@ -3,32 +3,32 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel;
+package org.photoslide.browserlighttable;
 
 import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.animation.PauseTransition;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import javafx.util.Duration;
 import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.browserlighttable.MediaLoadingTask;
+import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaGridCell;
 
 /**
  *
  * @author selfemp
  */
-public class MediaFileLoader {
+public class MediaFileLoaderLT {
 
     private final MediaGridCellFactory factory;
 
-    public MediaFileLoader(MediaGridCellFactory factory) {
+    public MediaFileLoaderLT(MediaGridCellFactory factory) {
         this.factory = factory;
     }
 
-    public MediaFileLoader() {
+    public MediaFileLoaderLT() {
         this.factory = null;
     }
 

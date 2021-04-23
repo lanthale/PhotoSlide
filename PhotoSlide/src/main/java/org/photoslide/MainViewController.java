@@ -18,17 +18,23 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,9 +49,11 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -74,13 +82,16 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.controlsfx.control.PopOver;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.bookmarksboard.BookmarkBoardController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.print.PrintController;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
@@ -169,9 +180,13 @@ public class MainViewController implements Initializable {
     private Image dialogIcon;
     @FXML
     private Button searchButton;
+    @FXML
+    private Button bookmarksBoardButton;
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
     private PrintDialog printDialog;
+    private Properties bookmarks;
+    private BookmarkBoardController bookmarksController;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -197,9 +212,9 @@ public class MainViewController implements Initializable {
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);
-        FontIcon icon = new FontIcon();
         handleMenuDisable(true);
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        readBookmarksFile();
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -244,6 +259,9 @@ public class MainViewController implements Initializable {
         }
         if (printDialog != null) {
             printDialog.getController().shutdown();
+        }
+        if (bookmarksController != null) {
+            bookmarksController.shutdown();
         }
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
@@ -656,7 +674,7 @@ public class MainViewController implements Initializable {
             ft1.setFromValue(0.0);
             ft1.setToValue(1.0);
             ft1.setOnFinished((t) -> {
-                editorMediaViewPaneController.setMediaFileForEdit(selMedia);                
+                editorMediaViewPaneController.setMediaFileForEdit(selMedia);
             });
             ft1.play();
         });
@@ -779,6 +797,91 @@ public class MainViewController implements Initializable {
             statusLabelLeft.textProperty().unbind();
             statusLabelLeft.setText("");
         }
+    }
+
+    public void saveBookmarksFile() {
+        executor.submit(() -> {
+            String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
+            try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
+                bookmarks.store(output, null);
+                output.flush();
+            } catch (IOException ex) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }
+
+    private void readBookmarksFile() {
+        executor.submit(() -> {
+            String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
+            if (new File(fileNameWithExt).exists() == false) {
+                bookmarks = new Properties();
+                return;
+            }
+            try (InputStream input = new FileInputStream(fileNameWithExt)) {
+                bookmarks = new Properties();
+                bookmarks.load(input);
+            } catch (IOException ex) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }
+
+    public boolean isMediaFileBookmarked(MediaFile m) {
+        boolean ret = false;
+        Object get = bookmarks.get(m.getName());
+        if (get == null) {
+            ret = false;
+        } else {
+            ret = true;
+        }
+        return ret;
+    }
+
+    public void bookmarkMediaFile(MediaFile m) {
+        if (m.isBookmarked()) {
+            bookmarks.remove(m.getName());
+            m.setBookmarked(false);
+            lighttablePaneController.getBookmarkButton().setText("Bookmark");
+        } else {
+            bookmarks.setProperty(m.getName(), m.getPathStorage().toString());
+            m.setBookmarked(true);
+            lighttablePaneController.getBookmarkButton().setText("Unbookmark");
+        }
+    }
+    
+    private List<String> getBookmarks(){   
+        List<String> retList=new ArrayList<>();
+        for (Enumeration<?> names = bookmarks.propertyNames(); names.hasMoreElements();) {
+            String key = (String) names.nextElement();
+            retList.add((String)bookmarks.get(key));
+        }
+        return retList;
+    }
+
+    @FXML
+    private void bookmarksButtonAction(ActionEvent event) {
+        PopOver popOver = new PopOver();
+        popOver.setDetachable(false);
+        popOver.setAnimated(true);
+        //popOver.setId("bookmarksboard");
+        popOver.setCloseButtonEnabled(true);
+
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"));
+        Parent root;
+        try {
+            root = (Parent) fxmlLoader.load();
+            bookmarksController = fxmlLoader.<BookmarkBoardController>getController();
+            bookmarksController.setMediaFileList(getBookmarks());
+            bookmarksController.readBookmarks();
+            popOver.setContentNode(root);
+            popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+            popOver.setFadeInDuration(new Duration(100));
+            popOver.show(bookmarksBoardButton);
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
 }

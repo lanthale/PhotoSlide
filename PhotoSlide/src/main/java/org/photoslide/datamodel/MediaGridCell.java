@@ -114,12 +114,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
-        } else {            
+        } else {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
-            }            
+            }
 
-            item.setImage(item.setFilters());                       
+            item.setImage(item.setFilters());
 
             //calc cropview based on small imageview
             //imageView.setViewport(item.getCropView());            
@@ -128,6 +128,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             imageView.setImage(item.getImage());
             rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());
+            setBookmarked(item.isBookmarked());
             setStacked(item.isStacked(), item.getStackPos());
             if (item.getDeletedProperty().getValue() == true) {
                 setDeletedNode();
@@ -150,7 +151,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
-            //item.setLoading(false);
+            setBookmarked(item.isBookmarked());            
         }
     }
 
@@ -202,5 +203,19 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().remove(vb);
         }
     }
-    
+
+    private void setBookmarked(boolean bookmarked) {
+        if (bookmarked) {
+            VBox vb = new VBox();
+            vb.setAlignment(Pos.TOP_LEFT);
+            HBox hb = new HBox();
+            hb.setPadding(new Insets(0, 0, 0, 3));
+            FontIcon bookmarkIcon = new FontIcon("fa-bookmark");
+            bookmarkIcon.setId("bookmark-icon");
+            hb.getChildren().add(bookmarkIcon);
+            vb.getChildren().add(hb);
+            rootPane.getChildren().add(vb);
+        }
+    }
+
 }

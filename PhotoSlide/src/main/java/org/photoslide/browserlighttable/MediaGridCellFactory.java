@@ -61,9 +61,9 @@ import org.photoslide.imageops.ImageFilter;
  * @author selfemp
  */
 public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridCell<MediaFile>> {
-
+    
     private Image img;
-
+    
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
@@ -78,7 +78,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final AtomicInteger yMouse;
     private final Image dialogIcon;
     private ObservableList<ImageFilter> filterList;
-
+    
     public MediaGridCellFactory(ExecutorService executor, LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         this.util = util;
         taskList = new ArrayList<>();
@@ -135,7 +135,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
-
+    
     @Override
     public GridCell<MediaFile> call(GridView<MediaFile> p) {
         MediaGridCell cell = new MediaGridCell();
@@ -149,7 +149,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });        
         return cell;
     }
-
+    
     private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
         if (t.isShiftDown()) {
             //select all nodes in between
@@ -181,7 +181,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         cell.requestLayout();
     }
-
+    
     private void handleGridCellSelection(Event t) {
         if (t.getTarget().getClass().equals(MediaFile.class)) {
             Node target = Utility.pick((MediaGridCell) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
@@ -200,7 +200,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getStackButton().setText("Stack");
         }
         setStdGUIState();
-
+        
         if (selectionModel.selectionCount() > 1) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -227,11 +227,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 img.cancel();
             }
         }
-
+        
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
         if (selectedMediaItem.isDeleted() == true) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
-
+            
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
@@ -248,13 +248,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         selectedCell = (MediaGridCell) t.getSource();
-
+        
+        updateGUIAccordingSelection();
+        
         task = new Task<>() {
             private Image imageWithFilters;
-
+            
             @Override
             protected Boolean call() throws MalformedURLException {
-
+                
                 Platform.runLater(() -> {
                     lightController.getPlayIcon().setVisible(false);
                     lightController.getImageView().setImage(null);
@@ -338,7 +340,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         }
                     }
                     break;
-
+                    
                     case IMAGE:
                         metadataController.setSelectedFile(selectedMediaItem);
                         Platform.runLater(() -> {
@@ -425,7 +427,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             });
                             lightController.getImageView().setImage(img);
                             lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
-
+                            
                             Button resetCrop = new Button();
                             FontIcon restoreIcon = new FontIcon("ti-back-right:24");
                             resetCrop.setGraphic(restoreIcon);
@@ -458,6 +460,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         executor.submit(task);
     }
 
+    private void updateGUIAccordingSelection() {
+        if (selectedMediaItem.isBookmarked()) {
+            lightController.getBookmarkButton().setText("Unbookmark");
+        } else {
+            lightController.getBookmarkButton().setText("Bookmark");
+        }
+    }
+    
     private void handleZoomIn(double ratio) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() + 9;
@@ -469,7 +479,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageView().setViewport(cropView);
         }
     }
-
+    
     private void handleZoomOut(double ratio) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() - 9;
@@ -481,11 +491,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageView().setViewport(cropView);
         }
     }
-
+    
     public void setStdGUIState() {
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
+        //lightController.getBookmarkButton().setDisable(false);
         if (selectionModel.getSelection().size() > 1) {
             lightController.getDetailToolbar().setDisable(false);
             lightController.getRotateLeftButton().setDisable(true);
@@ -512,7 +523,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getFilenameLabel().setText("");
         lightController.getRatingControl().ratingProperty().unbind();
         lightController.getOptionPane().getChildren().clear();
-
+        
         if (lightController.getSnapshotView() != null) {
             lightController.getSnapshotView().setSelectionActive(false);
             lightController.getSnapshotView().setSelection(Rectangle2D.EMPTY);
@@ -526,11 +537,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.setSnapshotView(null);
         }
     }
-
+    
     public GridCellSelectionModel getSelectionModel() {
         return selectionModel;
     }
-
+    
     public void cancleTask() {
         metadataController.cancelTasks();
         taskList.forEach(taskItem -> {
@@ -538,15 +549,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });
         taskList.clear();
     }
-
+    
     public MediaGridCell getSelectedCell() {
         return selectedCell;
     }
-
+    
     public MediaFile getSelectedMediaItem() {
         return selectedMediaItem;
     }
-
+    
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
         VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         for (int i = 0; i < vf.getCellCount(); i++) {
@@ -558,7 +569,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         return null;
     }
-
+    
     public void handleStackButtonAction(Event m, String stackName, Node anchore) {
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
@@ -655,5 +666,5 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         });
     }
-
+    
 }

@@ -12,11 +12,14 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaGridCellStackedDetailView;
 
 /**
@@ -138,6 +141,18 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
 
     public boolean isChanged() {
         return changed;
+    }
+    
+    public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
+        VirtualFlow vf = (VirtualFlow) lighttableController.getImageGrid().getChildrenUnmodifiable().get(0);
+        for (int i = 0; i < vf.getCellCount(); i++) {
+            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
+                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
+                    return (MediaGridCell) mediaCell;
+                }
+            }
+        }
+        return null;
     }
     
     

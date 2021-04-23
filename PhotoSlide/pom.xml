@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.0.18</version>        
+    <version>1.0.19-SNAPSHOT</version>        
     
     <properties>
         <javafx.version>17-ea+7</javafx.version>
@@ -550,22 +550,22 @@
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-core</artifactId>
-            <version>12.1.0</version>            
+            <version>12.2.0</version>            
         </dependency>        
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
-            <version>12.1.0</version>            
+            <version>12.2.0</version>            
         </dependency>        
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-themify-pack</artifactId>
-            <version>12.1.0</version>            
+            <version>12.2.0</version>            
         </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-fontawesome-pack</artifactId>
-            <version>12.1.0</version>
+            <version>12.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.dragon66</groupId>

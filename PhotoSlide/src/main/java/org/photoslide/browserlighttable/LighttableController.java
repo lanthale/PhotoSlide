@@ -5,7 +5,6 @@
  */
 package org.photoslide.browserlighttable;
 
-import java.awt.image.BufferedImage;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
@@ -25,6 +24,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimeZone;
@@ -189,6 +189,8 @@ public class LighttableController implements Initializable {
     private MenuItem oneStarMenu;
     @FXML
     private ToggleButton facesButton;
+    @FXML
+    private Button bookmarkButton;    
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -1108,5 +1110,19 @@ public class LighttableController implements Initializable {
         break;
         }*/
     }
+
+    public Button getBookmarkButton() {
+        return bookmarkButton;
+    }
+
+    @FXML
+    private void bookmarkButtonAction(ActionEvent event) {
+        Set<MediaFile> selection = factory.getSelectionModel().getSelection();
+        for (MediaFile m : selection) {            
+            mainController.bookmarkMediaFile(m);
+        }
+        mainController.saveBookmarksFile();
+    }    
+    
 
 }

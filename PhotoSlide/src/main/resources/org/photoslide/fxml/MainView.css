@@ -14,6 +14,11 @@
     -fx-icon-color: radial-gradient(focus-angle 0, focus-distance 0%, center 0 0,  radius 0.5, reflect, #f8f542, #c2b326);
 }
 
+#bookmark-icon {
+    -fx-icon-size: 14;    
+    -fx-icon-color: #9f9f9f;
+}
+
 .progress-indicator {
     -fx-progress-color: #e17c08;
 }
@@ -286,6 +291,10 @@
     -fx-padding: 5;    
 }
 
+#bookmarksboard > .content {
+    -fx-background-color: rgb(160,160,160); 
+}
+
 .popover > .content > .titlePane > .content > .title > .text {
     -fx-text-fill:red;
 }
@@ -311,6 +320,5 @@
 #CollectorRed{
     -fx-icon-color: red;    
 }
-
 
 

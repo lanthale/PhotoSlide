@@ -3,10 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.datamodel;
+package org.photoslide.bookmarksboard;
 
-import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -18,6 +16,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
+import org.photoslide.datamodel.*;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -25,7 +24,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
  *
  * @author selfemp
  */
-public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
+public class MediaGridCellBMB extends GridCell<MediaFile> {
 
     private final StackPane rootPane;
     private final MediaView mediaview;
@@ -38,8 +37,8 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
     private boolean loading;
     private FontIcon filmIcon;
 
-    public MediaGridCellStackedDetailView() {
-        this.setId("MediaGridCellStackedDetails");
+    public MediaGridCellBMB() {
+        this.setId("MediaGridCell");
         loading = true;
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
@@ -85,10 +84,18 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
         if (empty || item == null) {
 
         } else {
-            if (item.isSubViewSelected()) {
-                this.setId("MediaGridCellSelectedStackedDetails");
+            if (item.isSelected() == true) {
+                if (item.isStacked()) {
+                    this.setId("MediaGridCellSelectedStacked");
+                } else {
+                    this.setId("MediaGridCellSelected");
+                }
             } else {
-                this.setId("MediaGridCellStackedDetails");
+                if (item.isStacked()) {
+                    this.setId("MediaGridCellStacked");
+                } else {
+                    this.setId("MediaGridCell");
+                }
             }
             loading = item.isLoading();
             switch (item.getMediaType()) {
@@ -113,21 +120,19 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
-
             item.setImage(item.setFilters());
 
             //calc cropview based on small imageview
-            //imageView.setViewport(item.getCropView());            
+            //imageView.setViewport(cropView);
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
             imageView.setImage(item.getImage());
-            rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());
-            setBookmarked(item.isBookmarked());
             setStacked(item.isStacked(), item.getStackPos());
             if (item.getDeletedProperty().getValue() == true) {
                 setDeletedNode();
             }
+            item.setLoading(false);
         }
     }
 
@@ -146,7 +151,7 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
-            setBookmarked(item.isBookmarked());
+            item.setLoading(false);
         }
     }
 
@@ -196,20 +201,6 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         } else {
             rootPane.getChildren().remove(vb);
-        }
-    }
-
-    private void setBookmarked(boolean bookmarked) {
-        if (bookmarked) {
-            VBox vb = new VBox();
-            vb.setAlignment(Pos.TOP_LEFT);
-            HBox hb = new HBox();
-            hb.setPadding(new Insets(0, 0, 0, 3));
-            FontIcon bookmarkIcon = new FontIcon("fa-bookmark");
-            bookmarkIcon.setId("bookmark-icon");
-            hb.getChildren().add(bookmarkIcon);
-            vb.getChildren().add(hb);
-            rootPane.getChildren().add(vb);
         }
     }
 

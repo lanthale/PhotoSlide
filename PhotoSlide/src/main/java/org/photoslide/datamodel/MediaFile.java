@@ -82,6 +82,7 @@ public class MediaFile {
     private String gpsPosition;
     private LocalDateTime gpsDateTime;
     private double gpsHeight;
+    private boolean bookmarked;
 
     public enum MediaTypes {
         IMAGE,
@@ -97,6 +98,7 @@ public class MediaFile {
     private MediaTypes mediaType;
 
     public MediaFile() {
+        bookmarked = false;
         loading = true;
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
@@ -664,5 +666,15 @@ public class MediaFile {
     public void setLoading(boolean value) {        
         this.loading = value;
     }
+
+    public boolean isBookmarked() {
+        return bookmarked;
+    }
+
+    public void setBookmarked(boolean bookmarked) {
+        this.bookmarked = bookmarked;
+    }
+    
+    
 
 }

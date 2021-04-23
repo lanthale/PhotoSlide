@@ -233,9 +233,9 @@
                                 <FontIcon iconLiteral="ti-printer" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Styles">
+                        <Button id="toolbutton" fx:id="bookmarksBoardButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarksButtonAction" text="Bookmarks">
                             <graphic>
-                                <FontIcon iconLiteral="ti-palette" iconSize="24" />
+                                <FontIcon iconLiteral="ti-bookmark" iconSize="24" />
                             </graphic>
                         </Button>
                   <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="Search">

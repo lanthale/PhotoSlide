@@ -297,4 +297,14 @@ public class SearchToolsController implements Initializable {
         return infoBox;
     }
 
+    public GridView<MediaFile> getImageGrid() {
+        return imageGrid;
+    }
+
+    public MediaGridCellSearchFactory getFactory() {
+        return factory;
+    }
+    
+    
+
 }

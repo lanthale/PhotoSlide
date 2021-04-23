@@ -5,25 +5,18 @@
  */
 package org.photoslide.search;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaException;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.datamodel.MediaFileLoader;
 
 /**
  *
@@ -34,14 +27,14 @@ public class SRMediaLoadingTask extends Task<Void> {
     private final SearchToolsController searchController;
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
-    private final MediaFileLoader fileLoader;
+    private final MediaFileLoaderSR fileLoader;
     private final ArrayList<String> queryList;
 
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.searchController = control;
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
-        fileLoader = new MediaFileLoader();
+        fileLoader = new MediaFileLoaderSR(searchController.getFactory());
         this.queryList = queryList;
     }
 

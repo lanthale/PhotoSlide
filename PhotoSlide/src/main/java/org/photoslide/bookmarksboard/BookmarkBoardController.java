@@ -5,13 +5,13 @@
  */
 package org.photoslide.bookmarksboard;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -19,12 +19,16 @@ import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Label;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.GridView;
+import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.search.MediaGridCellSearchFactory;
 
 /**
  *
@@ -46,6 +50,10 @@ public class BookmarkBoardController implements Initializable {
     @FXML
     private HBox messageBox;
     private MediaGridCellBMBFactory factory;
+    @FXML
+    private Label statusLabel;
+    private Utility util;
+    private MainViewController mainViewController;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -60,9 +68,15 @@ public class BookmarkBoardController implements Initializable {
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
-        imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
-        imageGrid.setCellHeight(defaultCellHight + 3 * 20);
+        imageGrid.setCellWidth(defaultCellWidth+20);
+        imageGrid.setCellHeight(defaultCellHight+20);
         boardcontentBox.getChildren().add(imageGrid);
+        util=new Utility();
+        statusLabel.setText("");
+    }
+    
+    public void injectMainController(MainViewController mainC){
+        this.mainViewController=mainC;
     }
 
     public void setMediaFileList(List<String> mediaFileList) {
@@ -76,6 +90,7 @@ public class BookmarkBoardController implements Initializable {
 
     @FXML
     private void copyClipboardAction(ActionEvent event) {
+        copyAction();
     }
 
     @FXML
@@ -84,10 +99,22 @@ public class BookmarkBoardController implements Initializable {
 
     @FXML
     private void clearBoardAction(ActionEvent event) {
+        fullMediaList.forEach((m) -> {
+            m.setBookmarked(false);
+        });
+        fullMediaList.clear(); 
+        mainViewController.clearBookmars();
     }
 
     public void readBookmarks() {
+        statusLabel.setText("Retrieving Mediafiles...");
         task = new BMBMediaLoadingTask(mediaFileList, this, fullMediaList, imageGrid);
+        task.setOnSucceeded((t) -> {
+            util.hideNodeAfterTime(statusLabel, 3);
+        });
+        task.setOnFailed((t) -> {
+            util.hideNodeAfterTime(statusLabel, 3);
+        });
         executor.submit(task);
 
     }
@@ -99,9 +126,29 @@ public class BookmarkBoardController implements Initializable {
     public MediaGridCellBMBFactory getFactory() {
         return factory;
     }
-    
-    
-    
-    
+
+    public void copyAction() {
+        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...");
+        /*Platform.runLater(() -> {
+            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getStatusLabelLeft().setText("Copying to clipboard...");
+        });*/
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+        List<File> filesForClipboard = new ArrayList<>();
+
+        fullMediaList.stream().forEach((mfile) -> {
+            filesForClipboard.add(mfile.getPathStorage().toFile());
+        });
+        content.putFiles(filesForClipboard);
+        clipboard.setContent(content);
+        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...finished");
+        util.hideNodeAfterTime(statusLabel, 3);
+        /*Platform.runLater(() -> {
+            pasteButton.setDisable(false);
+            mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+        });*/
+    }
 
 }

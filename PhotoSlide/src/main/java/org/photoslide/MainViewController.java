@@ -837,6 +837,11 @@ public class MainViewController implements Initializable {
         }
         return ret;
     }
+    
+    public void clearBookmars(){                
+        bookmarks.clear();
+        saveBookmarksFile();
+    }
 
     public void bookmarkMediaFile(MediaFile m) {
         if (m.isBookmarked()) {
@@ -866,12 +871,16 @@ public class MainViewController implements Initializable {
         popOver.setAnimated(true);
         //popOver.setId("bookmarksboard");
         popOver.setCloseButtonEnabled(true);        
+        popOver.setAutoHide(false);
+        popOver.setTitle("Bookmarks Board");
+        popOver.setHeaderAlwaysVisible(true);
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"));
         Parent root;
         try {
             root = (Parent) fxmlLoader.load();
             bookmarksController = fxmlLoader.<BookmarkBoardController>getController();
+            bookmarksController.injectMainController(this);
             popOver.setOnHidden((t) -> {
                 bookmarksController.shutdown();
             });

@@ -31,13 +31,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -91,7 +91,6 @@ import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImageFilter;
-import org.photoslide.print.PrintController;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
@@ -99,6 +98,8 @@ import org.photoslide.search.SearchToolsDialog;
 public class MainViewController implements Initializable {
 
     private ExecutorService executor;
+    private ScheduledExecutorService executorParallel;
+    private SoftwareUpdater swUpdater;
 
     @FXML
     private StackPane leftPane;
@@ -194,6 +195,7 @@ public class MainViewController implements Initializable {
         editorMediaViewPane.setVisible(false);
         editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
+        executorParallel = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("mainviewControllerParallelScheduled"));
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
         browseButton.setToggleGroup(group);
@@ -214,7 +216,13 @@ public class MainViewController implements Initializable {
         progressPane.setVisible(false);
         handleMenuDisable(true);
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        swUpdater = new SoftwareUpdater(executorParallel, this);
         readBookmarksFile();
+        browseButton.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null && browseButton != null) {
+                swUpdater.checkForSoftwareUpdates();
+            }
+        });
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -263,6 +271,9 @@ public class MainViewController implements Initializable {
         if (bookmarksController != null) {
             bookmarksController.shutdown();
         }
+        if (swUpdater != null) {
+            swUpdater.Shutdown();
+        }
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
@@ -270,6 +281,7 @@ public class MainViewController implements Initializable {
         editorMediaViewPaneController.shutdown();
         editorToolsPaneController.shutdown();
         executor.shutdownNow();
+        executorParallel.shutdownNow();
     }
 
     @FXML
@@ -837,8 +849,8 @@ public class MainViewController implements Initializable {
         }
         return ret;
     }
-    
-    public void clearBookmars(){                
+
+    public void clearBookmars() {
         bookmarks.clear();
         saveBookmarksFile();
     }
@@ -854,12 +866,12 @@ public class MainViewController implements Initializable {
             lighttablePaneController.getBookmarkButton().setText("Unbookmark");
         }
     }
-    
-    private List<String> getBookmarks(){   
-        List<String> retList=new ArrayList<>();
+
+    private List<String> getBookmarks() {
+        List<String> retList = new ArrayList<>();
         for (Enumeration<?> names = bookmarks.propertyNames(); names.hasMoreElements();) {
             String key = (String) names.nextElement();
-            retList.add((String)bookmarks.get(key));
+            retList.add((String) bookmarks.get(key));
         }
         return retList;
     }
@@ -870,7 +882,7 @@ public class MainViewController implements Initializable {
         popOver.setDetachable(false);
         popOver.setAnimated(true);
         //popOver.setId("bookmarksboard");
-        popOver.setCloseButtonEnabled(true);        
+        popOver.setCloseButtonEnabled(true);
         popOver.setAutoHide(false);
         popOver.setTitle("Bookmarks Board");
         popOver.setHeaderAlwaysVisible(true);
@@ -894,6 +906,10 @@ public class MainViewController implements Initializable {
             Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+    }
+
+    public Button getBookmarksBoardButton() {
+        return bookmarksBoardButton;
     }
 
 }

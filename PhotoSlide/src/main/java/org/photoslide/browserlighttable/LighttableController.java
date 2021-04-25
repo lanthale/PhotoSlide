@@ -24,7 +24,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimeZone;
@@ -348,6 +347,9 @@ public class LighttableController implements Initializable {
             }
             if (KeyCode.LEFT == t.getCode()) {
                 selectPreviousImageInGrid();
+            }
+            if (KeyCode.X == t.getCode()) {
+                bookmarkSelection();
             }
             t.consume();
         });
@@ -1117,6 +1119,10 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void bookmarkButtonAction(ActionEvent event) {
+        bookmarkSelection();
+    }    
+
+    private void bookmarkSelection() {
         Set<MediaFile> selection = factory.getSelectionModel().getSelection();
         for (MediaFile m : selection) {            
             mainController.bookmarkMediaFile(m);

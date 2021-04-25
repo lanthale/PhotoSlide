@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -178,6 +179,8 @@ public class MainViewController implements Initializable {
     private MenuItem unstackMenu;
     @FXML
     private MenuItem openMenu;
+    @FXML
+    private MenuItem bookmarkMenu;
     private Image dialogIcon;
     @FXML
     private Button searchButton;
@@ -233,6 +236,7 @@ public class MainViewController implements Initializable {
             rateMenu.setDisable(disabled);
             deleteMenu.setDisable(disabled);
             copyMediaMenu.setDisable(disabled);
+            bookmarkMenu.setDisable(disabled);
             pasteMediaMenu.setDisable(!Clipboard.getSystemClipboard().hasFiles());
         });
     }
@@ -910,6 +914,15 @@ public class MainViewController implements Initializable {
 
     public Button getBookmarksBoardButton() {
         return bookmarksBoardButton;
+    }
+
+    @FXML
+    private void bookmarkMenuAction(ActionEvent event) {
+        Set<MediaFile> selection = lighttablePaneController.getFactory().getSelectionModel().getSelection();
+        for (MediaFile m : selection) {
+            bookmarkMediaFile(m);
+        }
+        saveBookmarksFile();
     }
 
 }

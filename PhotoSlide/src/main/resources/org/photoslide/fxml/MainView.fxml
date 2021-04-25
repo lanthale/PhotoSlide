@@ -34,11 +34,11 @@
                                 <FontIcon iconLiteral="fa-folder-open-o" />
                             </graphic>
                         </MenuItem>
-                  <MenuItem mnemonicParsing="false" text="Remove collection">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-folder-o" />
-                     </graphic>
-                  </MenuItem>
+                        <MenuItem mnemonicParsing="false" text="Remove collection">
+                            <graphic>
+                                <FontIcon iconLiteral="fa-folder-o" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="Quit">
                             <graphic>
                                 <FontIcon iconLiteral="ti-power-off" />
@@ -85,16 +85,16 @@
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" text="Select All" />
                         <MenuItem mnemonicParsing="false" text="Unselect All" />
-                  <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="Search">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-search" />
-                     </graphic>
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="F" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                     </accelerator>
-                  </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="Search">
+                            <graphic>
+                                <FontIcon iconLiteral="ti-search" />
+                            </graphic>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="F" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
+                        </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="Reset full text search index" />
+                        <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="Reset full text search index" />
                         <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
@@ -139,6 +139,14 @@
                                 <FontIcon iconLiteral="fa-star" />
                             </graphic>
                         </MenuItem>
+                        <MenuItem fx:id="bookmarkMenu" disable="true" mnemonicParsing="false" onAction="#bookmarkMenuAction" text="Un-/Bookmark">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="X" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                            </accelerator>
+                            <graphic>
+                                <FontIcon iconLiteral="fa-trash" />
+                            </graphic>
+                        </MenuItem>
                         <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="Mark mediafile deleted">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
@@ -174,9 +182,9 @@
                             </graphic>
                         </MenuItem>
                         <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
-                     </accelerator>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                            </accelerator>
                         </MenuItem>
                     </items>
                 </Menu>
@@ -215,7 +223,7 @@
                         <Insets left="20.0" />
                     </padding>
                 </ToolBar>
-            <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS" />
+                <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS" />
                 <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS">
                     <items>
                         <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
@@ -238,11 +246,11 @@
                                 <FontIcon iconLiteral="ti-bookmark" iconSize="24" />
                             </graphic>
                         </Button>
-                  <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="Search">
-                     <graphic>
-                        <FontIcon iconLiteral="ti-search" iconSize="24" />
-                     </graphic>
-                  </Button>
+                        <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="Search">
+                            <graphic>
+                                <FontIcon iconLiteral="ti-search" iconSize="24" />
+                            </graphic>
+                        </Button>
                     </items>
                 </ToolBar>
                 <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="70.0" HBox.hgrow="ALWAYS">

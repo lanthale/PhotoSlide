@@ -57,7 +57,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - Implemented multithreading for media loading (depends on the operating system - try to create threads as much as possible from the OS)
 - First implementation of an edit view (actually only an exposure filter is added)
 - Support for GPS information in meta data of image files
-- Printing support inclusive borderless printing (experimntal)
+- Printing support inclusive borderless printing (experimental)
 
 
 ## Missing features

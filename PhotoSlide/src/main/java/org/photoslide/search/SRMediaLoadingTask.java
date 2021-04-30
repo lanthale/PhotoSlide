@@ -15,6 +15,7 @@ import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
+import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 
@@ -27,14 +28,14 @@ public class SRMediaLoadingTask extends Task<Void> {
     private final SearchToolsController searchController;
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
-    private final MediaFileLoaderSR fileLoader;
+    private final MediaFileLoader fileLoader;
     private final ArrayList<String> queryList;
 
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.searchController = control;
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
-        fileLoader = new MediaFileLoaderSR(searchController.getFactory());
+        fileLoader = new MediaFileLoader();
         this.queryList = queryList;
     }
 

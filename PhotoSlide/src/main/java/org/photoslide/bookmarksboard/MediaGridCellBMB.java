@@ -33,13 +33,11 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;
-    private boolean loading;
+    private ProgressIndicator prgInd;    
     private FontIcon filmIcon;
 
     public MediaGridCellBMB() {
-        this.setId("MediaGridCell");
-        loading = true;
+        this.setId("MediaGridCell");        
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -96,8 +94,12 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }
-            loading = item.isLoading();
+            }            
+            item.loadingProperty().addListener((ov, t, t1) -> {
+                if (t1 == false) {                    
+                    this.requestLayout();
+                }
+            });
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);

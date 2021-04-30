@@ -9,6 +9,10 @@
     -fx-icon-color: #c5c5c5;
 }
 
+.progress-bar .bar {
+    -fx-accent: default-color;
+}
+
 #star-ikonli-font-icon {    
     -fx-icon-size: 6;
     -fx-icon-color: radial-gradient(focus-angle 0, focus-distance 0%, center 0 0,  radius 0.5, reflect, #f8f542, #c2b326);

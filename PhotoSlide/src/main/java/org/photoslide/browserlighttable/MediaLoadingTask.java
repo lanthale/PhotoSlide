@@ -5,6 +5,7 @@
  */
 package org.photoslide.browserlighttable;
 
+import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
@@ -37,11 +38,11 @@ public class MediaLoadingTask extends Task<Void> {
     private final MetadataController metadataController;
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
-    private final MediaFileLoaderLT fileLoader;
+    private final MediaFileLoader fileLoader;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
-        fileLoader = new MediaFileLoaderLT(factory);
+        fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
         sort = sortParm;
@@ -105,7 +106,7 @@ public class MediaLoadingTask extends Task<Void> {
                                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                 }
-                                m.setImage(fileLoader.loadImage(m));
+                                m.setImage(fileLoader.loadImage(m));                                
                                 Platform.runLater(() -> {
                                     fullMediaList.add(m);
                                 });

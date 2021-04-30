@@ -3,34 +3,29 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.photoslide.browserlighttable;
+package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import org.photoslide.browserlighttable.MediaGridCellFactory;
+import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.MediaLoadingTask;
-import org.photoslide.datamodel.MediaFile;
-import org.photoslide.datamodel.MediaGridCell;
 
 /**
  *
  * @author selfemp
  */
-public class MediaFileLoaderLT {
+public class MediaFileLoader {
+       
 
-    private final MediaGridCellFactory factory;
-
-    public MediaFileLoaderLT(MediaGridCellFactory factory) {
-        this.factory = factory;
-    }
-
-    public MediaFileLoaderLT() {
-        this.factory = null;
-    }
+    public MediaFileLoader() {        
+    }        
 
     public Image loadImage(MediaFile fileItem) {
         Image retImage = null;
@@ -38,13 +33,7 @@ public class MediaFileLoaderLT {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 300, 300, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
                 if (t1.doubleValue() == 1.0) {
-                    fileItem.setLoading(false);                    
-                    if (factory != null) {                        
-                        MediaGridCell mediaCellForMediaFile = factory.getMediaCellForMediaFile(fileItem);
-                        if (mediaCellForMediaFile != null) {
-                            mediaCellForMediaFile.requestLayout();
-                        }                        
-                    }
+                    fileItem.setLoading(false);
                 }
             });
             return iImage;
@@ -52,7 +41,7 @@ public class MediaFileLoaderLT {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
             return retImage;
         }
-    }
+    }    
 
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;

@@ -41,7 +41,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import org.photoslide.imageops.ImageFilter;
@@ -54,7 +53,7 @@ public class MediaFile {
 
     private String name;
     private Path pathStorage;
-    private boolean loading;
+    private SimpleBooleanProperty loading;
 
     private Image image;
     private Image unModifiyAbleImage;
@@ -99,7 +98,7 @@ public class MediaFile {
 
     public MediaFile() {
         bookmarked = false;
-        loading = true;
+        loading = new SimpleBooleanProperty(true);
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
@@ -660,11 +659,11 @@ public class MediaFile {
     }
 
     public boolean isLoading() {
-        return loading;
+        return loading.get();
     }
 
     public void setLoading(boolean value) {        
-        this.loading = value;
+        this.loading.set(value);
     }
 
     public boolean isBookmarked() {
@@ -674,6 +673,12 @@ public class MediaFile {
     public void setBookmarked(boolean bookmarked) {
         this.bookmarked = bookmarked;
     }
+
+    public SimpleBooleanProperty loadingProperty() {
+        return loading;
+    }
+    
+    
     
     
 

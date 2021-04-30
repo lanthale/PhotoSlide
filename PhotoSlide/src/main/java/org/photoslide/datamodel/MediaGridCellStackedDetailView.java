@@ -5,8 +5,6 @@
  */
 package org.photoslide.datamodel;
 
-import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -34,13 +32,11 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;
-    private boolean loading;
+    private ProgressIndicator prgInd;    
     private FontIcon filmIcon;
 
     public MediaGridCellStackedDetailView() {
-        this.setId("MediaGridCellStackedDetails");
-        loading = true;
+        this.setId("MediaGridCellStackedDetails");        
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -90,7 +86,11 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             } else {
                 this.setId("MediaGridCellStackedDetails");
             }
-            loading = item.isLoading();
+            item.loadingProperty().addListener((ov, t, t1) -> {
+                if (t1 == false) {                    
+                    this.requestLayout();
+                }
+            });
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);

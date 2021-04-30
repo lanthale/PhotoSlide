@@ -5,27 +5,16 @@
  */
 package org.photoslide.bookmarksboard;
 
-import org.photoslide.search.*;
-import java.io.File;
 import java.nio.file.Path;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaException;
 import org.controlsfx.control.GridView;
-import org.photoslide.App;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.browserlighttable.MediaFileLoaderLT;
+import org.photoslide.datamodel.MediaFileLoader;
 
 /**
  *
@@ -36,14 +25,14 @@ public class BMBMediaLoadingTask extends Task<Void> {
     private final BookmarkBoardController bmbController;
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
-    private final MediaFileLoaderBMB fileLoader;
+    private final MediaFileLoader fileLoader;
     private final List<String> queryList;
 
     public BMBMediaLoadingTask(List<String> queryList, BookmarkBoardController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.bmbController = control;
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
-        fileLoader = new MediaFileLoaderBMB(bmbController.getFactory());
+        fileLoader = new MediaFileLoader();
         this.queryList = queryList;
     }
 

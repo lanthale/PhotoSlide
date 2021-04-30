@@ -750,6 +750,7 @@ public class MainViewController implements Initializable {
         searchDialog.getController().setDialogPane(searchDialog.getDialogPane());
         searchDialog.getController().getSearchTextField().requestFocus();
         searchDialog.getController().injectCollectionsController(collectionsPaneController);
+        searchDialog.getController().injectMainController(this);
         Optional<ButtonType> result = searchDialog.showAndWait();
     }
 

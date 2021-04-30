@@ -21,7 +21,7 @@
                   </Button>
                   <Button id="toolbutton" mnemonicParsing="false" onAction="#exportAction" text="Export content">
                      <graphic>
-                        <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
+                        <FontIcon iconLiteral="ti-export" iconSize="18" />
                      </graphic>
                   </Button>
                   <Button id="toolbutton" mnemonicParsing="false" onAction="#removeMediaFileAction" text="Remove Mediafile">

@@ -42,6 +42,7 @@ import org.controlsfx.control.textfield.CustomTextField;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.App;
+import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.CollectionsController;
@@ -88,6 +89,8 @@ public class SearchToolsController implements Initializable {
     @FXML
     private Label searchLabel;
 
+    private MainViewController mainViewController;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         util = new Utility();
@@ -125,6 +128,10 @@ public class SearchToolsController implements Initializable {
         double defaultCellHight = imageGrid.getCellHeight();
         imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
         imageGrid.setCellHeight(defaultCellHight + 3 * 20);
+    }
+
+    public void injectMainController(MainViewController mainC) {
+        this.mainViewController = mainC;
     }
 
     public void shutdown() {
@@ -218,7 +225,7 @@ public class SearchToolsController implements Initializable {
     private void performSearch(String keyword) {
         try {
             ArrayList<String> queryList = new ArrayList<>();
-            try ( ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
+            try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
                     queryList.add("SELECT * FROM " + searchRS.getString("QUERY"));
                 }
@@ -304,7 +311,12 @@ public class SearchToolsController implements Initializable {
     public MediaGridCellSearchFactory getFactory() {
         return factory;
     }
-    
-    
+
+    @FXML
+    private void bookmarkMediaFileAction(ActionEvent event) {
+        if (factory.getSelectedMediaFile() != null) {
+            mainViewController.bookmarkMediaFile(factory.getSelectedMediaFile());
+        }
+    }
 
 }

@@ -12,7 +12,7 @@
 <?import org.controlsfx.control.textfield.CustomTextField?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane fx:id="mainSearchPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.search.SearchToolsController">
+<AnchorPane fx:id="mainSearchPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.search.SearchToolsController">
    <children>
       <Button id="toolbutton" fx:id="closeAction" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="Button" AnchorPane.leftAnchor="-20.0" AnchorPane.topAnchor="-10.0">
          <graphic>
@@ -48,6 +48,14 @@
                            </graphic>
                            <tooltip>
                               <Tooltip text="Copy file path to clipboard" />
+                           </tooltip>
+                        </Button>
+                        <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#bookmarkMediaFileAction" text="Button">
+                           <graphic>
+                              <FontIcon iconLiteral="ti-bookmark" iconSize="18" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="Bookmark selected file" />
                            </tooltip>
                         </Button>
                         <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" HBox.hgrow="ALWAYS">

@@ -290,9 +290,6 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void exportAction(ActionEvent event) {
-        ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
-        diag.setTitle("Export media files...");
-        diag.setHeaderText("Export media files...");
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
@@ -304,8 +301,18 @@ public class MainViewController implements Initializable {
             alert.showAndWait();
             return;
         }
-        diag.getController().setTitel(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue());
-        diag.getController().setInitOutDir(collectionsPaneController.getSelectedPath().toString());
+        exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue(), collectionsPaneController.getSelectedPath().toString(), lighttablePaneController.getFullMediaList());
+    }
+
+    public boolean exportData(String titel, String initOutDir, ObservableList<MediaFile> mediaListToExport) {
+        ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
+        diag.setTitle("Export media files...");
+        diag.setHeaderText("Export media files...");
+
+        diag.getController().setTitel(titel);
+        if (initOutDir != null) {
+            diag.getController().setInitOutDir(initOutDir);
+        }
         diag.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) diag.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         diag.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
@@ -323,11 +330,11 @@ public class MainViewController implements Initializable {
                     String outputDir = diag.getController().getOutputDir();
                     List<MediaFile> exportList = new ArrayList<>();
                     if (diag.getController().getExportSelectedBox().isSelected() == true) {
-                        lighttablePaneController.getFullMediaList().stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+                        mediaListToExport.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
                             exportList.add(mfile);
                         });
                     } else {
-                        exportList.addAll(lighttablePaneController.getFullMediaList());
+                        exportList.addAll(mediaListToExport);
                     }
                     int i = 0;
                     for (MediaFile mediaItem : exportList) {
@@ -437,6 +444,7 @@ public class MainViewController implements Initializable {
         } else {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
+        return false;
     }
 
     private BufferedImage getRotatedImage(BufferedImage bufferedImage, double angle) {
@@ -869,6 +877,12 @@ public class MainViewController implements Initializable {
             m.setBookmarked(true);
             lighttablePaneController.getBookmarkButton().setText("Unbookmark");
         }
+    }
+
+    public void removeBookmarkMediaFile(MediaFile m) {
+        bookmarks.remove(m.getName());
+        m.setBookmarked(false);
+        saveBookmarksFile();
     }
 
     private List<String> getBookmarks() {

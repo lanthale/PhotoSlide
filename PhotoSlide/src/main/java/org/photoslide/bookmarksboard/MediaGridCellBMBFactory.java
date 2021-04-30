@@ -45,25 +45,23 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
         MediaGridCellBMB cell = new MediaGridCellBMB();
         cell.setAlignment(Pos.CENTER);
         cell.setEditable(false);
-        /*cell.setOnMouseClicked((t) -> {
+        cell.setOnMouseClicked((t) -> {
             manageGUISelection(t, cell);
             handleGridCellSelection(t);
             t.consume();
-        });*/
+        });
         return cell;
     }
 
     private void manageGUISelection(MouseEvent t, MediaGridCellBMB cell) {
-        /*bmbTools.getFullMediaList().stream().filter(c -> c != null && c.isSelected() == true).forEach((mfile) -> {
+        bmbTools.getFullMediaList().stream().filter(c -> c != null && c.isSelected() == true).forEach((mfile) -> {
             mfile.setSelected(false);
         });
-        selectedMediaFile = ((MediaGridCellBMB) t.getSource()).getItem();
-        bmbTools.getInfoBox().setVisible(true);
-        bmbTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName());        
+        selectedMediaFile = ((MediaGridCellBMB) t.getSource()).getItem();        
         selectionModel.clear();
         selectionModel.add(((MediaGridCellBMB) t.getSource()).getItem());
         selectedCell = cell;
-        cell.requestLayout();*/
+        cell.requestLayout();
     }
 
     private void handleGridCellSelection(MouseEvent t) {

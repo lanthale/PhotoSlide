@@ -85,7 +85,7 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
-                } else {
+                } else {                    
                     this.setId("MediaGridCellSelected");
                 }
             } else {

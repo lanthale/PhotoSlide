@@ -95,6 +95,9 @@ public class BookmarkBoardController implements Initializable {
 
     @FXML
     private void removeMediaFileAction(ActionEvent event) {
+        MediaFile selectedMediaFile = factory.getSelectedMediaFile();
+        mainViewController.removeBookmarkMediaFile(selectedMediaFile);
+        fullMediaList.remove(selectedMediaFile);
     }
 
     @FXML
@@ -128,11 +131,7 @@ public class BookmarkBoardController implements Initializable {
     }
 
     public void copyAction() {
-        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...");
-        /*Platform.runLater(() -> {
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Copying to clipboard...");
-        });*/
+        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...");        
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         final ClipboardContent content = new ClipboardContent();
         List<File> filesForClipboard = new ArrayList<>();
@@ -143,12 +142,22 @@ public class BookmarkBoardController implements Initializable {
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
         statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...finished");
-        util.hideNodeAfterTime(statusLabel, 3);
-        /*Platform.runLater(() -> {
-            pasteButton.setDisable(false);
-            mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
-        });*/
+        util.hideNodeAfterTime(statusLabel, 3);        
     }
+
+    @FXML
+    private void exportAction(ActionEvent event) {
+        statusLabel.setText("Start export "+fullMediaList.size()+" files to filesystem...");  
+        String initDir=System.getProperty("user.dir").toUpperCase();
+        mainViewController.exportData("Export bookmarks", initDir, fullMediaList);        
+        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...finished");
+        util.hideNodeAfterTime(statusLabel, 3); 
+    }
+
+    public ObservableList<MediaFile> getFullMediaList() {
+        return fullMediaList;
+    }
+    
+    
 
 }

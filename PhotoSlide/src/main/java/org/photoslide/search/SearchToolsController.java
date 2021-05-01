@@ -9,6 +9,7 @@ import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +47,7 @@ import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.CollectionsController;
+import org.photoslide.browsermetadata.MetadataController;
 import org.photoslide.datamodel.MediaFile;
 
 /**
@@ -90,6 +92,7 @@ public class SearchToolsController implements Initializable {
     private Label searchLabel;
 
     private MainViewController mainViewController;
+    private MetadataController metadataController;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -134,13 +137,17 @@ public class SearchToolsController implements Initializable {
         this.mainViewController = mainC;
     }
 
+    public void injectCollectionsController(CollectionsController controller) {
+        this.collectionsController = controller;
+    }
+
+    public void injectMetaDataController(MetadataController controller) {
+        this.metadataController = controller;
+    }
+
     public void shutdown() {
         executor.shutdown();
         executorParallel.shutdown();
-    }
-
-    public void injectCollectionsController(CollectionsController controller) {
-        this.collectionsController = controller;
     }
 
     private void searchTextFieldAction(ActionEvent event) {
@@ -234,6 +241,16 @@ public class SearchToolsController implements Initializable {
                 fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
                 filteredMediaList = new FilteredList<>(fullMediaList, null);
                 sortedMediaList = new SortedList<>(filteredMediaList);
+                sortedMediaList.setComparator(new Comparator<MediaFile>() {
+                    @Override
+                    public int compare(MediaFile o1, MediaFile o2) {
+                        if (o2.getRecordTime() != null && o1.getRecordTime() != null) {                            
+                            return o2.getRecordTime().compareTo(o1.getRecordTime());
+                        } else {
+                            return o2.getCreationTime().compareTo(o1.getCreationTime());
+                        }
+                    }
+                });
                 imageGrid = new GridView<>(sortedMediaList);
                 double defaultCellWidth = imageGrid.getCellWidth();
                 double defaultCellHight = imageGrid.getCellHeight();
@@ -245,7 +262,7 @@ public class SearchToolsController implements Initializable {
                 if (task != null) {
                     task.cancel();
                 }
-                task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid);
+                task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
                 task.setOnFailed((t) -> {
                     Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
                 });

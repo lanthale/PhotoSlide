@@ -5,16 +5,22 @@
  */
 package org.photoslide.search;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
+import org.photoslide.MainViewController;
+import org.photoslide.browserlighttable.MediaLoadingTask;
+import org.photoslide.browsermetadata.MetadataController;
 import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
@@ -30,13 +36,17 @@ public class SRMediaLoadingTask extends Task<Void> {
     private final GridView<MediaFile> imageGrid;
     private final MediaFileLoader fileLoader;
     private final ArrayList<String> queryList;
+    private final MainViewController mainController;
+    private final MetadataController metaController;
 
-    public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
+    public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid, MetadataController mc, MainViewController mv) {
         this.searchController = control;
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();
         this.queryList = queryList;
+        mainController = mv;
+        metaController = mc;
     }
 
     @Override
@@ -45,7 +55,7 @@ public class SRMediaLoadingTask extends Task<Void> {
             if (this.isCancelled()) {
                 return null;
             }
-            try ( Statement stm = App.getSearchDBConnection().createStatement();  ResultSet rs = stm.executeQuery(query)) {
+            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {
                 rs.next();
                 String mediaURL = rs.getString("pathStorage");
                 MediaFile mediaItem = new MediaFile();
@@ -56,6 +66,9 @@ public class SRMediaLoadingTask extends Task<Void> {
                 }
                 mediaItem.readEdits();
                 mediaItem.getCreationTime();
+                if (mainController.isMediaFileBookmarked(mediaItem)) {
+                    mediaItem.setBookmarked(true);
+                }
                 if (this.isCancelled() == true) {
                     return null;
                 }
@@ -70,7 +83,13 @@ public class SRMediaLoadingTask extends Task<Void> {
                     });
                     mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
                 } else if (FileTypes.isValidImge(mediaURL)) {
-                    mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
+                    mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);                    
+                    metaController.setActualMediaFile(mediaItem);
+                    try {
+                        metaController.readBasicMetadata(this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     Platform.runLater(() -> {
                         fullMediaList.add(mediaItem);
                     });

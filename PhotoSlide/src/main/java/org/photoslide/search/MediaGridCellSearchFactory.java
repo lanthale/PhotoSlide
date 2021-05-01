@@ -63,7 +63,11 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
         });
         selectedMediaFile = ((MediaGridCellSR) t.getSource()).getItem();
         searchTools.getInfoBox().setVisible(true);
-        searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName());
+        if (selectedMediaFile.getRecordTime() != null) {
+            searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName() + " " + selectedMediaFile.getRecordTime());
+        } else {
+            searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName() + " " + selectedMediaFile.getCreationTime());
+        }
         selectionModel.clear();
         selectionModel.add(((MediaGridCellSR) t.getSource()).getItem());
         selectedCell = cell;

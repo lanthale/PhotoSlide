@@ -189,7 +189,7 @@ public class LighttableController implements Initializable {
     @FXML
     private ToggleButton facesButton;
     @FXML
-    private Button bookmarkButton;    
+    private Button bookmarkButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -909,26 +909,10 @@ public class LighttableController implements Initializable {
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         final ClipboardContent content = new ClipboardContent();
         List<File> filesForClipboard = new ArrayList<>();
-        Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.NO, ButtonType.YES);
-        confirmDiaglog.setHeaderText("Do you want to transfer all media edits as well ?");
-
-        confirmDiaglog.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-        Stage stage = (Stage) confirmDiaglog.getDialogPane().getScene().getWindow();
-        stage.getIcons().add(dialogIcon);
-        Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) stackPane.getScene().getWindow());
-        confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-        Optional<ButtonType> result = confirmDiaglog.showAndWait();
-        if (result.get() == ButtonType.YES) {
-            filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
-                filesForClipboard.add(mfile.getPathStorage().toFile());
-                filesForClipboard.add(mfile.getEditFilePath().toFile());
-            });
-        } else {
-            fullMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
-                filesForClipboard.add(mfile.getPathStorage().toFile());
-            });
-        }
+        filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
+            filesForClipboard.add(mfile.getPathStorage().toFile());
+            filesForClipboard.add(mfile.getEditFilePath().toFile());
+        });
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
         Platform.runLater(() -> {
@@ -1120,15 +1104,14 @@ public class LighttableController implements Initializable {
     @FXML
     private void bookmarkButtonAction(ActionEvent event) {
         bookmarkSelection();
-    }    
+    }
 
     private void bookmarkSelection() {
         Set<MediaFile> selection = factory.getSelectionModel().getSelection();
-        for (MediaFile m : selection) {            
+        for (MediaFile m : selection) {
             mainController.bookmarkMediaFile(m);
         }
         mainController.saveBookmarksFile();
-    }    
-    
+    }
 
 }

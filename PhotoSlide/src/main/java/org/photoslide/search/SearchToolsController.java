@@ -316,6 +316,7 @@ public class SearchToolsController implements Initializable {
     private void bookmarkMediaFileAction(ActionEvent event) {
         if (factory.getSelectedMediaFile() != null) {
             mainViewController.bookmarkMediaFile(factory.getSelectedMediaFile());
+            mainViewController.saveBookmarksFile();
         }
     }
 

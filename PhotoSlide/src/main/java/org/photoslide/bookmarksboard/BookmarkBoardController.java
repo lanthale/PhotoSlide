@@ -20,6 +20,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
@@ -54,6 +55,8 @@ public class BookmarkBoardController implements Initializable {
     private Label statusLabel;
     private Utility util;
     private MainViewController mainViewController;
+    @FXML
+    private ProgressIndicator progressIndicator;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -113,10 +116,12 @@ public class BookmarkBoardController implements Initializable {
         statusLabel.setText("Retrieving Mediafiles...");
         task = new BMBMediaLoadingTask(mediaFileList, this, fullMediaList, imageGrid);
         task.setOnSucceeded((t) -> {
-            util.hideNodeAfterTime(statusLabel, 3);
+            progressIndicator.setVisible(false);
+            statusLabel.setVisible(false);
         });
         task.setOnFailed((t) -> {
-            util.hideNodeAfterTime(statusLabel, 3);
+            progressIndicator.setVisible(false);
+            statusLabel.setVisible(false);
         });
         executor.submit(task);
 
@@ -150,7 +155,7 @@ public class BookmarkBoardController implements Initializable {
         statusLabel.setText("Start export "+fullMediaList.size()+" files to filesystem...");  
         String initDir=System.getProperty("user.dir").toUpperCase();
         mainViewController.exportData("Export bookmarks", initDir, fullMediaList);        
-        statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...finished");
+        statusLabel.setText("Export "+fullMediaList.size()+" files...finished");
         util.hideNodeAfterTime(statusLabel, 3); 
     }
 

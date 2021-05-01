@@ -32,7 +32,7 @@
             </HBox>
             <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                <children>
-                  <HBox fx:id="toolbar" fillHeight="false" prefHeight="50.0" prefWidth="200.0" visible="false" VBox.vgrow="NEVER">
+                  <HBox fx:id="toolbar" fillHeight="false" prefHeight="50.0" prefWidth="200.0" spacing="5.0" visible="false" VBox.vgrow="NEVER">
                      <children>
                         <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#linkToCollectionAction" text="Button">
                            <graphic>

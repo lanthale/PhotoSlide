@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -130,7 +131,7 @@ public class MediaFile {
         } else {
             return this.image;
         }
-    }        
+    }
 
     public void setImage(Image image) {
         this.image = image;
@@ -171,7 +172,7 @@ public class MediaFile {
 
         String fileNameWithExt = getEditFilePath().toString();
 
-        try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
+        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
             if (title.getValue() != null) {
@@ -250,7 +251,7 @@ public class MediaFile {
 
         fileNameWithExt = getEditFilePath().toString();
 
-        try ( InputStream input = new FileInputStream(fileNameWithExt)) {
+        try (InputStream input = new FileInputStream(fileNameWithExt)) {
 
             Properties prop = new Properties();
 
@@ -367,10 +368,6 @@ public class MediaFile {
         }
         return true;
     }
-
-    
-
-    
 
     public MediaTypes getMediaType() {
         return mediaType;
@@ -545,7 +542,7 @@ public class MediaFile {
     }
 
     public void removeImageFilter(ImageFilter ifm) {
-        filterList.remove(ifm);        
+        filterList.remove(ifm);
     }
 
     public ObservableList<ImageFilter> getFilterListWithoutImageData() {
@@ -662,7 +659,7 @@ public class MediaFile {
         return loading.get();
     }
 
-    public void setLoading(boolean value) {        
+    public void setLoading(boolean value) {
         this.loading.set(value);
     }
 
@@ -681,6 +678,21 @@ public class MediaFile {
     public SimpleBooleanProperty bookmarkedProperty() {
         return bookmarked;
     }
-        
+
+    public void removeAllEdits() {
+        String fileNameWithExt = getEditFilePath().toString();
+        File editFile = new File(fileNameWithExt);
+        if (editFile.exists()) {
+            Platform.runLater(() -> {
+                editFile.delete();
+            });
+            deleted.set(false);
+            places.set("");
+            faces.set("");
+            rotationAngle.set(0.0);
+            rating.set(0);
+            gpsHeight = -1;
+        }
+    }
 
 }

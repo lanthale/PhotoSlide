@@ -947,5 +947,11 @@ public class MainViewController implements Initializable {
         }
         saveBookmarksFile();
     }
+
+    @FXML
+    private void wipeAllMediaFileEdits(ActionEvent event) {
+        MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
+        selectedMediaItem.removeAllEdits();        
+    }
     
 }

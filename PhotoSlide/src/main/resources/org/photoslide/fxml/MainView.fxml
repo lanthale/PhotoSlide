@@ -186,6 +186,8 @@
                                 <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                             </accelerator>
                         </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#wipeAllMediaFileEdits" text="Wipe all edits" />
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

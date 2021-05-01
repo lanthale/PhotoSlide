@@ -192,7 +192,7 @@ public class SoftwareUpdater {
                 confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
                 DialogPane dialogPane = confirmDiaglog.getDialogPane();
                 dialogPane.getStylesheets().add(
-                        getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                        getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
                 Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
                 confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
                 Optional<ButtonType> result = confirmDiaglog.showAndWait();
@@ -212,7 +212,7 @@ public class SoftwareUpdater {
         downloadDialog.getDialogPane().setContent(pgr);
         DialogPane dialogPane = downloadDialog.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) downloadDialog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
         downloadDialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
 
@@ -303,7 +303,8 @@ public class SoftwareUpdater {
                 }
             }
             downloadDialog.close();
-            Platform.exit();
+            App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);
+            System.exit(0);
         });
         downloadTask.setOnFailed((t) -> {
             Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());

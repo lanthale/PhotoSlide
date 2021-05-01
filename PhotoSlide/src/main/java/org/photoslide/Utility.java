@@ -99,7 +99,7 @@ public class Utility {
         alert.getDialogPane().setExpandableContent(dialogPaneContent);
         alert.getDialogPane().setExpanded(false);
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) centerNode.getScene().getWindow());
         Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();

@@ -31,7 +31,7 @@ public class ExportDialog extends Alert {
             controller = fxmlLoader.<ExportDialogController>getController();
             //controller.setModel(new LoginModel(data));
             getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             getDialogPane().setContent(root);            
             Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
             Stage stage = (Stage) this.getDialogPane().getScene().getWindow();

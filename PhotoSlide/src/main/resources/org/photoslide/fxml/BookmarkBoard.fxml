@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Dialogs.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.bookmarksboard.BookmarkBoardController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.bookmarksboard.BookmarkBoardController">
    <children>
       <VBox layoutX="162.0" layoutY="213.0" prefHeight="284.0" prefWidth="511.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -41,7 +41,7 @@
                </padding>
             </HBox>
             <VBox fx:id="boardcontentBox" prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS" />
-            <HBox fx:id="messageBox" alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="200.0" VBox.vgrow="NEVER">
+            <HBox fx:id="messageBox" alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="200.0" spacing="5.0" VBox.vgrow="NEVER">
                <children>
                   <ProgressIndicator fx:id="progressIndicator" maxHeight="20.0" maxWidth="20.0" />
                   <Label fx:id="statusLabel" style="-fx-text-fill: #9f9f9f;" />

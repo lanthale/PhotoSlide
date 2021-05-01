@@ -113,6 +113,8 @@ public class BookmarkBoardController implements Initializable {
     }
 
     public void readBookmarks() {
+        progressIndicator.setVisible(true);
+        statusLabel.setVisible(true);
         statusLabel.setText("Retrieving Mediafiles...");
         task = new BMBMediaLoadingTask(mediaFileList, this, fullMediaList, imageGrid);
         task.setOnSucceeded((t) -> {

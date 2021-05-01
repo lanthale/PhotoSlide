@@ -1,0 +1,46 @@
+.root{    
+    -fx-base: rgb(80, 80, 80);
+    -fx-background: rgb(100, 100, 100);
+    -fx-focus-color: #e17c08;
+    default-color: #e17c08;
+}
+
+.popover  {
+	-fx-background-color: transparent;
+}
+
+.popover > .border {
+	-fx-stroke: linear-gradient(to bottom, rgba(100,100,100, .3), rgba(100, 100, 100, .7)) ;
+	-fx-stroke-width: 1;
+	-fx-fill: rgba(100.0,100.0,100.0, .95);
+	-fx-effect: dropshadow(gaussian, rgba(0,0,0,.2), 10.0, 0.5, 2.0, 2.0);
+}
+
+.popover > .content {
+    -fx-background-color: rgb(100,100,100); 
+    -fx-padding: 5; 
+}
+
+.popover > .detached {
+}
+
+.popover > .content > .title > .text  {
+	-fx-padding: 6.0 6.0 0.0 6.0;
+	-fx-text-fill: rgba(200, 200, 200, .8);
+	-fx-font-weight: bold;
+}
+
+.popover > .content > .title > .icon {
+	-fx-padding: 6.0 0.0 0.0 10.0;
+}
+
+.popover > .content > .title > .icon > .graphics > .circle {
+	-fx-fill: rgb(160,160,160) ;
+	-fx-effect: innershadow(gaussian, rgba(160,160,160,.2), 3, 0.5, 1.0, 1.0);
+}
+
+.popover > .content > .title > .icon > .graphics > .line {
+	-fx-stroke: rgb(200, 200, 200) ;
+	-fx-stroke-width: 2;
+}
+

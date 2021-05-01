@@ -590,7 +590,7 @@ public class LighttableController implements Initializable {
         
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-        getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+        getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.showAndWait();
         if (alert.getResult() == ButtonType.YES) {*/
         //new File(factory.getSelectedCell().getItem().getName()).delete();
@@ -913,7 +913,7 @@ public class LighttableController implements Initializable {
         confirmDiaglog.setHeaderText("Do you want to transfer all media edits as well ?");
 
         confirmDiaglog.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Stage stage = (Stage) confirmDiaglog.getDialogPane().getScene().getWindow();
         stage.getIcons().add(dialogIcon);
         Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) stackPane.getScene().getWindow());

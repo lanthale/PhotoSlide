@@ -16,7 +16,7 @@
 <?import org.controlsfx.control.Rating?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormedia.EditorMediaViewController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormedia.EditorMediaViewController">
    <children>
       <VBox layoutY="14.0" prefHeight="660.0" prefWidth="646.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>

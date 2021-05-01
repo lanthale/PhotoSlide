@@ -293,7 +293,7 @@ public class MainViewController implements Initializable {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             alert.setResizable(false);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -497,7 +497,7 @@ public class MainViewController implements Initializable {
         alert.getDialogPane().setContent(hb);
         alert.setResizable(false);
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
@@ -733,7 +733,7 @@ public class MainViewController implements Initializable {
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
         searchDialog.initStyle(StageStyle.UNDECORATED);
         searchDialog.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         searchDialog.setResizable(true);
         Utility.centerTopChildWindowOnStage((Stage) searchDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) searchDialog.getDialogPane().getScene().getWindow();
@@ -766,7 +766,7 @@ public class MainViewController implements Initializable {
         alert = Utility.setDefaultButton(alert, ButtonType.NO);
         alert.setHeaderText("Do you want to reset the search index ?");
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -787,7 +787,7 @@ public class MainViewController implements Initializable {
             Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
             msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the search index.");
             msg.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             msg.setResizable(false);
             Utility.centerChildWindowOnStage((Stage) msg.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             stage = (Stage) msg.getDialogPane().getScene().getWindow();
@@ -803,7 +803,7 @@ public class MainViewController implements Initializable {
         printDialog.setTitle("Print dialog");
         printDialog.setHeaderText("Print settings");
         printDialog.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         printDialog.setResizable(true);
         Utility.centerChildWindowOnStage((Stage) printDialog.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
         Stage stage = (Stage) printDialog.getDialogPane().getScene().getWindow();
@@ -901,7 +901,6 @@ public class MainViewController implements Initializable {
         PopOver popOver = new PopOver();
         popOver.setDetachable(false);
         popOver.setAnimated(true);
-        //popOver.setId("bookmarksboard");
         popOver.setCloseButtonEnabled(true);
         popOver.setAutoHide(false);
         popOver.setTitle("Bookmarks Board");
@@ -922,6 +921,8 @@ public class MainViewController implements Initializable {
             popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
             popOver.setFadeInDuration(new Duration(100));
             popOver.show(bookmarksBoardButton);
+            ((Parent) popOver.getSkin().getNode()).getStylesheets()
+                    .add(getClass().getResource("/org/photoslide/css/BMBPopOver.css").toExternalForm());
         } catch (IOException ex) {
             Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
         }

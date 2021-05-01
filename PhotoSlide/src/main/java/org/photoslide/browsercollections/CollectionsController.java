@@ -357,7 +357,7 @@ public class CollectionsController implements Initializable {
         alert = Utility.setDefaultButton(alert, ButtonType.YES);
         alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -535,7 +535,7 @@ public class CollectionsController implements Initializable {
             alert.setHeaderText("Please expand one pane to delete it!");
 
             alert.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(iconImage);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
@@ -578,7 +578,7 @@ public class CollectionsController implements Initializable {
             alert.setGraphic(st);
             alert.setContentText(message);
             alert.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             alert.setResizable(false);
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(iconImage);
@@ -612,7 +612,7 @@ public class CollectionsController implements Initializable {
         alert.setContentText("Please enter the name:");
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
@@ -685,7 +685,7 @@ public class CollectionsController implements Initializable {
         pane.setPadding(new Insets(10,10,10,10));        
         alert.getDialogPane().setContent(pane);
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) treeView.getScene().getWindow());
@@ -841,7 +841,7 @@ public class CollectionsController implements Initializable {
         FontIcon ft = new FontIcon("ti-agenda:50");
         alert.setGraphic(ft);
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
@@ -902,7 +902,7 @@ public class CollectionsController implements Initializable {
         alert = Utility.setDefaultButton(alert, ButtonType.YES);
         alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
         alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
         Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
         Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();

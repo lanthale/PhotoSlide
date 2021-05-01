@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormetadata.EditorMetadataController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editormetadata.EditorMetadataController">
     <children>
       <StackPane id="EditorMediaView" fx:id="stackPane" maxHeight="-Infinity" minHeight="10.0" minWidth="10.0" prefHeight="152.0" prefWidth="180.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <children>

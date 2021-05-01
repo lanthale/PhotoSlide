@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="284.0" prefWidth="511.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="284.0" prefWidth="511.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="161.0" />

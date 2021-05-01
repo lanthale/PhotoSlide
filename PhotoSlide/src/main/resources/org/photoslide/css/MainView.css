@@ -291,8 +291,11 @@
     -fx-padding: 5;    
 }
 
-#bookmarksboard > .content {
-    -fx-background-color: rgb(160,160,160); 
+.popover > .border {
+	-fx-stroke: linear-gradient(to bottom, rgba(60,60,60, .3), rgba(60, 60, 60, .7)) ;
+	-fx-stroke-width: 1;
+	-fx-fill: rgba(60.0,60.0,60.0, .95);
+	-fx-effect: dropshadow(gaussian, rgba(0,0,0,.2), 10.0, 0.5, 2.0, 2.0);
 }
 
 .popover > .content > .titlePane > .content > .title > .text {

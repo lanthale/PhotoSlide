@@ -234,7 +234,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
-                    getClass().getResource("/org/photoslide/fxml/Dialogs.css").toExternalForm());
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(dialogIcon);
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) grid.getScene().getWindow());

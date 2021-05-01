@@ -181,9 +181,9 @@ public class SoftwareUpdater {
         };
         checkTask.setOnSucceeded((t) -> {
             if (t.getSource().getValue() != null) {
-                String newversion = checkTask.getValue();                
+                String newversion = checkTask.getValue();
                 if (newversion.equalsIgnoreCase("")) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "No new version found! "+newversion);
+                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "No new version found! " + newversion);
                     return;
                 }
                 Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
@@ -265,16 +265,14 @@ public class SoftwareUpdater {
                         if (this.isCancelled()) {
                             return null;
                         }
-                        // Writing data
                         outputStream.write(buffer, 0, length);
                         downloaded += length;
                         updateProgress(downloaded, contentLength);
-                        //System.out.println("Downlad Status: " + (downloaded * 100) / (contentLength * 1.0) + "%");
                     }
                 } catch (FileNotFoundException ex) {
-                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot find downloaded file", ex);
                 } catch (IOException ex) {
-                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot access downloaded file", ex);
                 } finally {
                     try {
                         if (outputStream != null) {
@@ -284,15 +282,15 @@ public class SoftwareUpdater {
                             conn.disconnect();
                         }
                     } catch (IOException ex) {
-                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 return tempDir + File.separator + filename;
             }
         };
-        downloadTask.setOnSucceeded((t) -> {            
+        downloadTask.setOnSucceeded((t) -> {
             if (!Desktop.isDesktopSupported()) {
-                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Desktop is not supported for opening files!");
+                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Desktop is not supported for opening files!");
                 return;
             }
             Desktop desktop = Desktop.getDesktop();
@@ -301,11 +299,14 @@ public class SoftwareUpdater {
                 try {
                     desktop.open(f);
                 } catch (IOException ex) {
-                    Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Cannot open file", ex);
+                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot open file", ex);
                 }
             }
-            downloadDialog.close(); 
+            downloadDialog.close();
             Platform.exit();
+        });
+        downloadTask.setOnFailed((t) -> {
+            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
         });
         pgr.progressProperty().bind(downloadTask.progressProperty());
         executorParallel.schedule(downloadTask, 0, TimeUnit.SECONDS);

@@ -101,6 +101,9 @@ public class MediaGridCell extends GridCell<MediaFile> {
                     this.requestLayout();
                 }
             });
+            item.bookmarkedProperty().addListener((o) -> {
+                this.requestLayout();
+            });
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);

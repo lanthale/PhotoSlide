@@ -99,7 +99,7 @@ public class BookmarkBoardController implements Initializable {
     @FXML
     private void removeMediaFileAction(ActionEvent event) {
         MediaFile selectedMediaFile = factory.getSelectedMediaFile();
-        mainViewController.removeBookmarkMediaFile(selectedMediaFile);
+        mainViewController.removeBookmarkMediaFile(selectedMediaFile);        
         fullMediaList.remove(selectedMediaFile);
     }
 

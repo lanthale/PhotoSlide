@@ -99,9 +99,8 @@
                         <arg>--add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx</arg>                                
                         <arg>--add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx</arg>                     
                     </compilerArgs>                                     
-                </configuration>                
-                
-            </plugin>
+                </configuration>                 
+            </plugin>            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -500,7 +499,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>                        
+            </plugin>                                                            
         </plugins>
     </build>
     

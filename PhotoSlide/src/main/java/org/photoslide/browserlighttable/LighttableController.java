@@ -350,7 +350,10 @@ public class LighttableController implements Initializable {
             }
             if (KeyCode.X == t.getCode()) {
                 bookmarkSelection();
-            }
+            }            
+            if (KeyCode.BACK_SPACE == t.getCode() || KeyCode.DELETE == t.getCode()) {
+                deleteAction();
+            }            
             t.consume();
         });
         imageGrid.setOnDragDetected((t) -> {

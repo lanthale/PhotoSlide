@@ -108,6 +108,9 @@
                            <graphic>
                               <FontIcon iconLiteral="fa-trash" iconSize="17" />
                            </graphic>
+                           <tooltip>
+                              <Tooltip text="Backspace or Delete key for mark as deleted" />
+                           </tooltip>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="18.0" />
                         <Button id="toolbutton" fx:id="copyButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#copyButtonAction" text="Copy">
@@ -142,8 +145,11 @@
                            <graphic>
                               <FontIcon iconLiteral="fa-bookmark" iconSize="17" />
                            </graphic>
+                           <tooltip>
+                              <Tooltip text="Press 'x' for bookmakr/un-bookmark" />
+                           </tooltip>
                         </Button>
-                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
+                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
                            <graphic>
                               <FontIcon iconLiteral="fa-street-view" iconSize="17" />
                            </graphic>

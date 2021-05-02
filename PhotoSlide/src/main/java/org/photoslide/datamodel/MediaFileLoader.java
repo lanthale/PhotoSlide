@@ -6,15 +6,11 @@
 package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
 /**
@@ -30,7 +26,7 @@ public class MediaFileLoader {
     public Image loadImage(MediaFile fileItem) {
         Image retImage = null;
         try {
-            Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 300, 300, true, false, true);
+            Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
                 if (t1.doubleValue() == 1.0) {
                     fileItem.setLoading(false);

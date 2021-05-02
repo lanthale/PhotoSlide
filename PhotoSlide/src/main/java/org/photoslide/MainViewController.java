@@ -486,7 +486,19 @@ public class MainViewController implements Initializable {
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
-        Text txt = new Text("Thanks to the opensource community:\n - OpenJFX for this great GUI tookit\n - ControlsFX for very nice components\n - iCafe for the image codecs and metadata implementation\n - iKonli for nice icons\n - UndoFX\n\nLicense: GPL v3\n(c) lanthale 2020");
+        String aboutText="""
+                         Thanks to the opensource community:
+                          - OpenJFX for this great GUI tookit
+                          - ControlsFX for very nice components
+                          - iCafe for the image codecs and metadata implementation
+                          - iKonli for nice icons
+                          - UndoFX for undo support
+                          - Worldwind for mapsupport
+                          - Libraw for support of raw image formats
+                         
+                         License: GPL v3
+                         (c) lanthale 2021""";
+        Text txt = new Text(aboutText);
         txt.setStyle("-fx-fill: #e17c08;-fx-font-size:10pt;");
         txt.setLineSpacing(4);
         txt.setTextAlignment(TextAlignment.LEFT);

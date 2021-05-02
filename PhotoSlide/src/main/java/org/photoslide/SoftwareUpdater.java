@@ -64,7 +64,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();
+                String actVersion = util.getAppVersion();                
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }

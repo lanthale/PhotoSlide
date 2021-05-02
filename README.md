@@ -60,6 +60,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - Printing support inclusive borderless printing (experimental)
 - Bookmark files independend where found
 - Export/clipboard bookmarked files
+- Software update: Check for new version of photoslide and download/install it if user wants it
 
 
 ## Missing features

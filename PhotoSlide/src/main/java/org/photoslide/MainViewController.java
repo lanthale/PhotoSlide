@@ -67,6 +67,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
@@ -97,11 +98,11 @@ import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
 
 public class MainViewController implements Initializable {
-    
+
     private ExecutorService executor;
     private ScheduledExecutorService executorParallel;
     private SoftwareUpdater swUpdater;
-    
+
     @FXML
     private StackPane leftPane;
     @FXML
@@ -132,14 +133,14 @@ public class MainViewController implements Initializable {
     private EditorMediaViewController editorMediaViewPaneController;
     @FXML
     private EditorToolsController editorToolsPaneController;
-    
+
     @FXML
     private StackPane progressPane;
     @FXML
     private ProgressBar progressbar;
     @FXML
     private Label progressbarLabel;
-    
+
     @FXML
     private ToggleButton browseButton;
     @FXML
@@ -191,7 +192,7 @@ public class MainViewController implements Initializable {
     private PrintDialog printDialog;
     private Properties bookmarks;
     private BookmarkBoardController bookmarksController;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         editorMetaDataPane.setVisible(false);
@@ -227,7 +228,7 @@ public class MainViewController implements Initializable {
             }
         });
     }
-    
+
     public void handleMenuDisable(boolean disabled) {
         Platform.runLater(() -> {
             rotateMenuLeft.setDisable(disabled);
@@ -240,27 +241,27 @@ public class MainViewController implements Initializable {
             pasteMediaMenu.setDisable(!Clipboard.getSystemClipboard().hasFiles());
         });
     }
-    
+
     public StackPane getProgressPane() {
         return progressPane;
     }
-    
+
     public ProgressBar getProgressbar() {
         return progressbar;
     }
-    
+
     public Label getProgressbarLabel() {
         return progressbarLabel;
     }
-    
+
     public Label getStatusLabelLeft() {
         return statusLabelLeft;
     }
-    
+
     public Label getStatusLabelRight() {
         return statusLabelRight;
     }
-    
+
     public void Shutdown() {
         if (searchtools != null) {
             searchtools.shutdown();
@@ -287,7 +288,7 @@ public class MainViewController implements Initializable {
         executor.shutdownNow();
         executorParallel.shutdownNow();
     }
-    
+
     @FXML
     private void exportAction(ActionEvent event) {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
@@ -303,12 +304,12 @@ public class MainViewController implements Initializable {
         }
         exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue(), collectionsPaneController.getSelectedPath().toString(), lighttablePaneController.getFullMediaList());
     }
-    
+
     public boolean exportData(String titel, String initOutDir, ObservableList<MediaFile> mediaListToExport) {
         ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
         diag.setTitle("Export media files...");
         diag.setHeaderText("Export media files...");
-        
+
         diag.getController().setTitel(titel);
         if (initOutDir != null) {
             diag.getController().setInitOutDir(initOutDir);
@@ -417,6 +418,11 @@ public class MainViewController implements Initializable {
                                         break;
                                 }
                                 writer.setImageParam(builder.build());
+                                //int height = (int) newImage.getHeight();
+                                //int width = (int) newImage.getWidth();
+                                //int[] buffer = new int[width * height];
+                                //newImage.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), buffer, 0, width);
+                                //writer.write(buffer, i, i, fo);
                                 writer.write(fromFXImage, fo);
                                 fo.close();
                             } catch (FileNotFoundException ex) {
@@ -446,7 +452,7 @@ public class MainViewController implements Initializable {
         }
         return false;
     }
-    
+
     private BufferedImage getRotatedImage(BufferedImage bufferedImage, double angle) {
         AffineTransform transform = new AffineTransform();
         transform.rotate(angle);
@@ -454,17 +460,17 @@ public class MainViewController implements Initializable {
         bufferedImage = op.filter(bufferedImage, null);
         return bufferedImage;
     }
-    
+
     @FXML
     private void preferencesMenuAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void quitMenuAction(ActionEvent event) {
         App.saveSettings((Stage) browseButton.getScene().getWindow(), MainViewController.this);
         System.exit(0);
     }
-    
+
     @FXML
     private void aboutMenuAction(ActionEvent event) {
         Utility util = new Utility();
@@ -474,7 +480,7 @@ public class MainViewController implements Initializable {
         HBox hb = new HBox();
         hb.setAlignment(Pos.TOP_LEFT);
         hb.setSpacing(10);
-        
+
         ImageView iv = new ImageView(new Image(getClass().getResourceAsStream("/org/photoslide/img/Splashscreen.png")));
         iv.setPreserveRatio(true);
         iv.setFitWidth(400);
@@ -486,7 +492,7 @@ public class MainViewController implements Initializable {
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
-        String aboutText="""
+        String aboutText = """
                          Thanks to the opensource community:
                           - OpenJFX for this great GUI tookit
                           - ControlsFX for very nice components
@@ -516,71 +522,71 @@ public class MainViewController implements Initializable {
         stage.getIcons().add(dialogIcon);
         alert.showAndWait();
     }
-    
+
     @FXML
     private void rotateMenuLeftAction(ActionEvent event) {
         lighttablePaneController.rotateLeftAction();
     }
-    
+
     @FXML
     private void rotateMenuRightAction(ActionEvent event) {
         lighttablePaneController.rotateRightAction();
     }
-    
+
     @FXML
     private void cropMenuAction(ActionEvent event) {
         lighttablePaneController.cropAction();
     }
-    
+
     @FXML
     private void rateMenuAction(ActionEvent event) {
         lighttablePaneController.rateAction();
     }
-    
+
     @FXML
     private void deleteMenuAction(ActionEvent event) {
         lighttablePaneController.deleteAction();
     }
-    
+
     @FXML
     private void copyMediaMenuAction(ActionEvent event) {
         lighttablePaneController.copyAction();
     }
-    
+
     @FXML
     private void pastMediaMenuAction(ActionEvent event) {
         lighttablePaneController.pastAction();
     }
-    
+
     @FXML
     private void stackMenuAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void unstackMenuAction(ActionEvent event) {
     }
-    
+
     @FXML
     private void openMenuAction(ActionEvent event) {
         collectionsPaneController.addExistingPath();
     }
-    
+
     public void saveSettings() {
         collectionsPaneController.saveSettings();
         lighttablePaneController.saveSettings();
         metadataPaneController.saveSettings();
     }
-    
+
     void restoreSettings() {
         collectionsPaneController.restoreSettings();
         lighttablePaneController.restoreSettings();
         metadataPaneController.restoreSettings();
     }
-    
+
     public MetadataController getMetadataPaneController() {
         return metadataPaneController;
     }
-    
+
     @FXML
     private void browseButtonAction(ActionEvent event) {
         editorMetaDataPaneController.resetUI();
@@ -632,7 +638,7 @@ public class MainViewController implements Initializable {
         });
         ft3.play();
     }
-    
+
     @FXML
     private void editButtonAction(ActionEvent event) {
         RotateTransition rotate = new RotateTransition();
@@ -640,7 +646,7 @@ public class MainViewController implements Initializable {
         rotate.setByAngle(90);
         rotate.setCycleCount(1);
         rotate.setDuration(Duration.millis(1000));
-        
+
         if (collectionsPaneController.getSelectedPath() == null) {
             browseButton.setSelected(true);
             return;
@@ -735,12 +741,12 @@ public class MainViewController implements Initializable {
         });
         ft3.play();
     }
-    
+
     @FXML
     private void searchButtonAction(ActionEvent event) {
         searchAction();
     }
-    
+
     private void searchAction() {
         searchDialog = new SearchToolsDialog(Alert.AlertType.NONE);
         searchDialog.initStyle(StageStyle.UNDECORATED);
@@ -766,12 +772,12 @@ public class MainViewController implements Initializable {
         searchDialog.getController().injectMetaDataController(metadataPaneController);
         Optional<ButtonType> result = searchDialog.showAndWait();
     }
-    
+
     @FXML
     private void searchMenuAction(ActionEvent event) {
         searchAction();
     }
-    
+
     @FXML
     private void resetFTSearchIndex(ActionEvent event) {
         Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
@@ -807,7 +813,7 @@ public class MainViewController implements Initializable {
             msg.show();
         }
     }
-    
+
     @FXML
     private void printMediaAction(ActionEvent event) {
         printDialog = new PrintDialog(Alert.AlertType.INFORMATION, "", ButtonType.OK, ButtonType.CANCEL);
@@ -827,7 +833,7 @@ public class MainViewController implements Initializable {
         statusLabelLeft.textProperty().unbind();
         statusLabelLeft.setText("");
         printDialog.getController().setAllPrintItems(lighttablePaneController.getFactory().getSelectionModel().getSelection());
-        
+
         Optional<ButtonType> result = printDialog.showAndWait();
         if (result.get() == ButtonType.OK) {
             printDialog.getController().print(statusLabelLeft, lighttablePaneController.getFactory().getSelectionModel().getSelection());
@@ -836,7 +842,7 @@ public class MainViewController implements Initializable {
             statusLabelLeft.setText("");
         }
     }
-    
+
     public void saveBookmarksFile() {
         executor.submit(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
@@ -848,7 +854,7 @@ public class MainViewController implements Initializable {
             }
         });
     }
-    
+
     private void readBookmarksFile() {
         executor.submit(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
@@ -864,7 +870,7 @@ public class MainViewController implements Initializable {
             }
         });
     }
-    
+
     public boolean isMediaFileBookmarked(MediaFile m) {
         boolean ret = false;
         Object get = bookmarks.get(m.getName());
@@ -875,12 +881,12 @@ public class MainViewController implements Initializable {
         }
         return ret;
     }
-    
+
     public void clearBookmars() {
         bookmarks.clear();
         saveBookmarksFile();
     }
-    
+
     public void bookmarkMediaFile(MediaFile m) {
         if (m.isBookmarked()) {
             bookmarks.remove(m.getName());
@@ -892,7 +898,7 @@ public class MainViewController implements Initializable {
             lighttablePaneController.getBookmarkButton().setText("Unbookmark");
         }
     }
-    
+
     public void removeBookmarkMediaFile(MediaFile m) {
         bookmarks.remove(m.getName());
         m.setBookmarked(false);
@@ -904,7 +910,7 @@ public class MainViewController implements Initializable {
         }
         saveBookmarksFile();
     }
-    
+
     private List<String> getBookmarks() {
         List<String> retList = new ArrayList<>();
         for (Enumeration<?> names = bookmarks.propertyNames(); names.hasMoreElements();) {
@@ -913,7 +919,7 @@ public class MainViewController implements Initializable {
         }
         return retList;
     }
-    
+
     @FXML
     private void bookmarksButtonAction(ActionEvent event) {
         PopOver popOver = new PopOver();
@@ -923,7 +929,7 @@ public class MainViewController implements Initializable {
         popOver.setAutoHide(false);
         popOver.setTitle("Bookmarks Board");
         popOver.setHeaderAlwaysVisible(true);
-        
+
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"));
         Parent root;
         try {
@@ -944,13 +950,13 @@ public class MainViewController implements Initializable {
         } catch (IOException ex) {
             Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
-    
+
     public Button getBookmarksBoardButton() {
         return bookmarksBoardButton;
     }
-    
+
     @FXML
     private void bookmarkMenuAction(ActionEvent event) {
         Set<MediaFile> selection = lighttablePaneController.getFactory().getSelectionModel().getSelection();
@@ -963,7 +969,7 @@ public class MainViewController implements Initializable {
     @FXML
     private void wipeAllMediaFileEdits(ActionEvent event) {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
-        selectedMediaItem.removeAllEdits();        
+        selectedMediaItem.removeAllEdits();
     }
-    
+
 }

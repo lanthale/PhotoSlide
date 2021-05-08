@@ -151,11 +151,11 @@ public class App extends Application {
 
         try {
             String appData = Utility.getAppData();
-            Logger logger = Logger.getLogger("org.photoslide");
-            File logFile = new File(appData + File.separator + "photoslide.log");
+            Logger logger = Logger.getLogger("org");            
+            File logFile = new File(appData + File.separator + "photoslide.log");            
             Handler handler = new FileHandler(logFile.getAbsolutePath(), 50000, 1, true);
             logger.addHandler(handler);
-            logger.setLevel(Level.ALL);
+            logger.setLevel(Level.ALL);            
             handler.setFormatter(new SimpleFormatter());
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);

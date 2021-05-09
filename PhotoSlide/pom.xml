@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.1.1</version>        
+    <version>1.1.2</version>        
     
     <properties>
         <javafx.version>17-ea+8</javafx.version>
@@ -800,6 +800,11 @@
                                     <modules> <!--everything we need-->
                                         <module>${moduleName}</module>
                                         <module>java.base</module>
+                                        <module>java.net.http</module>
+                                        <module>java.logging</module>
+                                        <module>java.prefs</module>                                                                                
+                                        <module>jdk.crypto.ec</module>
+                                        <module>jdk.crypto.cryptoki</module>
                                         <module>jdk.localedata</module>
                                         <module>jdk.charsets</module>
                                         <module>javafx.base</module>                                        

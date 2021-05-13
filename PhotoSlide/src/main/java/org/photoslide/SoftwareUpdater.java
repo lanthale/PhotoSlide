@@ -183,7 +183,7 @@ public class SoftwareUpdater {
             if (t.getSource().getValue() != null) {
                 String newversion = checkTask.getValue();
                 if (newversion.equalsIgnoreCase("")) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "No new version found! " + newversion);
+                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.INFO, "No new version found! " + newversion);
                     return;
                 }
                 PauseTransition pause = new PauseTransition(Duration.seconds(6));

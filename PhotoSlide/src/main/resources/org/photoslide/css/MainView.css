@@ -9,6 +9,15 @@
     -fx-icon-color: #c5c5c5;
 }
 
+#iconcounter {
+    -fx-text-fill: -fx-base;    
+    -fx-background-color: default-color;
+    -fx-background-radius: 10 10 10 10;
+    -fx-background-insets: -2;
+    -fx-padding: 0 2 0 2;    
+    -fx-font-size: 8px;
+}
+
 #star-ikonli-font-icon {    
     -fx-icon-size: 6;
     -fx-icon-color: radial-gradient(focus-angle 0, focus-distance 0%, center 0 0,  radius 0.5, reflect, #f8f542, #c2b326);

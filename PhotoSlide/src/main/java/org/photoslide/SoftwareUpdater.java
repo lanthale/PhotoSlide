@@ -15,11 +15,10 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
+import javafx.animation.PauseTransition;
 import javafx.concurrent.Task;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -28,6 +27,7 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javax.net.ssl.HttpsURLConnection;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -37,12 +37,12 @@ import org.kordamp.ikonli.javafx.FontIcon;
  */
 public class SoftwareUpdater {
 
-    private final ScheduledExecutorService executorParallel;
+    private final ExecutorService executorParallel;
     private Task<String> checkTask;
     private Task<String> downloadTask;
     private final MainViewController controller;
 
-    public SoftwareUpdater(ScheduledExecutorService executorParallel, MainViewController mc) {
+    public SoftwareUpdater(ExecutorService executorParallel, MainViewController mc) {
         this.executorParallel = executorParallel;
         this.controller = mc;
     }
@@ -64,7 +64,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();                
+                String actVersion = util.getAppVersion();
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -186,22 +186,26 @@ public class SoftwareUpdater {
                     Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "No new version found! " + newversion);
                     return;
                 }
-                Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
-                confirmDiaglog.setHeaderText("Newer version of Photoslide available");
-                confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
-                confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
-                DialogPane dialogPane = confirmDiaglog.getDialogPane();
-                dialogPane.getStylesheets().add(
-                        getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-                Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
-                confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-                Optional<ButtonType> result = confirmDiaglog.showAndWait();
-                if (result.get() == ButtonType.YES) {
-                    downloadUpdate(newversion);
-                }
+                PauseTransition pause = new PauseTransition(Duration.seconds(6));
+                pause.setOnFinished((k) -> {
+                    Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
+                    confirmDiaglog.setHeaderText("Newer version of Photoslide available");
+                    confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
+                    confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
+                    DialogPane dialogPane = confirmDiaglog.getDialogPane();
+                    dialogPane.getStylesheets().add(
+                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+                    Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
+                    confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+                    Optional<ButtonType> result = confirmDiaglog.showAndWait();
+                    if (result.get() == ButtonType.YES) {
+                        downloadUpdate(newversion);
+                    }
+                });
+                pause.play();
             }
         });
-        executorParallel.schedule(checkTask, 6, TimeUnit.SECONDS);
+        executorParallel.submit(checkTask);
     }
 
     private void downloadUpdate(String nextAppVersion) {
@@ -310,7 +314,7 @@ public class SoftwareUpdater {
             Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
         });
         pgr.progressProperty().bind(downloadTask.progressProperty());
-        executorParallel.schedule(downloadTask, 0, TimeUnit.SECONDS);
+        executorParallel.submit(downloadTask);
     }
 
 }

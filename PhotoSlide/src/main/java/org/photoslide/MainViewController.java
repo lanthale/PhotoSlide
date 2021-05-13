@@ -87,6 +87,7 @@ import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.bookmarksboard.BMBIcon;
 import org.photoslide.bookmarksboard.BookmarkBoardController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
@@ -100,7 +101,8 @@ import org.photoslide.search.SearchToolsDialog;
 public class MainViewController implements Initializable {
 
     private ExecutorService executor;
-    private ScheduledExecutorService executorParallel;
+    private ScheduledExecutorService executorParallelScheduled;
+    private ExecutorService executorParallel;
     private SoftwareUpdater swUpdater;
 
     @FXML
@@ -192,6 +194,7 @@ public class MainViewController implements Initializable {
     private PrintDialog printDialog;
     private Properties bookmarks;
     private BookmarkBoardController bookmarksController;
+    private BMBIcon bmbIcon;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -199,7 +202,8 @@ public class MainViewController implements Initializable {
         editorMediaViewPane.setVisible(false);
         editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
-        executorParallel = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("mainviewControllerParallelScheduled"));
+        executorParallelScheduled = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("mainviewControllerParallelScheduled"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("mainviewControllerParallel"));
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
         browseButton.setToggleGroup(group);
@@ -221,6 +225,8 @@ public class MainViewController implements Initializable {
         handleMenuDisable(true);
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         swUpdater = new SoftwareUpdater(executorParallel, this);
+        bmbIcon = new BMBIcon((FontIcon) bookmarksBoardButton.getGraphic());
+        bookmarksBoardButton.setGraphic(bmbIcon);
         readBookmarksFile();
         browseButton.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null && browseButton != null) {
@@ -287,6 +293,7 @@ public class MainViewController implements Initializable {
         editorToolsPaneController.shutdown();
         executor.shutdownNow();
         executorParallel.shutdownNow();
+        executorParallelScheduled.shutdownNow();
     }
 
     @FXML
@@ -865,6 +872,9 @@ public class MainViewController implements Initializable {
             try (InputStream input = new FileInputStream(fileNameWithExt)) {
                 bookmarks = new Properties();
                 bookmarks.load(input);
+                Platform.runLater(() -> {
+                    bmbIcon.setCounter(bookmarks.size());
+                });
             } catch (IOException ex) {
                 Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -884,6 +894,7 @@ public class MainViewController implements Initializable {
 
     public void clearBookmars() {
         bookmarks.clear();
+        bmbIcon.setCounter(bookmarks.size());
         saveBookmarksFile();
     }
 
@@ -897,6 +908,7 @@ public class MainViewController implements Initializable {
             m.setBookmarked(true);
             lighttablePaneController.getBookmarkButton().setText("Unbookmark");
         }
+        bmbIcon.setCounter(bookmarks.size());
     }
 
     public void removeBookmarkMediaFile(MediaFile m) {
@@ -909,6 +921,7 @@ public class MainViewController implements Initializable {
             }
         }
         saveBookmarksFile();
+        bmbIcon.setCounter(bookmarks.size());
     }
 
     private List<String> getBookmarks() {
@@ -964,6 +977,7 @@ public class MainViewController implements Initializable {
             bookmarkMediaFile(m);
         }
         saveBookmarksFile();
+        bmbIcon.setCounter(bookmarks.size());
     }
 
     @FXML

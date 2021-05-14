@@ -23,7 +23,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
+<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
    <children>
       <Label layoutX="21.0" layoutY="81.0" text="MetaData" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -91,8 +91,8 @@
                                         <RowConstraints vgrow="SOMETIMES" />
                                       </rowConstraints>
                                        <children>
-                                          <FontIcon iconLiteral="ti-map-alt" iconSize="12" />
-                                          <TextField fx:id="gpsPlace" editable="false" GridPane.columnIndex="1">
+                                          <FontIcon iconLiteral="ti-map-alt" iconSize="12" onMouseClicked="#showGPSPositionIconMouse" onTouchPressed="#showGPSPositionIconTouch" />
+                                          <TextField fx:id="gpsPlace" editable="false" onAction="#showGPSPosition" onMousePressed="#showGPSPositionMouse" onTouchPressed="#showGPSPositionTouch" GridPane.columnIndex="1">
                                              <tooltip>
                                                 <Tooltip text="GPS Position" />
                                              </tooltip>

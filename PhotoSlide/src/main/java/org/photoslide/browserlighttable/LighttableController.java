@@ -350,10 +350,10 @@ public class LighttableController implements Initializable {
             }
             if (KeyCode.X == t.getCode()) {
                 bookmarkSelection();
-            }            
+            }
             if (KeyCode.BACK_SPACE == t.getCode() || KeyCode.DELETE == t.getCode()) {
                 deleteAction();
-            }            
+            }
             t.consume();
         });
         imageGrid.setOnDragDetected((t) -> {
@@ -914,7 +914,9 @@ public class LighttableController implements Initializable {
         List<File> filesForClipboard = new ArrayList<>();
         filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
             filesForClipboard.add(mfile.getPathStorage().toFile());
-            filesForClipboard.add(mfile.getEditFilePath().toFile());
+            if (mfile.getEditFilePath().toFile().exists()) {
+                filesForClipboard.add(mfile.getEditFilePath().toFile());
+            }
         });
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);

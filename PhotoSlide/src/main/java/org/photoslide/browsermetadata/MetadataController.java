@@ -21,6 +21,11 @@ import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.meta.jpeg.JpegExif;
 import com.icafe4j.image.meta.tiff.TiffExif;
 import com.icafe4j.image.meta.xmp.XMP;
+import com.sothawo.mapjfx.Coordinate;
+import com.sothawo.mapjfx.MapCircle;
+import com.sothawo.mapjfx.MapType;
+import com.sothawo.mapjfx.MapView;
+import com.sothawo.mapjfx.Marker;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -58,6 +63,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -75,6 +81,8 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TouchEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
@@ -83,8 +91,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
+import org.controlsfx.control.PopOver;
 import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.Utility;
@@ -159,6 +169,9 @@ public class MetadataController implements Initializable {
     private TextField gpsHeight;
     @FXML
     private TextField gpsDateTime;
+    private MapView map;
+    private Marker markerPos;
+    private MapCircle circle;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -169,6 +182,11 @@ public class MetadataController implements Initializable {
             anchorKeywordPane.setDisable(true);
             accordionPane.setExpandedPane(keywordsPane);
             progressPane.setVisible(false);
+            map = new MapView();            
+            map.setMapType(MapType.OSM);            
+            map.setPrefSize(400, 400);
+            map.setMaxSize(400, 400);            
+            map.initialize();            
         });
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
@@ -199,7 +217,7 @@ public class MetadataController implements Initializable {
     public void injectLightController(LighttableController lightController) {
         this.lightController = lightController;
     }
-    
+
     public void setSelectedFile(MediaFile file) {
         actualMediaFile = file;
         resetGUI();
@@ -602,7 +620,7 @@ public class MetadataController implements Initializable {
             Metadata.insertIPTC(fin, bout, iptcs, true);
 
             fin.close();
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             bout.close();
@@ -613,7 +631,7 @@ public class MetadataController implements Initializable {
             Metadata.insertComment(fin, bout, commentText.getText());
 
             fin.close();
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
 
@@ -647,7 +665,7 @@ public class MetadataController implements Initializable {
 
                     Metadata.insertComment(fin, bout, commentText.getText());
 
-                    try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
                     fin.close();
@@ -783,7 +801,7 @@ public class MetadataController implements Initializable {
                 });
             });
             Metadata.insertIPTC(fin, bout, iptcs, false);
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -924,6 +942,53 @@ public class MetadataController implements Initializable {
             actualMediaFile.setImage(exposerFilter.reset());
             exposerFilter = null;
         });
+    }
+
+    @FXML
+    private void showGPSPosition(ActionEvent event) {
+        //System.out.println("action");
+        showMap();
+    }
+
+    private void showMap() {        
+        PopOver popOver = new PopOver();
+        popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);         
+        map.setZoom(19);        
+        double lat=actualMediaFile.getGpsLatPosAsDouble();
+        double lon=actualMediaFile.getGpsLonPosAsDouble();        
+        Coordinate c=new Coordinate(lat, lon);        
+        map.setCenter(c);        
+        markerPos = Marker.createProvided(Marker.Provided.ORANGE).setPosition(c).setVisible(true);                
+        map.addMarker(markerPos);
+        circle=new MapCircle(c,3);
+        circle.setVisible(true);
+        //circle.setFillColor(Color.TRANSPARENT);        
+        circle.setColor(javafx.scene.paint.Color.BLUE);
+        map.addMapCircle(circle);        
+        popOver.setContentNode(map);
+        popOver.show(gpsPlace);
+        ((Parent) popOver.getSkin().getNode()).getStylesheets()
+                .add(getClass().getResource("/org/photoslide/css/BMBPopOver.css").toExternalForm());
+    }
+
+    @FXML
+    private void showGPSPositionTouch(TouchEvent event) {
+        showMap();
+    }
+
+    @FXML
+    private void showGPSPositionMouse(MouseEvent event) {
+        showMap();
+    }
+
+    @FXML
+    private void showGPSPositionIconMouse(MouseEvent event) {
+        showMap();
+    }
+
+    @FXML
+    private void showGPSPositionIconTouch(TouchEvent event) {
+        showMap();
     }
 
     private class KeywordChangeListener implements ListChangeListener {

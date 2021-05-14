@@ -615,6 +615,35 @@ public class MediaFile {
         return gpsPosition;
     }
 
+    public double getGpsLatPosAsDouble() {
+        String degree = gpsPosition.substring(0, gpsPosition.indexOf("°"));
+        String minutes = gpsPosition.substring(gpsPosition.indexOf("°") + 1, gpsPosition.indexOf("'"));
+        String seconds = gpsPosition.substring(gpsPosition.indexOf("'") + 1, gpsPosition.indexOf("\""));
+        if (seconds.contains(",")) {
+            seconds = seconds.replace(",", ".");
+        }
+        double d = Double.parseDouble(degree);
+        double m = Double.parseDouble(minutes);
+        double s = Double.parseDouble(seconds);
+        double dd = Math.signum(d) * (Math.abs(d) + (m / 60.0) + (s / 3600.0));
+        return dd;
+    }
+
+    public double getGpsLonPosAsDouble() {
+        int start = gpsPosition.indexOf(";")+1;
+        String degree = gpsPosition.substring(start, gpsPosition.lastIndexOf("°"));
+        String minutes = gpsPosition.substring(gpsPosition.lastIndexOf("°") + 1, gpsPosition.lastIndexOf("'"));
+        String seconds = gpsPosition.substring(gpsPosition.lastIndexOf("'") + 1, gpsPosition.lastIndexOf("\""));
+        if (seconds.contains(",")) {
+            seconds = seconds.replace(",", ".");
+        }
+        double d = Double.parseDouble(degree);
+        double m = Double.parseDouble(minutes);
+        double s = Double.parseDouble(seconds);
+        double dd = Math.signum(d) * (Math.abs(d) + (m / 60.0) + (s / 3600.0));
+        return dd;
+    }
+
     public void setGpsPosition(String gpsPosition) {
         this.gpsPosition = gpsPosition;
     }

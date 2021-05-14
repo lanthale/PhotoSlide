@@ -5,6 +5,9 @@
  */
 package org.photoslide.browsermetadata;
 
+import com.icafe4j.image.ImageIO;
+import com.icafe4j.image.ImageParam;
+import com.icafe4j.image.ImageType;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
@@ -21,13 +24,20 @@ import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.meta.jpeg.JpegExif;
 import com.icafe4j.image.meta.tiff.TiffExif;
 import com.icafe4j.image.meta.xmp.XMP;
+import com.icafe4j.image.options.PNGOptions;
+import com.icafe4j.image.png.Filter;
+import com.icafe4j.image.writer.ImageWriter;
 import com.sothawo.mapjfx.Coordinate;
 import com.sothawo.mapjfx.MapCircle;
 import com.sothawo.mapjfx.MapType;
 import com.sothawo.mapjfx.MapView;
 import com.sothawo.mapjfx.Marker;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -58,12 +68,14 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -79,6 +91,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -182,11 +195,12 @@ public class MetadataController implements Initializable {
             anchorKeywordPane.setDisable(true);
             accordionPane.setExpandedPane(keywordsPane);
             progressPane.setVisible(false);
-            map = new MapView();            
-            map.setMapType(MapType.OSM);            
-            map.setPrefSize(400, 400);
-            map.setMaxSize(400, 400);            
-            map.initialize();            
+            map = new MapView();
+            map.setMapType(MapType.OSM);
+            map.setPrefSize(300, 200);
+            map.setMaxSize(300, 200);
+            map.initialize();
+            markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
         });
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
@@ -950,22 +964,58 @@ public class MetadataController implements Initializable {
         showMap();
     }
 
-    private void showMap() {        
+    private void showMap() {
         PopOver popOver = new PopOver();
-        popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);         
-        map.setZoom(19);        
-        double lat=actualMediaFile.getGpsLatPosAsDouble();
-        double lon=actualMediaFile.getGpsLonPosAsDouble();        
-        Coordinate c=new Coordinate(lat, lon);        
-        map.setCenter(c);        
-        markerPos = Marker.createProvided(Marker.Provided.ORANGE).setPosition(c).setVisible(true);                
+        popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);
+        VBox vb = new VBox();
+        vb.setSpacing(5);
+        HBox hb = new HBox();
+        hb.setSpacing(5);
+        Button saveAs = new Button("Save to image");
+        saveAs.setOnAction((t) -> {            
+            WritableImage image = map.snapshot(new SnapshotParameters(), null);
+            executorParallel.submit(() -> {
+                BufferedImage renderedImage = SwingFXUtils.fromFXImage(image, null);
+                //Write the snapshot to the chosen file
+                String files = actualMediaFile.getPathStorage().getParent().toString().toString() + File.separator + "MapScreen"+System.currentTimeMillis()+".png";
+                try {
+                    FileOutputStream fo = new FileOutputStream(files, false);
+                    ImageWriter writer = ImageIO.getWriter(ImageType.PNG);
+                    ImageParam.ImageParamBuilder builder = ImageParam.getBuilder();
+                    PNGOptions pngOptions = new PNGOptions();
+                    pngOptions.setApplyAdaptiveFilter(true);
+                    pngOptions.setCompressionLevel(6);
+                    pngOptions.setFilterType(Filter.NONE);
+                    builder.imageOptions(pngOptions);
+                    writer.setImageParam(builder.build());
+                    writer.write(renderedImage, fo);
+                    fo.close();
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (Exception ex) {
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        });
+        saveAs.setId("toolbutton");
+        saveAs.setGraphic(new FontIcon("ti-save:20"));
+        hb.getChildren().add(saveAs);
+        vb.getChildren().add(hb);
+        map.setZoom(19);
+        double lat = actualMediaFile.getGpsLatPosAsDouble();
+        double lon = actualMediaFile.getGpsLonPosAsDouble();
+        Coordinate c = new Coordinate(lat, lon);
+        map.setCenter(c);
+        markerPos.setPosition(c).setVisible(true);
         map.addMarker(markerPos);
-        circle=new MapCircle(c,3);
+        circle = new MapCircle(c, 3);
         circle.setVisible(true);
         //circle.setFillColor(Color.TRANSPARENT);        
         circle.setColor(javafx.scene.paint.Color.BLUE);
-        map.addMapCircle(circle);        
-        popOver.setContentNode(map);
+        circle.setWidth(1);
+        map.addMapCircle(circle);
+        vb.getChildren().add(map);
+        popOver.setContentNode(vb);
         popOver.show(gpsPlace);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/BMBPopOver.css").toExternalForm());

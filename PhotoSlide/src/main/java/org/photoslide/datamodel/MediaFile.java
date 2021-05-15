@@ -616,6 +616,9 @@ public class MediaFile {
     }
 
     public double getGpsLatPosAsDouble() {
+        if (gpsPosition == null || gpsPosition.equalsIgnoreCase("")) {
+            return -1;
+        }
         String degree = gpsPosition.substring(0, gpsPosition.indexOf("°"));
         String minutes = gpsPosition.substring(gpsPosition.indexOf("°") + 1, gpsPosition.indexOf("'"));
         String seconds = gpsPosition.substring(gpsPosition.indexOf("'") + 1, gpsPosition.indexOf("\""));
@@ -630,7 +633,10 @@ public class MediaFile {
     }
 
     public double getGpsLonPosAsDouble() {
-        int start = gpsPosition.indexOf(";")+1;
+        if (gpsPosition == null || gpsPosition.equalsIgnoreCase("")) {
+            return -1;
+        }
+        int start = gpsPosition.indexOf(";") + 1;
         String degree = gpsPosition.substring(start, gpsPosition.lastIndexOf("°"));
         String minutes = gpsPosition.substring(gpsPosition.lastIndexOf("°") + 1, gpsPosition.lastIndexOf("'"));
         String seconds = gpsPosition.substring(gpsPosition.lastIndexOf("'") + 1, gpsPosition.lastIndexOf("\""));

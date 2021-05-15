@@ -88,10 +88,9 @@ public class SearchIndex {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                         insertMediaFileIntoSearchDB(collectionName, m);
                                     } else if (FileTypes.isValidImge(fileItem.toString())) {
-                                        m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                                        metadataController.setActualMediaFile(m);
+                                        m.setMediaType(MediaFile.MediaTypes.IMAGE);                                        
                                         try {
-                                            metadataController.readBasicMetadata(task);
+                                            metadataController.readBasicMetadata(task, m);
                                         } catch (Exception ex) {
                                             //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                                         }
@@ -127,7 +126,7 @@ public class SearchIndex {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {
-            Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Error creating searchIndexDB", t.getSource().getException());
+            Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
         executorParallel.submit(task);
 
@@ -213,13 +212,17 @@ public class SearchIndex {
             if (m.getPlaces().get() != null) {
                 places = "'" + m.getPlaces().get() + "'";
             }
+            String gpspos = null;
+            if (m.getGpsPosition() != null) {
+                gpspos = "'" + m.getGpsLatPosAsDouble() +";"+ m.getGpsLonPosAsDouble() + "'";
+            }
             String faces = null;
             if (m.getFaces().get() != null) {
                 faces = "'" + m.getFaces().get() + "'";
             }
             String metadata = "'" + metadataController.getMetaDataAsString().replace("'", "''") + "'";
             Statement stm = App.getSearchDBConnection().createStatement();
-            String statementStr = "INSERT INTO MediaFiles (COLLECTIONNAME, NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, FACES, METADATA) VALUES(" + collName + "," + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + faces + "," + metadata + ")";
+            String statementStr = "INSERT INTO MediaFiles (COLLECTIONNAME, NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, GPSPOSITION, FACES, METADATA) VALUES(" + collName + "," + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + gpspos + "," + faces + "," + metadata + ")";
             stm.execute(statementStr);
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);

@@ -308,7 +308,7 @@ public class CollectionsController implements Initializable {
                             });
                             taskTree.setOnFailed((WorkerStateEvent t) -> {
                                 mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
-                                util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
+                                util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
                             });
                             executor.submit(taskTree);
 
@@ -465,7 +465,7 @@ public class CollectionsController implements Initializable {
             actCollectionTitlePane.setGraphic(redIcon);
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10);
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
             Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
             actCollectionTitlePane.setTooltip(tip);
         });
@@ -642,7 +642,7 @@ public class CollectionsController implements Initializable {
         treeView.getSelectionModel().clearSelection();
         mainController.getStatusLabelLeft().setVisible(true);
         mainController.getStatusLabelLeft().setText("Cut collection " + clipboardPath.getFileName().toString());
-        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     @FXML
@@ -659,7 +659,7 @@ public class CollectionsController implements Initializable {
         treeView.getSelectionModel().clearSelection();
         mainController.getStatusLabelLeft().setVisible(true);
         mainController.getStatusLabelLeft().setText("Copy collection " + clipboardPath.getFileName().toString());
-        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     @FXML
@@ -895,6 +895,12 @@ public class CollectionsController implements Initializable {
             }
         }
     }
+
+    public SearchIndex getSearchIndexProcess() {
+        return searchIndexProcess;
+    }
+    
+    
 
     @FXML
     private void renameEventAction(ActionEvent event) {

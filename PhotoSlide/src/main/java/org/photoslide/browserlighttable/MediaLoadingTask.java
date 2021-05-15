@@ -101,7 +101,7 @@ public class MediaLoadingTask extends Task<Void> {
                                 if (sort.equalsIgnoreCase("Capture time")) {
                                     metadataController.setActualMediaFile(m);
                                     try {
-                                        metadataController.readBasicMetadata(this);
+                                        metadataController.readBasicMetadata(this,m);
                                     } catch (IOException ex) {
                                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                                     }

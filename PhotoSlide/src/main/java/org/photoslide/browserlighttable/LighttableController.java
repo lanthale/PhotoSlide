@@ -302,10 +302,10 @@ public class LighttableController implements Initializable {
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             sortOrderComboBox.setDisable(false);
             mainController.getStatusLabelRight().setText("Finished Image Task.");
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2);
+            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
         });
@@ -836,7 +836,7 @@ public class LighttableController implements Initializable {
                                 try {
                                     if (mediaFile.getRecordTime() == null) {
                                         metadataController.setActualMediaFile(mediaFile);
-                                        metadataController.readBasicMetadata(this);
+                                        metadataController.readBasicMetadata(this, mediaFile);
                                     }
                                 } catch (IOException e) {
                                     long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
@@ -923,7 +923,7 @@ public class LighttableController implements Initializable {
         Platform.runLater(() -> {
             pasteButton.setDisable(false);
             mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
         });
     }
 
@@ -976,7 +976,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
             mainController.getStatusLabelLeft().setText("Pasting...Done!");
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3);
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
             setSelectedPath(selectedPath);
         });
         if (clipboard.hasFiles()) {

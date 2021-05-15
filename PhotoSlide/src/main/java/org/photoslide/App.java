@@ -87,9 +87,9 @@ public class App extends Application {
         }
         notifyPreloader(new ProgressNotification(0.6));
         setDefaultTIFFCodec();
-        notifyPreloader(new ProgressNotification(0.7));        
+        notifyPreloader(new ProgressNotification(0.7));
         TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install();        
+        PSDImageLoaderFactory.install();
         //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
         RAWImageLoaderFactory.install();
         notifyPreloader(new ProgressNotification(0.8));
@@ -151,11 +151,11 @@ public class App extends Application {
 
         try {
             String appData = Utility.getAppData();
-            Logger logger = Logger.getLogger("org");            
-            File logFile = new File(appData + File.separator + "photoslide.log");            
+            Logger logger = Logger.getLogger("org");
+            File logFile = new File(appData + File.separator + "photoslide.log");
             Handler handler = new FileHandler(logFile.getAbsolutePath(), 50000, 1, true);
             logger.addHandler(handler);
-            logger.setLevel(Level.ALL);            
+            logger.setLevel(Level.INFO);
             handler.setFormatter(new SimpleFormatter());
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
@@ -187,6 +187,7 @@ public class App extends Application {
                     + "recordTime TIMESTAMP,"
                     + "creationTime TIMESTAMP,"
                     + "places VARCHAR(255),"
+                    + "gpsposition VARCHAR(255)," //Format: "gpslatAsDouble;gpslongAsDouble"
                     + "faces VARCHAR(255),"
                     + "metadata VARCHAR(4000),"
                     + "PRIMARY KEY (collectionname, name, pathStorage)"
@@ -198,7 +199,7 @@ public class App extends Application {
     }
 
     private void checkSearchDBStructure() throws SQLException {
-        String[] colNames = {"collectionname", "name", "pathStorage", "title", "keywords", "camera", "rating", "recordTime", "creationTime", "places", "faces", "metadata"};
+        String[] colNames = {"collectionname", "name", "pathStorage", "title", "keywords", "camera", "rating", "recordTime", "creationTime", "places", "gpsposition", "faces", "metadata"};
 
         DatabaseMetaData databaseMetaData = searchDBConnection.getMetaData();
         ResultSet columns = databaseMetaData.getColumns(null, null, "MEDIAFILES", null);

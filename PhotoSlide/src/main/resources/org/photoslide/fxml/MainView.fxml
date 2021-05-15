@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Separator?>
@@ -199,9 +200,9 @@
         </MenuBar>
         <HBox>
             <children>
-                <ToolBar prefHeight="70.0" prefWidth="259.0" HBox.hgrow="NEVER">
+                <ToolBar prefHeight="70.0" prefWidth="300.0" HBox.hgrow="NEVER">
                     <items>
-                        <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="230.0">
+                        <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="280.0">
                             <children>
                                 <ToggleButton id="tooltoggle-button" fx:id="browseButton" minWidth="120.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
                                     <font>
@@ -218,6 +219,20 @@
                                         <Font size="24.0" />
                                     </font>
                                 </ToggleButton>
+                        <Separator halignment="RIGHT" orientation="VERTICAL" prefHeight="45.0" prefWidth="10.0">
+                           <padding>
+                              <Insets bottom="10.0" top="10.0" />
+                           </padding>
+                        </Separator>
+                        <MenuButton id="tooltoggle-button" mnemonicParsing="false" prefHeight="45.0" text="..." HBox.hgrow="NEVER">
+                          <items>
+                            <MenuItem mnemonicParsing="false" style="-fx-font-size: 24px;" text="Map" />
+                            <MenuItem mnemonicParsing="false" style="-fx-font-size: 24;" text="Compositions" />
+                          </items>
+                           <font>
+                              <Font size="24.0" />
+                           </font>
+                        </MenuButton>
                             </children>
                         </HBox>
                     </items>

@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
@@ -799,6 +800,7 @@ public class MainViewController implements Initializable {
         stage.getIcons().add(dialogIcon);
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.YES) {
+            collectionsPaneController.getSearchIndexProcess().shutdown();
             try {
                 Statement stat = App.getSearchDBConnection().createStatement();
                 stat.execute("DROP TABLE MEDIAFILES");
@@ -806,9 +808,12 @@ public class MainViewController implements Initializable {
             }
             try {
                 FullText.dropAll(App.getSearchDBConnection());
+                App.getSearchDBConnection().close();                
             } catch (SQLException ef) {
-            }
-            App.initDB();
+            }                        
+            final File downloadDirectory = new File(Utility.getAppData());            
+            final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("SearchMediaFilesDB.*"));
+            Arrays.asList(files).stream().forEach(File::delete);
             Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
             msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the search index.");
             msg.getDialogPane().getStylesheets().add(

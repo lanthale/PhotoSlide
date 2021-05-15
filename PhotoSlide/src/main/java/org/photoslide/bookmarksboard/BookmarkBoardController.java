@@ -149,7 +149,7 @@ public class BookmarkBoardController implements Initializable {
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
         statusLabel.setText("Copy "+fullMediaList.size()+" files to clipboard...finished");
-        util.hideNodeAfterTime(statusLabel, 3);        
+        util.hideNodeAfterTime(statusLabel, 3, true);        
     }
 
     @FXML
@@ -158,7 +158,7 @@ public class BookmarkBoardController implements Initializable {
         String initDir=System.getProperty("user.dir").toUpperCase();
         mainViewController.exportData("Export bookmarks", initDir, fullMediaList);        
         statusLabel.setText("Export "+fullMediaList.size()+" files...finished");
-        util.hideNodeAfterTime(statusLabel, 3); 
+        util.hideNodeAfterTime(statusLabel, 3, true); 
     }
 
     public ObservableList<MediaFile> getFullMediaList() {

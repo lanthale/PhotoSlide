@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,11 +41,12 @@ import org.kordamp.ikonli.javafx.StackedFontIcon;
  */
 public class Utility {
 
-    public void hideNodeAfterTime(Node node, int timeInSec) {
+    public void hideNodeAfterTime(Node node, int timeInSec, boolean showInScene) {
         Platform.runLater(() -> {
             PauseTransition wait = new PauseTransition(Duration.seconds(timeInSec));
             wait.setOnFinished((e) -> {
                 node.setVisible(false);
+                node.setManaged(showInScene);
             });
             wait.play();
         });

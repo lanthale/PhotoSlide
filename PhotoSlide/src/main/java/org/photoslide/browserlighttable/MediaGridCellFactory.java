@@ -293,7 +293,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             } else {
                                 lightController.getPlayIcon().setIconLiteral("fa-play");
                             }
-                            util.hideNodeAfterTime(lightController.getPlayIcon(), 2);
+                            util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
                         });
                         lightController.getPlayIcon().setOnMouseClicked((t) -> {
                             if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
@@ -301,7 +301,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             } else {
                                 lightController.getMediaView().getMediaPlayer().play();
                                 lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
+                                util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
                             }
                         });
                         lightController.getMediaView().setOnKeyPressed((t) -> {
@@ -311,7 +311,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                 } else {
                                     lightController.getMediaView().getMediaPlayer().play();
                                     lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1);
+                                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
                                 }
                             }
                         });

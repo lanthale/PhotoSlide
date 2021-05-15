@@ -84,9 +84,8 @@ public class SRMediaLoadingTask extends Task<Void> {
                     mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
                 } else if (FileTypes.isValidImge(mediaURL)) {
                     mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);                    
-                    metaController.setActualMediaFile(mediaItem);
                     try {
-                        metaController.readBasicMetadata(this);
+                        metaController.readBasicMetadata(this, mediaItem);
                     } catch (IOException ex) {
                         Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                     }

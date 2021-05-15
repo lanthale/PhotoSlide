@@ -118,7 +118,7 @@ public class EditorMetadataController implements Initializable {
             @Override
             protected Boolean call() throws Exception {
                 metadatacontroller.setActualMediaFile(selectedMediaFile);
-                metadatacontroller.readBasicMetadata(this);
+                metadatacontroller.readBasicMetadata(this, selectedMediaFile);
                 return true;
             }
 

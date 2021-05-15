@@ -16,6 +16,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +27,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.photoslide.ThreadFactoryPS;
 
 /**
  *
@@ -39,9 +43,11 @@ public class MediaLoadingTask extends Task<Void> {
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
     private final MediaFileLoader fileLoader;
+    private final ExecutorService executor;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
+        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("MediaLoadingTask"));
         fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
@@ -82,37 +88,9 @@ public class MediaLoadingTask extends Task<Void> {
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
                         if (FileTypes.isValidType(fileItem.toString())) {
-                            MediaFile m = new MediaFile();
-                            m.setName(fileItem.getFileName().toString());
-                            m.setPathStorage(fileItem);
-                            m.readEdits();
-                            m.getCreationTime();
-                            if (mainController.isMediaFileBookmarked(m)) {
-                                m.setBookmarked(true);
-                            }
-                            if (FileTypes.isValidVideo(fileItem.toString())) {
-                                m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                                Platform.runLater(() -> {
-                                    fullMediaList.add(m);
-                                });
-                                m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());
-                            } else if (FileTypes.isValidImge(fileItem.toString())) {
-                                m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                                if (sort.equalsIgnoreCase("Capture time")) {
-                                    metadataController.setActualMediaFile(m);
-                                    try {
-                                        metadataController.readBasicMetadata(this,m);
-                                    } catch (IOException ex) {
-                                        Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
-                                    }
-                                }
-                                m.setImage(fileLoader.loadImage(m));                                
-                                Platform.runLater(() -> {
-                                    fullMediaList.add(m);
-                                });
-                            } else {
-                                m.setMediaType(MediaFile.MediaTypes.NONE);
-                            }
+                            executor.submit(() -> {
+                                loadItem(this, fileItem);
+                            });
                         }
                     }
                     updateProgress(iatom.get(), qty);
@@ -131,6 +109,70 @@ public class MediaLoadingTask extends Task<Void> {
                 break;
         }
         return null;
+    }
+
+    public void shutdown() {
+        executor.shutdownNow();
+    }
+
+    private void loadItem(Task task, Path fileItem) {
+        MediaFile m = new MediaFile();
+        m.setName(fileItem.getFileName().toString());
+        if (task.isCancelled()) {
+            return;
+        }
+        m.setPathStorage(fileItem);
+        if (task.isCancelled()) {
+            return;
+        }
+        m.readEdits();
+        if (task.isCancelled()) {
+            return;
+        }
+        m.getCreationTime();
+        if (task.isCancelled()) {
+            return;
+        }
+        if (mainController.isMediaFileBookmarked(m)) {
+            m.setBookmarked(true);
+        }
+        if (task.isCancelled()) {
+            return;
+        }
+        if (FileTypes.isValidVideo(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.VIDEO);
+            Platform.runLater(() -> {
+                fullMediaList.add(m);
+            });
+            if (task.isCancelled()) {
+                return;
+            }
+            m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());
+            if (task.isCancelled()) {
+                return;
+            }
+        } else if (FileTypes.isValidImge(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+            if (sort.equalsIgnoreCase("Capture time")) {
+                try {
+                    metadataController.readBasicMetadata(this, m);
+                } catch (IOException ex) {
+                    Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (task.isCancelled()) {
+                return;
+            }
+            m.setImage(fileLoader.loadImage(m));
+            if (task.isCancelled()) {
+                return;
+            }
+            Platform.runLater(() -> {
+                fullMediaList.add(m);
+            });
+        } else {
+            m.setMediaType(MediaFile.MediaTypes.NONE);
+        }
     }
 
 }

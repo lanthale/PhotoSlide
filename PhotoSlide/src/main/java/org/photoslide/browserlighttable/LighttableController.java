@@ -246,6 +246,7 @@ public class LighttableController implements Initializable {
             });
         }
         if (taskMLoading != null) {
+            taskMLoading.shutdown();
             taskMLoading.cancel();
             if (fullMediaList != null) {
                 for (MediaFile mediaFile : fullMediaList) {
@@ -417,6 +418,7 @@ public class LighttableController implements Initializable {
             }
         });
         if (taskMLoading != null) {
+            taskMLoading.shutdown();
             taskMLoading.cancel();
         }
         if (executorParallel != null) {

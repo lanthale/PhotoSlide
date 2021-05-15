@@ -982,7 +982,7 @@ public class MetadataController implements Initializable {
         vb.setSpacing(5);
         HBox hb = new HBox();
         hb.setSpacing(5);
-        Button saveAs = new Button("Save to image");
+        Button saveAs = new Button("Save map to image");
         saveAs.setOnAction((t) -> {
             WritableImage image = map.snapshot(new SnapshotParameters(), null);
             executorParallel.submit(() -> {
@@ -1016,7 +1016,7 @@ public class MetadataController implements Initializable {
         });
         saveAs.setId("toolbutton");
         saveAs.setGraphic(new FontIcon("ti-save:16"));
-        Button clipboardButton = new Button("Copy to clipboard");
+        Button clipboardButton = new Button("Copy GPS position to clipboard");
         clipboardButton.setOnAction((t) -> {
             final Clipboard clipboard = Clipboard.getSystemClipboard();
             final ClipboardContent content = new ClipboardContent();

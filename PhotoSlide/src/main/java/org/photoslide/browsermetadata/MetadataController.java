@@ -1051,7 +1051,7 @@ public class MetadataController implements Initializable {
         popOver.setContentNode(vb);
         popOver.show(gpsPlace);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
-                .add(getClass().getResource("/org/photoslide/css/BMBPopOver.css").toExternalForm());
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
 
     @FXML

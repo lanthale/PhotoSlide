@@ -964,7 +964,7 @@ public class MainViewController implements Initializable {
             popOver.setFadeInDuration(new Duration(100));
             popOver.show(bookmarksBoardButton);
             ((Parent) popOver.getSkin().getNode()).getStylesheets()
-                    .add(getClass().getResource("/org/photoslide/css/BMBPopOver.css").toExternalForm());
+                    .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
         } catch (IOException ex) {
             Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
         }

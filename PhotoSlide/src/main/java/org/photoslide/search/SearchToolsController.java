@@ -146,6 +146,10 @@ public class SearchToolsController implements Initializable {
     }
 
     public void shutdown() {
+        if (task!=null){
+            task.cancel();
+            task.shutdown();
+        }
         executor.shutdown();
         executorParallel.shutdown();
     }
@@ -261,6 +265,7 @@ public class SearchToolsController implements Initializable {
                 });
                 if (task != null) {
                     task.cancel();
+                    task.shutdown();
                 }
                 task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
                 task.setOnFailed((t) -> {

@@ -88,8 +88,14 @@ public class MediaLoadingTask extends Task<Void> {
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
                         if (FileTypes.isValidType(fileItem.toString())) {
+                            MediaFile m = new MediaFile();
+                            m.setName(fileItem.getFileName().toString());
+                            m.setPathStorage(fileItem);
                             executor.submit(() -> {
-                                loadItem(this, fileItem);
+                                loadItem(this, fileItem, m);
+                            });
+                            Platform.runLater(() -> {
+                                fullMediaList.add(m);
                             });
                         }
                     }
@@ -115,13 +121,8 @@ public class MediaLoadingTask extends Task<Void> {
         executor.shutdownNow();
     }
 
-    private void loadItem(Task task, Path fileItem) {
-        MediaFile m = new MediaFile();
-        m.setName(fileItem.getFileName().toString());
-        if (task.isCancelled()) {
-            return;
-        }
-        m.setPathStorage(fileItem);
+    private void loadItem(Task task, Path fileItem, MediaFile m) {
+
         if (task.isCancelled()) {
             return;
         }
@@ -140,10 +141,7 @@ public class MediaLoadingTask extends Task<Void> {
             return;
         }
         if (FileTypes.isValidVideo(fileItem.toString())) {
-            m.setMediaType(MediaFile.MediaTypes.VIDEO);
-            Platform.runLater(() -> {
-                fullMediaList.add(m);
-            });
+            m.setMediaType(MediaFile.MediaTypes.VIDEO);            
             if (task.isCancelled()) {
                 return;
             }
@@ -166,10 +164,7 @@ public class MediaLoadingTask extends Task<Void> {
             m.setImage(fileLoader.loadImage(m));
             if (task.isCancelled()) {
                 return;
-            }
-            Platform.runLater(() -> {
-                fullMediaList.add(m);
-            });
+            }            
         } else {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }

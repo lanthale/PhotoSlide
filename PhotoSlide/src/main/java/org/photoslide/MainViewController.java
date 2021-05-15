@@ -767,8 +767,11 @@ public class MainViewController implements Initializable {
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
             if (key.getCode() == KeyCode.ESCAPE) {
-                searchDialog.setResult(ButtonType.CANCEL);
+                searchDialog.setResult(ButtonType.CANCEL);                
             }
+        });
+        searchDialog.setOnHiding((t) -> {
+            searchDialog.getController().shutdown();
         });
         searchDialog.getController().getCloseAction().setOnMouseClicked((mouse) -> {
             searchDialog.setResult(ButtonType.CANCEL);

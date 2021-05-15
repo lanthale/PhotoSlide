@@ -13,7 +13,7 @@
    <children>
       <VBox layoutX="162.0" layoutY="213.0" prefHeight="284.0" prefWidth="511.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <HBox spacing="30.0">
+            <HBox fx:id="menuBox" spacing="30.0">
                <children>
                 <Button id="toolbutton" mnemonicParsing="false" onAction="#copyClipboardAction" text="Copy to clipboard">
                      <graphic>

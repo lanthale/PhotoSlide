@@ -61,6 +61,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - Bookmark files independend where found
 - Export/clipboard bookmarked files
 - Software update: Check for new version of photoslide and download/install it if user wants it
+- View of GPS position information on a OSM map
 
 
 ## Missing features

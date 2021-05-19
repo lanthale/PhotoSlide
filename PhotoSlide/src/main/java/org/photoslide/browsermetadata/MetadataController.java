@@ -50,6 +50,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +115,7 @@ import javafx.stage.Stage;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.librawfx.LibrawImage;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.imageops.ExposureFilter;
@@ -137,6 +139,7 @@ public class MetadataController implements Initializable {
     private IPTC iptcdata;
     private XMP xmpdata;
     private List<String> commentsdata;
+    private HashMap<String, String> rawMetaData;
 
     @FXML
     private Accordion accordionPane;
@@ -296,6 +299,9 @@ public class MetadataController implements Initializable {
     }
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
+        if (file.isRawImage()) {
+            rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
+        }
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
             if (actTask.isCancelled() == false) {
@@ -526,6 +532,16 @@ public class MetadataController implements Initializable {
         AtomicInteger i = new AtomicInteger(1);
         Iterator<MetadataEntry> iterator;
 
+        if (rawMetaData != null) {
+            rawMetaData.entrySet().forEach((entry) -> {
+                Label key = new Label(entry.getKey());
+                Label value = new Label(entry.getValue());
+                key.setStyle("-fx-font-size:8pt;");
+                value.setStyle("-fx-font-size:8pt;");
+                metaDataGrid.addRow(i.get(), key, value);
+                i.addAndGet(1);
+            });
+        }
         //read jpge exif
         if (exifdata != null) {
             iterator = exifdata.iterator();
@@ -971,10 +987,10 @@ public class MetadataController implements Initializable {
         if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase("")) {
             return;
         }
-        Utility util = new Utility();        
+        Utility util = new Utility();
         PopOver popOver = new PopOver();
         popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);
-        Label message = new Label("");        
+        Label message = new Label("");
         message.setVisible(false);
         message.setManaged(false);
         VBox vb = new VBox();
@@ -1011,7 +1027,7 @@ public class MetadataController implements Initializable {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
                     message.setText("Error on saving image!");
                 }
-                util.hideNodeAfterTime(message, 3, false);                
+                util.hideNodeAfterTime(message, 3, false);
             });
         });
         saveAs.setId("toolbutton");
@@ -1185,6 +1201,10 @@ public class MetadataController implements Initializable {
     public void setExposerFilter(ImageFilter exposerFilter) {
         this.exposerFilter = exposerFilter;
     }
+
+    public HashMap<String, String> getRawMetaData() {
+        return rawMetaData;
+    }        
 
     public void Shutdown() {
         if (task != null) {

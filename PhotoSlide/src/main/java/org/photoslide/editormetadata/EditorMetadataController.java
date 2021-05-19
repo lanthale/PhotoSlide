@@ -91,7 +91,7 @@ public class EditorMetadataController implements Initializable {
         imageVIew.setImage(null);
         progressMetaDataIndicator.setVisible(true);
         selectedMediaFile = f;
-        gridPaneMetaInfo.getChildren().clear();        
+        gridPaneMetaInfo.getChildren().clear();
         task = new Task<>() {
 
             @Override
@@ -143,6 +143,17 @@ public class EditorMetadataController implements Initializable {
         AtomicInteger i = new AtomicInteger(1);
         Iterator<MetadataEntry> iterator;
 
+        if (metadatacontroller.getRawMetaData() != null) {
+            metadatacontroller.getRawMetaData().entrySet().forEach((e) -> {
+                Label key = new Label(e.getKey());
+                Label value = new Label(e.getValue());
+                key.setStyle("-fx-font-size:8pt;");
+                value.setStyle("-fx-font-size:8pt;");
+                gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
+                gridPaneMetaInfo.addRow(i.get(), key, value);
+                i.addAndGet(1);
+            });
+        }
         //read jpge exif
         if (metadatacontroller.getExifdata() != null) {
             iterator = metadatacontroller.getExifdata().iterator();
@@ -217,7 +228,7 @@ public class EditorMetadataController implements Initializable {
         gridPaneMetaInfo.getChildren().clear();
         while (gridPaneMetaInfo.getRowConstraints().size() > 0) {
             gridPaneMetaInfo.getRowConstraints().remove(0);
-        }        
+        }
     }
 
     public void shutdown() {

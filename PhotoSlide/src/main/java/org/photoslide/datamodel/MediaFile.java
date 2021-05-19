@@ -730,4 +730,30 @@ public class MediaFile {
         }
     }
 
+    /**
+     * checks if the mediafile is a raw image format e.g. NEF, CR2, X3F, ...
+     * @return true if file is a raw file
+     */
+    public boolean isRawImage() {
+        if (mediaType == MediaTypes.IMAGE) {
+            String ext = name.substring(name.lastIndexOf("."));
+            if (ext.contains("jpg")) {
+                return false;
+            }
+            if (ext.contains("jpeg")) {
+                return false;
+            }
+            if (ext.contains("png")) {
+                return false;
+            }
+            if (ext.contains("tif")) {
+                return false;
+            }
+            if (ext.contains("tiff")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

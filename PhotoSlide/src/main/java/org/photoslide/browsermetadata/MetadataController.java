@@ -533,7 +533,7 @@ public class MetadataController implements Initializable {
         Iterator<MetadataEntry> iterator;
 
         if (rawMetaData != null) {
-            rawMetaData.entrySet().forEach((entry) -> {
+            rawMetaData.entrySet().stream().sorted(Map.Entry.<String, String>comparingByKey()).forEach((entry) -> {
                 Label key = new Label(entry.getKey());
                 Label value = new Label(entry.getValue());
                 key.setStyle("-fx-font-size:8pt;");
@@ -634,6 +634,10 @@ public class MetadataController implements Initializable {
     private void saveAction(ActionEvent event) {
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
+        if (actualMediaFile.isRawImage()) {
+            actualMediaFile.saveEdits();
+            return;
+        }
         try {
             bout = new ByteArrayOutputStream();
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
@@ -691,6 +695,10 @@ public class MetadataController implements Initializable {
             @Override
             protected Boolean call() throws IOException {
                 //saveImageEdits();
+                if (actualMediaFile.isRawImage()) {
+                    actualMediaFile.saveEdits();
+                    return true;
+                }
                 FileInputStream fin;
                 ByteArrayOutputStream bout = null;
                 try {
@@ -786,6 +794,14 @@ public class MetadataController implements Initializable {
         }
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
+        if (file.isRawImage()) {
+            file.setKeywords(keywords);
+            file.setTitle(title);
+            Platform.runLater(() -> {
+                file.saveEdits();
+            });
+            return;
+        }
         try {
             bout = new ByteArrayOutputStream();
 
@@ -924,9 +940,13 @@ public class MetadataController implements Initializable {
                         if (this.isCancelled() == false) {
                             updateProgress(i + 1, mediaList.size());
                             updateMessage("" + (i + 1) + "/" + mediaList.size());
-                            if (actFile.getMediaType() == MediaTypes.IMAGE) {
-                                readBasicMetadata(this, actFile);
-                                updateKeywordsTitle(actFile, titleText.getText(), getKeywordsAsString(keywordsToAllText));
+                            if (actFile.isRawImage()) {
+                                actFile.saveEdits();
+                            } else {
+                                if (actFile.getMediaType() == MediaTypes.IMAGE) {
+                                    readBasicMetadata(this, actFile);
+                                    updateKeywordsTitle(actFile, titleText.getText(), getKeywordsAsString(keywordsToAllText));
+                                }
                             }
                             i++;
                         }
@@ -984,7 +1004,7 @@ public class MetadataController implements Initializable {
     }
 
     private void showMap() {
-        if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase("")) {
+        if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase(";")) {
             return;
         }
         Utility util = new Utility();
@@ -1204,7 +1224,7 @@ public class MetadataController implements Initializable {
 
     public HashMap<String, String> getRawMetaData() {
         return rawMetaData;
-    }        
+    }
 
     public void Shutdown() {
         if (task != null) {

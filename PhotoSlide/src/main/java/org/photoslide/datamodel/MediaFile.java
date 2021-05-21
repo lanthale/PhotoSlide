@@ -178,6 +178,12 @@ public class MediaFile {
             if (title.getValue() != null) {
                 prop.setProperty("title", title.getValue());
             }
+            if (keywords.getValue() != null) {
+                prop.setProperty("keywords", keywords.getValue());
+            }
+            if (comments.getValue() != null) {
+                prop.setProperty("comments", comments.getValue());
+            }
             if (camera.getValue() != null) {
                 prop.setProperty("camera", camera.getValue());
             }
@@ -261,6 +267,12 @@ public class MediaFile {
             if (prop.getProperty("title") != null) {
                 title.setValue(prop.getProperty("title"));
             }
+            if (prop.getProperty("keywords") != null) {
+                keywords.setValue(prop.getProperty("keywords"));
+            }
+            if (prop.getProperty("comments") != null) {
+                comments.setValue(prop.getProperty("comments"));
+            }            
             if (prop.getProperty("camera") != null) {
                 camera.setValue(prop.getProperty("camera"));
             }
@@ -616,7 +628,7 @@ public class MediaFile {
     }
 
     public double getGpsLatPosAsDouble() {
-        if (gpsPosition == null || gpsPosition.equalsIgnoreCase("")) {
+        if (gpsPosition == null || gpsPosition.equalsIgnoreCase(";")) {
             return -1;
         }
         String degree = gpsPosition.substring(0, gpsPosition.indexOf("°"));
@@ -633,7 +645,7 @@ public class MediaFile {
     }
 
     public double getGpsLonPosAsDouble() {
-        if (gpsPosition == null || gpsPosition.equalsIgnoreCase("")) {
+        if (gpsPosition == null || gpsPosition.equalsIgnoreCase(";")) {
             return -1;
         }
         int start = gpsPosition.indexOf(";") + 1;

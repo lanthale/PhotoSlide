@@ -675,7 +675,7 @@ public class MainViewController implements Initializable {
                         m.getCreationTime();
                         if (FileTypes.isValidVideo(fileItem.toString())) {
                             m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                        } else if (FileTypes.isValidImge(fileItem.toString())) {
+                        } else if (FileTypes.isValidImage(fileItem.toString())) {
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
                             Image img = null;
                             img = new Image(m.getPathStorage().toUri().toURL().toString(), lighttablePaneController.getImageGrid().getCellWidth() + 300, lighttablePaneController.getImageGrid().getCellHeight() + 300, true, false, false);

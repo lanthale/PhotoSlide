@@ -87,7 +87,7 @@ public class SearchIndex {
                                     if (FileTypes.isValidVideo(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                         insertMediaFileIntoSearchDB(collectionName, m);
-                                    } else if (FileTypes.isValidImge(fileItem.toString())) {
+                                    } else if (FileTypes.isValidImage(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.IMAGE);                                        
                                         try {
                                             metadataController.readBasicMetadata(task, m);

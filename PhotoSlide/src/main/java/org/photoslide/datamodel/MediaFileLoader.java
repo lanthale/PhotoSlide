@@ -18,18 +18,20 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
-       
 
-    public MediaFileLoader() {        
-    }        
+    public MediaFileLoader() {
+    }
 
     public Image loadImage(MediaFile fileItem) {
         Image retImage = null;
         try {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
-                if (t1.doubleValue() == 1.0) {
+                if (t1.doubleValue() == 1.0) {                    
                     fileItem.setLoading(false);
+                }
+                if (iImage.isError()){
+                    fileItem.setMediaType(MediaFile.MediaTypes.NONE);                    
                 }
             });
             return iImage;
@@ -37,7 +39,7 @@ public class MediaFileLoader {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
             return retImage;
         }
-    }    
+    }
 
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;

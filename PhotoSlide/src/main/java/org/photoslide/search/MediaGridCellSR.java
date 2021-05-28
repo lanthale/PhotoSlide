@@ -9,12 +9,15 @@ import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
 import org.photoslide.datamodel.*;
 import org.controlsfx.control.GridCell;
@@ -112,9 +115,32 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
                     setImage(item);
                     setGraphic(rootPane);
                     break;
+                case NONE:
+                    setError(item);
+                    setGraphic(rootPane);
+                    break;
                 default:
                     break;
             }
+        }
+    }
+    
+    public final void setError(MediaFile item) {
+        rootPane.getChildren().clear();
+        dummyIcon.setIconLiteral("ti-bolt");
+        rootPane.getChildren().add(dummyIcon);
+        Label errorLabel=new Label("Error loading");        
+        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);                
+        errorLabel.setStyle("-fx-font-size:6");        
+        HBox hb=new HBox();
+        hb.setAlignment(Pos.BOTTOM_CENTER);
+        hb.getChildren().add(errorLabel);
+        rootPane.getChildren().add(hb);
+        if (item.getDeletedProperty().getValue() == true) {
+            setDeletedNode();
         }
     }
 

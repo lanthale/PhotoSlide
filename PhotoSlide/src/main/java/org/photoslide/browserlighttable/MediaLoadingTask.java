@@ -91,6 +91,7 @@ public class MediaLoadingTask extends Task<Void> {
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
+                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
                             executor.submit(() -> {
                                 loadItem(this, fileItem, m);
                             });
@@ -149,7 +150,7 @@ public class MediaLoadingTask extends Task<Void> {
             if (task.isCancelled()) {
                 return;
             }
-        } else if (FileTypes.isValidImge(fileItem.toString())) {
+        } else if (FileTypes.isValidImage(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (sort.equalsIgnoreCase("Capture time")) {
                 try {

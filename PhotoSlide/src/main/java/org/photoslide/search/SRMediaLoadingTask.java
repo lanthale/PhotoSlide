@@ -109,7 +109,7 @@ public class SRMediaLoadingTask extends Task<Void> {
                 fullMediaList.add(mediaItem);
             });*/
             mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
-        } else if (FileTypes.isValidImge(mediaURL)) {
+        } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
             try {
                 metaController.readBasicMetadata(this, mediaItem);

@@ -49,7 +49,7 @@ public class FileTypes {
         return videoTypes.toUpperCase().contains(fileEndingStr.toUpperCase());
     }
 
-    public static boolean isValidImge(String fileName) {
+    public static boolean isValidImage(String fileName) {
         int lastIndexOf = fileName.lastIndexOf('.');
         String fileEndingStr = "";
         if (lastIndexOf != -1) {

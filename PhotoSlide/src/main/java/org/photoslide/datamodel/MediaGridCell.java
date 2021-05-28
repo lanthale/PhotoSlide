@@ -9,12 +9,15 @@ import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -25,7 +28,7 @@ import org.photoslide.datamodel.MediaFile.MediaTypes;
  * @author selfemp
  */
 public class MediaGridCell extends GridCell<MediaFile> {
-    
+
     private final StackPane rootPane;
     private final MediaView mediaview;
     private final ImageView imageView;
@@ -35,7 +38,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private FontIcon dummyIcon;
     private ProgressIndicator prgInd;
     private FontIcon filmIcon;
-    
+
     public MediaGridCell() {
         this.setId("MediaGridCell");
         rootPane = new StackPane();
@@ -81,7 +84,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-            
+
         } else {
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
@@ -97,7 +100,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 }
             }
             item.loadingProperty().addListener((ov, t, t1) -> {
-                if (t1 == false) {                    
+                if (t1 == false) {
                     this.requestLayout();
                 }
             });
@@ -113,12 +116,35 @@ public class MediaGridCell extends GridCell<MediaFile> {
                     setImage(item);
                     setGraphic(rootPane);
                     break;
+                case NONE:
+                    setError(item);
+                    setGraphic(rootPane);
+                    break;
                 default:
                     break;
             }
         }
     }
-    
+
+    public final void setError(MediaFile item) {
+        rootPane.getChildren().clear();
+        dummyIcon.setIconLiteral("ti-bolt");
+        rootPane.getChildren().add(dummyIcon);
+        Label errorLabel=new Label("Error loading");        
+        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);                
+        errorLabel.setStyle("-fx-font-size:6");        
+        HBox hb=new HBox();
+        hb.setAlignment(Pos.BOTTOM_CENTER);
+        hb.getChildren().add(errorLabel);
+        rootPane.getChildren().add(hb);
+        if (item.getDeletedProperty().getValue() == true) {
+            setDeletedNode();
+        }
+    }
+
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
@@ -126,7 +152,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
-            
+
             item.setImage(item.setFilters());
 
             //calc cropview based on small imageview
@@ -140,10 +166,10 @@ public class MediaGridCell extends GridCell<MediaFile> {
             setStacked(item.isStacked(), item.getStackPos());
             if (item.getDeletedProperty().getValue() == true) {
                 setDeletedNode();
-            }            
+            }
         }
     }
-    
+
     public final void setMedia(MediaFile item) {
         if (item.isLoading() == true && item.getVideoSupported() == null) {
             setLoadingNode(item.getMediaType());
@@ -159,10 +185,10 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
-            setBookmarked(item.isBookmarked());            
+            setBookmarked(item.isBookmarked());
         }
     }
-    
+
     public void setLoadingNode(MediaTypes mediaType) {
         prgInd.maxHeightProperty().unbind();
         prgInd.maxWidthProperty().unbind();
@@ -176,14 +202,14 @@ public class MediaGridCell extends GridCell<MediaFile> {
         rootPane.getChildren().clear();
         rootPane.getChildren().add(prgInd);
     }
-    
+
     private void setDeletedNode() {
         VBox v = new VBox();
         v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         rootPane.getChildren().add(v);
         rootPane.getChildren().add(restoreIcon);
     }
-    
+
     private void setRatingNode(int rating) {
         if (rating > 0) {
             VBox vb = new VBox();
@@ -199,7 +225,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         }
     }
-    
+
     private void setStacked(boolean stacked, int stackPos) {
         VBox vb = new VBox();
         if (stacked == true && stackPos == 1) {
@@ -211,7 +237,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().remove(vb);
         }
     }
-    
+
     private void setBookmarked(boolean bookmarked) {
         if (bookmarked) {
             VBox vb = new VBox();
@@ -225,5 +251,5 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         }
     }
-    
+
 }

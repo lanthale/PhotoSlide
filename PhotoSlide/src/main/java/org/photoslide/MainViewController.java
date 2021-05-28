@@ -7,6 +7,12 @@ import org.photoslide.browsermetadata.MetadataController;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
+import com.icafe4j.image.meta.Metadata;
+import com.icafe4j.image.meta.MetadataEntry;
+import com.icafe4j.image.meta.MetadataType;
+import com.icafe4j.image.meta.image.Comments;
+import com.icafe4j.image.meta.iptc.IPTCDataSet;
+import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.options.JPGOptions;
 import com.icafe4j.image.options.PNGOptions;
 import com.icafe4j.image.options.TIFFOptions;
@@ -31,8 +37,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -303,7 +312,8 @@ public class MainViewController implements Initializable {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-            alert.setResizable(false);
+            alert.setResizable(false);            
+            alert.setGraphic(new FontIcon("ti-close:30"));
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
             stage.getIcons().add(dialogIcon);
@@ -315,6 +325,7 @@ public class MainViewController implements Initializable {
 
     public boolean exportData(String titel, String initOutDir, ObservableList<MediaFile> mediaListToExport) {
         ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
+        diag.setGraphic(new FontIcon("ti-export:30"));
         diag.setTitle("Export media files...");
         diag.setHeaderText("Export media files...");
 
@@ -372,7 +383,7 @@ public class MainViewController implements Initializable {
                             if (outFile.exists() == true) {
                                 continue;
                             }
-                            String url = mediaItem.getImageUrl().toString();
+                            String url = mediaItem.getImageUrl().toString();                            
                             Image img = new Image(url, false);
                             ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
                             Image imageWithFilters = img;
@@ -395,7 +406,7 @@ public class MainViewController implements Initializable {
                                 fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
                             }
                             try {
-                                FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + i + "." + imageType.getExtension(), false);
+                                FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension(), false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
                                 ImageParam.ImageParamBuilder builder = ImageParam.getBuilder();
                                 switch (imageType) {
@@ -432,7 +443,19 @@ public class MainViewController implements Initializable {
                                 //newImage.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), buffer, 0, width);
                                 //writer.write(buffer, i, i, fo);
                                 writer.write(fromFXImage, fo);
-                                fo.close();
+                                fo.close();                                
+                                if (diag.getController().getExportAllMetaData().isSelected()) {
+                                    fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension(), false);
+                                    FileInputStream fin = new FileInputStream(mediaItem.getPathStorage().toFile());
+                                    List<Metadata> metaList = new ArrayList<Metadata>();
+                                    metaList.add(metadataPaneController.getExifdata());
+                                    metaList.add(metadataPaneController.getIptcdata());
+                                    metaList.add(metadataPaneController.getXmpdata());
+                                    if (metadataPaneController.getCommentsdata() != null) {
+                                        metaList.add(new Comments(metadataPaneController.getCommentsdata()));
+                                    }
+                                    Metadata.insertMetadata(metaList, fin, fo);
+                                }                                
                             } catch (FileNotFoundException ex) {
                                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
                             } catch (Exception ex) {
@@ -767,7 +790,7 @@ public class MainViewController implements Initializable {
         stage.getIcons().add(dialogIcon);
         searchDialog.getDialogPane().setOnKeyPressed((key) -> {
             if (key.getCode() == KeyCode.ESCAPE) {
-                searchDialog.setResult(ButtonType.CANCEL);                
+                searchDialog.setResult(ButtonType.CANCEL);
             }
         });
         searchDialog.setOnHiding((t) -> {
@@ -811,10 +834,10 @@ public class MainViewController implements Initializable {
             }
             try {
                 FullText.dropAll(App.getSearchDBConnection());
-                App.getSearchDBConnection().close();                
+                App.getSearchDBConnection().close();
             } catch (SQLException ef) {
-            }                        
-            final File downloadDirectory = new File(Utility.getAppData());            
+            }
+            final File downloadDirectory = new File(Utility.getAppData());
             final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("SearchMediaFilesDB.*"));
             Arrays.asList(files).stream().forEach(File::delete);
             Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);

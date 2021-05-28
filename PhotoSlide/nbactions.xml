@@ -11,6 +11,7 @@
                 
                 
                 
+                
             </goals>
             <properties>
                 <exec.args>-Xmx8g --add-opens java.base/java.net=com.sothawo.mapjfx --add-modules jdk.incubator.foreign -Dforeign.restricted=permit --add-exports=java.desktop/sun.awt.image=PhotoSlide --add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx --add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls --add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls --add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls --module-path ${project.build.directory}/modules --module ${moduleName}/${mainClass}</exec.args>

@@ -5,7 +5,6 @@
  */
 package org.photoslide;
 
-import com.icafe4j.image.ImageType;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -13,7 +12,6 @@ import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Point2D;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -49,7 +47,9 @@ public class ExportDialogController implements Initializable {
     @FXML
     private Slider qualitySlider;
     @FXML
-    private Tooltip qSliderToolTip;
+    private Tooltip qSliderToolTip;    
+    @FXML
+    private CheckBox exportAllMetaData;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -147,6 +147,12 @@ public class ExportDialogController implements Initializable {
 
     public CheckBox getExportDeletedFileBox() {
         return exportDeletedFileBox;
+    }    
+
+    public CheckBox getExportAllMetaData() {
+        return exportAllMetaData;
     }
+    
+    
 
 }

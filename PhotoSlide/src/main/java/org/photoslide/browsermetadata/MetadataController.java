@@ -642,12 +642,7 @@ public class MetadataController implements Initializable {
             bout = new ByteArrayOutputStream();
             fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
 
-            List<IPTCDataSet> iptcs = new ArrayList<>();
-            /*StringTokenizer defaultTokenizer = new StringTokenizer(keywordText.getText(), ";");
-
-            while (defaultTokenizer.hasMoreTokens()) {
-                iptcs.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
-            }*/
+            List<IPTCDataSet> iptcs = new ArrayList<>();            
 
             keywordText.getChildren().forEach((tagitem) -> {
                 String text = ((Tag) tagitem).getText();
@@ -1170,6 +1165,12 @@ public class MetadataController implements Initializable {
     public XMP getXmpdata() {
         return xmpdata;
     }
+
+    public List<String> getCommentsdata() {
+        return commentsdata;
+    }
+    
+    
 
     /**
      * Method of getting all metadata as a string for the search database

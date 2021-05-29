@@ -50,6 +50,8 @@ public class ExportDialogController implements Initializable {
     private Tooltip qSliderToolTip;    
     @FXML
     private CheckBox exportAllMetaData;
+    @FXML
+    private CheckBox exportBasicMetadataBox;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -151,6 +153,10 @@ public class ExportDialogController implements Initializable {
 
     public CheckBox getExportAllMetaData() {
         return exportAllMetaData;
+    }
+
+    public CheckBox getExportBasicMetadataBox() {
+        return exportBasicMetadataBox;
     }
     
     

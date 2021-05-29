@@ -11,6 +11,7 @@ import com.icafe4j.image.meta.Metadata;
 import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.MetadataType;
 import com.icafe4j.image.meta.image.Comments;
+import com.icafe4j.image.meta.iptc.IPTCApplicationTag;
 import com.icafe4j.image.meta.iptc.IPTCDataSet;
 import com.icafe4j.image.meta.iptc.IPTCTag;
 import com.icafe4j.image.options.JPGOptions;
@@ -23,6 +24,7 @@ import com.icafe4j.image.writer.ImageWriter;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -312,7 +314,7 @@ public class MainViewController implements Initializable {
             Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-            alert.setResizable(false);            
+            alert.setResizable(false);
             alert.setGraphic(new FontIcon("ti-close:30"));
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
@@ -383,7 +385,7 @@ public class MainViewController implements Initializable {
                             if (outFile.exists() == true) {
                                 continue;
                             }
-                            String url = mediaItem.getImageUrl().toString();                            
+                            String url = mediaItem.getImageUrl().toString();
                             Image img = new Image(url, false);
                             ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
                             Image imageWithFilters = img;
@@ -443,19 +445,35 @@ public class MainViewController implements Initializable {
                                 //newImage.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), buffer, 0, width);
                                 //writer.write(buffer, i, i, fo);
                                 writer.write(fromFXImage, fo);
-                                fo.close();                                
+                                fo.close();
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
-                                    fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension(), false);
-                                    FileInputStream fin = new FileInputStream(mediaItem.getPathStorage().toFile());
+                                    FileInputStream fin = new FileInputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension());
+                                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                                    metadataPaneController.readBasicMetadata(this, mediaItem);
                                     List<Metadata> metaList = new ArrayList<Metadata>();
-                                    metaList.add(metadataPaneController.getExifdata());
-                                    metaList.add(metadataPaneController.getIptcdata());
-                                    metaList.add(metadataPaneController.getXmpdata());
+                                    if (metadataPaneController.getExifdata() != null) {
+                                        metaList.add(metadataPaneController.getExifdata());
+                                    }
+                                    /*if (metadataPaneController.getIptcdata() != null) {
+                                        metaList.add(metadataPaneController.getIptcdata());
+                                    }
+                                    if (metadataPaneController.getXmpdata() != null) {
+                                        metaList.add(metadataPaneController.getXmpdata());
+                                    }
                                     if (metadataPaneController.getCommentsdata() != null) {
                                         metaList.add(new Comments(metadataPaneController.getCommentsdata()));
+                                    }*/
+                                    Metadata.insertMetadata(metaList, fin, bout);
+                                    try (OutputStream outputStream = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension())) {
+                                        bout.writeTo(outputStream);
                                     }
-                                    Metadata.insertMetadata(metaList, fin, fo);
-                                }                                
+                                    fin.close();
+                                    bout.close();
+                                }
+                                if (diag.getController().getExportBasicMetadataBox().isSelected()) {
+                                    metadataPaneController.readBasicMetadata(this, mediaItem);
+                                    metadataPaneController.writeBasicMetadata(mediaItem, outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension());
+                                }
                             } catch (FileNotFoundException ex) {
                                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
                             } catch (Exception ex) {

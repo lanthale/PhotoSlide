@@ -631,55 +631,72 @@ public class MetadataController implements Initializable {
         }
     }
 
-    private void saveAction(ActionEvent event) {
-        FileInputStream fin;
-        ByteArrayOutputStream bout = null;
-        if (actualMediaFile.isRawImage()) {
-            actualMediaFile.saveEdits();
-            return;
+    public void writeBasicMetadata(MediaFile mf, String filePath) throws FileNotFoundException, IOException {
+        FileInputStream fin = new FileInputStream(filePath);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        if (iptcdata == null) {
+            iptcdata = new IPTC();
         }
-        try {
-            bout = new ByteArrayOutputStream();
-            fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
+        Map<IPTCTag, List<IPTCDataSet>> dataSets = iptcdata.getDataSets();
+        List<IPTCDataSet> keywordListLocal = dataSets.get(IPTCApplicationTag.KEY_WORDS);
+        if (keywordListLocal == null) {
+            keywordListLocal = new ArrayList<>();
+            dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
+        }
+        keywordListLocal.clear();
 
-            List<IPTCDataSet> iptcs = new ArrayList<>();            
-
-            keywordText.getChildren().forEach((tagitem) -> {
-                String text = ((Tag) tagitem).getText();
-                iptcs.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, text));
-            });
-
-            iptcs.add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, captionTextField.getText()));
-            Metadata.insertIPTC(fin, bout, iptcs, true);
-
-            fin.close();
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+        StringTokenizer defaultTokenizer = new StringTokenizer(mf.getKeywords(), ";");
+        while (defaultTokenizer.hasMoreTokens()) {
+            keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
+        }
+        Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
+        try (OutputStream outputStream = new FileOutputStream(filePath)) {
+            bout.writeTo(outputStream);
+        }
+        fin.close();
+        bout.close();
+        fin = new FileInputStream(filePath);
+        bout = new ByteArrayOutputStream();
+        if (mf.getTitleProperty().get() != null) {
+            if (iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME) != null) {
+                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).clear();
+                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
+            } else {
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
+            }
+            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
+            try (OutputStream outputStream = new FileOutputStream(filePath)) {
                 bout.writeTo(outputStream);
             }
-            bout.close();
-
-            bout = new ByteArrayOutputStream();
-            fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-
-            Metadata.insertComment(fin, bout, commentText.getText());
-
-            fin.close();
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+        }
+        fin.close();
+        bout.close();
+        fin = new FileInputStream(filePath);
+        bout = new ByteArrayOutputStream();
+        if (mf.getTitleProperty().get() != null) {
+            if (iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT) != null) {
+                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).clear();
+                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
+            } else {
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
+            }            
+            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
+            try (OutputStream outputStream = new FileOutputStream(filePath)) {
                 bout.writeTo(outputStream);
             }
-
-        } catch (IOException ex) {
-            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                if (bout != null) {
-                    bout.close();
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        fin.close();
+        bout.close();
+        fin = new FileInputStream(filePath);
+        bout = new ByteArrayOutputStream();
+        if (commentsdata != null) {
+            Metadata.insertComments(fin, bout, commentsdata);
+            try (OutputStream outputStream = new FileOutputStream(filePath)) {
+                bout.writeTo(outputStream);
             }
         }
-        System.out.println("Save meta data");
+        fin.close();
+        bout.close();
     }
 
     private void saveComments() {
@@ -1169,8 +1186,6 @@ public class MetadataController implements Initializable {
     public List<String> getCommentsdata() {
         return commentsdata;
     }
-    
-    
 
     /**
      * Method of getting all metadata as a string for the search database

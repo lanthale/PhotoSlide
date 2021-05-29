@@ -381,7 +381,8 @@ public class MainViewController implements Initializable {
                                     imageType = ImageType.TIFF;
                                     break;
                             }
-                            File outFile = new File(outputDir + File.separator + diag.getController().getFilename() + i + "." + imageType.getExtension());
+                            String outFileStr=outputDir + File.separator + diag.getController().getFilename() + (i+1) + "." + imageType.getExtension();
+                            File outFile = new File(outFileStr);
                             if (outFile.exists() == true) {
                                 continue;
                             }
@@ -408,7 +409,7 @@ public class MainViewController implements Initializable {
                                 fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
                             }
                             try {
-                                FileOutputStream fo = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension(), false);
+                                FileOutputStream fo = new FileOutputStream(outFileStr, false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
                                 ImageParam.ImageParamBuilder builder = ImageParam.getBuilder();
                                 switch (imageType) {
@@ -447,32 +448,12 @@ public class MainViewController implements Initializable {
                                 writer.write(fromFXImage, fo);
                                 fo.close();
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
-                                    FileInputStream fin = new FileInputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension());
-                                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
-                                    List<Metadata> metaList = new ArrayList<Metadata>();
-                                    if (metadataPaneController.getExifdata() != null) {
-                                        metaList.add(metadataPaneController.getExifdata());
-                                    }
-                                    /*if (metadataPaneController.getIptcdata() != null) {
-                                        metaList.add(metadataPaneController.getIptcdata());
-                                    }
-                                    if (metadataPaneController.getXmpdata() != null) {
-                                        metaList.add(metadataPaneController.getXmpdata());
-                                    }
-                                    if (metadataPaneController.getCommentsdata() != null) {
-                                        metaList.add(new Comments(metadataPaneController.getCommentsdata()));
-                                    }*/
-                                    Metadata.insertMetadata(metaList, fin, bout);
-                                    try (OutputStream outputStream = new FileOutputStream(outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension())) {
-                                        bout.writeTo(outputStream);
-                                    }
-                                    fin.close();
-                                    bout.close();
+                                    metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension());
                                 }
                                 if (diag.getController().getExportBasicMetadataBox().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
-                                    metadataPaneController.writeBasicMetadata(mediaItem, outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension());
+                                    metadataPaneController.exportBasicMetadata(mediaItem, outFileStr);
                                 }
                             } catch (FileNotFoundException ex) {
                                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);

@@ -16,6 +16,7 @@ import com.icafe4j.image.meta.Metadata;
 import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.MetadataType;
 import com.icafe4j.image.meta.exif.Exif;
+import com.icafe4j.image.meta.exif.ExifTag;
 import com.icafe4j.image.meta.image.Comments;
 import com.icafe4j.image.meta.iptc.IPTC;
 import com.icafe4j.image.meta.iptc.IPTCApplicationTag;
@@ -26,6 +27,7 @@ import com.icafe4j.image.meta.tiff.TiffExif;
 import com.icafe4j.image.meta.xmp.XMP;
 import com.icafe4j.image.options.PNGOptions;
 import com.icafe4j.image.png.Filter;
+import com.icafe4j.image.tiff.FieldType;
 import com.icafe4j.image.writer.ImageWriter;
 import com.sothawo.mapjfx.Coordinate;
 import com.sothawo.mapjfx.MapCircle;
@@ -631,8 +633,11 @@ public class MetadataController implements Initializable {
         }
     }
 
-    public void writeBasicMetadata(MediaFile mf, String filePath) throws FileNotFoundException, IOException {
-        FileInputStream fin = new FileInputStream(filePath);
+    public void exportBasicMetadata(MediaFile mf, String exportFilePath) throws FileNotFoundException, IOException {
+        if (exportFilePath.contains(".png")) {
+            return;
+        }
+        FileInputStream fin = new FileInputStream(exportFilePath);
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         if (iptcdata == null) {
             iptcdata = new IPTC();
@@ -650,12 +655,12 @@ public class MetadataController implements Initializable {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }
         Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
-        try (OutputStream outputStream = new FileOutputStream(filePath)) {
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
         bout.close();
-        fin = new FileInputStream(filePath);
+        fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
         if (mf.getTitleProperty().get() != null) {
             if (iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME) != null) {
@@ -665,13 +670,13 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
-            try (OutputStream outputStream = new FileOutputStream(filePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
         fin.close();
         bout.close();
-        fin = new FileInputStream(filePath);
+        fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
         if (mf.getTitleProperty().get() != null) {
             if (iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT) != null) {
@@ -679,24 +684,75 @@ public class MetadataController implements Initializable {
                 iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
             } else {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
-            }            
+            }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
-            try (OutputStream outputStream = new FileOutputStream(filePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
         fin.close();
         bout.close();
-        fin = new FileInputStream(filePath);
+        fin = new FileInputStream(exportFilePath);
+        bout = new ByteArrayOutputStream();
+        if (iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR) != null) {
+            iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR).clear();
+            iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR).add(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
+        } else {
+            iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
+        }
+        Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR), true);
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            bout.writeTo(outputStream);
+        }
+        fin.close();
+        bout.close();
+
+        fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
         if (commentsdata != null) {
             Metadata.insertComments(fin, bout, commentsdata);
-            try (OutputStream outputStream = new FileOutputStream(filePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
         fin.close();
         bout.close();
+    }
+
+    public void exportCompleteMetdata(MediaFile mf, String exportFilePath, String extension) throws IOException {
+        if (exportFilePath.contains(".png")) {
+            return;
+        }
+        exportBasicMetadata(mf, exportFilePath);
+        FileInputStream fin = new FileInputStream(exportFilePath);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        Exif exportExif;
+        if (extension.contains("jpg")) {
+            exportExif = new JpegExif();
+        } else {
+            exportExif = new TiffExif();
+        }
+        exportExif.setExifIFD(exifdata.getExifIFD());
+        exportExif.setGPSIFD(exifdata.getGPSIFD());
+        if (!exportFilePath.contains(".tif")) {
+            exportExif.setImageIFD(exifdata.getImageIFD());
+        }
+        Metadata.insertExif(fin, bout, exportExif);
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            bout.writeTo(outputStream);
+        }
+        fin.close();
+        bout.close();
+        if (!exportFilePath.contains(".jpg")) {
+            fin = new FileInputStream(exportFilePath);
+            bout = new ByteArrayOutputStream();
+            Metadata.insertXMP(fin, bout, xmpdata);
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+                bout.writeTo(outputStream);
+            }
+            fin.close();
+            bout.close();
+        }
     }
 
     private void saveComments() {

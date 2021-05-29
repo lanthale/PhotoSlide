@@ -381,10 +381,14 @@ public class MainViewController implements Initializable {
                                     imageType = ImageType.TIFF;
                                     break;
                             }
-                            String outFileStr=outputDir + File.separator + diag.getController().getFilename() + (i+1) + "." + imageType.getExtension();
+                            String outFileStr = outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension();
                             File outFile = new File(outFileStr);
                             if (outFile.exists() == true) {
-                                continue;
+                                if (diag.getController().getOverwriteFilesBox().isSelected()) {
+                                    outFile.delete();
+                                } else {
+                                    continue;
+                                }
                             }
                             String url = mediaItem.getImageUrl().toString();
                             Image img = new Image(url, false);

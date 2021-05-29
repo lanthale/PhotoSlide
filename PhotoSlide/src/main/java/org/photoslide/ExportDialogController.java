@@ -27,7 +27,7 @@ import javafx.util.Duration;
  * @author selfemp
  */
 public class ExportDialogController implements Initializable {
-
+    
     @FXML
     private ComboBox<String> fileSequenceCombo;
     @FXML
@@ -38,7 +38,7 @@ public class ExportDialogController implements Initializable {
     private ComboBox<String> fileFormatCombo;
     @FXML
     private Label exampleLabel;
-
+    
     private Stage root;
     @FXML
     private CheckBox exportSelectedBox;
@@ -52,7 +52,9 @@ public class ExportDialogController implements Initializable {
     private CheckBox exportAllMetaData;
     @FXML
     private CheckBox exportBasicMetadataBox;
-
+    @FXML
+    private CheckBox overwriteFilesBox;
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         fileFormatCombo.getItems().add("JPG");
@@ -84,12 +86,12 @@ public class ExportDialogController implements Initializable {
                     break;
             }
         });
-        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1."+fileFormatCombo.getSelectionModel().getSelectedItem()));
+        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));
         qualitySlider.valueChangingProperty().addListener((o) -> {
             
         });        
         qSliderToolTip.textProperty().bind(qualitySlider.valueProperty().asString());
-        qSliderToolTip.textProperty().bind(Bindings.format("%.0f",qualitySlider.valueProperty()));
+        qSliderToolTip.textProperty().bind(Bindings.format("%.0f", qualitySlider.valueProperty()));
         qSliderToolTip.setShowDelay(Duration.ZERO);
         fileSequenceCombo.getItems().add("Title/Caption based");
         fileSequenceCombo.getItems().add("Orginial filename");
@@ -108,8 +110,18 @@ public class ExportDialogController implements Initializable {
         fileSequenceCombo.getSelectionModel().select("Title/Caption based");
         filenamePrefixText.setText("Probe_01");
         filenamePrefixText.setDisable(true);
+        exportBasicMetadataBox.setOnAction((t) -> {
+            if (exportAllMetaData.isSelected()) {
+                exportAllMetaData.setSelected(false);
+            }
+        });
+        exportAllMetaData.setOnAction((t) -> {
+            if (exportBasicMetadataBox.isSelected()) {
+                exportBasicMetadataBox.setSelected(false);
+            }
+        });
     }
-
+    
     @FXML
     private void outputSelectionButtonAction(ActionEvent event) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -117,23 +129,23 @@ public class ExportDialogController implements Initializable {
         File selectedDirectory = directoryChooser.showDialog((Stage) fileSequenceCombo.getScene().getWindow());
         outputDirText.setText(selectedDirectory.getAbsolutePath());
     }
-
+    
     public String getFileFormat() {
         return fileFormatCombo.getSelectionModel().getSelectedItem();
     }
-
+    
     public String getFilename() {
         return filenamePrefixText.getText() + "_";
     }
-
+    
     public String getOutputDir() {
         return outputDirText.getText();
     }
-
+    
     public void setInitOutDir(String dir) {
         outputDirText.setText(dir);
     }
-
+    
     public void setTitel(String titel) {
         if (titel != null) {
             filenamePrefixText.setText(titel);
@@ -142,23 +154,27 @@ public class ExportDialogController implements Initializable {
             fileSequenceCombo.getSelectionModel().select("Custom filname");
         }
     }
-
+    
     public CheckBox getExportSelectedBox() {
         return exportSelectedBox;
     }
-
+    
     public CheckBox getExportDeletedFileBox() {
         return exportDeletedFileBox;
     }    
-
+    
     public CheckBox getExportAllMetaData() {
         return exportAllMetaData;
     }
-
+    
     public CheckBox getExportBasicMetadataBox() {
         return exportBasicMetadataBox;
     }
-    
-    
 
+    public CheckBox getOverwriteFilesBox() {
+        return overwriteFilesBox;
+    }
+    
+    
+    
 }

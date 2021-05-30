@@ -64,19 +64,19 @@ public class SRMediaLoadingTask extends Task<Void> {
                 rs.next();
                 String mediaURL = rs.getString("pathStorage");
                 MediaFile mediaItem = new MediaFile();
+                mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
                 mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
-                executor.submit(() -> {
-                    loadItem(this, mediaItem, mediaURL);
-                });
+                loadItem(this, mediaItem, mediaURL);
                 Platform.runLater(() -> {
                     fullMediaList.add(mediaItem);
-                });
+                });                
                 if (this.isCancelled() == true) {
                     return null;
                 }
-            }
+            } 
         }
+        System.out.println("END");
         return null;
     }
 

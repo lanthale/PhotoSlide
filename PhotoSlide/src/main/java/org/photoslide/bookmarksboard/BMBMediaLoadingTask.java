@@ -51,6 +51,7 @@ public class BMBMediaLoadingTask extends Task<Void> {
             MediaFile mediaItem = new MediaFile();
             mediaItem.setName(Path.of(mediaURL).getFileName().toString());
             mediaItem.setPathStorage(Path.of(mediaURL));
+            mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (this.isCancelled() == true) {
                 return null;
             }

@@ -9,6 +9,7 @@ import javafx.animation.PauseTransition;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tooltip;
@@ -127,14 +128,15 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
     
     public final void setError(MediaFile item) {
         rootPane.getChildren().clear();
-        dummyIcon.setIconLiteral("ti-bolt");
-        rootPane.getChildren().add(dummyIcon);
+        dummyIcon.setIconLiteral("ti-bolt");        
         Label errorLabel=new Label("Error loading");        
         Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
         tp.setFont(new Font(13));
         errorLabel.setPadding(new Insets(-5));
         errorLabel.setTooltip(tp);                
         errorLabel.setStyle("-fx-font-size:6");        
+        errorLabel.setGraphic(dummyIcon);
+        errorLabel.setContentDisplay(ContentDisplay.TOP);
         HBox hb=new HBox();
         hb.setAlignment(Pos.BOTTOM_CENTER);
         hb.getChildren().add(errorLabel);

@@ -146,7 +146,7 @@ public class SearchToolsController implements Initializable {
     }
 
     public void shutdown() {
-        if (task!=null){
+        if (task != null) {
             task.cancel();
             task.shutdown();
         }
@@ -235,6 +235,11 @@ public class SearchToolsController implements Initializable {
 
     private void performSearch(String keyword) {
         try {
+            Platform.runLater(() -> {
+                searchLabel.setText("Populating results...");
+                searchProgress.setManaged(true);
+                searchProgress.setVisible(true);
+            });
             ArrayList<String> queryList = new ArrayList<>();
             try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
@@ -248,7 +253,7 @@ public class SearchToolsController implements Initializable {
                 sortedMediaList.setComparator(new Comparator<MediaFile>() {
                     @Override
                     public int compare(MediaFile o1, MediaFile o2) {
-                        if (o2.getRecordTime() != null && o1.getRecordTime() != null) {                            
+                        if (o2.getRecordTime() != null && o1.getRecordTime() != null) {
                             return o2.getRecordTime().compareTo(o1.getRecordTime());
                         } else {
                             return o2.getCreationTime().compareTo(o1.getCreationTime());
@@ -268,9 +273,6 @@ public class SearchToolsController implements Initializable {
                     task.shutdown();
                 }
                 task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
-                task.setOnFailed((t) -> {
-                    Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, t.getSource().getException());
-                });
                 task.setOnSucceeded((t) -> {
                     searchProgress.setVisible(false);
                     searchLabel.setVisible(false);
@@ -280,6 +282,12 @@ public class SearchToolsController implements Initializable {
                     searchLabel.setVisible(false);
                 });
                 executorParallel.submit(task);
+            } else {
+                Platform.runLater(() -> {
+                    searchProgress.setVisible(false);
+                    searchProgress.setManaged(false);
+                    searchLabel.setText("Nothing found!");
+                });
             }
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);

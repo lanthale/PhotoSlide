@@ -5,22 +5,16 @@
  */
 package org.photoslide.search;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.datamodel.MediaGridCell;
 
 /**
  *
@@ -80,21 +74,6 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
 
     public MediaFile getSelectedMediaFile() {
         return selectedMediaFile;
-    }
-
-    public MediaGridCellSR getMediaCellForMediaFile(MediaFile input) {
-        if (searchTools.getImageGrid().getChildrenUnmodifiable().size() == 0) {
-            return null;
-        }
-        VirtualFlow vf = (VirtualFlow) searchTools.getImageGrid().getChildrenUnmodifiable().get(0);
-        for (int i = 0; i < vf.getCellCount(); i++) {
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                if (((MediaGridCellSR) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
-                    return (MediaGridCellSR) mediaCell;
-                }
-            }
-        }
-        return null;
-    }
+    }    
 
 }

@@ -539,11 +539,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getOptionPane().getChildren().clear();
 
         if (lightController.getSnapshotView() != null) {
+            lightController.getSnapshotView().setSelectionRatioFixed(false);
+            lightController.getSnapshotView().setFixedSelectionRatio(1);
             lightController.getSnapshotView().setSelectionActive(false);
             lightController.getSnapshotView().setSelection(Rectangle2D.EMPTY);
             lightController.getSnapshotView().setNode(null);
             lightController.getImageStackPane().getChildren().clear();
-            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
+            lightController.getImageStackPane().getChildren().add(lightController.getImageView());            
             lightController.setSnapshotView(null);
         } else {
             lightController.getImageStackPane().getChildren().clear();

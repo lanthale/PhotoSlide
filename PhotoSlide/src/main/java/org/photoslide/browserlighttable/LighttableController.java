@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -655,7 +656,7 @@ public class LighttableController implements Initializable {
 
     }
 
-    public void cropAction() {
+    public void cropAction() {        
         if (snapshotView != null) {
             if (snapshotView.isSelectionActive()) {
                 snapshotView.setSelectionActive(false);
@@ -670,17 +671,12 @@ public class LighttableController implements Initializable {
             infoPane.setDisable(true);
             optionPane.setDisable(true);
             snapshotView = new SnapshotView(imageView);
-            if (factory.getSelectedCell().getItem().getCropView() == null) {
-                snapshotView.setSelection(Rectangle2D.EMPTY);
-            } else {
-                //recalc selection view from image pixels
-                snapshotView.setSelection(factory.getSelectedCell().getItem().getCropView());
-            }
+            //snapshotView.setSelectionAreaBoundary(SnapshotView.Boundary.NODE);
+
             snapshotView.setSelectionActive(false);
             imageStackPane.getChildren().add(snapshotView);
             snapshotView.setOnKeyPressed((t) -> {
                 if (KeyCode.ESCAPE == t.getCode()) {
-                    snapshotView.setSelectionActive(false);
                     snapshotView.setSelection(Rectangle2D.EMPTY);
                     snapshotView.setNode(null);
                     imageStackPane.getChildren().clear();
@@ -688,6 +684,9 @@ public class LighttableController implements Initializable {
                     imageView.requestFocus();
                     infoPane.setDisable(false);
                     optionPane.setDisable(false);
+                    snapshotView.setSelectionRatioFixed(false);
+                    snapshotView.setFixedSelectionRatio(1);
+                    snapshotView.setSelectionActive(false);
                     snapshotView = null;
                 }
                 if (KeyCode.ENTER == t.getCode()) {
@@ -707,6 +706,7 @@ public class LighttableController implements Initializable {
                     factory.getSelectedCell().getItem().setCropView(cropView);
                     infoPane.setDisable(false);
                     optionPane.setDisable(false);
+                    snapshotView.setSelectionRatioFixed(false);
                     snapshotView = null;
                     executorParallel.submit(() -> {
                         factory.getSelectedCell().getItem().saveEdits();
@@ -718,20 +718,22 @@ public class LighttableController implements Initializable {
 
         if (snapshotView != null) {
             double ratio = 1;
-            snapshotView.setSelectionRatioFixed(true);
-            ratio = imageView.getImage().getWidth() / imageView.getImage().getHeight();
+            snapshotView.setSelectionRatioFixed(false);
+            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();
+            snapshotView.requestFocus();
             final double ratioF = ratio;
-            Platform.runLater(() -> {
-                snapshotView.setFixedSelectionRatio(ratioF);
-                try {
-                    snapshotView.setSelection(new Rectangle2D(38.5, 46.5, 100.0 * ratioF, 100.0));
-                } catch (IllegalArgumentException e) {
-                    Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, e.getMessage(), e);
-                    infoPane.setDisable(false);
-                    optionPane.setDisable(false);
+            snapshotView.setFixedSelectionRatio(ratioF);
+            snapshotView.setSelectionRatioFixed(true);
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished((t) -> {
+                if (factory.getSelectedCell().getItem().getCropView() == null) {
+                    snapshotView.setSelection(new Rectangle2D(imageView.getFitWidth() / 2 - 100, imageView.getFitHeight() / 2 - 100, 100 * ratioF, 100));
+                } else {
+                    Rectangle2D viewport = imageView.getViewport();
+                    imageView.setViewport(null);                    
                 }
-                snapshotView.requestFocus();
             });
+            pause.play();
         }
     }
 

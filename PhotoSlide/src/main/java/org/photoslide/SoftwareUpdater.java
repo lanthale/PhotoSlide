@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -64,7 +65,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();
+                String actVersion = util.getAppVersion();                
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -197,10 +198,12 @@ public class SoftwareUpdater {
                             getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
                     Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
                     confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-                    Optional<ButtonType> result = confirmDiaglog.showAndWait();
-                    if (result.get() == ButtonType.YES) {
-                        downloadUpdate(newversion);
-                    }
+                    Platform.runLater(() -> {
+                        Optional<ButtonType> result = confirmDiaglog.showAndWait();
+                        if (result.get() == ButtonType.YES) {
+                            downloadUpdate(newversion);
+                        }
+                    });
                 });
                 pause.play();
             }

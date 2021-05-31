@@ -188,7 +188,7 @@ public class CollectionsController implements Initializable {
             });
         });
         executorParallel.submit(task);
-        //executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
     }
 
     public void saveSettings() {

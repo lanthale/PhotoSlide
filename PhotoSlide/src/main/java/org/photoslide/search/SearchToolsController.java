@@ -177,9 +177,11 @@ public class SearchToolsController implements Initializable {
             if ((searchTextField.getText() + event.getText()).length() > 2) {
                 searchTextField.setRight(progressInd);
                 progressInd.setVisible(true);
+                searchLabel.setText("Populating results...");
                 searchProgress.setVisible(true);
+                searchProgress.setManaged(true);
                 searchLabel.setVisible(true);
-                searchResultVBox.getChildren().clear();
+                searchResultVBox.getChildren().clear();                
                 String keyword = searchTextField.getText() + event.getText();
                 if (event.getCode() == KeyCode.ENTER) {
                     keyword = searchTextField.getText();
@@ -234,12 +236,7 @@ public class SearchToolsController implements Initializable {
     }
 
     private void performSearch(String keyword) {
-        try {
-            Platform.runLater(() -> {
-                searchLabel.setText("Populating results...");
-                searchProgress.setManaged(true);
-                searchProgress.setVisible(true);
-            });
+        try {            
             ArrayList<String> queryList = new ArrayList<>();
             try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
@@ -282,7 +279,7 @@ public class SearchToolsController implements Initializable {
                     searchLabel.setVisible(false);
                 });
                 executorParallel.submit(task);
-            } else {
+            } else {                
                 Platform.runLater(() -> {
                     searchProgress.setVisible(false);
                     searchProgress.setManaged(false);

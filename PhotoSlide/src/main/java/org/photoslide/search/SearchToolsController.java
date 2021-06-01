@@ -5,6 +5,7 @@
  */
 package org.photoslide.search;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -181,7 +182,7 @@ public class SearchToolsController implements Initializable {
                 searchProgress.setVisible(true);
                 searchProgress.setManaged(true);
                 searchLabel.setVisible(true);
-                searchResultVBox.getChildren().clear();                
+                searchResultVBox.getChildren().clear();
                 String keyword = searchTextField.getText() + event.getText();
                 if (event.getCode() == KeyCode.ENTER) {
                     keyword = searchTextField.getText();
@@ -236,56 +237,55 @@ public class SearchToolsController implements Initializable {
     }
 
     private void performSearch(String keyword) {
-        try {            
+        try {
             ArrayList<String> queryList = new ArrayList<>();
             try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
                     queryList.add("SELECT * FROM " + searchRS.getString("QUERY"));
                 }
             }
-            if (queryList.isEmpty() == false) {
-                fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-                filteredMediaList = new FilteredList<>(fullMediaList, null);
-                sortedMediaList = new SortedList<>(filteredMediaList);
-                sortedMediaList.setComparator(new Comparator<MediaFile>() {
-                    @Override
-                    public int compare(MediaFile o1, MediaFile o2) {
-                        if (o2.getRecordTime() != null && o1.getRecordTime() != null) {
-                            return o2.getRecordTime().compareTo(o1.getRecordTime());
-                        } else {
-                            return o2.getCreationTime().compareTo(o1.getCreationTime());
-                        }
+            fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+            filteredMediaList = new FilteredList<>(fullMediaList, null);
+            sortedMediaList = new SortedList<>(filteredMediaList);
+            sortedMediaList.setComparator(new Comparator<MediaFile>() {
+                @Override
+                public int compare(MediaFile o1, MediaFile o2) {
+                    if (o2.getRecordTime() != null && o1.getRecordTime() != null) {
+                        return o2.getRecordTime().compareTo(o1.getRecordTime());
+                    } else {
+                        return o2.getCreationTime().compareTo(o1.getCreationTime());
                     }
-                });
-                imageGrid = new GridView<>(sortedMediaList);
-                double defaultCellWidth = imageGrid.getCellWidth();
-                double defaultCellHight = imageGrid.getCellHeight();
-                factory = new MediaGridCellSearchFactory(executorParallel, this, sortedMediaList);
-                imageGrid.setCellFactory(factory);
-                Platform.runLater(() -> {
-                    searchResultVBox.getChildren().add(imageGrid);
-                });
-                if (task != null) {
-                    task.cancel();
-                    task.shutdown();
                 }
-                task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
-                task.setOnSucceeded((t) -> {
-                    searchProgress.setVisible(false);
-                    searchLabel.setVisible(false);
-                });
-                task.setOnFailed((t) -> {
-                    searchProgress.setVisible(false);
-                    searchLabel.setVisible(false);
-                });
-                executorParallel.submit(task);
-            } else {                
-                Platform.runLater(() -> {
+            });
+            imageGrid = new GridView<>(sortedMediaList);
+            double defaultCellWidth = imageGrid.getCellWidth();
+            double defaultCellHight = imageGrid.getCellHeight();
+            factory = new MediaGridCellSearchFactory(executorParallel, this, sortedMediaList);
+            imageGrid.setCellFactory(factory);
+            Platform.runLater(() -> {
+                searchResultVBox.getChildren().add(imageGrid);
+            });
+            if (task != null) {
+                task.cancel();
+                task.shutdown();
+            }
+            task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
+            task.setOnSucceeded((t) -> {                
+                searchProgress.setVisible(false);
+                searchLabel.setVisible(false);
+            });
+            task.setOnFailed((t) -> {
+                if (t.getSource().getException() instanceof IOException) {
+                    searchLabel.setText("Nothing found!");
                     searchProgress.setVisible(false);
                     searchProgress.setManaged(false);
-                    searchLabel.setText("Nothing found!");
-                });
-            }
+                } else {
+                    searchProgress.setVisible(false);
+                    searchLabel.setVisible(false);
+                }
+            });
+            executorParallel.submit(task);
+
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
         }

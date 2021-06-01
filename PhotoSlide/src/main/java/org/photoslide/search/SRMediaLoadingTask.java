@@ -56,27 +56,31 @@ public class SRMediaLoadingTask extends Task<Void> {
 
     @Override
     protected Void call() throws Exception {
+        if (queryList.isEmpty()) {            
+            throw new IOException("Nothing found!");
+        }       
         for (String query : queryList) {
             if (this.isCancelled()) {
                 return null;
             }
-            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {
-                rs.next();
-                String mediaURL = rs.getString("pathStorage");
+            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {                
+                rs.next();                
+                String mediaURL = rs.getString("pathStorage");                
                 MediaFile mediaItem = new MediaFile();
                 mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
                 mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
-                loadItem(this, mediaItem, mediaURL);                
+                executor.submit(() -> {
+                    loadItem(this, mediaItem, mediaURL);
+                });                
                 Platform.runLater(() -> {
                     fullMediaList.add(mediaItem);
-                });
+                });                
                 if (this.isCancelled() == true) {
                     return null;
                 }
             }
-        }
-        System.out.println("END");
+        }        
         return null;
     }
 
@@ -98,16 +102,13 @@ public class SRMediaLoadingTask extends Task<Void> {
             task.cancel();
             return;
         }
-        Tooltip t = new Tooltip(mediaItem.getName());
+        
         if (FileTypes.isValidVideo(mediaURL)) {
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;
             }
-            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
-            /*Platform.runLater(() -> {
-                fullMediaList.add(mediaItem);
-            });*/
+            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);            
             mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
         } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
@@ -115,10 +116,7 @@ public class SRMediaLoadingTask extends Task<Void> {
                 metaController.readBasicMetadata(this, mediaItem);
             } catch (IOException ex) {
                 Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            /*Platform.runLater(() -> {
-                fullMediaList.add(mediaItem);
-            });*/
+            }            
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;

@@ -1008,4 +1008,10 @@ public class MainViewController implements Initializable {
         selectedMediaItem.removeAllEdits();
     }
 
+    public CollectionsController getCollectionsPaneController() {
+        return collectionsPaneController;
+    }
+    
+    
+
 }

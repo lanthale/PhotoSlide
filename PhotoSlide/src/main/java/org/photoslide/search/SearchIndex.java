@@ -82,7 +82,6 @@ public class SearchIndex {
                                 m.setName(fileItem.getFileName().toString());
                                 m.setPathStorage(fileItem);
                                 if (checkIfIndexed(m) == false) {
-                                    System.out.println("Indexing file "+fileItem);
                                     m.readEdits();
                                     m.getCreationTime();
                                     if (FileTypes.isValidVideo(fileItem.toString())) {

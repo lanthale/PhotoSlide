@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimeZone;
@@ -50,9 +49,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -76,14 +73,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaView;
-import javafx.scene.paint.Paint;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.browsercollections.DirectoryWatcher;
 
 /*import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.processing.face.detection.DetectedFace;
@@ -194,6 +190,7 @@ public class LighttableController implements Initializable {
     private ToggleButton facesButton;
     @FXML
     private Button bookmarkButton;
+    private DirectoryWatcher directorywatch;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -243,11 +240,29 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbarLabel().setText("Retrieving files...");
         });
+
+        if (directorywatch != null) {
+            directorywatch.stopWatch();
+        }
+        directorywatch = new DirectoryWatcher(mainController.getCollectionsPaneController());
+        executorParallel.submit(() -> {
+            try {
+                directorywatch.startWatch(sPath.getParent());
+            } catch (IOException | InterruptedException ex) {
+            }
+        });
+
         if (Platform.isFxApplicationThread()) {
             imageGridPane.getChildren().clear();
         } else {
             Platform.runLater(() -> {
                 imageGridPane.getChildren().clear();
+            });
+        }
+        if (imageView.getImage() != null) {
+            imageView.getImage().cancel();
+            Platform.runLater(() -> {
+                imageProgress.setVisible(false);
             });
         }
         if (taskMLoading != null) {
@@ -322,7 +337,9 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
         });
-        mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
+        Platform.runLater(() -> {
+            mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
+        });
         executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
 
         imageGrid.setCellFactory(factory);

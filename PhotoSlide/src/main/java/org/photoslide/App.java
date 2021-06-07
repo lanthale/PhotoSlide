@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -28,6 +29,8 @@ import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ServiceRegistry;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import org.h2.fulltext.FullText;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
@@ -91,7 +94,14 @@ public class App extends Application {
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
         //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
-        RAWImageLoaderFactory.install();
+
+        //if memory > 4GB -> install raw support
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
+        long memory = Long.parseLong(attribute.toString()) / 1024;
+        if (memory > 4000000) {
+            RAWImageLoaderFactory.install();
+        }
         notifyPreloader(new ProgressNotification(0.8));
     }
 

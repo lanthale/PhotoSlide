@@ -70,7 +70,6 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.TextFieldTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
@@ -481,7 +480,7 @@ public class CollectionsController implements Initializable {
         refreshTree();
     }
 
-    private void refreshTree() {
+    public void refreshTree() {
         try {
             TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();

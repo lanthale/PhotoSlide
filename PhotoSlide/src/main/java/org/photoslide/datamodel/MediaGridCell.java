@@ -15,6 +15,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
@@ -35,10 +36,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final ImageView imageView;
     private final FontIcon layerIcon;
     private final FontIcon restoreIcon;
+    private final FontIcon errorIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
     private ProgressIndicator prgInd;
     private FontIcon filmIcon;
+    private Label errorLabel;
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
@@ -63,15 +66,42 @@ public class MediaGridCell extends GridCell<MediaFile> {
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
         dummyIcon = new FontIcon("fa-file-movie-o");
+        errorIcon = new FontIcon("ti-bolt");
         rootPane.getChildren().add(prgInd);
+        errorLabel = new Label("Error loading");
+        Tooltip tp = new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);
+        errorLabel.setStyle("-fx-font-size:6");
+        errorLabel.setGraphic(errorIcon);
+        errorLabel.setContentDisplay(ContentDisplay.TOP);
         PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished((t) -> {
-            layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
-            restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
-            dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+            setupBinding();
         });
         pause.play();
+    }
+
+    private void setupBinding() {
+        try {
+            if (layerIcon.iconSizeProperty().isBound() == false) {
+                layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
+            }
+            if (restoreIcon.iconSizeProperty().isBound() == false) {
+                restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
+            }
+            if (dummyIcon.iconSizeProperty().isBound() == false) {
+                dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+            }
+            if (filmIcon.iconSizeProperty().isBound() == false) {
+                filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+            }
+            if (errorIcon.iconSizeProperty().isBound() == false) {
+                errorIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
+            }
+        } catch (Exception e) {
+        }
     }
 
     /**
@@ -127,23 +157,18 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public final void setError(MediaFile item) {
-        rootPane.getChildren().clear();
-        dummyIcon.setIconLiteral("ti-bolt");        
-        Label errorLabel=new Label("Error loading");        
-        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
-        tp.setFont(new Font(13));
-        errorLabel.setPadding(new Insets(-5));
-        errorLabel.setTooltip(tp);                
-        errorLabel.setStyle("-fx-font-size:6");        
-        errorLabel.setGraphic(dummyIcon);
-        errorLabel.setContentDisplay(ContentDisplay.TOP);
-        HBox hb=new HBox();
-        hb.setAlignment(Pos.BOTTOM_CENTER);
-        hb.getChildren().add(errorLabel);
-        rootPane.getChildren().add(hb);
-        if (item.getDeletedProperty().getValue() == true) {
-            setDeletedNode();
-        }
+        PauseTransition pause = new PauseTransition(Duration.millis(100));
+        pause.setOnFinished((t) -> {
+            rootPane.getChildren().clear();
+            HBox hb = new HBox();
+            hb.setAlignment(Pos.BOTTOM_CENTER);
+            hb.getChildren().add(errorLabel);
+            rootPane.getChildren().add(hb);
+            if (item.getDeletedProperty().getValue() == true) {
+                setDeletedNode();
+            }
+        });
+        pause.play();
     }
 
     public final void setImage(MediaFile item) {

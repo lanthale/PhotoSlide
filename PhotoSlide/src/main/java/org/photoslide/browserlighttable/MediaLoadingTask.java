@@ -107,6 +107,9 @@ public class MediaLoadingTask extends Task<Void> {
                     iatom.addAndGet(1);
                 }
             });
+            if (this.isCancelled()) {
+                return null;
+            }
         } catch (IOException ex) {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
         }

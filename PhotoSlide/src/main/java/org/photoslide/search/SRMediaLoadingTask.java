@@ -12,6 +12,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -41,11 +43,11 @@ public class SRMediaLoadingTask extends Task<Void> {
     private final ArrayList<String> queryList;
     private final MainViewController mainController;
     private final MetadataController metaController;
-    private final ExecutorService executor;
+    private final ScheduledExecutorService executor;
 
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid, MetadataController mc, MainViewController mv) {
         this.searchController = control;
-        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("SRMediaLoadingTask"));
+        executor = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SRMediaLoadingTask"));
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();
@@ -56,31 +58,29 @@ public class SRMediaLoadingTask extends Task<Void> {
 
     @Override
     protected Void call() throws Exception {
-        if (queryList.isEmpty()) {            
+        if (queryList.isEmpty()) {
             throw new IOException("Nothing found!");
-        }       
+        }
         for (String query : queryList) {
             if (this.isCancelled()) {
                 return null;
             }
-            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {                
-                rs.next();                
-                String mediaURL = rs.getString("pathStorage");                
+            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {
+                rs.next();
+                String mediaURL = rs.getString("pathStorage");
                 MediaFile mediaItem = new MediaFile();
                 mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
                 mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
-                executor.submit(() -> {
-                    loadItem(this, mediaItem, mediaURL);
-                });                
                 Platform.runLater(() -> {
                     fullMediaList.add(mediaItem);
-                });                
+                });
+                loadItem(this, mediaItem, mediaURL);
                 if (this.isCancelled() == true) {
                     return null;
                 }
             }
-        }        
+        }
         return null;
     }
 
@@ -91,7 +91,6 @@ public class SRMediaLoadingTask extends Task<Void> {
     private void loadItem(Task task, MediaFile mediaItem, String mediaURL) {
         mediaItem.readEdits();
         if (this.isCancelled() == true) {
-            task.cancel();
             return;
         }
         mediaItem.getCreationTime();
@@ -99,16 +98,14 @@ public class SRMediaLoadingTask extends Task<Void> {
             mediaItem.setBookmarked(true);
         }
         if (this.isCancelled() == true) {
-            task.cancel();
             return;
         }
-        
+
         if (FileTypes.isValidVideo(mediaURL)) {
             if (this.isCancelled() == true) {
-                task.cancel();
                 return;
             }
-            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);            
+            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
             mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
         } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
@@ -116,14 +113,13 @@ public class SRMediaLoadingTask extends Task<Void> {
                 metaController.readBasicMetadata(this, mediaItem);
             } catch (IOException ex) {
                 Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
-            }            
+            }
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;
             }
             mediaItem.setImage(fileLoader.loadImage(mediaItem));
             if (this.isCancelled() == true) {
-                task.cancel();
                 return;
             }
         } else {

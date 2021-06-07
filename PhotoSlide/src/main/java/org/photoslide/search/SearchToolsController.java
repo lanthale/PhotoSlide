@@ -12,7 +12,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +63,7 @@ public class SearchToolsController implements Initializable {
     private SortedList<MediaFile> sortedMediaList;
     private GridView<MediaFile> imageGrid;
     private ScheduledExecutorService executor;
-    private ExecutorService executorParallel;
+    private ScheduledExecutorService executorParallel;
     private SRMediaLoadingTask task;
     @FXML
     private CustomTextField searchTextField;
@@ -126,7 +125,7 @@ public class SearchToolsController implements Initializable {
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
         executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutor"));
+        executorParallel = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SearchToolExecutorScheduledParallel"));
         imageGrid = new GridView<>(sortedMediaList);
         MediaGridCellSearchFactory factory = new MediaGridCellSearchFactory(executor, this, sortedMediaList);
         imageGrid.setCellFactory(factory);
@@ -288,7 +287,7 @@ public class SearchToolsController implements Initializable {
                     searchLabel.setVisible(false);
                 }
             });
-            executorParallel.submit(task);
+            executorParallel.schedule(task, 500, TimeUnit.MILLISECONDS);
 
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);

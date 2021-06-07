@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -105,6 +107,7 @@ public class LighttableController implements Initializable {
     private MainViewController mainController;
     private Path selectedPath;
     private ExecutorService executor;
+    private ScheduledExecutorService executorSchedule;
     private ExecutorService executorParallel;
     private MediaLoadingTask taskMLoading;
     private ObservableList<MediaFile> fullMediaList;
@@ -213,6 +216,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableController"));
+        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("lightTableControllerScheduled"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelection"));
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
@@ -319,7 +323,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setVisible(false);
         });
         mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
-        executor.submit(taskMLoading);
+        executorSchedule.schedule(taskMLoading, 100, TimeUnit.MILLISECONDS);
 
         imageGrid.setCellFactory(factory);
         Platform.runLater(() -> {
@@ -424,6 +428,9 @@ public class LighttableController implements Initializable {
         }
         if (executorParallel != null) {
             executorParallel.shutdownNow();
+        }
+        if (executorSchedule != null) {
+            executorSchedule.shutdownNow();
         }
         if (executor != null) {
             executor.shutdownNow();
@@ -656,7 +663,7 @@ public class LighttableController implements Initializable {
 
     }
 
-    public void cropAction() {        
+    public void cropAction() {
         if (snapshotView != null) {
             if (snapshotView.isSelectionActive()) {
                 snapshotView.setSelectionActive(false);
@@ -730,7 +737,7 @@ public class LighttableController implements Initializable {
                     snapshotView.setSelection(new Rectangle2D(imageView.getFitWidth() / 2 - 100, imageView.getFitHeight() / 2 - 100, 100 * ratioF, 100));
                 } else {
                     Rectangle2D viewport = imageView.getViewport();
-                    imageView.setViewport(null);                    
+                    imageView.setViewport(null);
                 }
             });
             pause.play();

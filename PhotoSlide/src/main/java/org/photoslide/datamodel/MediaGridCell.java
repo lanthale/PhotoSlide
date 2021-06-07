@@ -85,7 +85,6 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-
         } else {
             if (item.isSelected() == true) {
                 if (item.isStacked()) {

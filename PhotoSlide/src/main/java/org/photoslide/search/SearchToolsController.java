@@ -14,6 +14,8 @@ import java.util.Comparator;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
@@ -61,7 +63,7 @@ public class SearchToolsController implements Initializable {
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
     private GridView<MediaFile> imageGrid;
-    private ExecutorService executor;
+    private ScheduledExecutorService executor;
     private ExecutorService executorParallel;
     private SRMediaLoadingTask task;
     @FXML
@@ -123,7 +125,7 @@ public class SearchToolsController implements Initializable {
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
+        executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("SearchToolExecutor"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutor"));
         imageGrid = new GridView<>(sortedMediaList);
         MediaGridCellSearchFactory factory = new MediaGridCellSearchFactory(executor, this, sortedMediaList);
@@ -194,7 +196,7 @@ public class SearchToolsController implements Initializable {
                 Task<Void> srTask = new Task<>() {
                     @Override
                     protected Void call() throws Exception {
-                        Thread.sleep(500);
+                        //Thread.sleep(500);
                         Platform.runLater(() -> {
                             searchTextField.setRight(clearButton);
                         });
@@ -207,11 +209,13 @@ public class SearchToolsController implements Initializable {
                     infoBox.setVisible(false);
                 });
                 srTask.setOnSucceeded((t) -> {
-                    toolbar.setVisible(true);
-                    toolbar.setManaged(true);
-                    progressInd.setVisible(false);
+                    if (event.getCode() != KeyCode.BACK_SPACE) {
+                        toolbar.setVisible(true);
+                        toolbar.setManaged(true);
+                        progressInd.setVisible(false);
+                    }
                 });
-                executor.submit(srTask);
+                executor.schedule(srTask, 500, TimeUnit.MILLISECONDS);
                 dialogPane.getScene().getWindow().setHeight(400);
                 mediaFileInfoLabel.setText("");
             }
@@ -270,7 +274,7 @@ public class SearchToolsController implements Initializable {
                 task.shutdown();
             }
             task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
-            task.setOnSucceeded((t) -> {                
+            task.setOnSucceeded((t) -> {
                 searchProgress.setVisible(false);
                 searchLabel.setVisible(false);
             });

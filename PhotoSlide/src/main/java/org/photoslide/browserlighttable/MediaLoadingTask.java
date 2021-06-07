@@ -87,7 +87,7 @@ public class MediaLoadingTask extends Task<Void> {
             fileList.forEachOrdered((fileItem) -> {
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {
+                        if (FileTypes.isValidType(fileItem.toString())) {                            
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);

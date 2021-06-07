@@ -323,7 +323,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setVisible(false);
         });
         mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
-        executorSchedule.schedule(taskMLoading, 100, TimeUnit.MILLISECONDS);
+        executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
 
         imageGrid.setCellFactory(factory);
         Platform.runLater(() -> {

@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,9 +84,12 @@ public class MediaLoadingTask extends Task<Void> {
             }).sorted();
             AtomicInteger iatom = new AtomicInteger(1);
             fileList.forEachOrdered((fileItem) -> {
+                if (this.isCancelled()) {
+                    return;
+                }
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {                            
+                        if (FileTypes.isValidType(fileItem.toString())) {
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
@@ -142,7 +144,7 @@ public class MediaLoadingTask extends Task<Void> {
             return;
         }
         if (FileTypes.isValidVideo(fileItem.toString())) {
-            m.setMediaType(MediaFile.MediaTypes.VIDEO);            
+            m.setMediaType(MediaFile.MediaTypes.VIDEO);
             if (task.isCancelled()) {
                 return;
             }
@@ -165,7 +167,7 @@ public class MediaLoadingTask extends Task<Void> {
             m.setImage(fileLoader.loadImage(m));
             if (task.isCancelled()) {
                 return;
-            }            
+            }
         } else {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }

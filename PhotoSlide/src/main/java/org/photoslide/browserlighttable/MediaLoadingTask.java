@@ -133,7 +133,6 @@ public class MediaLoadingTask extends Task<Void> {
     }
 
     public void loadItem(Task task, Path fileItem, MediaFile m) {
-        System.out.println("task "+task);
         if (task.isCancelled()) {
             return;
         }

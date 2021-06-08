@@ -44,6 +44,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
@@ -78,6 +79,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.controlsfx.control.SnapshotView;
+import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
 
@@ -191,6 +193,8 @@ public class LighttableController implements Initializable {
     @FXML
     private Button bookmarkButton;
     private DirectoryWatcher directorywatch;
+    @FXML
+    private ToggleSwitch previewPaneButton;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -1140,4 +1144,9 @@ public class LighttableController implements Initializable {
         mainController.saveBookmarksFile();
     }
 
+    public ToggleSwitch getPreviewPaneButton() {
+        return previewPaneButton;
+    }
+    
+    
 }

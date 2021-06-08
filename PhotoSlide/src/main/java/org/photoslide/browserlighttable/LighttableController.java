@@ -259,12 +259,6 @@ public class LighttableController implements Initializable {
                 imageGridPane.getChildren().clear();
             });
         }
-        if (imageView.getImage() != null) {
-            imageView.getImage().cancel();
-            Platform.runLater(() -> {
-                imageProgress.setVisible(false);
-            });
-        }
         if (taskMLoading != null) {
             taskMLoading.shutdown();
             taskMLoading.cancel();
@@ -317,7 +311,6 @@ public class LighttableController implements Initializable {
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
-
             filteredMediaList.setPredicate(standardFilter());
             //sort if needed
             mainController.getProgressbar().progressProperty().unbind();

@@ -15,7 +15,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
@@ -38,14 +37,17 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final FontIcon errorIcon;
     private final SimpleDoubleProperty rotationAngle;
-    private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;
-    private FontIcon filmIcon;
-    private Label errorLabel;
+    private final FontIcon dummyIcon;
+    private final ProgressIndicator prgInd;
+    private final FontIcon filmIcon;
+    private final Label errorLabel;
+    private final VBox deleteBox;
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
         rootPane = new StackPane();
+        deleteBox= new VBox();
+        deleteBox.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
         imageView.setPreserveRatio(true);
@@ -230,9 +232,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     private void setDeletedNode() {
-        VBox v = new VBox();
-        v.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
-        rootPane.getChildren().add(v);
+        rootPane.getChildren().add(deleteBox);
         rootPane.getChildren().add(restoreIcon);
     }
 

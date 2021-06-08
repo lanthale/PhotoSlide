@@ -94,9 +94,14 @@ public class MediaLoadingTask extends Task<Void> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            executor.submit(() -> {
-                                loadItem(this, fileItem, m);
-                            });
+                            Task<Void> loadTask=new Task<>() {
+                                @Override
+                                protected Void call() throws Exception {
+                                    loadItem(this, fileItem, m);
+                                    return null;
+                                }
+                            };
+                            executor.submit(loadTask);
                             Platform.runLater(() -> {
                                 fullMediaList.add(m);
                             });
@@ -127,8 +132,8 @@ public class MediaLoadingTask extends Task<Void> {
         executor.shutdownNow();
     }
 
-    private void loadItem(Task task, Path fileItem, MediaFile m) {
-
+    public void loadItem(Task task, Path fileItem, MediaFile m) {
+        System.out.println("task "+task);
         if (task.isCancelled()) {
             return;
         }

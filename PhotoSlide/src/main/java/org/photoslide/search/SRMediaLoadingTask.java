@@ -65,17 +65,24 @@ public class SRMediaLoadingTask extends Task<Void> {
             if (this.isCancelled()) {
                 return null;
             }
-            try (Statement stm = App.getSearchDBConnection().createStatement(); ResultSet rs = stm.executeQuery(query)) {
+            try ( Statement stm = App.getSearchDBConnection().createStatement();  ResultSet rs = stm.executeQuery(query)) {
                 rs.next();
                 String mediaURL = rs.getString("pathStorage");
                 MediaFile mediaItem = new MediaFile();
                 mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
                 mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
+                Task<Void> loadTask = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        loadItem(this, mediaItem, mediaURL);
+                        return null;
+                    }
+                };
+                executor.submit(loadTask);
                 Platform.runLater(() -> {
                     fullMediaList.add(mediaItem);
                 });
-                loadItem(this, mediaItem, mediaURL);
                 if (this.isCancelled() == true) {
                     return null;
                 }

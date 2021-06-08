@@ -971,6 +971,7 @@ public class MainViewController implements Initializable {
             root = (Parent) fxmlLoader.load();
             bookmarksController = fxmlLoader.<BookmarkBoardController>getController();
             bookmarksController.injectMainController(this);
+            bookmarksController.injectPopOverControl(popOver);
             popOver.setOnHidden((t) -> {
                 bookmarksController.shutdown();
             });

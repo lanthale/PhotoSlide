@@ -25,7 +25,9 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.controlsfx.control.GridView;
+import org.controlsfx.control.PopOver;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
@@ -59,6 +61,7 @@ public class BookmarkBoardController implements Initializable {
     private ProgressIndicator progressIndicator;
     @FXML
     private HBox menuBox;
+    private PopOver popover;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -83,6 +86,10 @@ public class BookmarkBoardController implements Initializable {
     public void injectMainController(MainViewController mainC) {
         this.mainViewController = mainC;
     }
+    
+    public void injectPopOverControl(PopOver ov){
+        popover=ov;
+    }
 
     public void setMediaFileList(List<String> mediaFileList) {
         this.mediaFileList = mediaFileList;
@@ -99,6 +106,7 @@ public class BookmarkBoardController implements Initializable {
     @FXML
     private void copyClipboardAction(ActionEvent event) {
         copyAction();
+        popover.hide(Duration.millis(500));
     }
 
     @FXML
@@ -167,6 +175,7 @@ public class BookmarkBoardController implements Initializable {
 
     @FXML
     private void exportAction(ActionEvent event) {
+        popover.hide(Duration.millis(500));
         statusLabel.setText("Start export " + fullMediaList.size() + " files to filesystem...");
         String initDir = System.getProperty("user.dir").toUpperCase();
         mainViewController.exportData("Export bookmarks", initDir, fullMediaList);

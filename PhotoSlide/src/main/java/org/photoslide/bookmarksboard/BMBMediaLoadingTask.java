@@ -55,23 +55,28 @@ public class BMBMediaLoadingTask extends Task<Void> {
             if (this.isCancelled() == true) {
                 return null;
             }
-            executor.submit(() -> {
-                loadItem(this,mediaItem, mediaURL);
-            });
+            Task<Void> loadTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    loadItem(this, mediaItem, mediaURL);
+                    return null;
+                }
+            };
+            executor.submit(loadTask);
             Platform.runLater(() -> {
                 fullMediaList.add(mediaItem);
             });
         }
         return null;
     }
-    
-    public void shutdown(){
+
+    public void shutdown() {
         executor.shutdownNow();
     }
 
-    private void loadItem(Task task,MediaFile mediaItem, String mediaURL) {
+    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) {
         mediaItem.readEdits();
-        if (this.isCancelled() == true) { 
+        if (this.isCancelled() == true) {
             task.cancel();
             return;
         }

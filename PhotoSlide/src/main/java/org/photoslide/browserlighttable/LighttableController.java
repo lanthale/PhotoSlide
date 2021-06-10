@@ -44,7 +44,6 @@ import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
@@ -194,7 +193,7 @@ public class LighttableController implements Initializable {
     private Button bookmarkButton;
     private DirectoryWatcher directorywatch;
     @FXML
-    private ToggleSwitch previewPaneButton;
+    private ToggleSwitch showPreviewPaneToggle;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -1144,9 +1143,10 @@ public class LighttableController implements Initializable {
         mainController.saveBookmarksFile();
     }
 
-    public ToggleSwitch getPreviewPaneButton() {
-        return previewPaneButton;
+    public ToggleSwitch getShowPreviewPaneToggle() {
+        return showPreviewPaneToggle;
     }
+
     
     
 }

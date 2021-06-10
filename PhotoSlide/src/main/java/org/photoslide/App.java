@@ -94,14 +94,8 @@ public class App extends Application {
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
         //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
-
-        //if memory > 4GB -> install raw support
-        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
-        long memory = Long.parseLong(attribute.toString()) / 1024;
-        if (memory > 4000000) {
-            RAWImageLoaderFactory.install();
-        }
+        
+        RAWImageLoaderFactory.install();
         notifyPreloader(new ProgressNotification(0.8));
     }
 

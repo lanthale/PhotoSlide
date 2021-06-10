@@ -200,7 +200,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getStackButton().setText("Stack");
         }
         setStdGUIState();
-        if (lightController.getPreviewPaneButton().isSelected() == false) {
+        if (lightController.getShowPreviewPaneToggle().isSelected() == false) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
             lightController.getMediaView().setMediaPlayer(null);

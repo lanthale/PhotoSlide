@@ -807,7 +807,7 @@
                                         <module>java.base</module>
                                         <module>java.net.http</module>
                                         <module>java.logging</module>
-                                        <module>java.prefs</module>                                                                                
+                                        <module>java.prefs</module>                                                                              
                                         <module>jdk.crypto.ec</module>
                                         <module>jdk.crypto.cryptoki</module>
                                         <module>jdk.localedata</module>
@@ -899,6 +899,8 @@
                                         <argument>--java-options</argument>
                                         <argument>--add-modules jdk.incubator.foreign -Dforeign.restricted=permit</argument>
                                         <argument>--java-options</argument>
+                                        <argument>--add-exports=java.desktop/sun.awt.image=PhotoSlide</argument>
+                                        <argument>--java-options</argument>
                                         <argument>--add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls</argument>                                        
                                         <argument>--java-options</argument>    
                                         <argument>--add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls</argument>                                        
@@ -919,7 +921,7 @@
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx</argument>              
                                         <argument>--java-options</argument>
-                                        <argument>--add-opens java.base/java.net=com.sothawo.mapjfx</argument>                                                                  
+                                        <argument>--add-opens=java.base/java.net=com.sothawo.mapjfx</argument>                                                                  
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>${param3}</argument>

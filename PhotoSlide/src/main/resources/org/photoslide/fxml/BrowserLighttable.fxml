@@ -275,6 +275,6 @@
             </VBox>
         </items>
       </SplitPane>
-      <ToggleSwitch fx:id="previewPaneButton" layoutX="580.0" layoutY="19.0" selected="true" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="15.0" />
+      <ToggleSwitch fx:id="showPreviewPaneToggle" layoutX="580.0" layoutY="19.0" selected="true" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0" />
    </children>
 </AnchorPane>

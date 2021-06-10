@@ -333,4 +333,8 @@
     -fx-icon-color: red;    
 }
 
+.toggle-switch:selected .thumb-area {
+    -fx-background-color: derive(default-color, 40%);
+}
+
 

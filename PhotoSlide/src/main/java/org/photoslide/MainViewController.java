@@ -468,6 +468,18 @@ public class MainViewController implements Initializable {
                 progressPane.setVisible(false);
                 statusLabelLeft.setVisible(false);
             });
+            task.setOnFailed((t) -> {
+                progressbar.progressProperty().unbind();
+                progressbarLabel.textProperty().unbind();
+                progressPane.setVisible(false);
+                statusLabelLeft.setVisible(false);
+                Alert errorDiag = new Alert(AlertType.ERROR, "Error during export", ButtonType.OK);
+                errorDiag.setContentText("During export the following error occured\n" + t.getSource().getException().getMessage());
+                errorDiag.setResizable(false);
+                Utility.centerChildWindowOnStage((Stage) errorDiag.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+                errorDiag.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+                errorDiag.show();
+            });
             executor.submit(task);
         } else {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
@@ -875,7 +887,7 @@ public class MainViewController implements Initializable {
     public void saveBookmarksFile() {
         executor.submit(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
-            try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
+            try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
                 bookmarks.store(output, null);
                 output.flush();
             } catch (IOException ex) {
@@ -891,7 +903,7 @@ public class MainViewController implements Initializable {
                 bookmarks = new Properties();
                 return;
             }
-            try (InputStream input = new FileInputStream(fileNameWithExt)) {
+            try ( InputStream input = new FileInputStream(fileNameWithExt)) {
                 bookmarks = new Properties();
                 bookmarks.load(input);
                 Platform.runLater(() -> {
@@ -1012,7 +1024,5 @@ public class MainViewController implements Initializable {
     public CollectionsController getCollectionsPaneController() {
         return collectionsPaneController;
     }
-    
-    
 
 }

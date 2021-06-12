@@ -469,6 +469,7 @@ public class MainViewController implements Initializable {
                 statusLabelLeft.setVisible(false);
             });
             task.setOnFailed((t) -> {
+                //error during rotated images occuring...
                 progressbar.progressProperty().unbind();
                 progressbarLabel.textProperty().unbind();
                 progressPane.setVisible(false);

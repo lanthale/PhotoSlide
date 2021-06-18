@@ -14,6 +14,7 @@ import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
+import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -351,56 +352,57 @@ public class MainViewController implements Initializable {
                         if (this.isCancelled() == false) {
                             updateProgress(i + 1, exportList.size());
                             updateMessage("" + (i + 1) + "/" + exportList.size());
-                            if (diag.getController().getExportDeletedFileBox().isSelected() == false) {
-                                if (mediaItem.isDeleted() == true) {
-                                    continue;
-                                }
-                            }
-                            String fileFormat = diag.getController().getFileFormat();
-                            ImageType imageType = ImageType.JPG;
-                            switch (fileFormat) {
-                                case "JPG":
-                                    imageType = ImageType.JPG;
-                                    break;
-                                case "PNG":
-                                    imageType = ImageType.PNG;
-                                    break;
-                                case "TIFF":
-                                    imageType = ImageType.TIFF;
-                                    break;
-                            }
-                            String outFileStr = outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension();
-                            File outFile = new File(outFileStr);
-                            if (outFile.exists() == true) {
-                                if (diag.getController().getOverwriteFilesBox().isSelected()) {
-                                    outFile.delete();
-                                } else {
-                                    continue;
-                                }
-                            }
-                            String url = mediaItem.getImageUrl().toString();
-                            Image img = new Image(url, false);
-                            ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
-                            Image imageWithFilters = img;
-                            for (ImageFilter imageFilter : filterList) {
-                                imageWithFilters = imageFilter.load(imageWithFilters);
-                                imageFilter.filter(imageFilter.getValues());
-                            }
-                            img = imageWithFilters;
-                            PixelReader reader = img.getPixelReader();
-                            BufferedImage fromFXImage;
-                            WritableImage newImage;
-                            if (mediaItem.getCropView() != null) {
-                                newImage = new WritableImage(reader, (int) (mediaItem.getCropView().getMinX()), (int) (mediaItem.getCropView().getMinY()), (int) (mediaItem.getCropView().getWidth()), (int) (mediaItem.getCropView().getHeight()));
-                            } else {
-                                newImage = new WritableImage(reader, (int) img.getWidth(), (int) img.getHeight());
-                            }
-                            fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
-                            // rotate image in FX or swing
-                            if (mediaItem.getRotationAngleProperty().get() != 0) {
-                                fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
-                            }
                             try {
+                                if (diag.getController().getExportDeletedFileBox().isSelected() == false) {
+                                    if (mediaItem.isDeleted() == true) {
+                                        continue;
+                                    }
+                                }
+                                String fileFormat = diag.getController().getFileFormat();
+                                ImageType imageType = ImageType.JPG;
+                                switch (fileFormat) {
+                                    case "JPG":
+                                        imageType = ImageType.JPG;
+                                        break;
+                                    case "PNG":
+                                        imageType = ImageType.PNG;
+                                        break;
+                                    case "TIFF":
+                                        imageType = ImageType.TIFF;
+                                        break;
+                                }
+                                String outFileStr = outputDir + File.separator + diag.getController().getFilename() + (i + 1) + "." + imageType.getExtension();
+                                File outFile = new File(outFileStr);
+                                if (outFile.exists() == true) {
+                                    if (diag.getController().getOverwriteFilesBox().isSelected()) {
+                                        outFile.delete();
+                                    } else {
+                                        continue;
+                                    }
+                                }
+                                String url = mediaItem.getImageUrl().toString();
+                                Image img = new Image(url, false);
+                                ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
+                                Image imageWithFilters = img;
+                                for (ImageFilter imageFilter : filterList) {
+                                    imageWithFilters = imageFilter.load(imageWithFilters);
+                                    imageFilter.filter(imageFilter.getValues());
+                                }
+                                img = imageWithFilters;
+                                PixelReader reader = img.getPixelReader();
+                                BufferedImage fromFXImage;
+                                WritableImage newImage;
+                                if (mediaItem.getCropView() != null) {
+                                    newImage = new WritableImage(reader, (int) (mediaItem.getCropView().getMinX()), (int) (mediaItem.getCropView().getMinY()), (int) (mediaItem.getCropView().getWidth()), (int) (mediaItem.getCropView().getHeight()));
+                                } else {
+                                    newImage = new WritableImage(reader, (int) img.getWidth(), (int) img.getHeight());
+                                }
+                                fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
+                                // rotate image in FX or swing                            
+                                if (mediaItem.getRotationAngleProperty().get() != 0) {
+                                    fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
+                                }
+
                                 FileOutputStream fo = new FileOutputStream(outFileStr, false);
                                 ImageWriter writer = ImageIO.getWriter(imageType);
                                 ImageParam.ImageParamBuilder builder = ImageParam.getBuilder();
@@ -469,7 +471,8 @@ public class MainViewController implements Initializable {
                 statusLabelLeft.setVisible(false);
             });
             task.setOnFailed((t) -> {
-                //error during rotated images occuring...
+                //error during rotated images occuring...                
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Error during export occured!", t.getSource().getException());
                 progressbar.progressProperty().unbind();
                 progressbarLabel.textProperty().unbind();
                 progressPane.setVisible(false);
@@ -488,12 +491,13 @@ public class MainViewController implements Initializable {
         return false;
     }
 
-    private BufferedImage getRotatedImage(BufferedImage bufferedImage, double angle) {
-        AffineTransform transform = new AffineTransform();
-        transform.rotate(angle);
-        AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
-        bufferedImage = op.filter(bufferedImage, null);
-        return bufferedImage;
+    private BufferedImage getRotatedImage(BufferedImage imageToRotate, double angle) {
+        BufferedImage rotatedImage = new BufferedImage(imageToRotate.getHeight(null), imageToRotate.getWidth(null), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = (Graphics2D) rotatedImage.getGraphics();
+        g2d.rotate(Math.toRadians(angle));
+        g2d.drawImage(imageToRotate, 0, -rotatedImage.getWidth(null), null);
+        g2d.dispose();
+        return rotatedImage;
     }
 
     @FXML
@@ -888,7 +892,7 @@ public class MainViewController implements Initializable {
     public void saveBookmarksFile() {
         executor.submit(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
-            try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
+            try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
                 bookmarks.store(output, null);
                 output.flush();
             } catch (IOException ex) {
@@ -904,7 +908,7 @@ public class MainViewController implements Initializable {
                 bookmarks = new Properties();
                 return;
             }
-            try ( InputStream input = new FileInputStream(fileNameWithExt)) {
+            try (InputStream input = new FileInputStream(fileNameWithExt)) {
                 bookmarks = new Properties();
                 bookmarks.load(input);
                 Platform.runLater(() -> {

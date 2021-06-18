@@ -334,7 +334,11 @@
 }
 
 .toggle-switch:selected .thumb-area {
-    -fx-background-color: derive(default-color, 40%);
+    -fx-background-color: rgb(140, 140, 140);
+}
+
+.toggle-switch .thumb-area {
+    -fx-background-color: rgb(80, 80, 80);
 }
 
 

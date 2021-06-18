@@ -199,17 +199,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         } else {
             lightController.getStackButton().setText("Stack");
         }
-        setStdGUIState();
-        if (lightController.getShowPreviewPaneToggle().isSelected() == false) {
-            lightController.getPlayIcon().setVisible(false);
-            lightController.getImageView().setImage(null);
-            lightController.getMediaView().setMediaPlayer(null);
-            lightController.getTitleLabel().setVisible(false);
-            lightController.getCameraLabel().setVisible(false);
-            lightController.getFilenameLabel().setVisible(false);
-            lightController.getRatingControl().setVisible(false);
-            return;
-        }
+        setStdGUIState();        
         if (selectionModel.selectionCount() > 1) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -257,6 +247,16 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         selectedCell = (MediaGridCell) t.getSource();
+        if (lightController.getShowPreviewPaneToggle().isSelected() == false) {
+            lightController.getPlayIcon().setVisible(false);
+            lightController.getImageView().setImage(null);
+            lightController.getMediaView().setMediaPlayer(null);
+            lightController.getTitleLabel().setVisible(false);
+            lightController.getCameraLabel().setVisible(false);
+            lightController.getFilenameLabel().setVisible(false);
+            lightController.getRatingControl().setVisible(false);
+            return;
+        }
 
         updateGUIAccordingSelection();
 

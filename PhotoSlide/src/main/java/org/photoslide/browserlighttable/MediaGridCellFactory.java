@@ -430,6 +430,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     }
                                     img = imageWithFilters;
                                     lightController.getImageView().setImage(img);
+                                    //lightController.getImageView().getParent().requestLayout();
                                 } else {
                                     lightController.getImageProgress().setVisible(true);
                                 }

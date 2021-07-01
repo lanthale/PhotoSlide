@@ -48,6 +48,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -252,7 +253,11 @@ public class MetadataController implements Initializable {
         task = new Task<>() {
             @Override
             protected Boolean call() throws IOException {
-                readBasicMetadata(this, file);
+                try {
+                    readBasicMetadata(this, file);
+                } catch (IOException | IllegalArgumentException e) {
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '"+file.getName()+"'!", e);
+                }
                 return null;
             }
         };
@@ -303,6 +308,9 @@ public class MetadataController implements Initializable {
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.isRawImage()) {
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
+            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");            
+            LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
+            file.setRecordTime(ofEpochSecond);
         }
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {

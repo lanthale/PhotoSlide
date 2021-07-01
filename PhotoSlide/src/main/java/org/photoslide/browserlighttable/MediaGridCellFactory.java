@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
@@ -54,6 +55,7 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.ThreadFactoryPS;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -77,17 +79,17 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
     private final Image dialogIcon;
-    private ObservableList<ImageFilter> filterList;
+    private ObservableList<ImageFilter> filterList;    
 
-    public MediaGridCellFactory(ExecutorService executor, LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
+    public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
         this.util = util;
         taskList = new ArrayList<>();
         this.metadataController = metadataController;
         this.grid = grid;
         this.lightController = lightController;
         selectionModel = new GridCellSelectionModel();
-        //new RubberBandSelection(grid, selectionModel);
-        this.executor = executor;
+        //new RubberBandSelection(grid, selectionModel);        
         lightController.getOptionPane().setOnSwipeLeft((t) -> {
             lightController.selectNextImageInGrid();
         });
@@ -134,6 +136,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+    }
+    
+    public void shutdown(){
+        executor.shutdown();
     }
 
     @Override

@@ -299,7 +299,7 @@ public class LighttableController implements Initializable {
         imageGrid = new GridView<>(sortedMediaList);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
-        factory = new MediaGridCellFactory(executorParallel, this, imageGrid, util, metadataController);
+        factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
 
         Platform.runLater(() -> {
             if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
@@ -438,6 +438,9 @@ public class LighttableController implements Initializable {
         if (taskMLoading != null) {
             taskMLoading.shutdown();
             taskMLoading.cancel();
+        }
+        if (factory != null) {
+            factory.shutdown();
         }
         if (executorParallel != null) {
             executorParallel.shutdownNow();
@@ -1147,6 +1150,4 @@ public class LighttableController implements Initializable {
         return showPreviewPaneToggle;
     }
 
-    
-    
 }

@@ -12,18 +12,17 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
-import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -70,21 +69,19 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
     private final GridView<MediaFile> grid;
-    private Task<Boolean> task;
     private final ExecutorService executor;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
-    private final List<Task> taskList;
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
     private final Image dialogIcon;
-    private ObservableList<ImageFilter> filterList;    
+    private ObservableList<ImageFilter> filterList;
+    private Image imageWithFilters;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
         this.util = util;
-        taskList = new ArrayList<>();
         this.metadataController = metadataController;
         this.grid = grid;
         this.lightController = lightController;
@@ -137,8 +134,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
-    
-    public void shutdown(){
+
+    public void shutdown() {
         executor.shutdown();
     }
 
@@ -150,7 +147,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.setEditable(false);
         cell.setOnMouseClicked((t) -> {
             manageGUISelection(t, cell);
-            handleGridCellSelection(t);
+            try {
+                handleGridCellSelection(t);
+            } catch (MalformedURLException ex) {
+                Logger.getLogger(MediaGridCellFactory.class.getName()).log(Level.SEVERE, null, ex);
+            }
             t.consume();
         });
         return cell;
@@ -188,7 +189,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.requestLayout();
     }
 
-    private void handleGridCellSelection(Event t) {
+    private void handleGridCellSelection(Event t) throws MalformedURLException {
         if (t.getTarget().getClass().equals(MediaFile.class)) {
             Node target = Utility.pick((MediaGridCell) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target.getClass().equals(FontIcon.class)) {
@@ -205,7 +206,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         } else {
             lightController.getStackButton().setText("Stack");
         }
-        setStdGUIState();        
+        setStdGUIState();
         if (selectionModel.selectionCount() > 1) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -216,7 +217,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getRatingControl().setVisible(false);
             return;
         }
-        if (task != null) {
+        if (img != null) {
             cancleTask();
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -227,10 +228,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getFilenameLabel().setVisible(false);
             lightController.getRatingControl().setVisible(false);
             lightController.getOptionPane().setDisable(false);
-            metadataController.cancelTasks();
-            if (img != null) {
-                img.cancel();
-            }
         }
 
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
@@ -266,214 +263,203 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
         updateGUIAccordingSelection();
 
-        task = new Task<>() {
-            private Image imageWithFilters;
-
-            @Override
-            protected Boolean call() throws MalformedURLException {
-
-                Platform.runLater(() -> {
-                    lightController.getPlayIcon().setVisible(false);
-                    lightController.getImageView().setImage(null);
-                    lightController.getMediaView().setMediaPlayer(null);
-                });
-                switch (selectedMediaItem.getMediaType()) {
-                    case VIDEO:
+        Platform.runLater(() -> {
+            lightController.getPlayIcon().setVisible(false);
+            lightController.getImageView().setImage(null);
+            lightController.getMediaView().setMediaPlayer(null);
+        });
+        switch (selectedMediaItem.getMediaType()) {
+            case VIDEO:
                         try {
-                        Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                Platform.runLater(() -> {
+                    lightController.getImageView().setVisible(false);
+                    lightController.getMediaView().setVisible(true);
+                    lightController.getImageProgress().setVisible(false);
+                    lightController.getInvalidStackPane().setVisible(false);
+                    lightController.getPlayIcon().setVisible(true);
+                    lightController.getMediaView().toFront();
+                    lightController.getPlayIcon().toFront();
+                    lightController.getMediaView().requestFocus();
+                });
+                MediaPlayer mp = new MediaPlayer(media);
+                if (lightController.getMediaView().getMediaPlayer() != null) {
+                    lightController.getMediaView().getMediaPlayer().stop();
+                }
+                lightController.getMediaView().setMediaPlayer(mp);
+                lightController.getMediaView().setOnMouseMoved((k) -> {
+                    Platform.runLater(() -> {
+                        lightController.getPlayIcon().setVisible(true);
+                    });
+                    if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
                         Platform.runLater(() -> {
-                            lightController.getImageView().setVisible(false);
-                            lightController.getMediaView().setVisible(true);
-                            lightController.getImageProgress().setVisible(false);
-                            lightController.getInvalidStackPane().setVisible(false);
                             lightController.getPlayIcon().setVisible(true);
-                            lightController.getMediaView().toFront();
-                            lightController.getPlayIcon().toFront();
-                            lightController.getMediaView().requestFocus();
                         });
-                        MediaPlayer mp = new MediaPlayer(media);
-                        if (lightController.getMediaView().getMediaPlayer() != null) {
-                            lightController.getMediaView().getMediaPlayer().stop();
-                        }
-                        lightController.getMediaView().setMediaPlayer(mp);
-                        lightController.getMediaView().setOnMouseMoved((t) -> {
-                            Platform.runLater(() -> {
-                                lightController.getPlayIcon().setVisible(true);
-                            });
-                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                Platform.runLater(() -> {
-                                    lightController.getPlayIcon().setVisible(true);
-                                });
-                                lightController.getPlayIcon().setIconLiteral("fa-pause");
-                            } else {
-                                lightController.getPlayIcon().setIconLiteral("fa-play");
-                            }
-                            util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
-                        });
-                        lightController.getPlayIcon().setOnMouseClicked((t) -> {
-                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                lightController.getMediaView().getMediaPlayer().pause();
-                            } else {
-                                lightController.getMediaView().getMediaPlayer().play();
-                                lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
-                            }
-                        });
-                        lightController.getMediaView().setOnKeyPressed((t) -> {
-                            if (t.getCode() == KeyCode.SPACE) {
-                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                    lightController.getMediaView().getMediaPlayer().pause();
-                                } else {
-                                    lightController.getMediaView().getMediaPlayer().play();
-                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
-                                }
-                            }
-                        });
-                    } catch (MediaException e) {
-                        if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
-                            VBox vb = new VBox();
-                            vb.setAlignment(Pos.CENTER);
-                            FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
-                            filmIcon.setOpacity(0.3);
-                            FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
-                            Label lb = new Label("Filtype not supported!");
-                            lb.setStyle("-fx-font-size: 20px;");
-                            Platform.runLater(() -> {
-                                lightController.getPlayIcon().setVisible(false);
-                                lightController.getImageView().setVisible(false);
-                                lightController.getMediaView().setVisible(false);
-                                lightController.getImageProgress().setVisible(false);
-                                vb.getChildren().clear();
-                                vb.getChildren().add(filmIcon);
-                                vb.getChildren().add(lb);
-                                lightController.getInvalidStackPane().getChildren().clear();
-                                lightController.getInvalidStackPane().getChildren().add(vb);
-                                lightController.getInvalidStackPane().getChildren().add(controlIcon);
-                                lightController.getInvalidStackPane().setVisible(true);
-                            });
+                        lightController.getPlayIcon().setIconLiteral("fa-pause");
+                    } else {
+                        lightController.getPlayIcon().setIconLiteral("fa-play");
+                    }
+                    util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
+                });
+                lightController.getPlayIcon().setOnMouseClicked((k2) -> {
+                    if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                        lightController.getMediaView().getMediaPlayer().pause();
+                    } else {
+                        lightController.getMediaView().getMediaPlayer().play();
+                        lightController.getPlayIcon().setIconLiteral("fa-pause");
+                        util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
+                    }
+                });
+                lightController.getMediaView().setOnKeyPressed((k3) -> {
+                    if (k3.getCode() == KeyCode.SPACE) {
+                        if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                            lightController.getMediaView().getMediaPlayer().pause();
+                        } else {
+                            lightController.getMediaView().getMediaPlayer().play();
+                            lightController.getPlayIcon().setIconLiteral("fa-pause");
+                            util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
                         }
                     }
-                    break;
-
-                    case IMAGE:
-                        metadataController.setSelectedFile(selectedMediaItem);
-                        Platform.runLater(() -> {
-                            lightController.getImageProgress().progressProperty().unbind();
-                            lightController.getImageView().setImage(null);
-                            lightController.getInvalidStackPane().setVisible(false);
-                            lightController.getImageView().setVisible(true);
-                            lightController.getMediaView().setVisible(false);
-                            lightController.getImageProgress().setProgress(0);
-                            lightController.getImageProgress().setVisible(true);
-                        });
-                        String url = selectedMediaItem.getImageUrl().toString();
-                        img = new Image(url, true);
-                        Platform.runLater(() -> {
-                            lightController.getDetailToolbar().setDisable(false);
-                            lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
-                            lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().getCameraProperty());
-                            lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
-                            lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
-                            lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
-                            switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
-                                case 0:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                    break;
-                                case 180:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                    break;
-                                case 360:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                    break;
-                                case -180:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                    break;
-                                case -360:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                                    break;
-                                case 90:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                                    break;
-                                case 270:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                                    break;
-                                case -90:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                                    break;
-                                case -270:
-                                    lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                                    lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                                    break;
-                            }
-                            lightController.getTitleLabel().setVisible(true);
-                            lightController.getCameraLabel().setVisible(true);
-                            lightController.getFilenameLabel().setVisible(true);
-                            lightController.getRatingControl().setVisible(true);
-                            lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-                            img.progressProperty().addListener((ov, t, t1) -> {
-                                if ((Double) t1 == 1.0 && !img.isError()) {
-                                    lightController.getImageProgress().setVisible(false);
-                                    imageWithFilters = img;
-                                    filterList = selectedMediaItem.getFilterListWithoutImageData();
-                                    for (ImageFilter imageFilter : filterList) {
-                                        imageWithFilters = imageFilter.load(imageWithFilters);
-                                        imageFilter.filter(imageFilter.getValues());
-                                        switch (imageFilter.getName()) {
-                                            case "ExposureFilter": {
-                                                metadataController.setExposerFilter(imageFilter);
-                                                metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
-                                            }
-                                        }
-                                    }
-                                    img = imageWithFilters;
-                                    lightController.getImageView().setImage(img);
-                                    //lightController.getImageView().getParent().requestLayout();
-                                } else {
-                                    lightController.getImageProgress().setVisible(true);
-                                }
-                            });
-                            lightController.getImageView().setImage(img);
-                            lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
-
-                            Button resetCrop = new Button();
-                            FontIcon restoreIcon = new FontIcon("ti-back-right:24");
-                            resetCrop.setGraphic(restoreIcon);
-                            if (selectedCell.getItem().getCropView() != null) {
-                                lightController.getOptionPane().getChildren().clear();
-                                lightController.getOptionPane().getChildren().add(resetCrop);
-                                resetCrop.setOnAction((t) -> {
-                                    lightController.getOptionPane().setDisable(false);
-                                    lightController.getInfoPane().setDisable(false);
-                                    lightController.getImageView().setViewport(null);
-                                    selectedMediaItem.setCropView(null);
-                                    lightController.getImageStackPane().getChildren().clear();
-                                    lightController.getImageStackPane().getChildren().add(lightController.getImageView());
-                                    lightController.getOptionPane().getChildren().clear();
-                                    selectedCell.requestFocus();
-                                });
-                            } else {
-                                Platform.runLater(() -> {
-                                    resetCrop.setVisible(false);
-                                });
-                            }
-                        });
-                        break;
-                    default:
+                });
+            } catch (MediaException e) {
+                if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
+                    VBox vb = new VBox();
+                    vb.setAlignment(Pos.CENTER);
+                    FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
+                    filmIcon.setOpacity(0.3);
+                    FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
+                    Label lb = new Label("Filtype not supported!");
+                    lb.setStyle("-fx-font-size: 20px;");
+                    Platform.runLater(() -> {
+                        lightController.getPlayIcon().setVisible(false);
+                        lightController.getImageView().setVisible(false);
+                        lightController.getMediaView().setVisible(false);
+                        lightController.getImageProgress().setVisible(false);
+                        vb.getChildren().clear();
+                        vb.getChildren().add(filmIcon);
+                        vb.getChildren().add(lb);
+                        lightController.getInvalidStackPane().getChildren().clear();
+                        lightController.getInvalidStackPane().getChildren().add(vb);
+                        lightController.getInvalidStackPane().getChildren().add(controlIcon);
+                        lightController.getInvalidStackPane().setVisible(true);
+                    });
                 }
-                return null;
             }
-        };
-        taskList.add(task);
-        executor.submit(task);
+            break;
+
+            case IMAGE:
+                metadataController.setSelectedFile(selectedMediaItem);
+                Platform.runLater(() -> {
+                    lightController.getImageProgress().progressProperty().unbind();
+                    lightController.getImageView().setImage(null);
+                    lightController.getInvalidStackPane().setVisible(false);
+                    lightController.getImageView().setVisible(true);
+                    lightController.getMediaView().setVisible(false);
+                    lightController.getImageProgress().setProgress(0);
+                    lightController.getImageProgress().setVisible(true);
+                });
+                String url = selectedMediaItem.getImageUrl().toString();
+                img = new Image(url, true);
+                Platform.runLater(() -> {
+                    lightController.getDetailToolbar().setDisable(false);
+                    lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
+                    lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().getCameraProperty());
+                    lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
+                    lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
+                    lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
+                    switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
+                        case 0:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                            break;
+                        case 180:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                            break;
+                        case 360:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                            break;
+                        case -180:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                            break;
+                        case -360:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                            break;
+                        case 90:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                            break;
+                        case 270:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                            break;
+                        case -90:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                            break;
+                        case -270:
+                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                            break;
+                    }
+                    lightController.getTitleLabel().setVisible(true);
+                    lightController.getCameraLabel().setVisible(true);
+                    lightController.getFilenameLabel().setVisible(true);
+                    lightController.getRatingControl().setVisible(true);
+                    lightController.getImageProgress().progressProperty().bind(img.progressProperty());
+                    img.progressProperty().addListener((ov, g, g1) -> {
+                        if ((Double) g1 == 1.0 && !img.isError()) {
+                            lightController.getImageProgress().setVisible(false);
+                            imageWithFilters = img;
+                            filterList = selectedMediaItem.getFilterListWithoutImageData();
+                            for (ImageFilter imageFilter : filterList) {
+                                imageWithFilters = imageFilter.load(imageWithFilters);
+                                imageFilter.filter(imageFilter.getValues());
+                                switch (imageFilter.getName()) {
+                                    case "ExposureFilter": {
+                                        metadataController.setExposerFilter(imageFilter);
+                                        metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
+                                    }
+                                }
+                            }
+                            img = imageWithFilters;
+                            lightController.getImageView().setImage(img);
+                            //lightController.getImageView().getParent().requestLayout();
+                        } else {
+                            lightController.getImageProgress().setVisible(true);
+                        }
+                    });
+                    lightController.getImageView().setImage(img);
+                    lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
+
+                    Button resetCrop = new Button();
+                    FontIcon restoreIcon = new FontIcon("ti-back-right:24");
+                    resetCrop.setGraphic(restoreIcon);
+                    if (selectedCell.getItem().getCropView() != null) {
+                        lightController.getOptionPane().getChildren().clear();
+                        lightController.getOptionPane().getChildren().add(resetCrop);
+                        resetCrop.setOnAction((h) -> {
+                            lightController.getOptionPane().setDisable(false);
+                            lightController.getInfoPane().setDisable(false);
+                            lightController.getImageView().setViewport(null);
+                            selectedMediaItem.setCropView(null);
+                            lightController.getImageStackPane().getChildren().clear();
+                            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
+                            lightController.getOptionPane().getChildren().clear();
+                            selectedCell.requestFocus();
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            resetCrop.setVisible(false);
+                        });
+                    }
+                });
+                break;
+            default:
+        }
     }
 
     private void updateGUIAccordingSelection() {
@@ -575,11 +561,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public void cancleTask() {
+        if (img != null) {
+            img.cancel();
+        }
         metadataController.cancelTasks();
-        taskList.forEach(taskItem -> {
-            taskItem.cancel();
-        });
-        taskList.clear();
     }
 
     public MediaGridCell getSelectedCell() {

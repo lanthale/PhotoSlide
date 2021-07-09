@@ -256,7 +256,7 @@ public class MetadataController implements Initializable {
                 try {
                     readBasicMetadata(this, file);
                 } catch (IOException | IllegalArgumentException e) {
-                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '"+file.getName()+"'!", e);
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '" + file.getName() + "'!", e);
                 }
                 return null;
             }
@@ -308,7 +308,7 @@ public class MetadataController implements Initializable {
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.isRawImage()) {
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");            
+            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
             file.setRecordTime(ofEpochSecond);
         }
@@ -870,10 +870,12 @@ public class MetadataController implements Initializable {
         }
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
+        final String keysw=keywords;
+        final String titlew=title;
         if (file.isRawImage()) {
-            file.setKeywords(keywords);
-            file.setTitle(title);
             Platform.runLater(() -> {
+                file.setKeywords(keysw);
+                file.setTitle(titlew);
                 file.saveEdits();
             });
             return;

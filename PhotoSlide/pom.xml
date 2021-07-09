@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.1.10</version>        
+    <version>1.1.11-SNAPSHOT</version>        
     
     <properties>
-        <javafx.version>17-ea+12</javafx.version>
+        <javafx.version>17-ea+14</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

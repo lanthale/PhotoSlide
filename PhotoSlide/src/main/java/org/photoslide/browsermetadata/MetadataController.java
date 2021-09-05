@@ -658,12 +658,16 @@ public class MetadataController implements Initializable {
         }
         keywordListLocal.clear();
 
+        String mfKeyw = mf.getKeywords();
+        if (mfKeyw == null) {
+            mfKeyw = "";
+        }
         StringTokenizer defaultTokenizer = new StringTokenizer(mf.getKeywords(), ";");
         while (defaultTokenizer.hasMoreTokens()) {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }
         Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -678,7 +682,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -694,7 +698,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -709,7 +713,7 @@ public class MetadataController implements Initializable {
             iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
         }
         Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR), true);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -719,7 +723,7 @@ public class MetadataController implements Initializable {
         bout = new ByteArrayOutputStream();
         if (commentsdata != null) {
             Metadata.insertComments(fin, bout, commentsdata);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -746,7 +750,7 @@ public class MetadataController implements Initializable {
             exportExif.setImageIFD(exifdata.getImageIFD());
         }
         Metadata.insertExif(fin, bout, exportExif);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -755,7 +759,7 @@ public class MetadataController implements Initializable {
             fin = new FileInputStream(exportFilePath);
             bout = new ByteArrayOutputStream();
             Metadata.insertXMP(fin, bout, xmpdata);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -783,7 +787,7 @@ public class MetadataController implements Initializable {
 
                     Metadata.insertComment(fin, bout, commentText.getText());
 
-                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+                    try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
                     fin.close();
@@ -870,8 +874,8 @@ public class MetadataController implements Initializable {
         }
         FileInputStream fin;
         ByteArrayOutputStream bout = null;
-        final String keysw=keywords;
-        final String titlew=title;
+        final String keysw = keywords;
+        final String titlew = title;
         if (file.isRawImage()) {
             Platform.runLater(() -> {
                 file.setKeywords(keysw);
@@ -929,7 +933,7 @@ public class MetadataController implements Initializable {
                 });
             });
             Metadata.insertIPTC(fin, bout, iptcs, false);
-            try (OutputStream outputStream = new FileOutputStream(file.getPathStorage().toFile())) {
+            try ( OutputStream outputStream = new FileOutputStream(file.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             fin.close();

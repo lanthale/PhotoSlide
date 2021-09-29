@@ -3,15 +3,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.1.12-SNAPSHOT</version>        
+    <version>1.1.12</version>        
     
     <properties>
-        <javafx.version>17</javafx.version>
+        <javafx.version>17.0.0.1</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <moduleName>PhotoSlide</moduleName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>        
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>        
     </properties>
     
     <repositories>
@@ -73,7 +73,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -537,7 +537,7 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
             <version>${javafx.version}</version>
-        </dependency> 
+        </dependency>         
                                             
         <dependency>
             <groupId>org.controlsfx</groupId>
@@ -719,6 +719,12 @@
             <groupId>com.sothawo</groupId>
             <artifactId>mapjfx</artifactId>
             <version>3.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         
@@ -822,8 +828,8 @@
                                         <module>javafx.controls</module>
                                         <module>javafx.graphics</module> 
                                         <module>javafx.media</module>   
-                                        <module>javafx.swing</module> 
-                                        <module>javafx.web</module>
+                                        <module>javafx.swing</module>
+                                        <module>javafx.web</module>           
                                         <module>java.desktop</module>
                                         <module>org.controlsfx.controls</module>                                        
                                         <module>org.kordamp.ikonli.core</module>
@@ -928,6 +934,8 @@
                                         <argument>--add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx</argument>              
                                         <argument>--java-options</argument>
                                         <argument>--add-opens=java.base/java.net=com.sothawo.mapjfx</argument>                                                                  
+                                        <argument>--java-options</argument>
+                                        <argument>-XX:+UseShenandoahGC</argument>
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>${param3}</argument>

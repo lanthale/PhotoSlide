@@ -71,7 +71,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 
 ## Steps to create your own build
-- Install AdoptOpenJDK 16 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 14 or later.
+- Install AdoptOpenJDK 17 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 14 or later.
 - Set env var JAVA_HOME
 - Install maven
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools

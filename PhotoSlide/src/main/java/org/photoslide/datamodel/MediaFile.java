@@ -749,19 +749,19 @@ public class MediaFile {
     public boolean isRawImage() {
         if (mediaType == MediaTypes.IMAGE) {
             String ext = name.substring(name.lastIndexOf("."));
-            if (ext.contains("jpg")) {
+            if (ext.toLowerCase().contains("jpg")) {
                 return false;
             }
-            if (ext.contains("jpeg")) {
+            if (ext.toLowerCase().contains("jpeg")) {
                 return false;
             }
-            if (ext.contains("png")) {
+            if (ext.toLowerCase().contains("png")) {
                 return false;
             }
-            if (ext.contains("tif")) {
+            if (ext.toLowerCase().contains("tif")) {
                 return false;
             }
-            if (ext.contains("tiff")) {
+            if (ext.toLowerCase().contains("tiff")) {
                 return false;
             }
         }

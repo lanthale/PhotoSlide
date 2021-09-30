@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.1.12</version>        
+    <version>1.1.13-SNAPSHOT</version>        
     
     <properties>
         <javafx.version>17.0.0.1</javafx.version>
@@ -713,7 +713,7 @@
         <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
-            <version>1.6</version>
+            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>com.sothawo</groupId>
@@ -909,7 +909,7 @@
                                         <argument>--java-options</argument>
                                         <argument>-Xmx8g</argument>
                                         <argument>--java-options</argument>
-                                        <argument>--add-modules jdk.incubator.foreign -Dforeign.restricted=permit</argument>
+                                        <argument>--add-modules jdk.incubator.foreign --enable-native-access=org.librawfx</argument>
                                         <argument>--java-options</argument>
                                         <argument>--add-exports=java.desktop/sun.awt.image=PhotoSlide</argument>
                                         <argument>--java-options</argument>

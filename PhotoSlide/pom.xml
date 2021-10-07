@@ -935,7 +935,7 @@
                                         <argument>--java-options</argument>
                                         <argument>--add-opens=java.base/java.net=com.sothawo.mapjfx</argument>                                                                  
                                         <argument>--java-options</argument>
-                                        <argument>-XX:+UseShenandoahGC</argument>
+                                        <argument>-XX:+UseZGC</argument>
                                         <argument>${param1}</argument>
                                         <argument>${param2}</argument>
                                         <argument>${param3}</argument>

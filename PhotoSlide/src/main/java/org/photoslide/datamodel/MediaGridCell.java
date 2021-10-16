@@ -6,7 +6,9 @@
 package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
@@ -46,7 +48,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public MediaGridCell() {
         this.setId("MediaGridCell");
         rootPane = new StackPane();
-        deleteBox= new VBox();
+        deleteBox = new VBox();
         deleteBox.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -78,15 +80,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
         errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(errorIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-        PauseTransition pause = new PauseTransition(Duration.millis(100));
-        pause.setOnFinished((t) -> {
-            setupBinding();
-        });
-        pause.play();
+        setupBinding();
     }
 
     private void setupBinding() {
-        try {
+        Platform.runLater(() -> {
             if (layerIcon.iconSizeProperty().isBound() == false) {
                 layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
             }
@@ -102,8 +100,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (errorIcon.iconSizeProperty().isBound() == false) {
                 errorIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
             }
-        } catch (Exception e) {
-        }
+        });
     }
 
     /**
@@ -180,13 +177,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
-
             item.setImage(item.setFilters());
-
             //calc cropview based on small imageview
-            //imageView.setViewport(item.getCropView());            
+            //imageView.setViewport(item.getCropView());
             rootPane.getChildren().clear();
-            rootPane.getChildren().add(imageView);
+            rootPane.getChildren().add(imageView);            
             imageView.setImage(item.getImage());
             rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());

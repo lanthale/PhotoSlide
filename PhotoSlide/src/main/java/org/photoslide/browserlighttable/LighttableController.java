@@ -304,15 +304,13 @@ public class LighttableController implements Initializable {
         Platform.runLater(() -> {
             if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
                 imageGridPane.getChildren().add(imageGrid);
-            }
-            mainController.getProgressbar().setProgress(0);
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().progressProperty().bind(taskMLoading.progressProperty());
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().bind(taskMLoading.messageProperty());
+            }            
+            mainController.getProgressbar().progressProperty().unbind();            
+            mainController.getProgressbarLabel().textProperty().unbind();            
         });
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
+        factory.setMediaLoadingExecutor(taskMLoading.getExecutor());
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             filteredMediaList.setPredicate(standardFilter());
             //sort if needed

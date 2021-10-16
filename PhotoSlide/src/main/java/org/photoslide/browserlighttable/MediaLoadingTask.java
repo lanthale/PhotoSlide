@@ -75,6 +75,7 @@ public class MediaLoadingTask extends Task<Void> {
                 Platform.runLater(() -> {
                     mainController.getStatusLabelLeft().setVisible(true);
                     mainController.getProgressPane().setVisible(true);
+                    mainController.getProgressbarLabel().setText(qty + " files found.");
                     mediaQTYLabel.setText(qty + " media files.");
                 });
             }
@@ -94,7 +95,7 @@ public class MediaLoadingTask extends Task<Void> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            Task<Void> loadTask=new Task<>() {
+                            Task<Void> loadTask = new Task<>() {
                                 @Override
                                 protected Void call() throws Exception {
                                     loadItem(this, fileItem, m);
@@ -107,9 +108,18 @@ public class MediaLoadingTask extends Task<Void> {
                             });
                         }
                     }
-                    updateProgress(iatom.get(), qty);
-                    updateMessage(iatom.get() + " / " + qty);
+                    updateMessage(iatom.get() + " / " + qty);                    
                     iatom.addAndGet(1);
+                    if (iatom.get() == 2) {
+                        Platform.runLater(() -> {
+                            mainController.getStatusLabelLeft().setVisible(false);
+                            mainController.getProgressPane().setVisible(false);
+                        });
+                    }
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ex) {
+                    }
                 }
             });
             if (this.isCancelled()) {
@@ -178,6 +188,10 @@ public class MediaLoadingTask extends Task<Void> {
         } else {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }
+    }
+
+    public ExecutorService getExecutor() {
+        return executor;
     }
 
 }

@@ -905,9 +905,7 @@
                                         <argument>--name</argument>
                                         <argument>${project.name}</argument>
                                         <argument>--runtime-image</argument>
-                                        <argument>${project.build.directory}/jlink-image</argument>                                        
-                                        <argument>--java-options</argument>
-                                        <argument>-Xmx8g</argument>
+                                        <argument>${project.build.directory}/jlink-image</argument>                                                                                
                                         <argument>--java-options</argument>
                                         <argument>--add-modules jdk.incubator.foreign --enable-native-access=org.librawfx</argument>
                                         <argument>--java-options</argument>

@@ -35,6 +35,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.VirtualFlow;
@@ -70,6 +71,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final GridCellSelectionModel selectionModel;
     private final GridView<MediaFile> grid;
     private final ExecutorService executor;
+    private ExecutorService mediaLoadingExecutor;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
@@ -78,6 +80,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Image dialogIcon;
     private ObservableList<ImageFilter> filterList;
     private Image imageWithFilters;
+    private final Button resetCrop;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
@@ -133,6 +136,19 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        resetCrop = new Button();
+        FontIcon restoreIcon = new FontIcon("ti-back-right:24");
+        resetCrop.setGraphic(restoreIcon);
+        resetCrop.setOnAction((h) -> {
+            lightController.getOptionPane().setDisable(false);
+            lightController.getInfoPane().setDisable(false);
+            lightController.getImageView().setViewport(null);
+            selectedMediaItem.setCropView(null);
+            lightController.getImageStackPane().getChildren().clear();
+            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
+            lightController.getOptionPane().getChildren().clear();
+            selectedCell.requestFocus();
+        });
     }
 
     public void shutdown() {
@@ -286,7 +302,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 if (lightController.getMediaView().getMediaPlayer() != null) {
                     lightController.getMediaView().getMediaPlayer().stop();
                 }
-                lightController.getMediaView().setMediaPlayer(mp);
+                Platform.runLater(() -> {
+                    lightController.getMediaView().setMediaPlayer(mp);
+                });
                 lightController.getMediaView().setOnMouseMoved((k) -> {
                     Platform.runLater(() -> {
                         lightController.getPlayIcon().setVisible(true);
@@ -357,16 +375,16 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     lightController.getMediaView().setVisible(false);
                     lightController.getImageProgress().setProgress(0);
                     lightController.getImageProgress().setVisible(true);
-                });
-                String url = selectedMediaItem.getImageUrl().toString();
-                img = new Image(url, true);
-                Platform.runLater(() -> {
                     lightController.getDetailToolbar().setDisable(false);
                     lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
                     lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().getCameraProperty());
                     lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
                     lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
+                    lightController.getTitleLabel().setVisible(true);
+                    lightController.getCameraLabel().setVisible(true);
+                    lightController.getFilenameLabel().setVisible(true);
+                    lightController.getRatingControl().setVisible(true);
                     switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
                         case 0:
                             lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
@@ -405,60 +423,54 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
                             break;
                     }
-                    lightController.getTitleLabel().setVisible(true);
-                    lightController.getCameraLabel().setVisible(true);
-                    lightController.getFilenameLabel().setVisible(true);
-                    lightController.getRatingControl().setVisible(true);
-                    lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-                    img.progressProperty().addListener((ov, g, g1) -> {
-                        if ((Double) g1 == 1.0 && !img.isError()) {
-                            lightController.getImageProgress().setVisible(false);
-                            imageWithFilters = img;
-                            filterList = selectedMediaItem.getFilterListWithoutImageData();
-                            for (ImageFilter imageFilter : filterList) {
-                                imageWithFilters = imageFilter.load(imageWithFilters);
-                                imageFilter.filter(imageFilter.getValues());
-                                switch (imageFilter.getName()) {
-                                    case "ExposureFilter": {
-                                        metadataController.setExposerFilter(imageFilter);
-                                        metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
-                                    }
-                                }
-                            }
-                            img = imageWithFilters;
-                            lightController.getImageView().setImage(img);
-                            //lightController.getImageView().getParent().requestLayout();
-                        } else {
-                            lightController.getImageProgress().setVisible(true);
-                        }
-                    });
-                    lightController.getImageView().setImage(img);
-                    lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
-
-                    Button resetCrop = new Button();
-                    FontIcon restoreIcon = new FontIcon("ti-back-right:24");
-                    resetCrop.setGraphic(restoreIcon);
-                    if (selectedCell.getItem().getCropView() != null) {
-                        lightController.getOptionPane().getChildren().clear();
-                        lightController.getOptionPane().getChildren().add(resetCrop);
-                        resetCrop.setOnAction((h) -> {
-                            lightController.getOptionPane().setDisable(false);
-                            lightController.getInfoPane().setDisable(false);
-                            lightController.getImageView().setViewport(null);
-                            selectedMediaItem.setCropView(null);
-                            lightController.getImageStackPane().getChildren().clear();
-                            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
-                            lightController.getOptionPane().getChildren().clear();
-                            selectedCell.requestFocus();
-                        });
-                    } else {
-                        Platform.runLater(() -> {
-                            resetCrop.setVisible(false);
-                        });
-                    }
                 });
+                loadImage();
                 break;
             default:
+        }
+    }
+
+    private void loadImage() throws MalformedURLException {
+        String url = selectedMediaItem.getImageUrl().toString();
+        img = new Image(url, true);
+        Platform.runLater(() -> {
+            lightController.getImageProgress().progressProperty().bind(img.progressProperty());
+        });
+        img.progressProperty().addListener((ov, g, g1) -> {
+            if ((Double) g1 == 1.0 && !img.isError()) {
+                lightController.getImageProgress().setVisible(false);
+                imageWithFilters = img;
+                filterList = selectedMediaItem.getFilterListWithoutImageData();
+                for (ImageFilter imageFilter : filterList) {
+                    imageWithFilters = imageFilter.load(imageWithFilters);
+                    imageFilter.filter(imageFilter.getValues());
+                    switch (imageFilter.getName()) {
+                        case "ExposureFilter": {
+                            metadataController.setExposerFilter(imageFilter);
+                            metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
+                        }
+                    }
+                }
+                img = imageWithFilters;
+                lightController.getImageView().setImage(img);
+                lightController.getImageView().getParent().requestLayout();
+            } else {
+                //lightController.getImageProgress().setVisible(true);
+            }
+        });
+        lightController.getImageView().setImage(img);
+        lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
+
+        if (selectedCell.getItem().getCropView() != null) {
+            Platform.runLater(() -> {
+                resetCrop.setVisible(true);
+                lightController.getOptionPane().getChildren().clear();
+                lightController.getOptionPane().getChildren().add(resetCrop);
+            });
+        } else {
+            Platform.runLater(() -> {
+                resetCrop.setVisible(false);
+            });
         }
     }
 
@@ -512,6 +524,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
+        lightController.getImageProgress().setVisible(true);
         //lightController.getBookmarkButton().setDisable(false);
         if (selectionModel.getSelection().size() > 1) {
             lightController.getDetailToolbar().setDisable(false);
@@ -554,6 +567,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageStackPane().getChildren().add(lightController.getImageView());
             lightController.setSnapshotView(null);
         }
+        resetCrop.setVisible(false);
     }
 
     public GridCellSelectionModel getSelectionModel() {
@@ -682,6 +696,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         false, false, false, false, false, true, null));
             }
         });
+    }
+
+    public void setMediaLoadingExecutor(ExecutorService mediaLoadingExecutor) {
+        this.mediaLoadingExecutor = mediaLoadingExecutor;
     }
 
 }

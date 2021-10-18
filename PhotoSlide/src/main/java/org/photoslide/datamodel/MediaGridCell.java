@@ -7,6 +7,7 @@ package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -80,11 +81,10 @@ public class MediaGridCell extends GridCell<MediaFile> {
         errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(errorIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-        setupBinding();
     }
 
     private void setupBinding() {
-        Platform.runLater(() -> {
+        if (rootPane.heightProperty().subtract(42).intValue() > 0) {
             if (layerIcon.iconSizeProperty().isBound() == false) {
                 layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
             }
@@ -100,7 +100,25 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (errorIcon.iconSizeProperty().isBound() == false) {
                 errorIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
             }
-        });
+        }
+    }
+
+    private void updateIconSize() {
+        DoubleBinding subtract = rootPane.heightProperty().subtract(42);
+        DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
+        DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
+
+        if (subtract.intValue() > 0) {
+            layerIcon.setIconSize(subtract.intValue());
+        }
+        if (subtract1.intValue() > 0) {
+            restoreIcon.setIconSize(subtract1.intValue());
+        }
+        if (subtract2.intValue() > 0) {
+            dummyIcon.setIconSize(subtract2.intValue());
+            filmIcon.setIconSize(subtract2.intValue());
+            errorIcon.setIconSize(subtract2.intValue());
+        }
     }
 
     /**
@@ -114,12 +132,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-        } else {  
-            /*layerIcon.setIconSize(rootPane.heightProperty().subtract(42).intValue());
-            restoreIcon.setIconSize(rootPane.heightProperty().subtract(28).intValue());
-            dummyIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());
-            filmIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());
-            errorIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());*/
+        } else {
+            updateIconSize();            
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -186,7 +200,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             //calc cropview based on small imageview
             //imageView.setViewport(item.getCropView());
             rootPane.getChildren().clear();
-            rootPane.getChildren().add(imageView);            
+            rootPane.getChildren().add(imageView);
             imageView.setImage(item.getImage());
             rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());

@@ -304,9 +304,9 @@ public class LighttableController implements Initializable {
         Platform.runLater(() -> {
             if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
                 imageGridPane.getChildren().add(imageGrid);
-            }            
-            mainController.getProgressbar().progressProperty().unbind();            
-            mainController.getProgressbarLabel().textProperty().unbind();            
+            }
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressbarLabel().textProperty().unbind();
         });
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
@@ -330,6 +330,11 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
+        });
+        taskMLoading.valueProperty().addListener((ov, t, t1) -> {
+            if (t1 != null) {
+                fullMediaList.add(t1);
+            }
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());

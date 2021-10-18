@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -32,7 +33,7 @@ import org.photoslide.ThreadFactoryPS;
  *
  * @author selfemp
  */
-public class MediaLoadingTask extends Task<Void> {
+public class MediaLoadingTask extends Task<MediaFile> {
 
     private final Path selectedPath;
     private final Label mediaQTYLabel;
@@ -57,7 +58,7 @@ public class MediaLoadingTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() throws Exception {
+    protected MediaFile call() throws Exception {
         final long qty;
         List<MediaFile> content = new ArrayList<>();
         try {
@@ -84,6 +85,12 @@ public class MediaLoadingTask extends Task<Void> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted();
             AtomicInteger iatom = new AtomicInteger(1);
+            AnimationTimer timer = new AnimationTimer() {
+                @Override
+                public void handle(long l) {
+                    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                }
+            };
             fileList.forEachOrdered((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
@@ -95,30 +102,27 @@ public class MediaLoadingTask extends Task<Void> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            Task<Void> loadTask = new Task<>() {
+                            updateValue(m);
+                            /*Task<Void> loadTask = new Task<>() {
                                 @Override
                                 protected Void call() throws Exception {
                                     loadItem(this, fileItem, m);
                                     return null;
                                 }
-                            };
-                            executor.submit(loadTask);
+                            };                            
                             Platform.runLater(() -> {
-                                fullMediaList.add(m);
-                            });
+                                executor.submit(loadTask);                                 
+                            });*/
+                            loadItem(this, fileItem, m);
                         }
                     }
-                    updateMessage(iatom.get() + " / " + qty);                    
+                    updateMessage(iatom.get() + " / " + qty);
                     iatom.addAndGet(1);
                     if (iatom.get() == 2) {
                         Platform.runLater(() -> {
                             mainController.getStatusLabelLeft().setVisible(false);
                             mainController.getProgressPane().setVisible(false);
                         });
-                    }
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException ex) {
                     }
                 }
             });

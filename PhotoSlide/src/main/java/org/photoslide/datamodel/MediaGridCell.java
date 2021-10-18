@@ -114,7 +114,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-        } else {
+        } else {  
+            /*layerIcon.setIconSize(rootPane.heightProperty().subtract(42).intValue());
+            restoreIcon.setIconSize(rootPane.heightProperty().subtract(28).intValue());
+            dummyIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());
+            filmIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());
+            errorIcon.setIconSize(rootPane.heightProperty().subtract(10).intValue());*/
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");

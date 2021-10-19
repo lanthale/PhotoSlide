@@ -658,6 +658,12 @@ public class MediaFile {
         if (seconds.contains(",")) {
             seconds = seconds.replace(",", ".");
         }
+        if (minutes.contains(",")) {
+            minutes = minutes.replace(",", ".");
+        }
+        if (degree.contains(",")) {
+            degree = degree.replace(",", ".");
+        }
         double d = Double.parseDouble(degree);
         double m = Double.parseDouble(minutes);
         double s = Double.parseDouble(seconds);

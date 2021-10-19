@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -237,6 +238,9 @@ public class LighttableController implements Initializable {
         Platform.runLater(() -> {
             mainController.getStatusLabelLeft().setVisible(true);
             mainController.getStatusLabelLeft().setText("Scanning...");
+            mainController.getStatusLabelRight().textProperty().unbind();
+            mainController.getStatusLabelRight().setText("");
+            mainController.getStatusLabelRight().setVisible(true);
             mainController.getProgressPane().setVisible(true);
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -263,7 +267,6 @@ public class LighttableController implements Initializable {
             });
         }
         if (taskMLoading != null) {
-            taskMLoading.shutdown();
             taskMLoading.cancel();
             if (fullMediaList != null) {
                 for (MediaFile mediaFile : fullMediaList) {
@@ -309,8 +312,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
         });
 
-        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
-        factory.setMediaLoadingExecutor(taskMLoading.getExecutor());
+        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);        
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             filteredMediaList.setPredicate(standardFilter());
             //sort if needed
@@ -322,7 +324,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished Image Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getStatusLabelLeft().setText("");
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
@@ -330,11 +332,6 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
-        });
-        taskMLoading.valueProperty().addListener((ov, t, t1) -> {
-            if (t1 != null) {
-                fullMediaList.add(t1);
-            }
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
@@ -438,8 +435,7 @@ public class LighttableController implements Initializable {
                 imageGridPane.getChildren().remove(0);
             }
         });
-        if (taskMLoading != null) {
-            taskMLoading.shutdown();
+        if (taskMLoading != null) {            
             taskMLoading.cancel();
         }
         if (factory != null) {

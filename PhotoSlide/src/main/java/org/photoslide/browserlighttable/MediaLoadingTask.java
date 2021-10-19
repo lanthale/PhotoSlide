@@ -42,12 +42,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final MetadataController metadataController;
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
-    private final MediaFileLoader fileLoader;
-    private final ExecutorService executor;
+    private final MediaFileLoader fileLoader;    
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
-        selectedPath = sPath;
-        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("MediaLoadingTask"));
+        selectedPath = sPath;        
         fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
@@ -102,18 +100,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            updateValue(m);
-                            /*Task<Void> loadTask = new Task<>() {
-                                @Override
-                                protected Void call() throws Exception {
-                                    loadItem(this, fileItem, m);
-                                    return null;
-                                }
-                            };                            
-                            Platform.runLater(() -> {
-                                executor.submit(loadTask);                                 
-                            });*/
                             loadItem(this, fileItem, m);
+                            updateValue(m);
                         }
                     }
                     updateMessage(iatom.get() + " / " + qty);
@@ -122,6 +110,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         Platform.runLater(() -> {
                             mainController.getStatusLabelLeft().setVisible(false);
                             mainController.getProgressPane().setVisible(false);
+                            mainController.getStatusLabelRight().setVisible(true);
                         });
                     }
                 }
@@ -140,10 +129,6 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 break;
         }
         return null;
-    }
-
-    public void shutdown() {
-        executor.shutdownNow();
     }
 
     public void loadItem(Task task, Path fileItem, MediaFile m) {
@@ -194,8 +179,14 @@ public class MediaLoadingTask extends Task<MediaFile> {
         }
     }
 
-    public ExecutorService getExecutor() {
-        return executor;
+    @Override
+    protected void updateValue(MediaFile v) {
+        if (v != null) {
+            super.updateValue(v);
+            Platform.runLater(() -> {
+                fullMediaList.add(v);
+            });            
+        }
     }
 
 }

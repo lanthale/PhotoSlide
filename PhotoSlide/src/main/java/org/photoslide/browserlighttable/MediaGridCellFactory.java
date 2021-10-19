@@ -697,9 +697,5 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         });
     }
-
-    public void setMediaLoadingExecutor(ExecutorService mediaLoadingExecutor) {
-        this.mediaLoadingExecutor = mediaLoadingExecutor;
-    }
-
+    
 }

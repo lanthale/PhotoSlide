@@ -188,5 +188,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             });            
         }
     }
+    
+    public void shutdown(){
+        fileLoader.shutdown();
+    }
 
 }

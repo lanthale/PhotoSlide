@@ -6,11 +6,15 @@
 package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
+import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
 /**
@@ -18,8 +22,11 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
+    
+    private ExecutorService executor;
 
     public MediaFileLoader() {
+        executor = Executors.newFixedThreadPool(10, new ThreadFactoryPS("mediaFileLoaderThread"));
     }
 
     public Image loadImage(MediaFile fileItem) {
@@ -40,6 +47,7 @@ public class MediaFileLoader {
             return retImage;
         }
     }
+    
 
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;
@@ -57,5 +65,9 @@ public class MediaFileLoader {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
         }
         return video;
+    }
+    
+    public void shutdown(){
+        executor.shutdown();
     }
 }

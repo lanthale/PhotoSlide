@@ -275,6 +275,7 @@ public class LighttableController implements Initializable {
                     }
                 }
             }
+            taskMLoading.shutdown();
         }
         if (factory != null) {
             factory.cancleTask();

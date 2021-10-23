@@ -6,10 +6,8 @@
 package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
@@ -133,7 +131,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         super.updateItem(item, empty);
         if (empty || item == null) {
         } else {
-            updateIconSize();            
+            updateIconSize();
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -148,7 +146,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 }
             }
             item.loadingProperty().addListener((ov, t, t1) -> {
-                if (t1 == false) {
+                if (t == true && t1 == false) {
                     this.requestLayout();
                 }
             });

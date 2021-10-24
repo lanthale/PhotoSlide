@@ -33,7 +33,7 @@ import org.photoslide.datamodel.MediaFile.MediaTypes;
  * @author selfemp
  */
 public class MediaGridCell extends GridCell<MediaFile> {
-    
+
     private final StackPane rootPane;
     private final MediaView mediaview;
     private final ImageView imageView;
@@ -47,7 +47,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final Label errorLabel;
     private final VBox deleteBox;
     private final SimpleBooleanProperty loading;
-    
+
     public MediaGridCell() {
         this.setId("MediaGridCell");
         rootPane = new StackPane();
@@ -91,7 +91,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
         });
     }
-    
+
     private void setupBinding() {
         if (rootPane.heightProperty().subtract(42).intValue() > 0) {
             if (layerIcon.iconSizeProperty().isBound() == false) {
@@ -111,12 +111,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
         }
     }
-    
+
     private void updateIconSize() {
         DoubleBinding subtract = rootPane.heightProperty().subtract(42);
         DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
         DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
-        
+
         if (subtract.intValue() > 0) {
             layerIcon.setIconSize(subtract.intValue());
         }
@@ -156,14 +156,15 @@ public class MediaGridCell extends GridCell<MediaFile> {
                     this.setId("MediaGridCell");
                 }
             }
-            
+
             /*item.loadingProperty().addListener((ov, t, t1) -> {
-                if (t == true && t1 == false) {
+                if (item.isLoading()==false) {
+                    System.out.println("item "+item.getName());
                     this.requestLayout();
                 }
             });
             item.bookmarkedProperty().addListener((o) -> {
-                this.requestLayout();
+                //this.requestLayout();
             });*/
             switch (item.getMediaType()) {
                 case VIDEO:
@@ -183,7 +184,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
         }
     }
-    
+
     public final void setError(MediaFile item) {
         PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished((t) -> {
@@ -198,11 +199,17 @@ public class MediaGridCell extends GridCell<MediaFile> {
         });
         pause.play();
     }
-    
+
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
+            if (item.getName().equalsIgnoreCase("Mutterberg_4.jpg")) {
+                System.out.println("redraw called loading true " + item.getName());
+            }
             setLoadingNode(item.getMediaType());
         } else {
+            if (item.getName().equalsIgnoreCase("Mutterberg_4.jpg")) {
+                System.out.println("redraw called loading false " + item.getName());
+            }
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
@@ -221,7 +228,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
         }
     }
-    
+
     public final void setMedia(MediaFile item) {
         if (item.isLoading() == true && item.getVideoSupported() == null) {
             setLoadingNode(item.getMediaType());
@@ -240,7 +247,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             setBookmarked(item.isBookmarked());
         }
     }
-    
+
     public void setLoadingNode(MediaTypes mediaType) {
         prgInd.maxHeightProperty().unbind();
         prgInd.maxWidthProperty().unbind();
@@ -254,12 +261,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
         rootPane.getChildren().clear();
         rootPane.getChildren().add(prgInd);
     }
-    
+
     private void setDeletedNode() {
         rootPane.getChildren().add(deleteBox);
         rootPane.getChildren().add(restoreIcon);
     }
-    
+
     private void setRatingNode(int rating) {
         if (rating > 0) {
             VBox vb = new VBox();
@@ -275,7 +282,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         }
     }
-    
+
     private void setStacked(boolean stacked, int stackPos) {
         VBox vb = new VBox();
         if (stacked == true && stackPos == 1) {
@@ -287,7 +294,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().remove(vb);
         }
     }
-    
+
     private void setBookmarked(boolean bookmarked) {
         if (bookmarked) {
             VBox vb = new VBox();
@@ -301,5 +308,5 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         }
     }
-    
+
 }

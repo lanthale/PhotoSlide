@@ -6,8 +6,6 @@
 package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -84,33 +82,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
         errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(errorIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-        loading.addListener((ov, t, t1) -> {
-            if (t1 == true) {
-                System.out.println("change true detected");
-                rootPane.requestLayout();
-            }
-        });
-    }
-
-    private void setupBinding() {
-        if (rootPane.heightProperty().subtract(42).intValue() > 0) {
-            if (layerIcon.iconSizeProperty().isBound() == false) {
-                layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
-            }
-            if (restoreIcon.iconSizeProperty().isBound() == false) {
-                restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
-            }
-            if (dummyIcon.iconSizeProperty().isBound() == false) {
-                dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            }
-            if (filmIcon.iconSizeProperty().isBound() == false) {
-                filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            }
-            if (errorIcon.iconSizeProperty().isBound() == false) {
-                errorIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            }
-        }
-    }
+                
+    }    
 
     private void updateIconSize() {
         DoubleBinding subtract = rootPane.heightProperty().subtract(42);
@@ -142,7 +115,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         super.updateItem(item, empty);
         if (empty || item == null) {
         } else {
-            updateIconSize();
+            updateIconSize();            
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -155,17 +128,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }
-
-            /*item.loadingProperty().addListener((ov, t, t1) -> {
-                if (item.isLoading()==false) {
-                    System.out.println("item "+item.getName());
-                    this.requestLayout();
-                }
-            });
-            item.bookmarkedProperty().addListener((o) -> {
-                //this.requestLayout();
-            });*/
+            }            
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);
@@ -193,7 +156,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             hb.setAlignment(Pos.BOTTOM_CENTER);
             hb.getChildren().add(errorLabel);
             rootPane.getChildren().add(hb);
-            if (item.getDeletedProperty().getValue() == true) {
+            if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
         });
@@ -202,14 +165,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
 
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
-            if (item.getName().equalsIgnoreCase("Mutterberg_4.jpg")) {
-                System.out.println("redraw called loading true " + item.getName());
-            }
             setLoadingNode(item.getMediaType());
-        } else {
-            if (item.getName().equalsIgnoreCase("Mutterberg_4.jpg")) {
-                System.out.println("redraw called loading false " + item.getName());
-            }
+        } else {            
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
@@ -223,7 +180,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
             setStacked(item.isStacked(), item.getStackPos());
-            if (item.getDeletedProperty().getValue() == true) {
+            if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
         }
@@ -308,5 +265,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         }
     }
+
+    public ImageView getImageView() {
+        return imageView;
+    }
+    
+    
 
 }

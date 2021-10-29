@@ -36,7 +36,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -297,7 +296,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().textProperty().unbind();
             mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
         });
-        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
         imageGrid = new GridView<>(sortedMediaList);
@@ -322,7 +321,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().textProperty().unbind();
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             sortOrderComboBox.setDisable(false);
-            mainController.getStatusLabelRight().setText("Finished Image Task.");
+            mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText("");
@@ -506,8 +505,7 @@ public class LighttableController implements Initializable {
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
-        }
-        factory.getSelectedCell().requestLayout();
+        }        
         executorParallel.submit(() -> {
             factory.getSelectedCell().getItem().saveEdits();
         });
@@ -566,8 +564,7 @@ public class LighttableController implements Initializable {
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
-        }
-        factory.getSelectedCell().requestLayout();
+        }        
         executorParallel.submit(() -> {
             factory.getSelectedCell().getItem().saveEdits();
         });
@@ -592,14 +589,8 @@ public class LighttableController implements Initializable {
         popOver.setFadeInDuration(new Duration(100));
         rate.ratingProperty().addListener((o) -> {
             rate.ratingProperty().unbindBidirectional(factory.getSelectedCell().getItem().getRatingProperty());
-            popOver.hide();
-            factory.getSelectedCell().requestLayout();
-        });
-        popOver.showingProperty().addListener((ov, t, t1) -> {
-            if (t1 == false) {
-                factory.getSelectedCell().requestLayout();
-            }
-        });
+            popOver.hide();            
+        });        
         popOver.setOnHidden((t) -> {
             executorParallel.submit(() -> {
                 factory.getSelectedCell().getItem().saveEdits();
@@ -624,8 +615,7 @@ public class LighttableController implements Initializable {
         if (alert.getResult() == ButtonType.YES) {*/
         //new File(factory.getSelectedCell().getItem().getName()).delete();
         MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
-        item.setDeleted(true);
-        fullMediaList.set(fullMediaList.indexOf(item), item);
+        item.setDeleted(true);        
         imageView.setImage(null);
         getTitleLabel().setVisible(false);
         getCameraLabel().setVisible(false);

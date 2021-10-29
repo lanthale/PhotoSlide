@@ -311,7 +311,7 @@ public class MainViewController implements Initializable {
             alert.showAndWait();
             return;
         }
-        exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().getTitleProperty().getValue(), collectionsPaneController.getSelectedPath().toString(), lighttablePaneController.getFullMediaList());
+        exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().titleProperty().getValue(), collectionsPaneController.getSelectedPath().toString(), lighttablePaneController.getFullMediaList());
     }
 
     public boolean exportData(String titel, String initOutDir, ObservableList<MediaFile> mediaListToExport) {

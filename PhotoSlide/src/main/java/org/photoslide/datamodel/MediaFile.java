@@ -31,6 +31,7 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -44,6 +45,7 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Callback;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -120,6 +122,10 @@ public class MediaFile {
         gpsHeight = -1;
     }
 
+    public static Callback<MediaFile, Observable[]> extractor() {
+        return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating};
+    }
+
     public Image setFilters() {
         if (this.unModifiyAbleImage != null) {
             Image imageWithFilters = getClonedImage(unModifiyAbleImage);
@@ -172,7 +178,7 @@ public class MediaFile {
 
         String fileNameWithExt = getEditFilePath().toString();
 
-        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
+        try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
             if (title.getValue() != null) {
@@ -257,7 +263,7 @@ public class MediaFile {
 
         fileNameWithExt = getEditFilePath().toString();
 
-        try (InputStream input = new FileInputStream(fileNameWithExt)) {
+        try ( InputStream input = new FileInputStream(fileNameWithExt)) {
 
             Properties prop = new Properties();
 
@@ -272,7 +278,7 @@ public class MediaFile {
             }
             if (prop.getProperty("comments") != null) {
                 comments.setValue(prop.getProperty("comments"));
-            }            
+            }
             if (prop.getProperty("camera") != null) {
                 camera.setValue(prop.getProperty("camera"));
             }
@@ -429,7 +435,7 @@ public class MediaFile {
         this.cropView = cropView;
     }
 
-    public SimpleStringProperty getTitleProperty() {
+    public SimpleStringProperty titleProperty() {
         return title;
     }
 
@@ -437,7 +443,7 @@ public class MediaFile {
         this.title.set(title);
     }
 
-    public SimpleStringProperty getCameraProperty() {
+    public SimpleStringProperty cameraProperty() {
         return camera;
     }
 
@@ -445,7 +451,7 @@ public class MediaFile {
         this.camera.set(camera);
     }
 
-    public SimpleBooleanProperty getDeletedProperty() {
+    public SimpleBooleanProperty deletedProperty() {
         return deleted;
     }
 
@@ -465,7 +471,7 @@ public class MediaFile {
         this.recordTime = recordTime;
     }
 
-    public SimpleBooleanProperty getSelectedProperty() {
+    public SimpleBooleanProperty selectedProperty() {
         return selected;
     }
 
@@ -611,15 +617,15 @@ public class MediaFile {
         this.unModifiyAbleImage = unModifiyAbleImage;
     }
 
-    public SimpleStringProperty getPlaces() {
+    public SimpleStringProperty placesProperty() {
         return places;
     }
 
-    public SimpleStringProperty getFaces() {
+    public SimpleStringProperty facesProperty() {
         return faces;
     }
 
-    public SimpleStringProperty getComments() {
+    public SimpleStringProperty commentsProperty() {
         return comments;
     }
 
@@ -753,6 +759,7 @@ public class MediaFile {
 
     /**
      * checks if the mediafile is a raw image format e.g. NEF, CR2, X3F, ...
+     *
      * @return true if file is a raw file
      */
     public boolean isRawImage() {
@@ -776,5 +783,6 @@ public class MediaFile {
         }
         return true;
     }
+    
 
 }

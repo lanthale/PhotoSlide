@@ -71,7 +71,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final GridCellSelectionModel selectionModel;
     private final GridView<MediaFile> grid;
     private final ExecutorService executor;
-    private ExecutorService mediaLoadingExecutor;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
@@ -259,7 +258,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);
-                grid.getItems().set(grid.getItems().indexOf(selectedMediaItem), selectedMediaItem);
+                executor.submit(() -> {
+                    selectedMediaItem.saveEdits();
+                });
             } else {
                 alert.hide();
                 return;
@@ -376,8 +377,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     lightController.getImageProgress().setProgress(0);
                     lightController.getImageProgress().setVisible(true);
                     lightController.getDetailToolbar().setDisable(false);
-                    lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().getTitleProperty());
-                    lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().getCameraProperty());
+                    lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().titleProperty());
+                    lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().cameraProperty());
                     lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
                     lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
@@ -423,6 +424,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
                             break;
                     }
+                    lightController.getImageView().setImage(selectedMediaItem.getImage());
                 });
                 loadImage();
                 break;
@@ -453,9 +455,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
                 img = imageWithFilters;
                 lightController.getImageView().setImage(img);
-                lightController.getImageView().getParent().requestLayout();
-            } else {
-                //lightController.getImageProgress().setVisible(true);
             }
         });
         lightController.getImageView().setImage(img);
@@ -697,5 +696,5 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         });
     }
-    
+
 }

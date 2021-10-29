@@ -66,7 +66,7 @@ public class BookmarkBoardController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         mediaFileList = new ArrayList<>();
-        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));

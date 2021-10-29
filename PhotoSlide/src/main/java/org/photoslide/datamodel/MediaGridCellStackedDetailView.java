@@ -6,6 +6,7 @@
 package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -57,15 +58,24 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
         restoreIcon = new FontIcon("ti-back-right");
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
-        dummyIcon = new FontIcon("fa-file-movie-o");
-        PauseTransition pause = new PauseTransition(Duration.millis(100));
-        pause.setOnFinished((t) -> {
-            layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
-            restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
-            dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-        });
-        pause.play();
+        dummyIcon = new FontIcon("fa-file-movie-o");        
+    }
+    
+    private void updateIconSize() {
+        DoubleBinding subtract = rootPane.heightProperty().subtract(42);
+        DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
+        DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
+
+        if (subtract.intValue() > 0) {
+            layerIcon.setIconSize(subtract.intValue());
+        }
+        if (subtract1.intValue() > 0) {
+            restoreIcon.setIconSize(subtract1.intValue());
+        }
+        if (subtract2.intValue() > 0) {
+            dummyIcon.setIconSize(subtract2.intValue());
+            filmIcon.setIconSize(subtract2.intValue());            
+        }
     }
 
     /**
@@ -81,19 +91,12 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
         if (empty || item == null) {
 
         } else {
+            updateIconSize();
             if (item.isSubViewSelected()) {
                 this.setId("MediaGridCellSelectedStackedDetails");
             } else {
                 this.setId("MediaGridCellStackedDetails");
-            }
-            item.loadingProperty().addListener((ov, t, t1) -> {
-                if (t1 == false) {                    
-                    this.requestLayout();
-                }
-            });
-            item.bookmarkedProperty().addListener((o) -> {
-                this.requestLayout();
-            });
+            }            
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);
@@ -128,7 +131,7 @@ public class MediaGridCellStackedDetailView extends GridCell<MediaFile> {
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
             setStacked(item.isStacked(), item.getStackPos());
-            if (item.getDeletedProperty().getValue() == true) {
+            if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
         }

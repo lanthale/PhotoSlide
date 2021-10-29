@@ -74,21 +74,15 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 Platform.runLater(() -> {
                     mainController.getStatusLabelLeft().setVisible(true);
                     mainController.getProgressPane().setVisible(true);
-                    mainController.getProgressbarLabel().setText(qty + " files found.");
-                    mediaQTYLabel.setText(qty + " media files.");
+                    mainController.getProgressbarLabel().setText(qty + " files found - Loading...");
+                    mediaQTYLabel.setText(qty + " media files");
                 });
             }
 
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted();
-            AtomicInteger iatom = new AtomicInteger(1);
-            AnimationTimer timer = new AnimationTimer() {
-                @Override
-                public void handle(long l) {
-                    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                }
-            };
+            AtomicInteger iatom = new AtomicInteger(1);            
             fileList.forEachOrdered((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
@@ -170,7 +164,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (task.isCancelled()) {
                 return;
             }
-            m.setImage(fileLoader.loadImage(m));
+            m.setImage(fileLoader.loadImage(m));            
             if (task.isCancelled()) {
                 return;
             }

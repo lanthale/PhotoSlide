@@ -50,7 +50,7 @@ public class SearchIndex {
     }
 
     public void createSearchIndex(String searchPath) {
-        String collectionName = searchPath.toString();
+        String collectionName = searchPath;
         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         task = new Task<>() {
@@ -188,16 +188,16 @@ public class SearchIndex {
             String name = "'" + m.getName() + "'";
             String path = "'" + m.getPathStorage().toString() + "'";
             String title = null;
-            if (m.getTitleProperty().get() != null) {
-                title = "'" + m.getTitleProperty().get() + "'";
+            if (m.titleProperty().get() != null) {
+                title = "'" + m.titleProperty().get() + "'";
             }
             String keyw = null;
             if (m.getKeywords() != null) {
                 keyw = "'" + m.getKeywords() + "'";
             }
             String cam = null;
-            if (m.getCameraProperty().get() != null) {
-                cam = "'" + m.getCameraProperty().get() + "'";
+            if (m.cameraProperty().get() != null) {
+                cam = "'" + m.cameraProperty().get() + "'";
             }
             String creationTime = null;
             if (m.getCreationTime() != null) {
@@ -209,16 +209,16 @@ public class SearchIndex {
             }
             int rating = m.getRatingProperty().getValue();
             String places = null;
-            if (m.getPlaces().get() != null) {
-                places = "'" + m.getPlaces().get() + "'";
+            if (m.placesProperty().get() != null) {
+                places = "'" + m.placesProperty().get() + "'";
             }
             String gpspos = null;
             if (m.getGpsPosition() != null) {
                 gpspos = "'" + m.getGpsLatPosAsDouble() +";"+ m.getGpsLonPosAsDouble() + "'";
             }
             String faces = null;
-            if (m.getFaces().get() != null) {
-                faces = "'" + m.getFaces().get() + "'";
+            if (m.facesProperty().get() != null) {
+                faces = "'" + m.facesProperty().get() + "'";
             }
             String metadata = "'" + metadataController.getMetaDataAsString().replace("'", "''") + "'";
             Statement stm = App.getSearchDBConnection().createStatement();
@@ -239,14 +239,14 @@ public class SearchIndex {
             try {
                 StringBuilder strb = new StringBuilder();
                 strb.append("UPDATE MediaFiles SET ");
-                if (m.getTitleProperty().get() != null) {
-                    strb.append("TITLE='").append(m.getTitleProperty().get()).append("',");
+                if (m.titleProperty().get() != null) {
+                    strb.append("TITLE='").append(m.titleProperty().get()).append("',");
                 }
                 if (m.getKeywords() != null) {
                     strb.append("KEYWORDS='").append(m.getKeywords()).append("',");
                 }
-                if (m.getCameraProperty().get() != null) {
-                    strb.append("CAMERA='").append(m.getCameraProperty().get()).append("',");
+                if (m.cameraProperty().get() != null) {
+                    strb.append("CAMERA='").append(m.cameraProperty().get()).append("',");
                 }
                 //SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");                
                 if (m.getCreationTime() != null) {

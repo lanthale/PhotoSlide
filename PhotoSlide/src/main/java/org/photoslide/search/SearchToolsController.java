@@ -121,7 +121,7 @@ public class SearchToolsController implements Initializable {
         });
         toolbar.setVisible(false);
         toolbar.setManaged(false);
-        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
         executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("SearchToolExecutor"));

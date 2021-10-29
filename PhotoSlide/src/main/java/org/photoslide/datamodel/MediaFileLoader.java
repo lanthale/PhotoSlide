@@ -22,7 +22,7 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
-    
+
     private ExecutorService executor;
 
     public MediaFileLoader() {
@@ -33,12 +33,12 @@ public class MediaFileLoader {
         Image retImage = null;
         try {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
-            iImage.progressProperty().addListener((ov, t, t1) -> {
+            iImage.progressProperty().addListener((ov, t, t1) -> {                
                 if (t1.doubleValue() == 1.0) {                    
                     fileItem.setLoading(false);
                 }
-                if (iImage.isError()){
-                    fileItem.setMediaType(MediaFile.MediaTypes.NONE);                    
+                if (iImage.isError()) {                    
+                    fileItem.setMediaType(MediaFile.MediaTypes.NONE);
                 }
             });
             return iImage;
@@ -47,7 +47,6 @@ public class MediaFileLoader {
             return retImage;
         }
     }
-    
 
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;
@@ -66,8 +65,8 @@ public class MediaFileLoader {
         }
         return video;
     }
-    
-    public void shutdown(){
+
+    public void shutdown() {
         executor.shutdown();
     }
 }

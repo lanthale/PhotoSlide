@@ -250,8 +250,9 @@ public class MetadataController implements Initializable {
             protected Boolean call() throws IOException {
                 try {
                     readBasicMetadata(this, file);
-                } catch (IOException | IllegalArgumentException e) {
+                } catch (IOException e) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '" + file.getName() + "'!", e);
+                } catch (IllegalArgumentException f){                    
                 }
                 return null;
             }
@@ -271,9 +272,9 @@ public class MetadataController implements Initializable {
                 }
                 TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
             }
-            captionTextField.setText(actualMediaFile.getTitleProperty().get());
-            if (actualMediaFile.getComments().get() != null) {
-                commentText.appendText(actualMediaFile.getComments().get());
+            captionTextField.setText(actualMediaFile.titleProperty().get());
+            if (actualMediaFile.commentsProperty().get() != null) {
+                commentText.appendText(actualMediaFile.commentsProperty().get());
             }
             anchorKeywordPane.setDisable(false);
             progressPane.setVisible(false);
@@ -324,10 +325,10 @@ public class MetadataController implements Initializable {
                                 sb.append(comment);
                             });
                             if (Platform.isFxApplicationThread() == true) {
-                                file.getComments().set(sb.toString());
+                                file.commentsProperty().set(sb.toString());
                             } else {
                                 Platform.runLater(() -> {
-                                    file.getComments().set(sb.toString());
+                                    file.commentsProperty().set(sb.toString());
                                 });
                             }
                         }
@@ -669,12 +670,12 @@ public class MetadataController implements Initializable {
         bout.close();
         fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
-        if (mf.getTitleProperty().get() != null) {
+        if (mf.titleProperty().get() != null) {
             if (iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME) != null) {
                 iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
+                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.getTitleProperty().get()));
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
             try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
@@ -685,12 +686,12 @@ public class MetadataController implements Initializable {
         bout.close();
         fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
-        if (mf.getTitleProperty().get() != null) {
+        if (mf.titleProperty().get() != null) {
             if (iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT) != null) {
                 iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
+                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.getTitleProperty().get()));
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
             try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {

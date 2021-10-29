@@ -5,7 +5,7 @@
  */
 package org.photoslide.bookmarksboard;
 
-import javafx.animation.PauseTransition;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,7 +19,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Font;
-import javafx.util.Duration;
 import org.photoslide.datamodel.*;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -62,15 +61,24 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
         restoreIcon = new FontIcon("ti-back-right");
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
-        dummyIcon = new FontIcon("fa-file-movie-o");
-        PauseTransition pause = new PauseTransition(Duration.millis(100));
-        pause.setOnFinished((t) -> {
-            layerIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(42));
-            restoreIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(28));
-            dummyIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-            filmIcon.iconSizeProperty().bind(rootPane.heightProperty().subtract(10));
-        });
-        pause.play();
+        dummyIcon = new FontIcon("fa-file-movie-o");        
+    }
+    
+    private void updateIconSize() {
+        DoubleBinding subtract = rootPane.heightProperty().subtract(42);
+        DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
+        DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
+
+        if (subtract.intValue() > 0) {
+            layerIcon.setIconSize(subtract.intValue());
+        }
+        if (subtract1.intValue() > 0) {
+            restoreIcon.setIconSize(subtract1.intValue());
+        }
+        if (subtract2.intValue() > 0) {
+            dummyIcon.setIconSize(subtract2.intValue());
+            filmIcon.setIconSize(subtract2.intValue());            
+        }
     }
 
     /**
@@ -86,6 +94,7 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
         if (empty || item == null) {
 
         } else {
+            updateIconSize();
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -138,7 +147,7 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
         hb.setAlignment(Pos.BOTTOM_CENTER);
         hb.getChildren().add(errorLabel);
         rootPane.getChildren().add(hb);
-        if (item.getDeletedProperty().getValue() == true) {
+        if (item.deletedProperty().getValue() == true) {
             setDeletedNode();
         }
     }
@@ -159,7 +168,7 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
             imageView.setImage(item.getImage());
             setRatingNode(item.getRatingProperty().get());
             setStacked(item.isStacked(), item.getStackPos());
-            if (item.getDeletedProperty().getValue() == true) {
+            if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
             item.setLoading(false);

@@ -56,6 +56,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.imageops.ImageFilter;
 
 /**

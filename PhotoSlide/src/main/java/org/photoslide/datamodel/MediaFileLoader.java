@@ -6,6 +6,8 @@
 package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -22,32 +24,34 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
-
+    
     private ExecutorService executor;
-
+    private List<Task> taskList;
+    
     public MediaFileLoader() {
-        executor = Executors.newFixedThreadPool(10, new ThreadFactoryPS("mediaFileLoaderThread"));
+        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+        taskList = new ArrayList<>();
     }
-
-    public Image loadImage(MediaFile fileItem) {
+    
+    public void loadImage(MediaFile fileItem) {
         Image retImage = null;
         try {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
-            iImage.progressProperty().addListener((ov, t, t1) -> {                
-                if (t1.doubleValue() == 1.0) {                    
+            iImage.progressProperty().addListener((ov, t, t1) -> {
+                if (t1.doubleValue() == 1.0) {
                     fileItem.setLoading(false);
                 }
-                if (iImage.isError()) {                    
+                if (iImage.isError()) {
                     fileItem.setMediaType(MediaFile.MediaTypes.NONE);
                 }
             });
-            return iImage;
+            retImage = iImage;
         } catch (MalformedURLException ex) {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
-            return retImage;
         }
+        fileItem.setImage(retImage);
     }
-
+    
     public Media loadVideo(MediaFile fileItem) {
         Media video = null;
         try {
@@ -65,8 +69,8 @@ public class MediaFileLoader {
         }
         return video;
     }
-
+    
     public void shutdown() {
-        executor.shutdown();
+        executor.shutdownNow();
     }
 }

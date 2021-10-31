@@ -26,6 +26,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -42,10 +43,12 @@ public class SoftwareUpdater {
     private Task<String> checkTask;
     private Task<String> downloadTask;
     private final MainViewController controller;
+    private final Image dialogIcon;
 
     public SoftwareUpdater(ExecutorService executorParallel, MainViewController mc) {
         this.executorParallel = executorParallel;
         this.controller = mc;
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
     public void Shutdown() {
@@ -218,6 +221,8 @@ public class SoftwareUpdater {
         ProgressBar pgr = new ProgressBar();
         downloadDialog.getDialogPane().setContent(pgr);
         DialogPane dialogPane = downloadDialog.getDialogPane();
+        Stage stage = (Stage) downloadDialog.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         Utility.centerChildWindowOnStage((Stage) downloadDialog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());

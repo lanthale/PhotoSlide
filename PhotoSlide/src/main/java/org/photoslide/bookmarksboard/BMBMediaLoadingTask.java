@@ -99,7 +99,7 @@ public class BMBMediaLoadingTask extends Task<Void> {
                 task.cancel();
                 return;
             }
-            mediaItem.setImage(fileLoader.loadImage(mediaItem));
+            fileLoader.loadImage(mediaItem);
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;

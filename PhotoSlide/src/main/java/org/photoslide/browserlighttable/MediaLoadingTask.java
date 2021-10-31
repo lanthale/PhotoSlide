@@ -16,18 +16,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import org.photoslide.ThreadFactoryPS;
 
 /**
  *
@@ -94,7 +90,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            loadItem(this, fileItem, m);
+                            loadItem(fileItem, m);
                             updateValue(m);
                         }
                     }
@@ -125,31 +121,31 @@ public class MediaLoadingTask extends Task<MediaFile> {
         return null;
     }
 
-    public void loadItem(Task task, Path fileItem, MediaFile m) {
-        if (task.isCancelled()) {
+    public void loadItem(Path fileItem, MediaFile m) {
+        if (this.isCancelled()) {
             return;
         }
         m.readEdits();
-        if (task.isCancelled()) {
+        if (this.isCancelled()) {
             return;
         }
         m.getCreationTime();
-        if (task.isCancelled()) {
+        if (this.isCancelled()) {
             return;
         }
         if (mainController.isMediaFileBookmarked(m)) {
             m.setBookmarked(true);
         }
-        if (task.isCancelled()) {
+        if (this.isCancelled()) {
             return;
         }
         if (FileTypes.isValidVideo(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.VIDEO);
-            if (task.isCancelled()) {
+            if (this.isCancelled()) {
                 return;
             }
             m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());
-            if (task.isCancelled()) {
+            if (this.isCancelled()) {
                 return;
             }
         } else if (FileTypes.isValidImage(fileItem.toString())) {
@@ -161,11 +157,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            if (task.isCancelled()) {
+            if (this.isCancelled()) {
                 return;
             }
-            m.setImage(fileLoader.loadImage(m));            
-            if (task.isCancelled()) {
+            fileLoader.loadImage(m);
+            if (this.isCancelled()) {
                 return;
             }
         } else {

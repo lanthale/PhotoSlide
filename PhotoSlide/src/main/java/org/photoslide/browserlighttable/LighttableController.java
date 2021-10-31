@@ -435,8 +435,9 @@ public class LighttableController implements Initializable {
                 imageGridPane.getChildren().remove(0);
             }
         });
-        if (taskMLoading != null) {            
+        if (taskMLoading != null) { 
             taskMLoading.cancel();
+            taskMLoading.shutdown();
         }
         if (factory != null) {
             factory.shutdown();

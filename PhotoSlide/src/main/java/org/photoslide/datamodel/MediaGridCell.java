@@ -44,7 +44,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final FontIcon filmIcon;
     private final Label errorLabel;
     private final VBox deleteBox;
-    private final SimpleBooleanProperty loading;
+    private final MediaFileLoader loader;
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
@@ -52,7 +52,6 @@ public class MediaGridCell extends GridCell<MediaFile> {
         deleteBox = new VBox();
         deleteBox.setStyle("-fx-background-color: rgba(80, 80, 80, .7);");
         rotationAngle = new SimpleDoubleProperty(0.0);
-        loading = new SimpleBooleanProperty(true);
         imageView = new ImageView();
         imageView.setPreserveRatio(true);
         imageView.fitHeightProperty().bind(heightProperty().subtract(15));
@@ -82,8 +81,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
         errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(errorIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-                
-    }    
+        loader = new MediaFileLoader();
+    }
 
     private void updateIconSize() {
         DoubleBinding subtract = rootPane.heightProperty().subtract(42);
@@ -115,7 +114,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         super.updateItem(item, empty);
         if (empty || item == null) {
         } else {
-            updateIconSize();            
+            updateIconSize();
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
@@ -128,7 +127,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }            
+            }
             switch (item.getMediaType()) {
                 case VIDEO:
                     setMedia(item);
@@ -166,7 +165,8 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
-        } else {            
+            //loader.loadImage(item);
+        } else {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
@@ -269,7 +269,5 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public ImageView getImageView() {
         return imageView;
     }
-    
-    
 
 }

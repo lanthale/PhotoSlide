@@ -39,6 +39,7 @@ public class MediaFileLoader {
             Image iImage = new Image(fileItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
             iImage.progressProperty().addListener((ov, t, t1) -> {
                 if (t1.doubleValue() == 1.0) {
+                    //fileItem.setImage(iImage);
                     fileItem.setLoading(false);
                 }
                 if (iImage.isError()) {

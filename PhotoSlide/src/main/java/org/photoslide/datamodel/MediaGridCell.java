@@ -165,6 +165,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
+            //System.out.println("loading img "+item.getName());
             //loader.loadImage(item);
         } else {
             if (item.getUnModifiyAbleImage() == null) {

@@ -23,6 +23,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -72,6 +73,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final GridCellSelectionModel selectionModel;
     private final GridView<MediaFile> grid;
     private final ExecutorService executor;
+    private final ExecutorService executorParallel;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
@@ -84,6 +86,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
+        executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("factoryControllerParallel"));
         this.util = util;
         this.metadataController = metadataController;
         this.grid = grid;
@@ -153,6 +156,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public void shutdown() {
         executor.shutdown();
+        executorParallel.shutdown();
     }
 
     @Override
@@ -170,6 +174,27 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
             t.consume();
         });
+        /*cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
+            if (newMediaItem != null) {
+                if (newMediaItem.isLoading() == true) {
+                    Task<Image> task = new Task<Image>() {
+                        @Override
+                        public Image call() throws Exception {
+                            Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
+                            newMediaItem.setImage(image);
+                            return image;
+                        }
+                    };
+                    if (newMediaItem.getImage() == null) {
+                        newMediaItem.setImage(task.getValue());
+                        task.setOnSucceeded((t) -> {
+                            newMediaItem.setLoading(false);
+                        });
+                        executorParallel.submit(task);
+                    }
+                }
+            }
+        });*/
         return cell;
     }
 

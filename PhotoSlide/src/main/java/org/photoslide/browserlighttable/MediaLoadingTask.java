@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import javafx.scene.control.skin.VirtualFlow;
 
 /**
  *
@@ -38,10 +39,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final MetadataController metadataController;
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
-    private final MediaFileLoader fileLoader;    
+    private final MediaFileLoader fileLoader;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
-        selectedPath = sPath;        
+        selectedPath = sPath;
         fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
@@ -78,7 +79,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted();
-            AtomicInteger iatom = new AtomicInteger(1);            
+            AtomicInteger iatom = new AtomicInteger(1);
             fileList.forEachOrdered((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
@@ -160,7 +161,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled()) {
                 return;
             }
-            fileLoader.loadImage(m);
+            //fileLoader.loadImage(m);
             if (this.isCancelled()) {
                 return;
             }
@@ -174,13 +175,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);
-            });            
+                fullMediaList.add(v);                
+            });
         }
-    }
-    
-    public void shutdown(){
-        fileLoader.shutdown();
     }
 
 }

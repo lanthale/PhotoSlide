@@ -12,7 +12,10 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,8 +38,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.VirtualFlow;
@@ -65,15 +68,15 @@ import org.photoslide.imageops.ImageFilter;
  * @author selfemp
  */
 public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridCell<MediaFile>> {
-
+    
     private Image img;
-
+    
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
     private final GridView<MediaFile> grid;
     private final ExecutorService executor;
-    private final ExecutorService executorParallel;
+    private ExecutorService executorParallel;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
@@ -83,7 +86,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private ObservableList<ImageFilter> filterList;
     private Image imageWithFilters;
     private final Button resetCrop;
-
+    private final MediaFileLoader fileLoader;
+    private HashMap<String, Task> taskList;        
+    
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
         executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("factoryControllerParallel"));
@@ -91,6 +96,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         this.metadataController = metadataController;
         this.grid = grid;
         this.lightController = lightController;
+        fileLoader = new MediaFileLoader();
+        taskList = new HashMap<>();               
         selectionModel = new GridCellSelectionModel();
         //new RubberBandSelection(grid, selectionModel);        
         lightController.getOptionPane().setOnSwipeLeft((t) -> {
@@ -151,14 +158,18 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageStackPane().getChildren().add(lightController.getImageView());
             lightController.getOptionPane().getChildren().clear();
             selectedCell.requestFocus();
-        });
+        });        
     }
-
+    
     public void shutdown() {
-        executor.shutdown();
-        executorParallel.shutdown();
+        taskList.values().forEach(t -> {
+            t.cancel();
+        });
+        executor.shutdownNow();
+        executorParallel.shutdownNow();
+        taskList.clear();
     }
-
+    
     @Override
     public GridCell<MediaFile> call(GridView<MediaFile> p) {
         MediaGridCell cell = new MediaGridCell();
@@ -174,30 +185,53 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
             t.consume();
         });
-        /*cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
+        cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
             if (newMediaItem != null) {
-                if (newMediaItem.isLoading() == true) {
-                    Task<Image> task = new Task<Image>() {
-                        @Override
-                        public Image call() throws Exception {
-                            Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
-                            newMediaItem.setImage(image);
-                            return image;
+                //if (isCellVisible(cell)) {
+                    if (newMediaItem.isLoading() == true) {
+                        Task<Image> task = new Task<Image>() {
+                            @Override
+                            public Image call() throws Exception {
+                                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
+                                image.progressProperty().addListener((o) -> {
+                                    if (this.isCancelled()) {
+                                        image.cancel();
+                                    }
+                                });
+                                if (image.isError()) {
+                                    throw new Exception("Cannot load image '" + newMediaItem.getPathStorage().toUri().toURL().toString() + "'!");
+                                }
+                                if (this.isCancelled()) {
+                                    return image;
+                                }
+                                newMediaItem.setImage(image);
+                                return image;
+                            }
+                        };
+                        if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                            if (newMediaItem.getImage() == null) {
+                                newMediaItem.setImage(task.getValue());
+                                task.setOnSucceeded((t) -> {
+                                    newMediaItem.setLoading(false);
+                                });
+                                task.setOnFailed((t) -> {
+                                    newMediaItem.setLoading(false);
+                                    newMediaItem.setMediaType(MediaFile.MediaTypes.NONE);
+                                });
+                                if (taskList.get(newMediaItem.getName()) == null) {
+                                    taskList.put(newMediaItem.getName(), task);
+                                    //System.out.println("Size map " + taskList.size());
+                                    executorParallel.submit(task);
+                                }
+                            }
                         }
-                    };
-                    if (newMediaItem.getImage() == null) {
-                        newMediaItem.setImage(task.getValue());
-                        task.setOnSucceeded((t) -> {
-                            newMediaItem.setLoading(false);
-                        });
-                        executorParallel.submit(task);
                     }
                 }
-            }
-        });*/
+            //}
+        });
         return cell;
     }
-
+    
     private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
         if (t.isShiftDown()) {
             //select all nodes in between
@@ -229,7 +263,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         cell.requestLayout();
     }
-
+    
     private void handleGridCellSelection(Event t) throws MalformedURLException {
         if (t.getTarget().getClass().equals(MediaFile.class)) {
             Node target = Utility.pick((MediaGridCell) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
@@ -259,7 +293,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             return;
         }
         if (img != null) {
-            cancleTask();
+            cancleImageTask();
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
             lightController.getImageView().setViewport(null);
@@ -270,11 +304,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getRatingControl().setVisible(false);
             lightController.getOptionPane().setDisable(false);
         }
-
+        
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
         if (selectedMediaItem.isDeleted() == true) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
-
+            
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
@@ -303,9 +337,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getRatingControl().setVisible(false);
             return;
         }
-
+        
         updateGUIAccordingSelection();
-
+        
         Platform.runLater(() -> {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -391,7 +425,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
             }
             break;
-
+            
             case IMAGE:
                 metadataController.setSelectedFile(selectedMediaItem);
                 Platform.runLater(() -> {
@@ -457,7 +491,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             default:
         }
     }
-
+    
     private void loadImage() throws MalformedURLException {
         String url = selectedMediaItem.getImageUrl().toString();
         img = new Image(url, true);
@@ -485,7 +519,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });
         lightController.getImageView().setImage(img);
         lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
-
+        
         if (selectedCell.getItem().getCropView() != null) {
             Platform.runLater(() -> {
                 resetCrop.setVisible(true);
@@ -498,7 +532,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             });
         }
     }
-
+    
     private void updateGUIAccordingSelection() {
         if (selectedMediaItem.isBookmarked()) {
             lightController.getBookmarkButton().setText("Unbookmark");
@@ -506,7 +540,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getBookmarkButton().setText("Bookmark");
         }
     }
-
+    
     private void handleZoomIn(double ratio) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() + 20;
@@ -518,7 +552,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageView().setViewport(cropView);
         }
     }
-
+    
     private void handleZoomOut(double ratio) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() - 20;
@@ -544,7 +578,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Rectangle2D cropView = new Rectangle2D(x, y, width, height);
         lightController.getImageView().setViewport(cropView);
     }
-
+    
     public void setStdGUIState() {
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
@@ -577,7 +611,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getFilenameLabel().setText("");
         lightController.getRatingControl().ratingProperty().unbind();
         lightController.getOptionPane().getChildren().clear();
-
+        
         if (lightController.getSnapshotView() != null) {
             lightController.getSnapshotView().setSelectionRatioFixed(false);
             lightController.getSnapshotView().setFixedSelectionRatio(1);
@@ -594,26 +628,39 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         resetCrop.setVisible(false);
     }
-
+    
     public GridCellSelectionModel getSelectionModel() {
         return selectionModel;
     }
-
+    
     public void cancleTask() {
         if (img != null) {
             img.cancel();
         }
         metadataController.cancelTasks();
+        taskList.values().forEach(t -> {
+            t.cancel();
+        });
+        taskList.clear();
+        executorParallel.shutdownNow();
+        executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("factoryControllerParallel"));
     }
-
+    
+    private void cancleImageTask() {
+        if (img != null) {
+            img.cancel();
+        }
+        metadataController.cancelTasks();
+    }
+    
     public MediaGridCell getSelectedCell() {
         return selectedCell;
     }
-
+    
     public MediaFile getSelectedMediaItem() {
         return selectedMediaItem;
     }
-
+    
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
         VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         for (int i = 0; i < vf.getCellCount(); i++) {
@@ -625,7 +672,64 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         return null;
     }
-
+    
+    public List<String> getVisibleItems() {
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        int visibleCellCount = 0;
+        List<String> cells = new ArrayList<>();
+        for (int i = vf.getFirstVisibleCell().getIndex(); i <= vf.getLastVisibleCell().getIndex(); i++) {
+            visibleCellCount = visibleCellCount + vf.getCell(i).getChildrenUnmodifiable().size();
+            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
+                cells.add(((MediaGridCell) mediaCell).getItem().getName());
+                System.out.println("cell item name: " + ((MediaGridCell) mediaCell).getItem().getName());
+            }
+        }
+        System.out.println("cellcount " + visibleCellCount);
+        return cells;
+    }
+    
+    public boolean isItemVisible(MediaFile input) {
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        boolean ret = false;
+        if (vf.getFirstVisibleCell() == null) {
+            return false;
+        }
+        IndexedCell visibleCell = vf.getVisibleCell(lightController.getFullMediaList().indexOf(vf));
+        for (int i = vf.getFirstVisibleCell().getIndex(); i <= vf.getLastVisibleCell().getIndex(); i++) {
+            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
+                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
+                    return true;
+                }
+            }
+        }
+        return ret;
+    }
+    
+    public boolean isCellVisible(MediaGridCell input) {
+        System.out.println("Search: " + input.getItem().getName());
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        boolean ret = false;
+        if (vf.getFirstVisibleCell() == null) {
+            return false;
+        }
+        System.out.println("Start Index " + vf.getFirstVisibleCell().getIndex());
+        System.out.println("End Index " + vf.getLastVisibleCell().getIndex());
+        System.out.println("countCells " + vf.getCellCount());          
+        for (int i = vf.getFirstVisibleCell().getIndex(); i <= vf.getLastVisibleCell().getIndex(); i++) {
+            /*System.out.println("START " + i);
+            for (Node node : vf.getCell(i).getChildrenUnmodifiable()) {
+                MediaGridCell c1 = (MediaGridCell) node;
+                System.out.println("c1 item " + c1.getItem().getName());
+            }
+            System.out.println("END " + i);*/
+            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                System.out.println("first found!");
+                return true;
+            }
+        }        
+        return ret;
+    }
+    
     public void handleStackButtonAction(Event m, String stackName, Node anchore) {
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
@@ -721,6 +825,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         false, false, false, false, false, true, null));
             }
         });
-    }
-
+    }        
+    
 }

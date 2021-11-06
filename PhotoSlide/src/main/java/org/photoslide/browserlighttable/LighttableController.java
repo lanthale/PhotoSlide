@@ -57,6 +57,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -274,7 +275,6 @@ public class LighttableController implements Initializable {
                     }
                 }
             }
-            taskMLoading.shutdown();
         }
         if (factory != null) {
             factory.cancleTask();
@@ -324,14 +324,14 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");
+            mainController.getStatusLabelLeft().setText("");            
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);            
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
@@ -341,7 +341,7 @@ public class LighttableController implements Initializable {
         imageGrid.setCellFactory(factory);
         Platform.runLater(() -> {
             imageGrid.requestFocus();
-        });
+        });        
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -436,8 +436,7 @@ public class LighttableController implements Initializable {
             }
         });
         if (taskMLoading != null) { 
-            taskMLoading.cancel();
-            taskMLoading.shutdown();
+            taskMLoading.cancel();            
         }
         if (factory != null) {
             factory.shutdown();

@@ -21,9 +21,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Font;
+import javafx.util.Callback;
 import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
+import org.controlsfx.control.GridView;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 
 /**
@@ -164,9 +167,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
 
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
-            setLoadingNode(item.getMediaType());
-            //System.out.println("loading img "+item.getName());
-            //loader.loadImage(item);
+            setLoadingNode(item.getMediaType());            
         } else {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));

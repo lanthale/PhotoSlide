@@ -7,7 +7,6 @@ package org.photoslide.datamodel;
 
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,12 +20,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Font;
-import javafx.util.Callback;
 import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
-import org.controlsfx.control.GridView;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 
 /**
@@ -47,7 +43,6 @@ public class MediaGridCell extends GridCell<MediaFile> {
     private final FontIcon filmIcon;
     private final Label errorLabel;
     private final VBox deleteBox;
-    private final MediaFileLoader loader;
 
     public MediaGridCell() {
         this.setId("MediaGridCell");
@@ -84,7 +79,6 @@ public class MediaGridCell extends GridCell<MediaFile> {
         errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(errorIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-        loader = new MediaFileLoader();
     }
 
     private void updateIconSize() {
@@ -116,7 +110,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     protected void updateItem(MediaFile item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-        } else {            
+        } else {
             updateIconSize();
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
@@ -151,7 +145,15 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public final void setError(MediaFile item) {
-        PauseTransition pause = new PauseTransition(Duration.millis(100));
+        rootPane.getChildren().clear();
+        HBox hb = new HBox();
+        hb.setAlignment(Pos.BOTTOM_CENTER);
+        hb.getChildren().add(errorLabel);
+        rootPane.getChildren().add(hb);
+        if (item.deletedProperty().getValue() == true) {
+            setDeletedNode();
+        }
+        /*PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished((t) -> {
             rootPane.getChildren().clear();
             HBox hb = new HBox();
@@ -162,12 +164,12 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 setDeletedNode();
             }
         });
-        pause.play();
+        pause.play();*/
     }
 
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
-            setLoadingNode(item.getMediaType());            
+            setLoadingNode(item.getMediaType());
         } else {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
@@ -189,10 +191,9 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     public final void setMedia(MediaFile item) {
-        if (item.isLoading() == true && item.getVideoSupported() == null) {
+        if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
         } else {
-            setRatingNode(item.getRatingProperty().get());
             if (item.getVideoSupported() == MediaFile.VideoTypes.SUPPORTED) {
                 dummyIcon.setIconLiteral("fa-file-movie-o");
                 rootPane.getChildren().clear();
@@ -203,7 +204,11 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
+            setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
+            if (item.deletedProperty().getValue() == true) {
+                setDeletedNode();
+            }
         }
     }
 

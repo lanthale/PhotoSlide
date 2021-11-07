@@ -99,6 +99,7 @@ public class BookmarkBoardController implements Initializable {
         if (task != null) {
             task.shutdown();
         }
+        factory.shutdown();
         executor.shutdown();
         executorParallel.shutdown();
     }

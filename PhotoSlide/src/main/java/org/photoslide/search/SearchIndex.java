@@ -77,6 +77,9 @@ public class SearchIndex {
                             if (fileItem.getFileName().toString().startsWith("@")) {
                                 return FileVisitResult.CONTINUE;
                             }
+                            if (fileItem.getFileName().toString().contains("@")) {
+                                return FileVisitResult.CONTINUE;
+                            }
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
                                 m.setName(fileItem.getFileName().toString());
@@ -88,7 +91,7 @@ public class SearchIndex {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                         insertMediaFileIntoSearchDB(collectionName, m);
                                     } else if (FileTypes.isValidImage(fileItem.toString())) {
-                                        m.setMediaType(MediaFile.MediaTypes.IMAGE);                                        
+                                        m.setMediaType(MediaFile.MediaTypes.IMAGE);
                                         try {
                                             metadataController.readBasicMetadata(task, m);
                                         } catch (Exception ex) {
@@ -214,7 +217,7 @@ public class SearchIndex {
             }
             String gpspos = null;
             if (m.getGpsPosition() != null) {
-                gpspos = "'" + m.getGpsLatPosAsDouble() +";"+ m.getGpsLonPosAsDouble() + "'";
+                gpspos = "'" + m.getGpsLatPosAsDouble() + ";" + m.getGpsLonPosAsDouble() + "'";
             }
             String faces = null;
             if (m.facesProperty().get() != null) {

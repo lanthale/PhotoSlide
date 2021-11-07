@@ -91,15 +91,13 @@ public class BMBMediaLoadingTask extends Task<Void> {
                 task.cancel();
                 return;
             }
-            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
-            mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
+            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);            
         } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;
-            }
-            fileLoader.loadImage(mediaItem);
+            }            
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;

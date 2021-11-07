@@ -152,6 +152,7 @@ public class SearchToolsController implements Initializable {
             task.cancel();
             task.shutdown();
         }
+        factory.shutdown();
         executor.shutdown();
         executorParallel.shutdown();
     }
@@ -242,7 +243,7 @@ public class SearchToolsController implements Initializable {
     private void performSearch(String keyword) {
         try {
             ArrayList<String> queryList = new ArrayList<>();
-            try (ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
+            try ( ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
                 while (searchRS.next()) {
                     queryList.add("SELECT * FROM " + searchRS.getString("QUERY"));
                 }

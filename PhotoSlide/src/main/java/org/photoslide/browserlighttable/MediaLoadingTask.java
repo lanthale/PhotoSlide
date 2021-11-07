@@ -144,8 +144,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             m.setMediaType(MediaFile.MediaTypes.VIDEO);
             if (this.isCancelled()) {
                 return;
-            }
-            m.setMedia(fileLoader.loadVideo(m), m.getVideoSupported());
+            }            
             if (this.isCancelled()) {
                 return;
             }
@@ -160,8 +159,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
             if (this.isCancelled()) {
                 return;
-            }
-            //fileLoader.loadImage(m);
+            }            
             if (this.isCancelled()) {
                 return;
             }

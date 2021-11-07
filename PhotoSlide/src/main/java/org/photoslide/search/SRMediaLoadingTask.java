@@ -10,16 +10,13 @@ import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.scene.control.Tooltip;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
@@ -113,7 +110,6 @@ public class SRMediaLoadingTask extends Task<Void> {
                 return;
             }
             mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
-            mediaItem.setMedia(fileLoader.loadVideo(mediaItem), mediaItem.getVideoSupported());
         } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
             try {
@@ -125,7 +121,6 @@ public class SRMediaLoadingTask extends Task<Void> {
                 task.cancel();
                 return;
             }
-            fileLoader.loadImage(mediaItem);
             if (this.isCancelled() == true) {
                 return;
             }

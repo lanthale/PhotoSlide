@@ -17,6 +17,8 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaFileLoader;
+import org.photoslide.datamodel.MediaGridCell;
 
 /**
  *
@@ -31,13 +33,15 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
     private final ExecutorService executor;
     private final BookmarkBoardController bmbTools;
     private final GridCellSelectionModel selectionModel;
+    private final MediaFileLoader fileLoader;
 
     public MediaGridCellBMBFactory(ExecutorService executor, BookmarkBoardController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.bmbTools = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        this.executor = executor;        
+        this.executor = executor;
         selectionModel = new GridCellSelectionModel();
+        fileLoader = new MediaFileLoader();
     }
 
     @Override
@@ -50,6 +54,21 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
             handleGridCellSelection(t);
             t.consume();
         });
+        cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
+            if (newMediaItem != null && oldMediaItem == null) {
+                if (newMediaItem.isLoading() == true) {
+                    if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadImage(newMediaItem);
+                        }
+                    } else {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadVideo(newMediaItem);
+                        }
+                    }
+                }
+            }
+        });
         return cell;
     }
 
@@ -57,7 +76,7 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
         bmbTools.getFullMediaList().stream().filter(c -> c != null && c.isSelected() == true).forEach((mfile) -> {
             mfile.setSelected(false);
         });
-        selectedMediaFile = ((MediaGridCellBMB) t.getSource()).getItem();        
+        selectedMediaFile = ((MediaGridCellBMB) t.getSource()).getItem();
         selectionModel.clear();
         selectionModel.add(((MediaGridCellBMB) t.getSource()).getItem());
         selectedCell = cell;
@@ -71,8 +90,7 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
     public MediaFile getSelectedMediaFile() {
         return selectedMediaFile;
     }
-    
-    
+
     public MediaGridCellBMB getMediaCellForMediaFile(MediaFile input) {
         VirtualFlow vf = (VirtualFlow) bmbTools.getImageGrid().getChildrenUnmodifiable().get(0);
         for (int i = 0; i < vf.getCellCount(); i++) {
@@ -83,6 +101,29 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
             }
         }
         return null;
+    }
+
+    public boolean isCellVisible(MediaGridCellBMB input) {
+        VirtualFlow vf = (VirtualFlow) bmbTools.getImageGrid().getChildrenUnmodifiable().get(0);
+        boolean ret = false;
+        if (vf.getFirstVisibleCell() == null) {
+            return false;
+        }
+        int start = vf.getFirstVisibleCell().getIndex();
+        int end = vf.getLastVisibleCell().getIndex();
+        if (start == end) {
+            return true;
+        }
+        for (int i = start; i <= end; i++) {
+            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                return true;
+            }
+        }
+        return ret;
+    }
+    
+    public void shutdown(){
+        fileLoader.shutdown();
     }
 
 }

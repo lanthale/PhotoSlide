@@ -176,7 +176,7 @@ public class MediaGridCellBMB extends GridCell<MediaFile> {
     }
 
     public final void setMedia(MediaFile item) {
-        if (item.isLoading() == true && item.getVideoSupported() == null) {
+        if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
         } else {
             setRatingNode(item.getRatingProperty().get());

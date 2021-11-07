@@ -9,12 +9,14 @@ import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Pos;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaFileLoader;
 
 /**
  *
@@ -29,6 +31,7 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
     private final ExecutorService executor;
     private final SearchToolsController searchTools;
     private final GridCellSelectionModel selectionModel;
+    private final MediaFileLoader fileLoader;
 
     public MediaGridCellSearchFactory(ExecutorService executor, SearchToolsController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
@@ -36,6 +39,7 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         this.executor = executor;
         selectionModel = new GridCellSelectionModel();
+        fileLoader = new MediaFileLoader();
     }
 
     @Override
@@ -47,6 +51,21 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
             manageGUISelection(t, cell);
             handleGridCellSelection(t);
             t.consume();
+        });
+        cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
+            if (newMediaItem != null && oldMediaItem == null) {
+                if (newMediaItem.isLoading() == true) {
+                    if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadImage(newMediaItem);
+                        }
+                    } else {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadVideo(newMediaItem);
+                        }
+                    }
+                }
+            }
         });
         return cell;
     }
@@ -74,6 +93,29 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
 
     public MediaFile getSelectedMediaFile() {
         return selectedMediaFile;
-    }    
+    }
+
+    public boolean isCellVisible(MediaGridCellSR input) {
+        VirtualFlow vf = (VirtualFlow) searchTools.getImageGrid().getChildrenUnmodifiable().get(0);
+        boolean ret = false;
+        if (vf.getFirstVisibleCell() == null) {
+            return false;
+        }
+        int start = vf.getFirstVisibleCell().getIndex();
+        int end = vf.getLastVisibleCell().getIndex();
+        if (start == end) {
+            return true;
+        }
+        for (int i = start; i <= end; i++) {
+            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                return true;
+            }
+        }
+        return ret;
+    }
+    
+    public void shutdown(){
+        fileLoader.shutdown();
+    }
 
 }

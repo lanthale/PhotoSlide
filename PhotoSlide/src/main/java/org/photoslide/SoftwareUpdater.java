@@ -69,7 +69,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();                
+                String actVersion = util.getAppVersion();
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -80,83 +80,14 @@ public class SoftwareUpdater {
                 String newVersion = "";
                 String version = "";
                 int parseInt = 0;
-                int count = (int) actVersion.chars().filter(ch -> ch == '.').count();
+                int count = (int) actVersion.chars().filter(ch -> ch == '.').count();                
                 switch (count) {
-                    case 1:                
-                try {
-                        version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
-                        parseInt = Integer.parseInt(version);
-                        parseInt = parseInt + 1;
-                        newVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + parseInt;
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
-                        myUrl = new URL(httpsURL);
-                        conn = (HttpsURLConnection) myUrl.openConnection();
-                        inputStream = conn.getInputStream();
-                    } catch (FileNotFoundException ex2) {
-                        try {
-                            version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
-                            newVersion = actVersion + ".0";
-                            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
-                            myUrl = new URL(httpsURL);
-                            conn = (HttpsURLConnection) myUrl.openConnection();
-                            inputStream = conn.getInputStream();
-                        } catch (FileNotFoundException ex3) {
-                            newVersion = "";
-                        } catch (MalformedURLException ex) {
-                            newVersion = "";
-                            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (IOException ex) {
-                            newVersion = "";
-                            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    } catch (MalformedURLException ex) {
-                        newVersion = "";
-                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        newVersion = "";
-                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    break;
-
+                    case 1:
+                        newVersion = checkMajorVersion(count, actVersion);
+                        break;
                     case 2:
-                try {
-                        version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
-                        parseInt = Integer.parseInt(version);
-                        parseInt = parseInt + 1;
-                        newVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + parseInt;
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
-                        myUrl = new URL(httpsURL);
-                        conn = (HttpsURLConnection) myUrl.openConnection();
-                        inputStream = conn.getInputStream();
-                    } catch (FileNotFoundException ex2) {
-                        try {
-                            version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
-                            String version2 = actVersion.substring(actVersion.indexOf(".") + 1, actVersion.lastIndexOf("."));
-                            parseInt = Integer.parseInt(version2);
-                            parseInt = parseInt + 1;
-                            newVersion = actVersion.substring(0, actVersion.indexOf(".") + 1) + parseInt;
-                            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
-                            myUrl = new URL(httpsURL);
-                            conn = (HttpsURLConnection) myUrl.openConnection();
-                            inputStream = conn.getInputStream();
-                        } catch (FileNotFoundException ex3) {
-                            newVersion = "";
-                        } catch (MalformedURLException ex) {
-                            newVersion = "";
-                            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (IOException ex) {
-                            newVersion = "";
-                            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    } catch (MalformedURLException ex) {
-                        newVersion = "";
-                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        newVersion = "";
-                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    break;
-
+                        newVersion = checkMinorVersion(count, actVersion);                        
+                        break;
                     default: {
                         try {
                             version = actVersion.substring(0, actVersion.indexOf("."));
@@ -184,35 +115,127 @@ public class SoftwareUpdater {
                 return newVersion;
             }
         };
-        checkTask.setOnSucceeded((t) -> {
-            if (t.getSource().getValue() != null) {
-                String newversion = checkTask.getValue();
-                if (newversion.equalsIgnoreCase("")) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.INFO, "No new version found! " + newversion);
-                    return;
-                }
-                PauseTransition pause = new PauseTransition(Duration.seconds(6));
-                pause.setOnFinished((k) -> {
-                    Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
-                    confirmDiaglog.setHeaderText("Newer version of Photoslide available");
-                    confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
-                    confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
-                    DialogPane dialogPane = confirmDiaglog.getDialogPane();
-                    dialogPane.getStylesheets().add(
-                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-                    Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
-                    confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-                    Platform.runLater(() -> {
-                        Optional<ButtonType> result = confirmDiaglog.showAndWait();
-                        if (result.get() == ButtonType.YES) {
-                            downloadUpdate(newversion);
+        checkTask.setOnSucceeded(
+                (t) -> {
+                    if (t.getSource().getValue() != null) {
+                        String newversion = checkTask.getValue();
+                        if (newversion.equalsIgnoreCase("")) {
+                            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.INFO, "No new version found! " + newversion);
+                            return;
                         }
-                    });
+                        PauseTransition pause = new PauseTransition(Duration.seconds(6));
+                        pause.setOnFinished((k) -> {
+                            Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
+                            confirmDiaglog.setHeaderText("Newer version of Photoslide available");
+                            confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
+                            confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
+                            DialogPane dialogPane = confirmDiaglog.getDialogPane();
+                            dialogPane.getStylesheets().add(
+                                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+                            Utility.centerChildWindowOnStage((Stage) confirmDiaglog.getDialogPane().getScene().getWindow(), (Stage) controller.getBookmarksBoardButton().getScene().getWindow());
+                            confirmDiaglog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+                            Platform.runLater(() -> {
+                                Optional<ButtonType> result = confirmDiaglog.showAndWait();
+                                if (result.get() == ButtonType.YES) {
+                                    downloadUpdate(newversion);
+                                }
+                            });
+                        });
+                        pause.play();
+                    }
                 });
-                pause.play();
-            }
-        });
         executorParallel.submit(checkTask);
+    }
+
+    private String checkMajorVersion(int count, String actVersion) {
+        InputStream inputStream = null;
+        HttpsURLConnection conn = null;
+        String httpsURL = "";
+        URL myUrl = null;
+        String newVersion = "";
+        String version = "";
+        int parseInt = 0;
+        try {
+            version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
+            parseInt = Integer.parseInt(version);
+            parseInt = parseInt + 1;
+            newVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + parseInt;
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+            myUrl = new URL(httpsURL);
+            conn = (HttpsURLConnection) myUrl.openConnection();
+            inputStream = conn.getInputStream();
+        } catch (FileNotFoundException ex2) {
+            try {
+                version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
+                newVersion = actVersion + ".0";
+                httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+                myUrl = new URL(httpsURL);
+                conn = (HttpsURLConnection) myUrl.openConnection();
+                inputStream = conn.getInputStream();
+            } catch (FileNotFoundException ex3) {
+                newVersion = "";
+            } catch (MalformedURLException ex) {
+                newVersion = "";
+                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                newVersion = "";
+                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (MalformedURLException ex) {
+            newVersion = "";
+            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            newVersion = "";
+            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return newVersion;
+    }
+
+    private String checkMinorVersion(int count, String actVersion) {
+        InputStream inputStream = null;
+        HttpsURLConnection conn = null;
+        String httpsURL = "";
+        URL myUrl = null;
+        String newVersion = "";
+        String version = "";
+        int parseInt = 0;
+        try {
+            version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
+            parseInt = Integer.parseInt(version);
+            parseInt = parseInt + 1;
+            newVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + parseInt;
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+            myUrl = new URL(httpsURL);
+            conn = (HttpsURLConnection) myUrl.openConnection();
+            inputStream = conn.getInputStream();
+        } catch (FileNotFoundException ex2) {
+            try {
+                version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
+                String version2 = actVersion.substring(actVersion.indexOf(".") + 1, actVersion.lastIndexOf("."));
+                parseInt = Integer.parseInt(version2);
+                parseInt = parseInt + 1;
+                newVersion = actVersion.substring(0, actVersion.indexOf(".") + 1) + parseInt;
+                httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+                myUrl = new URL(httpsURL);
+                conn = (HttpsURLConnection) myUrl.openConnection();
+                inputStream = conn.getInputStream();
+            } catch (FileNotFoundException ex3) {
+                newVersion = "";
+            } catch (MalformedURLException ex) {
+                newVersion = "";
+                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                newVersion = "";
+                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } catch (MalformedURLException ex) {
+            newVersion = "";
+            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            newVersion = "";
+            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return newVersion;
     }
 
     private void downloadUpdate(String nextAppVersion) {
@@ -281,11 +304,15 @@ public class SoftwareUpdater {
                         outputStream.write(buffer, 0, length);
                         downloaded += length;
                         updateProgress(downloaded, contentLength);
+
                     }
                 } catch (FileNotFoundException ex) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot find downloaded file", ex);
+                    Logger.getLogger(SoftwareUpdater.class
+                            .getName()).log(Level.SEVERE, "Cannot find downloaded file", ex);
+
                 } catch (IOException ex) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot access downloaded file", ex);
+                    Logger.getLogger(SoftwareUpdater.class
+                            .getName()).log(Level.SEVERE, "Cannot access downloaded file", ex);
                 } finally {
                     try {
                         if (outputStream != null) {
@@ -293,35 +320,43 @@ public class SoftwareUpdater {
                         }
                         if (conn != null) {
                             conn.disconnect();
+
                         }
                     } catch (IOException ex) {
-                        Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SoftwareUpdater.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 return tempDir + File.separator + filename;
             }
         };
-        downloadTask.setOnSucceeded((t) -> {
-            if (!Desktop.isDesktopSupported()) {
-                Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Desktop is not supported for opening files!");
-                return;
-            }
-            Desktop desktop = Desktop.getDesktop();
-            File f = new File(downloadTask.getValue());
-            if (f.exists()) {
-                try {
-                    desktop.open(f);
-                } catch (IOException ex) {
-                    Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Cannot open file", ex);
-                }
-            }
-            downloadDialog.close();
-            App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);
-            System.exit(0);
-        });
-        downloadTask.setOnFailed((t) -> {
-            Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
-        });
+        downloadTask
+                .setOnSucceeded((t) -> {
+                    if (!Desktop.isDesktopSupported()) {
+                        Logger.getLogger(SoftwareUpdater.class
+                                .getName()).log(Level.SEVERE, "Desktop is not supported for opening files!");
+                        return;
+                    }
+                    Desktop desktop = Desktop.getDesktop();
+                    File f = new File(downloadTask.getValue());
+                    if (f.exists()) {
+                        try {
+                            desktop.open(f);
+
+                        } catch (IOException ex) {
+                            Logger.getLogger(SoftwareUpdater.class
+                                    .getName()).log(Level.SEVERE, "Cannot open file", ex);
+                        }
+                    }
+                    downloadDialog.close();
+                    App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);
+                    System.exit(0);
+                });
+        downloadTask
+                .setOnFailed((t) -> {
+                    Logger.getLogger(SoftwareUpdater.class
+                            .getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
+                });
         pgr.progressProperty().bind(downloadTask.progressProperty());
         executorParallel.submit(downloadTask);
     }

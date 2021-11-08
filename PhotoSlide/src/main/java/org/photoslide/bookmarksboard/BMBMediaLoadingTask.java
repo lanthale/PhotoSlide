@@ -23,7 +23,7 @@ import org.photoslide.datamodel.MediaFileLoader;
  *
  * @author selfemp
  */
-public class BMBMediaLoadingTask extends Task<Void> {
+public class BMBMediaLoadingTask extends Task<MediaFile> {
 
     private final BookmarkBoardController bmbController;
     private final ObservableList<MediaFile> fullMediaList;
@@ -31,7 +31,7 @@ public class BMBMediaLoadingTask extends Task<Void> {
     private final MediaFileLoader fileLoader;
     private final List<String> mediaList;
     private final ExecutorService executor;
-
+    
     public BMBMediaLoadingTask(List<String> queryList, BookmarkBoardController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.bmbController = control;
         executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("BMBMediaLoadingTask"));
@@ -42,7 +42,7 @@ public class BMBMediaLoadingTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() throws Exception {
+    protected MediaFile call() throws Exception {
         for (String mFile : mediaList) {
             if (this.isCancelled()) {
                 return null;
@@ -55,17 +55,8 @@ public class BMBMediaLoadingTask extends Task<Void> {
             if (this.isCancelled() == true) {
                 return null;
             }
-            Task<Void> loadTask = new Task<>() {
-                @Override
-                protected Void call() throws Exception {
-                    loadItem(this, mediaItem, mediaURL);
-                    return null;
-                }
-            };
-            executor.submit(loadTask);
-            Platform.runLater(() -> {
-                fullMediaList.add(mediaItem);
-            });
+            loadItem(this, mediaItem, mediaURL);
+            updateValue(mediaItem);            
         }
         return null;
     }
@@ -97,13 +88,19 @@ public class BMBMediaLoadingTask extends Task<Void> {
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;
-            }            
-            if (this.isCancelled() == true) {
-                task.cancel();
-                return;
-            }
+            }                        
         } else {
             mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
+        }
+    }
+    
+    @Override
+    protected void updateValue(MediaFile v) {
+        if (v != null) {
+            super.updateValue(v);
+            Platform.runLater(() -> {
+                fullMediaList.add(v);                
+            });
         }
     }
 

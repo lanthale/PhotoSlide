@@ -978,7 +978,7 @@ public class MainViewController implements Initializable {
         popOver.setDetachable(false);
         popOver.setAnimated(true);
         popOver.setCloseButtonEnabled(true);
-        popOver.setAutoHide(false);
+        popOver.setAutoHide(true);
         popOver.setTitle("Bookmarks Board");
         popOver.setHeaderAlwaysVisible(true);
 

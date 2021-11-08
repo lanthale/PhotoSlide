@@ -60,6 +60,7 @@ public class SoftwareUpdater {
         }
     }
 
+    //TODO: Download only the newest version (support skipping if more than one new version found)
     public void checkForSoftwareUpdates() {
         if (checkTask != null) {
             return;

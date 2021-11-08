@@ -24,7 +24,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import javafx.scene.control.skin.VirtualFlow;
 
 /**
  *

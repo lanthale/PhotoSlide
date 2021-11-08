@@ -31,7 +31,7 @@ import org.photoslide.datamodel.MediaFile;
  *
  * @author selfemp
  */
-public class SRMediaLoadingTask extends Task<Void> {
+public class SRMediaLoadingTask extends Task<MediaFile> {
 
     private final SearchToolsController searchController;
     private final ObservableList<MediaFile> fullMediaList;
@@ -41,7 +41,7 @@ public class SRMediaLoadingTask extends Task<Void> {
     private final MainViewController mainController;
     private final MetadataController metaController;
     private final ScheduledExecutorService executor;
-
+    
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid, MetadataController mc, MainViewController mv) {
         this.searchController = control;
         executor = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SRMediaLoadingTask"));
@@ -54,7 +54,7 @@ public class SRMediaLoadingTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() throws Exception {
+    protected MediaFile call() throws Exception {
         if (queryList.isEmpty()) {
             throw new IOException("Nothing found!");
         }
@@ -69,20 +69,15 @@ public class SRMediaLoadingTask extends Task<Void> {
                 mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
                 mediaItem.setName(Path.of(mediaURL).getFileName().toString());
                 mediaItem.setPathStorage(Path.of(mediaURL));
-                Task<Void> loadTask = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        loadItem(this, mediaItem, mediaURL);
-                        return null;
-                    }
-                };
-                executor.submit(loadTask);
-                Platform.runLater(() -> {
-                    fullMediaList.add(mediaItem);
-                });
+                try {
+                    loadItem(this, mediaItem, mediaURL);
+                    updateValue(mediaItem);
+                } catch (Exception e) {                    
+                    mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
+                }
                 if (this.isCancelled() == true) {
                     return null;
-                }
+                }                
             }
         }
         return null;
@@ -92,7 +87,7 @@ public class SRMediaLoadingTask extends Task<Void> {
         executor.shutdownNow();
     }
 
-    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) {
+    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws Exception {
         mediaItem.readEdits();
         if (this.isCancelled() == true) {
             return;
@@ -126,6 +121,16 @@ public class SRMediaLoadingTask extends Task<Void> {
             }
         } else {
             mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
+        }
+    }
+
+    @Override
+    protected void updateValue(MediaFile v) {
+        if (v != null) {
+            super.updateValue(v);
+            Platform.runLater(() -> {
+                fullMediaList.add(v);
+            });
         }
     }
 

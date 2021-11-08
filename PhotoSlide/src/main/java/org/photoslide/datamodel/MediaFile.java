@@ -489,7 +489,7 @@ public class MediaFile {
                 BasicFileAttributes attr = Files.readAttributes(pathStorage, BasicFileAttributes.class);
                 creationTime = attr.creationTime();
             } catch (IOException ex) {
-                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+                //Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         return creationTime;

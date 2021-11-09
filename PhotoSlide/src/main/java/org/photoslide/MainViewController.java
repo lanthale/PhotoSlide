@@ -232,11 +232,7 @@ public class MainViewController implements Initializable {
         readBookmarksFile();
         browseButton.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null && browseButton != null) {
-                PauseTransition pause=new PauseTransition(Duration.seconds(5));
-                pause.setOnFinished((t) -> {
-                    swUpdater.checkForSoftwareUpdates();
-                });                
-                pause.play();
+                swUpdater.checkForSoftwareUpdates();                
             }
         });
     }

@@ -59,7 +59,7 @@ public class SoftwareUpdater {
             downloadTask.cancel();
         }
     }
-    
+
     public void checkForSoftwareUpdates() {
         if (checkTask != null) {
             return;
@@ -68,7 +68,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();                
+                String actVersion = util.getAppVersion();
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -83,7 +83,7 @@ public class SoftwareUpdater {
                 switch (count) {
                     case 1:
                         newVersion = checkMajorVersion(actVersion);
-                        actVersion = newVersion + ".0";                    
+                        actVersion = newVersion + ".0";
                     case 2:
                         newVersion = checkMinorVersion(actVersion);
                         break;
@@ -190,7 +190,6 @@ public class SoftwareUpdater {
         return newVersion;
     }
 
-    
     private String checkMinorVersion(String actVersion) {
         InputStream inputStream = null;
         HttpsURLConnection conn = null;
@@ -212,7 +211,7 @@ public class SoftwareUpdater {
                 errorcount++;
             }
         }
-        maxMinorVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + (parseInt - 1);
+        maxMinorVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + (parseInt-1);
         //Check major version afterwards
         try {
             version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
@@ -244,6 +243,10 @@ public class SoftwareUpdater {
             newVersion = actVersion.substring(0, actVersion.indexOf(".") + 1) + parseInt;
         } else {
             newVersion = maxMinorVersion;
+        }
+        //Check if newVersion is better or nor
+        if (actVersion.equalsIgnoreCase(newVersion)) {
+            newVersion = "";
         }
         return newVersion;
     }

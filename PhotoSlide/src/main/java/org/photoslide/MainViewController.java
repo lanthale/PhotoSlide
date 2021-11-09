@@ -45,6 +45,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -231,7 +232,11 @@ public class MainViewController implements Initializable {
         readBookmarksFile();
         browseButton.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null && browseButton != null) {
-                swUpdater.checkForSoftwareUpdates();
+                PauseTransition pause=new PauseTransition(Duration.seconds(5));
+                pause.setOnFinished((t) -> {
+                    swUpdater.checkForSoftwareUpdates();
+                });                
+                pause.play();
             }
         });
     }

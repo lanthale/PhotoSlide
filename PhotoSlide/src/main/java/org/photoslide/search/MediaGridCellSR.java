@@ -5,7 +5,6 @@
  */
 package org.photoslide.search;
 
-import javafx.animation.PauseTransition;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -20,7 +19,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Font;
-import javafx.util.Duration;
 import org.photoslide.datamodel.*;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -175,10 +173,9 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
     }
 
     public final void setMedia(MediaFile item) {
-        if (item.isLoading() == true && item.getVideoSupported() == null) {
+        if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
         } else {
-            setRatingNode(item.getRatingProperty().get());
             if (item.getVideoSupported() == MediaFile.VideoTypes.SUPPORTED) {
                 dummyIcon.setIconLiteral("fa-file-movie-o");
                 rootPane.getChildren().clear();
@@ -189,7 +186,11 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
                 rootPane.getChildren().add(filmIcon);
                 rootPane.getChildren().add(dummyIcon);
             }
-            setBookmarked(item.isBookmarked());            
+            setRatingNode(item.getRatingProperty().get());
+            setBookmarked(item.isBookmarked());
+            if (item.deletedProperty().getValue() == true) {
+                setDeletedNode();
+            }
         }
     }
 

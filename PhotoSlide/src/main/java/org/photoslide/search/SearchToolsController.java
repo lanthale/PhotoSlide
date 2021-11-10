@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -32,6 +33,7 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Slider;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -95,6 +97,8 @@ public class SearchToolsController implements Initializable {
 
     private MainViewController mainViewController;
     private MetadataController metadataController;
+    @FXML
+    private Slider mediaZoomSlider;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -257,7 +261,12 @@ public class SearchToolsController implements Initializable {
                     if (o2.getRecordTime() != null && o1.getRecordTime() != null) {
                         return o2.getRecordTime().compareTo(o1.getRecordTime());
                     } else {
-                        return o2.getCreationTime().compareTo(o1.getCreationTime());
+                        try {
+                            return o2.getCreationTime().compareTo(o1.getCreationTime());
+                        } catch (IOException ex) {
+                            Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
+                            return -1;
+                        }
                     }
                 }
             });
@@ -287,6 +296,10 @@ public class SearchToolsController implements Initializable {
                     searchProgress.setVisible(false);
                     searchLabel.setVisible(false);
                 }
+            });
+            mediaZoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
+                imageGrid.setCellWidth(defaultCellWidth + 3 * mediaZoomSlider.getValue());
+                imageGrid.setCellHeight(defaultCellHight + 3 * mediaZoomSlider.getValue());
             });
             executorParallel.schedule(task, 500, TimeUnit.MILLISECONDS);
 

@@ -32,7 +32,7 @@ import org.photoslide.datamodel.MediaFile;
  * @author selfemp
  */
 public class SRMediaLoadingTask extends Task<MediaFile> {
-
+    
     private final SearchToolsController searchController;
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
@@ -52,7 +52,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
         mainController = mv;
         metaController = mc;
     }
-
+    
     @Override
     protected MediaFile call() throws Exception {
         if (queryList.isEmpty()) {
@@ -82,12 +82,12 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
         }
         return null;
     }
-
+    
     public void shutdown() {
         executor.shutdownNow();
     }
-
-    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws Exception {
+    
+    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws Exception {        
         mediaItem.readEdits();
         if (this.isCancelled() == true) {
             return;
@@ -99,7 +99,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
         if (this.isCancelled() == true) {
             return;
         }
-
+        
         if (FileTypes.isValidVideo(mediaURL)) {
             if (this.isCancelled() == true) {
                 return;
@@ -123,7 +123,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
             mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
         }
     }
-
+    
     @Override
     protected void updateValue(MediaFile v) {
         if (v != null) {
@@ -133,5 +133,5 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
             });
         }
     }
-
+    
 }

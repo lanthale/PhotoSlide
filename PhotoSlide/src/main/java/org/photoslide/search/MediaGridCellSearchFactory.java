@@ -5,8 +5,11 @@
  */
 package org.photoslide.search;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Pos;
 import javafx.scene.control.skin.VirtualFlow;
@@ -77,9 +80,13 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
         selectedMediaFile = ((MediaGridCellSR) t.getSource()).getItem();
         searchTools.getInfoBox().setVisible(true);
         if (selectedMediaFile.getRecordTime() != null) {
-            searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName() + " " + selectedMediaFile.getRecordTime());
+            searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getPathStorage().toString()+"\t"+selectedMediaFile.getName() + "\t" + selectedMediaFile.getRecordTime());
         } else {
-            searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getName() + " " + selectedMediaFile.getCreationTime());
+            try {
+                searchTools.getMediaFileInfoLabel().setText(selectedMediaFile.getPathStorage().toString()+"\t"+selectedMediaFile.getName() + "\t" + selectedMediaFile.getCreationTime());
+            } catch (IOException ex) {
+                Logger.getLogger(MediaGridCellSearchFactory.class.getName()).log(Level.SEVERE, "Cannot read creation time/date from file "+ex.getMessage(), ex);
+            }
         }
         selectionModel.clear();
         selectionModel.add(((MediaGridCellSR) t.getSource()).getItem());

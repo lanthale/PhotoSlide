@@ -5,6 +5,7 @@
  */
 package org.photoslide.bookmarksboard;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +32,7 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
     private final MediaFileLoader fileLoader;
     private final List<String> mediaList;
     private final ExecutorService executor;
-    
+
     public BMBMediaLoadingTask(List<String> queryList, BookmarkBoardController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.bmbController = control;
         executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("BMBMediaLoadingTask"));
@@ -55,8 +56,11 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled() == true) {
                 return null;
             }
-            loadItem(this, mediaItem, mediaURL);
-            updateValue(mediaItem);            
+            try {
+                loadItem(this, mediaItem, mediaURL);
+                updateValue(mediaItem);
+            } catch (IOException e) {
+            }
         }
         return null;
     }
@@ -65,7 +69,7 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
         executor.shutdownNow();
     }
 
-    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) {
+    private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws IOException {
         mediaItem.readEdits();
         if (this.isCancelled() == true) {
             task.cancel();
@@ -82,24 +86,24 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
                 task.cancel();
                 return;
             }
-            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);            
+            mediaItem.setMediaType(MediaFile.MediaTypes.VIDEO);
         } else if (FileTypes.isValidImage(mediaURL)) {
             mediaItem.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (this.isCancelled() == true) {
                 task.cancel();
                 return;
-            }                        
+            }
         } else {
             mediaItem.setMediaType(MediaFile.MediaTypes.NONE);
         }
     }
-    
+
     @Override
     protected void updateValue(MediaFile v) {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);                
+                fullMediaList.add(v);
             });
         }
     }

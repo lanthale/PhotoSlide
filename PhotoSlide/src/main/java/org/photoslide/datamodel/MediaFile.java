@@ -483,14 +483,10 @@ public class MediaFile {
         this.selected.set(selected);
     }
 
-    public FileTime getCreationTime() {
+    public FileTime getCreationTime() throws IOException {
         if (creationTime == null) {
-            try {
-                BasicFileAttributes attr = Files.readAttributes(pathStorage, BasicFileAttributes.class);
-                creationTime = attr.creationTime();
-            } catch (IOException ex) {
-                //Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            BasicFileAttributes attr = Files.readAttributes(pathStorage, BasicFileAttributes.class);
+            creationTime = attr.creationTime();
         }
         return creationTime;
     }
@@ -783,6 +779,5 @@ public class MediaFile {
         }
         return true;
     }
-    
 
 }

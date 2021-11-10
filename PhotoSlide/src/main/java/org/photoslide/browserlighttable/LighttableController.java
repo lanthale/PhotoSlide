@@ -312,7 +312,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
         });
 
-        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);        
+        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             filteredMediaList.setPredicate(standardFilter());
             //sort if needed
@@ -324,14 +324,14 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");            
+            mainController.getStatusLabelLeft().setText("");
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setVisible(false);            
+            mainController.getStatusLabelLeft().setVisible(false);
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
@@ -341,7 +341,7 @@ public class LighttableController implements Initializable {
         imageGrid.setCellFactory(factory);
         Platform.runLater(() -> {
             imageGrid.requestFocus();
-        });        
+        });
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
@@ -435,8 +435,8 @@ public class LighttableController implements Initializable {
                 imageGridPane.getChildren().remove(0);
             }
         });
-        if (taskMLoading != null) { 
-            taskMLoading.cancel();            
+        if (taskMLoading != null) {
+            taskMLoading.cancel();
         }
         if (factory != null) {
             factory.shutdown();
@@ -505,7 +505,7 @@ public class LighttableController implements Initializable {
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
-        }        
+        }
         executorParallel.submit(() -> {
             factory.getSelectedCell().getItem().saveEdits();
         });
@@ -564,7 +564,7 @@ public class LighttableController implements Initializable {
                 imageView.fitWidthProperty().bind(stackPane.heightProperty());
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
-        }        
+        }
         executorParallel.submit(() -> {
             factory.getSelectedCell().getItem().saveEdits();
         });
@@ -589,8 +589,8 @@ public class LighttableController implements Initializable {
         popOver.setFadeInDuration(new Duration(100));
         rate.ratingProperty().addListener((o) -> {
             rate.ratingProperty().unbindBidirectional(factory.getSelectedCell().getItem().getRatingProperty());
-            popOver.hide();            
-        });        
+            popOver.hide();
+        });
         popOver.setOnHidden((t) -> {
             executorParallel.submit(() -> {
                 factory.getSelectedCell().getItem().saveEdits();
@@ -615,7 +615,7 @@ public class LighttableController implements Initializable {
         if (alert.getResult() == ButtonType.YES) {*/
         //new File(factory.getSelectedCell().getItem().getName()).delete();
         MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
-        item.setDeleted(true);        
+        item.setDeleted(true);
         imageView.setImage(null);
         getTitleLabel().setVisible(false);
         getCameraLabel().setVisible(false);
@@ -902,7 +902,15 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                sortedMediaList.setComparator(Comparator.comparing(MediaFile::getCreationTime));
+                Comparator<MediaFile> comparing = Comparator.comparing((MediaFile t) -> {
+                    try {
+                        return t.getCreationTime(); //To change body of generated lambdas, choose Tools | Templates.
+                    } catch (IOException ex) {
+                        Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    return null;
+                });
+                sortedMediaList.setComparator(comparing);
             }
         }
     }

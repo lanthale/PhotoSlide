@@ -90,8 +90,12 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            loadItem(fileItem, m);
-                            updateValue(m);
+                            try {
+                                loadItem(fileItem, m);
+                                updateValue(m);
+                            } catch (IOException e) {
+                                m.setMediaType(MediaFile.MediaTypes.NONE);
+                            }
                         }
                     }
                     updateMessage(iatom.get() + " / " + qty);
@@ -115,13 +119,22 @@ public class MediaLoadingTask extends Task<MediaFile> {
             case "filename":
                 break;
             case "File creation time":
-                content.sort(Comparator.comparing(MediaFile::getCreationTime));
+                Comparator<MediaFile> comparing = Comparator.comparing((MediaFile t) -> {
+                    try {
+                        return t.getCreationTime();
+                    } catch (IOException ex) {
+                        Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    return null;
+                });
+                content.sort(comparing);
                 break;
+
         }
         return null;
     }
 
-    public void loadItem(Path fileItem, MediaFile m) {
+    public void loadItem(Path fileItem, MediaFile m) throws IOException {
         if (this.isCancelled()) {
             return;
         }
@@ -143,7 +156,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             m.setMediaType(MediaFile.MediaTypes.VIDEO);
             if (this.isCancelled()) {
                 return;
-            }            
+            }
             if (this.isCancelled()) {
                 return;
             }
@@ -158,7 +171,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
             if (this.isCancelled()) {
                 return;
-            }            
+            }
             if (this.isCancelled()) {
                 return;
             }
@@ -172,7 +185,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);                
+                fullMediaList.add(v);
             });
         }
     }

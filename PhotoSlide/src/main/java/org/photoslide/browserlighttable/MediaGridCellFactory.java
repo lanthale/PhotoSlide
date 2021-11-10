@@ -448,6 +448,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 });
                 loadImage();
                 break;
+            case NONE:
+                Platform.runLater(() -> {
+                    lightController.getImageView().setVisible(false);
+                    lightController.getMediaView().setVisible(false);
+                    lightController.getImageProgress().setVisible(false);
+                    lightController.getInvalidStackPane().setVisible(false);
+                    lightController.getPlayIcon().setVisible(false);
+                });
+                break;
             default:
         }
     }

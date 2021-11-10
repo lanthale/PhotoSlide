@@ -146,25 +146,22 @@ public class MediaGridCell extends GridCell<MediaFile> {
 
     public final void setError(MediaFile item) {
         rootPane.getChildren().clear();
-        HBox hb = new HBox();
+        dummyIcon.setIconLiteral("ti-bolt");        
+        Label errorLabel=new Label("Error loading");        
+        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);                
+        errorLabel.setStyle("-fx-font-size:6");        
+        errorLabel.setGraphic(dummyIcon);
+        errorLabel.setContentDisplay(ContentDisplay.TOP);
+        HBox hb=new HBox();
         hb.setAlignment(Pos.BOTTOM_CENTER);
         hb.getChildren().add(errorLabel);
         rootPane.getChildren().add(hb);
         if (item.deletedProperty().getValue() == true) {
             setDeletedNode();
         }
-        /*PauseTransition pause = new PauseTransition(Duration.millis(100));
-        pause.setOnFinished((t) -> {
-            rootPane.getChildren().clear();
-            HBox hb = new HBox();
-            hb.setAlignment(Pos.BOTTOM_CENTER);
-            hb.getChildren().add(errorLabel);
-            rootPane.getChildren().add(hb);
-            if (item.deletedProperty().getValue() == true) {
-                setDeletedNode();
-            }
-        });
-        pause.play();*/
     }
 
     public final void setImage(MediaFile item) {

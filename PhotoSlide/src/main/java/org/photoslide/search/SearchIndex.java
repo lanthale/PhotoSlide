@@ -77,7 +77,7 @@ public class SearchIndex {
                             if (fileItem.getFileName().toString().startsWith("@")) {
                                 return FileVisitResult.CONTINUE;
                             }
-                            if (fileItem.getFileName().toString().contains("@")) {
+                            if (fileItem.toString().contains("@")) {
                                 return FileVisitResult.CONTINUE;
                             }
                             if (FileTypes.isValidType(fileItem.toString())) {
@@ -94,7 +94,7 @@ public class SearchIndex {
                                         m.setMediaType(MediaFile.MediaTypes.IMAGE);
                                         try {
                                             metadataController.readBasicMetadata(task, m);
-                                        } catch (Exception ex) {
+                                        } catch (IOException ex) {
                                             //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                                         }
                                         insertMediaFileIntoSearchDB(collectionName, m);
@@ -116,6 +116,11 @@ public class SearchIndex {
                                 // directory iteration failed
                                 throw e;
                             }
+                        }
+
+                        @Override
+                        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                            return FileVisitResult.CONTINUE;
                         }
                     });
                 } catch (IOException ex) {
@@ -182,7 +187,7 @@ public class SearchIndex {
         executorParallel.shutdown();
     }
 
-    public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m) {
+    public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m) throws IOException {
         if (App.getSearchDBConnection() == null) {
             return;
         }
@@ -232,7 +237,7 @@ public class SearchIndex {
         }
     }
 
-    public void updateMediaFileIntoSearchDB(String collectionName, MediaFile m) {
+    public void updateMediaFileIntoSearchDB(String collectionName, MediaFile m) throws IOException {
         if (App.getSearchDBConnection() == null) {
             return;
         }

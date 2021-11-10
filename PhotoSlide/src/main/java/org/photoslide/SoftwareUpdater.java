@@ -128,6 +128,7 @@ public class SoftwareUpdater {
                             confirmDiaglog.setHeaderText("Newer version of Photoslide available");
                             confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
                             confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
+                            confirmDiaglog.setTitle("Downloadmanager");
                             DialogPane dialogPane = confirmDiaglog.getDialogPane();
                             dialogPane.getStylesheets().add(
                                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());

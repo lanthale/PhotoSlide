@@ -12,9 +12,7 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,7 +34,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
-import javafx.scene.control.IndexedCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
@@ -316,8 +313,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     lightController.getInvalidStackPane().setVisible(false);
                     lightController.getPlayIcon().setVisible(true);
                     lightController.getMediaView().toFront();
-                    lightController.getPlayIcon().toFront();
-                    lightController.getMediaView().requestFocus();
+                    lightController.getPlayIcon().toFront();                    
                 });
                 MediaPlayer mp = new MediaPlayer(media);
                 if (lightController.getMediaView().getMediaPlayer() != null) {
@@ -637,36 +633,58 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         return null;
     }
 
-    public List<String> getVisibleItems() {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
-        int visibleCellCount = 0;
-        List<String> cells = new ArrayList<>();
-        for (int i = vf.getFirstVisibleCell().getIndex(); i <= vf.getLastVisibleCell().getIndex(); i++) {
-            visibleCellCount = visibleCellCount + vf.getCell(i).getChildrenUnmodifiable().size();
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                cells.add(((MediaGridCell) mediaCell).getItem().getName());
-                System.out.println("cell item name: " + ((MediaGridCell) mediaCell).getItem().getName());
-            }
+    /**
+     * Scrolls the GridView one row up.
+     *
+     * @param gridView
+     */
+    public void oneRowUp(MediaGridCell input, final GridView<MediaFile> gridView) {
+        // get the underlying VirtualFlow object
+        VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        if (flow.getCellCount() == 0) {
+            return; // check that rows exist
         }
-        System.out.println("cellcount " + visibleCellCount);
-        return cells;
-    }
-
-    public boolean isItemVisible(MediaFile input) {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
-        boolean ret = false;
-        if (vf.getFirstVisibleCell() == null) {
-            return false;
-        }
-        IndexedCell visibleCell = vf.getVisibleCell(lightController.getFullMediaList().indexOf(vf));
-        for (int i = vf.getFirstVisibleCell().getIndex(); i <= vf.getLastVisibleCell().getIndex(); i++) {
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
-                    return true;
+        for (int i = 0; i <= flow.cellCountProperty().get(); i++) {
+            if (flow.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                int selectedRow = i;
+                int index = flow.getCell(i).getChildrenUnmodifiable().indexOf(input);
+                if (index == flow.getCell(i).getChildrenUnmodifiable().size()-1) {
+                    if (--selectedRow < 0) {
+                        selectedRow = 0;
+                    }
+                    if (selectedRow >= flow.cellCountProperty().get()) {
+                        selectedRow = flow.getCellCount() - 1;
+                    }                    
+                    flow.scrollTo(selectedRow);
                 }
             }
         }
-        return ret;
+    }
+
+    /**
+     * Scrolls the GridView one row down.
+     *
+     * @param input nextMediaCell to be selected
+     * @param gridView
+     */
+    public void oneRowDown(MediaGridCell input, final GridView<MediaFile> gridView) {
+        // get the underlying VirtualFlow object
+        VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        if (flow.getCellCount() == 0) {
+            return; // check that rows exist
+        }
+        for (int i = 0; i <= flow.cellCountProperty().get(); i++) {
+            if (flow.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                int selectedRow = i;
+                int index = flow.getCell(i).getChildrenUnmodifiable().indexOf(input);
+                if (index == 0) {
+                    if (++selectedRow >= flow.cellCountProperty().get()) {
+                        selectedRow = flow.getCellCount() - 1;
+                    }
+                    flow.scrollTo(selectedRow);
+                }
+            }
+        }
     }
 
     public boolean isCellVisible(MediaGridCell input) {

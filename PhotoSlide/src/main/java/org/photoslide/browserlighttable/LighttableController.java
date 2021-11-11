@@ -409,6 +409,7 @@ public class LighttableController implements Initializable {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));
+                factory.oneRowUp(nextCell,imageGrid);
                 nextCell.requestLayout();
             }
         }
@@ -419,11 +420,14 @@ public class LighttableController implements Initializable {
         int actIndex = fullMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex + 1;
         if (actIndex < fullMediaList.size()) {
+            VirtualFlow vf = (VirtualFlow) imageGrid.getChildrenUnmodifiable().get(0);
+            //MediaGridCell nextCell = (MediaGridCell) vf.getCell(actIndex);
             MediaGridCell nextCell = factory.getMediaCellForMediaFile(fullMediaList.get(actIndex));
             if (nextCell != null) {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
-                        false, false, false, false, false, true, null));
+                        false, false, false, false, false, true, null));                                
+                factory.oneRowDown(nextCell,imageGrid);
                 nextCell.requestLayout();
             }
         }

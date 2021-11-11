@@ -638,7 +638,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      *
      * @param gridView
      */
-    public void oneRowUp(MediaGridCell input, final GridView<MediaFile> gridView) {
+    public void oneRowUp(MediaGridCell input) {
         // get the underlying VirtualFlow object
         VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         if (flow.getCellCount() == 0) {
@@ -667,25 +667,28 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @param input nextMediaCell to be selected
      * @param gridView
      */
-    public void oneRowDown(MediaGridCell input, final GridView<MediaFile> gridView) {
+    public void oneRowDown(MediaGridCell input) {
         // get the underlying VirtualFlow object
         VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         if (flow.getCellCount() == 0) {
             return; // check that rows exist
         }
-        for (int i = 0; i <= flow.cellCountProperty().get(); i++) {
+        int cellcount=flow.cellCountProperty().get();
+        for (int i = 0; i <= cellcount; i++) {
             if (flow.getCell(i).getChildrenUnmodifiable().contains(input)) {
-                int selectedRow = i;
+                int selectedRow = i;                
+                System.out.println("selectedRow "+selectedRow);
                 int index = flow.getCell(i).getChildrenUnmodifiable().indexOf(input);
+                System.out.println("index "+index);
                 if (index == 0) {
-                    if (++selectedRow >= flow.cellCountProperty().get()) {
+                    if (++selectedRow >= cellcount) {
                         selectedRow = flow.getCellCount() - 1;
                     }
                     flow.scrollTo(selectedRow);
                 }
             }
         }
-    }
+    }    
 
     public boolean isCellVisible(MediaGridCell input) {
         VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);

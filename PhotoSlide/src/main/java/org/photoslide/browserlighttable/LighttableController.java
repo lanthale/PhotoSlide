@@ -409,7 +409,7 @@ public class LighttableController implements Initializable {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));
-                factory.oneRowUp(nextCell,imageGrid);
+                factory.oneRowUp(nextCell);
                 nextCell.requestLayout();
             }
         }
@@ -427,7 +427,7 @@ public class LighttableController implements Initializable {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));                                
-                factory.oneRowDown(nextCell,imageGrid);
+                factory.oneRowDown(nextCell);
                 nextCell.requestLayout();
             }
         }

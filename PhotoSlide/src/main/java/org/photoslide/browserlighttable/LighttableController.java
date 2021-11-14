@@ -420,9 +420,8 @@ public class LighttableController implements Initializable {
         });*/
     }
 
-    public void selectPreviousImageInGrid() {
-        MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = sortedMediaList.indexOf(selectedCell.getItem());
+    public void selectPreviousImageInGrid() {        
+        int actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
         actIndex = actIndex - 1;
         if (actIndex >= 0) {
             MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
@@ -436,13 +435,12 @@ public class LighttableController implements Initializable {
         }
     }
 
-    public void selectNextImageInGrid() {
-        MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = sortedMediaList.indexOf(selectedCell.getItem());
+    public void selectNextImageInGrid() {                
+        int actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
         actIndex = actIndex + 1;
-        if (actIndex < sortedMediaList.size()) {
-            MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
-            if (nextCell != null) {
+        if (actIndex < sortedMediaList.size()) {            
+            MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));            
+            if (nextCell != null) {                
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));

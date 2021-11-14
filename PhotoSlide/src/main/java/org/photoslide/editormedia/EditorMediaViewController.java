@@ -231,11 +231,11 @@ public class EditorMediaViewController implements Initializable {
         VBox box = new VBox();
         box.setPrefSize(700, 100);
         box.setMaxSize(700, 100);
-        box.setAlignment(Pos.CENTER);
+        box.setAlignment(Pos.CENTER);        
         GridView<MediaFile> imageGrid = new GridView<>(lightTableController.getSortedMediaList());
         imageGrid.setCellFactory(lightTableController.getFactory());
         //subscribe to selectedMediaItem in Factory        
-        box.getChildren().add(imageGrid);
+        box.getChildren().add(lightTableController.getImageGrid());
         po.setContentNode(box);
         po.show(showGridViewButton);
     }

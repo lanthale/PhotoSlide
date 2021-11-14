@@ -264,6 +264,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
 
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
+        selectedCell = (MediaGridCell) t.getSource();
         if (selectedMediaItem.isDeleted() == true) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
 
@@ -283,8 +284,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 alert.hide();
                 return;
             }
-        }
-        selectedCell = (MediaGridCell) t.getSource();
+        }        
         if (lightController.getShowPreviewPaneToggle().isSelected() == false) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -552,7 +552,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
-        lightController.getImageProgress().setVisible(true);
+        lightController.getImageProgress().setVisible(false);
         //lightController.getBookmarkButton().setDisable(false);
         if (selectionModel.getSelection().size() > 1) {
             lightController.getDetailToolbar().setDisable(false);
@@ -635,7 +635,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         return null;
-    }
+    }    
 
     /**
      * Scrolls the GridView one row up.
@@ -688,7 +688,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         selectedRow = flow.getCellCount() - 1;
                     }
                     //flow.scrollTo(selectedRow);
-                    flow.scrollPixels(cellHeight);                    
+                    flow.scrollPixels(cellHeight);
                     break;
                 }
                 break;

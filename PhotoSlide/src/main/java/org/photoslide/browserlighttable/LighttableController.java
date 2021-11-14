@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
@@ -44,6 +45,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
@@ -57,7 +59,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
-import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -68,6 +69,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -114,7 +116,7 @@ public class LighttableController implements Initializable {
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
-
+    
     @FXML
     private ImageView imageView;
     @FXML
@@ -397,6 +399,25 @@ public class LighttableController implements Initializable {
             imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
             imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
         });
+        /*imageGrid.setOnScroll(new EventHandler<ScrollEvent>() {
+            private SmoothishTransition transition;
+
+            @Override
+            public void handle(ScrollEvent event) {
+                double deltaY = BASE_MODIFIER * event.getDeltaY();
+                double width = imageGrid.getBoundsInLocal().getWidth();
+                double vvalue = imageGrid.getVvalue();
+                Interpolator interp = Interpolator.LINEAR;
+                transition = new SmoothishTransition(transition, deltaY) {
+                    @Override
+                    protected void interpolate(double frac) {
+                        double x = interp.interpolate(vvalue, vvalue + -deltaY * getMod() / width, frac);
+                        imageGrid.setVvalue(x);
+                    }
+                };
+                transition.play();
+            }
+        });*/
     }
 
     public void selectPreviousImageInGrid() {
@@ -409,23 +430,23 @@ public class LighttableController implements Initializable {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));
-                factory.oneRowUp(nextCell);
+                factory.oneRowUp(nextCell, imageGrid.getCellHeight());
                 nextCell.requestLayout();
             }
         }
     }
 
     public void selectNextImageInGrid() {
-        MediaGridCell selectedCell = factory.getSelectedCell();        
+        MediaGridCell selectedCell = factory.getSelectedCell();
         int actIndex = sortedMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex + 1;
-        if (actIndex < sortedMediaList.size()) {            
+        if (actIndex < sortedMediaList.size()) {
             MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
-            if (nextCell != null) {                
+            if (nextCell != null) {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
-                        false, false, false, false, false, true, null));                                
-                factory.oneRowDown(nextCell);
+                        false, false, false, false, false, true, null));
+                factory.oneRowDown(nextCell, imageGrid.getCellHeight());
                 nextCell.requestLayout();
             }
         }

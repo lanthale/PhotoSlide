@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -641,7 +642,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      *
      * @param input next visible media cell
      */
-    public void oneRowUp(MediaGridCell input) {
+    public void oneRowUp(MediaGridCell input, double cellHeight) {
         // get the underlying VirtualFlow object
         VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         if (flow.getCellCount() == 0) {
@@ -658,7 +659,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     if (selectedRow >= flow.cellCountProperty().get()) {
                         selectedRow = flow.getCellCount() - 1;
                     }
-                    flow.scrollTo(selectedRow);
+                    //flow.scrollTo(selectedRow);
+                    flow.scrollPixels(-cellHeight);
                 }
             }
         }
@@ -670,7 +672,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @param input nextMediaCell to be selected
      * @param gridView
      */
-    public void oneRowDown(MediaGridCell input) {
+    public void oneRowDown(MediaGridCell input, double cellHeight) {
         // get the underlying VirtualFlow object
         VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         if (flow.getCellCount() == 0) {
@@ -685,7 +687,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     if (++selectedRow >= cellcount) {
                         selectedRow = flow.getCellCount() - 1;
                     }
-                    flow.scrollTo(selectedRow);
+                    //flow.scrollTo(selectedRow);
+                    flow.scrollPixels(cellHeight);                    
                     break;
                 }
                 break;

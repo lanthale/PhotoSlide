@@ -401,10 +401,10 @@ public class LighttableController implements Initializable {
 
     public void selectPreviousImageInGrid() {
         MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = fullMediaList.indexOf(selectedCell.getItem());
+        int actIndex = sortedMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex - 1;
         if (actIndex >= 0) {
-            MediaGridCell nextCell = factory.getMediaCellForMediaFile(fullMediaList.get(actIndex));
+            MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
             if (nextCell != null) {
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
@@ -416,14 +416,12 @@ public class LighttableController implements Initializable {
     }
 
     public void selectNextImageInGrid() {
-        MediaGridCell selectedCell = factory.getSelectedCell();
-        int actIndex = fullMediaList.indexOf(selectedCell.getItem());
+        MediaGridCell selectedCell = factory.getSelectedCell();        
+        int actIndex = sortedMediaList.indexOf(selectedCell.getItem());
         actIndex = actIndex + 1;
-        if (actIndex < fullMediaList.size()) {
-            VirtualFlow vf = (VirtualFlow) imageGrid.getChildrenUnmodifiable().get(0);
-            //MediaGridCell nextCell = (MediaGridCell) vf.getCell(actIndex);
-            MediaGridCell nextCell = factory.getMediaCellForMediaFile(fullMediaList.get(actIndex));
-            if (nextCell != null) {
+        if (actIndex < sortedMediaList.size()) {            
+            MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
+            if (nextCell != null) {                
                 nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                         0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                         false, false, false, false, false, true, null));                                

@@ -8,10 +8,12 @@ package org.photoslide;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
@@ -32,6 +34,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
 
@@ -134,6 +143,18 @@ public class Utility {
         }
 
         return path;
+    }
+
+    public static long getNativeMemorySize() {
+        try {
+            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
+            long memory = Long.parseLong(attribute.toString()) / 1024;            
+            return memory;
+        } catch (MalformedObjectNameException | MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException ex) {
+            Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return -1;
     }
 
     public String getAppVersion() {

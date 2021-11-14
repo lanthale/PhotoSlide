@@ -6,9 +6,7 @@
 package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -18,6 +16,7 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.Utility;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
 /**
@@ -27,10 +26,16 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
 public class MediaFileLoader {
 
     private ExecutorService executorParallel;
-    private HashMap<String, Task> taskList;
+    private final HashMap<String, Task> taskList;
+    private long memory;
 
     public MediaFileLoader() {
-        executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+        memory = Utility.getNativeMemorySize();
+        if (memory > 4194500) {            
+            executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+        } else {
+            executorParallel = Executors.newFixedThreadPool(1, new ThreadFactoryPS("mediaFileLoaderThread"));
+        }
         taskList = new HashMap<>();
     }
 
@@ -89,7 +94,7 @@ public class MediaFileLoader {
                         //fileItem.setMedia(video, MediaFile.VideoTypes.UNSUPPORTED);
                     }
                 } catch (MalformedURLException ex) {
-                    Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);                    
+                    Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                     throw new Exception("Cannot load video '" + fileItem.getPathStorage().toUri().toURL().toString() + "'!");
                 }
                 return video;
@@ -113,7 +118,7 @@ public class MediaFileLoader {
                 }
             }
         }
-    }    
+    }
 
     public void shutdown() {
         taskList.values().forEach(t -> {
@@ -129,6 +134,10 @@ public class MediaFileLoader {
         });
         taskList.clear();
         executorParallel.shutdownNow();
-        executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+        if (memory > 4000000) {            
+            executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+        } else {
+            executorParallel = Executors.newFixedThreadPool(1, new ThreadFactoryPS("mediaFileLoaderThread"));
+        }        
     }
 }

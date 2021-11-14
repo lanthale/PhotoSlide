@@ -252,7 +252,7 @@ public class MetadataController implements Initializable {
                     readBasicMetadata(this, file);
                 } catch (IOException e) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '" + file.getName() + "'!", e);
-                } catch (IllegalArgumentException f){                    
+                } catch (IllegalArgumentException f) {
                 }
                 return null;
             }
@@ -262,7 +262,6 @@ public class MetadataController implements Initializable {
             if (actualMediaFile.getRecordTime() != null) {
                 recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
             }
-            updateUIWithExtendedMetadata();
             if (actualMediaFile.getKeywords() != null) {
                 StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
                 while (defaultTokenizer.hasMoreTokens()) {
@@ -277,19 +276,29 @@ public class MetadataController implements Initializable {
                 commentText.appendText(actualMediaFile.commentsProperty().get());
             }
             anchorKeywordPane.setDisable(false);
-            progressPane.setVisible(false);
             commentText.textProperty().addListener(commentsChangeListener);
 
             keywordText.getChildren().addListener(keywordsChangeListener);
             captionTextField.textProperty().addListener(captionChangeListener);
 
-            gpsPlace.setText(actualMediaFile.getGpsPosition());
-            if (actualMediaFile.getGpsHeight() != -1) {
-                gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
+            if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
+                Label key = new Label("File name");
+                Label value = new Label(file.getName());
+                key.setStyle("-fx-font-size:8pt;");
+                value.setStyle("-fx-font-size:8pt;");
+                metaDataGrid.addRow(0, key, value);
+            } else {
+                updateUIWithExtendedMetadata();
+
+                gpsPlace.setText(actualMediaFile.getGpsPosition());
+                if (actualMediaFile.getGpsHeight() != -1) {
+                    gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
+                }
+                if (actualMediaFile.getGpsDateTime() != null) {
+                    gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                }
             }
-            if (actualMediaFile.getGpsDateTime() != null) {
-                gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            }
+            progressPane.setVisible(false);
         });
         task.setOnFailed((t) -> {
             anchorKeywordPane.setDisable(false);
@@ -302,6 +311,9 @@ public class MetadataController implements Initializable {
     }
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
+        if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
+            return;
+        }
         if (file.isRawImage()) {
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");

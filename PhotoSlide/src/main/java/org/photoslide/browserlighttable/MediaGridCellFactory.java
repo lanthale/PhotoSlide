@@ -70,7 +70,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
-    private final GridView<MediaFile> grid;
+    private GridView<MediaFile> grid;
     private final ExecutorService executor;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
@@ -815,6 +815,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         false, false, false, false, false, true, null));
             }
         });
-    }
+    }    
+    
 
 }

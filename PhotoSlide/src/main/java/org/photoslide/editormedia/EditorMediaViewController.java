@@ -31,7 +31,9 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.Utility;
 import org.photoslide.browserlighttable.LighttableController;
+import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
@@ -231,12 +233,24 @@ public class EditorMediaViewController implements Initializable {
         VBox box = new VBox();
         box.setPrefSize(700, 100);
         box.setMaxSize(700, 100);
-        box.setAlignment(Pos.CENTER);        
-        GridView<MediaFile> imageGrid = new GridView<>(lightTableController.getSortedMediaList());
-        imageGrid.setCellFactory(lightTableController.getFactory());
-        //subscribe to selectedMediaItem in Factory        
-        box.getChildren().add(lightTableController.getImageGrid());
+        box.setAlignment(Pos.CENTER);
         po.setContentNode(box);
+        Task<GridView<MediaFile>> task = new Task<>() {
+            @Override
+            protected GridView<MediaFile> call() throws Exception {
+                GridView<MediaFile> imageGrid = new GridView<>(lightTableController.getSortedMediaList());
+                //MediaGridCellFactory factory = new MediaGridCellFactory(EditorMediaViewController.this, imageGrid, new Utility(), null);
+                //imageGrid.setCellFactory(lightTableController.getFactory());                
+                return imageGrid;
+            }
+        };
+        task.setOnSucceeded((t) -> {
+            //box.getChildren().add((GridView<MediaFile>)t.getSource().getValue());            
+            //box.getChildren().add(lightTableController.getImageGrid());
+        });
+        Thread th = new Thread(task);
+        th.setDaemon(true);
+        th.start();
         po.show(showGridViewButton);
     }
 }

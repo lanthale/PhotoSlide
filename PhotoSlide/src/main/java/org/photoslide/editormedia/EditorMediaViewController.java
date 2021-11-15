@@ -9,6 +9,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -31,9 +32,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
-import org.photoslide.Utility;
 import org.photoslide.browserlighttable.LighttableController;
-import org.photoslide.browserlighttable.MediaGridCellFactory;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
@@ -47,6 +46,7 @@ public class EditorMediaViewController implements Initializable {
 
     private ExecutorService executor;
     private MediaFile selectedMediaFile;
+    private VBox box;
 
     @FXML
     private Button zoomButton;
@@ -72,6 +72,8 @@ public class EditorMediaViewController implements Initializable {
     private EditorMetadataController editMetadataController;
     private EditorToolsController editorToolsController;
     private Task<Boolean> task;
+    private GridView<MediaFile> mediaGrid;
+    private EditMediaGridCellFactory factory;
     @FXML
     private Button showGridViewButton;
 
@@ -94,6 +96,14 @@ public class EditorMediaViewController implements Initializable {
         stackPane.setOnSwipeLeft((t) -> {
             previousMediaItem();
         });
+        box = new VBox();
+        box.setFillWidth(true);        
+        box.setPrefSize(700, 100);
+        box.setMaxSize(700, 100);
+        box.setAlignment(Pos.CENTER);
+        mediaGrid = new GridView<>();
+        factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
+        mediaGrid.setCellFactory(factory);        
     }
 
     public void injectLightController(LighttableController c) {
@@ -164,6 +174,7 @@ public class EditorMediaViewController implements Initializable {
     }
 
     public void shutdown() {
+        factory.shutdown();
         executor.shutdownNow();
     }
 
@@ -230,27 +241,26 @@ public class EditorMediaViewController implements Initializable {
         po.setFadeInDuration(Duration.millis(50));
         po.setFadeOutDuration(Duration.millis(50));
         po.setAutoHide(true);
-        VBox box = new VBox();
-        box.setPrefSize(700, 100);
-        box.setMaxSize(700, 100);
-        box.setAlignment(Pos.CENTER);
         po.setContentNode(box);
-        Task<GridView<MediaFile>> task = new Task<>() {
-            @Override
-            protected GridView<MediaFile> call() throws Exception {
-                GridView<MediaFile> imageGrid = new GridView<>(lightTableController.getSortedMediaList());
-                //MediaGridCellFactory factory = new MediaGridCellFactory(EditorMediaViewController.this, imageGrid, new Utility(), null);
-                //imageGrid.setCellFactory(lightTableController.getFactory());                
-                return imageGrid;
-            }
-        };
-        task.setOnSucceeded((t) -> {
-            //box.getChildren().add((GridView<MediaFile>)t.getSource().getValue());            
-            //box.getChildren().add(lightTableController.getImageGrid());
-        });
-        Thread th = new Thread(task);
-        th.setDaemon(true);
-        th.start();
+        if (!box.getChildren().contains(mediaGrid)) {
+            box.getChildren().add(mediaGrid);
+        }
         po.show(showGridViewButton);
+        PauseTransition timer = new PauseTransition(Duration.millis(150));
+        timer.setOnFinished((k) -> {
+            if (mediaGrid.getItems().isEmpty()) {                
+                mediaGrid.setItems(lightTableController.getSortedMediaList());
+            }
+        });
+        timer.play();
     }
+
+    public ObservableList<MediaFile> getFullMediaList() {
+        return lightTableController.getSortedMediaList();
+    }
+
+    public GridView<MediaFile> getImageGrid() {
+        return mediaGrid;
+    }
+
 }

@@ -7,10 +7,13 @@ package org.photoslide.editormedia;
 
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
-import javafx.collections.transformation.SortedList;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.skin.VirtualFlow;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
@@ -18,13 +21,15 @@ import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaFileLoader;
+import org.photoslide.datamodel.MediaGridCell;
+import org.photoslide.imageops.ImageFilter;
 
 /**
  *
  * @author selfemp
  */
 public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, GridCell<MediaFile>> {
-    
+
     private EditMediaGridCell selectedCell;
     private MediaFile selectedMediaFile;
     private final Comparator<MediaFile> stackNameComparator;
@@ -32,6 +37,7 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
     private final EditorMediaViewController mediaViewController;
     private final GridCellSelectionModel selectionModel;
     private final MediaFileLoader fileLoader;
+    private Task<Object> task;
 
     public EditMediaGridCellFactory(ExecutorService executor, EditorMediaViewController controller) {
         this.mediaViewController = controller;
@@ -81,7 +87,54 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
     }
 
     private void handleGridCellSelection(MouseEvent t) {
+        selectedMediaFile = ((EditMediaGridCell) t.getSource()).getItem();
+        selectedCell = (EditMediaGridCell) t.getSource();
+        task = new Task<>() {
+            private Image imageWithFilters;
+            private ObservableList<ImageFilter> filterList;
+            private Image img;
 
+            @Override
+            protected Boolean call() throws Exception {
+                switch (selectedMediaFile.getMediaType()) {
+                    case VIDEO:
+                        break;
+                    case IMAGE:
+                        Platform.runLater(() -> {
+                            mediaViewController.getImageProgress().progressProperty().unbind();
+                            mediaViewController.getEditorImageView().setImage(null);
+                            mediaViewController.getEditorImageView().setVisible(true);
+                            mediaViewController.getImageProgress().setVisible(true);
+                        });
+                        String url = selectedMediaFile.getImageUrl().toString();
+                        img = new Image(url, true);
+                        Platform.runLater(() -> {
+                            mediaViewController.getImageProgress().progressProperty().bind(img.progressProperty());
+                            img.progressProperty().addListener((ov, t, t1) -> {
+                                if ((Double) t1 == 1.0 && !img.isError()) {
+                                    mediaViewController.getImageProgress().setVisible(false);
+                                    imageWithFilters = img;
+                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
+                                    for (ImageFilter imageFilter : filterList) {
+                                        imageWithFilters = imageFilter.load(imageWithFilters);
+                                        imageFilter.filter(imageFilter.getValues());
+                                    }
+                                    img = imageWithFilters;
+                                    mediaViewController.getEditorImageView().setImage(img);
+                                    mediaViewController.getStackPane().requestFocus();
+                                } else {
+                                    mediaViewController.getImageProgress().setVisible(true);
+                                    mediaViewController.getStackPane().requestFocus();
+                                }
+                            });
+                            mediaViewController.getEditorImageView().setImage(img);
+                        });
+                        break;
+                }
+                return true;
+            }
+        };
+        executor.submit(task);
     }
 
     public MediaFile getSelectedMediaFile() {
@@ -118,9 +171,13 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
         }
         return ret;
     }
-    
-    public void shutdown(){
+
+    public void shutdown() {
         fileLoader.shutdown();
+    }
+
+    public GridCellSelectionModel getSelectionModel() {
+        return selectionModel;
     }
 
 }

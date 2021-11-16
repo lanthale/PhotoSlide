@@ -24,6 +24,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -34,6 +36,7 @@ import org.controlsfx.control.Rating;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImageFilter;
@@ -76,6 +79,7 @@ public class EditorMediaViewController implements Initializable {
     private EditMediaGridCellFactory factory;
     @FXML
     private Button showGridViewButton;
+    private PopOver mediaGridView;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -97,13 +101,24 @@ public class EditorMediaViewController implements Initializable {
             previousMediaItem();
         });
         box = new VBox();
-        box.setFillWidth(true);        
+        box.setFillWidth(true);
         box.setPrefSize(700, 100);
         box.setMaxSize(700, 100);
         box.setAlignment(Pos.CENTER);
         mediaGrid = new GridView<>();
         factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
-        mediaGrid.setCellFactory(factory);        
+        mediaGrid.setCellFactory(factory);
+        mediaGridView = new PopOver();
+        mediaGridView.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        mediaGridView.setAnimated(true);
+        mediaGridView.setCloseButtonEnabled(true);
+        mediaGridView.setFadeInDuration(Duration.millis(50));
+        mediaGridView.setFadeOutDuration(Duration.millis(50));
+        mediaGridView.setAutoHide(true);
+        mediaGridView.setContentNode(box);
+        if (!box.getChildren().contains(mediaGrid)) {
+            box.getChildren().add(mediaGrid);
+        }
     }
 
     public void injectLightController(LighttableController c) {
@@ -233,23 +248,13 @@ public class EditorMediaViewController implements Initializable {
     }
 
     @FXML
-    private void showGridViewAction(ActionEvent event) {
-        PopOver po = new PopOver();
-        po.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
-        po.setAnimated(true);
-        po.setCloseButtonEnabled(true);
-        po.setFadeInDuration(Duration.millis(50));
-        po.setFadeOutDuration(Duration.millis(50));
-        po.setAutoHide(true);
-        po.setContentNode(box);
-        if (!box.getChildren().contains(mediaGrid)) {
-            box.getChildren().add(mediaGrid);
-        }
-        po.show(showGridViewButton);
+    private void showGridViewAction(ActionEvent event) {        
+        mediaGridView.show(showGridViewButton);        
         PauseTransition timer = new PauseTransition(Duration.millis(150));
         timer.setOnFinished((k) -> {
-            if (mediaGrid.getItems().isEmpty()) {                
+            if (mediaGrid.getItems().isEmpty()) {
                 mediaGrid.setItems(lightTableController.getSortedMediaList());
+                selectMediaFileInGrid(selectedMediaFile);                
             }
         });
         timer.play();
@@ -262,5 +267,58 @@ public class EditorMediaViewController implements Initializable {
     public GridView<MediaFile> getImageGrid() {
         return mediaGrid;
     }
+
+    public void selectMediaFileInGrid(MediaFile item) {
+        int actIndex = lightTableController.getSortedMediaList().indexOf(item);
+        if (actIndex != -1) {
+            EditMediaGridCell actCell = factory.getMediaCellForMediaFile(lightTableController.getSortedMediaList().get(actIndex));
+            actCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                    0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                    false, false, false, false, false, true, null));
+            actCell.requestLayout();
+        }
+    }
+
+    public void selectPreviousImageInGrid() {
+        int actIndex = lightTableController.getSortedMediaList().indexOf(factory.getSelectedMediaFile());
+        actIndex = actIndex - 1;
+        if (actIndex >= 0) {
+            EditMediaGridCell nextCell = factory.getMediaCellForMediaFile(lightTableController.getSortedMediaList().get(actIndex));
+            if (nextCell != null) {
+                nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                        0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                        false, false, false, false, false, true, null));
+                nextCell.requestLayout();
+            }
+        }
+    }
+
+    public void selectNextImageInGrid() {
+        int actIndex = lightTableController.getSortedMediaList().indexOf(factory.getSelectedMediaFile());
+        actIndex = actIndex + 1;
+        if (actIndex < lightTableController.getSortedMediaList().size()) {
+            EditMediaGridCell nextCell = factory.getMediaCellForMediaFile(lightTableController.getSortedMediaList().get(actIndex));
+            if (nextCell != null) {
+                nextCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                        0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                        false, false, false, false, false, true, null));
+                nextCell.requestLayout();
+            }
+        }
+    }
+
+    public ProgressIndicator getImageProgress() {
+        return imageProgress;
+    }
+
+    public StackPane getStackPane() {
+        return stackPane;
+    }
+
+    public ImageView getEditorImageView() {
+        return editorImageView;
+    }
+    
+    
 
 }

@@ -5,8 +5,12 @@
  */
 package org.photoslide.editormedia;
 
+import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javafx.animation.PauseTransition;
@@ -23,16 +27,22 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
+import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
@@ -48,8 +58,10 @@ import org.photoslide.imageops.ImageFilter;
 public class EditorMediaViewController implements Initializable {
 
     private ExecutorService executor;
+    private MainViewController mainController;
     private MediaFile selectedMediaFile;
     private VBox box;
+    private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
 
     @FXML
     private Button zoomButton;
@@ -104,7 +116,7 @@ public class EditorMediaViewController implements Initializable {
         box.setFillWidth(true);
         box.setPrefSize(700, 100);
         box.setMaxSize(700, 100);
-        box.setAlignment(Pos.CENTER);
+        box.setAlignment(Pos.CENTER);        
         mediaGrid = new GridView<>();
         factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
         mediaGrid.setCellFactory(factory);
@@ -115,10 +127,14 @@ public class EditorMediaViewController implements Initializable {
         mediaGridView.setFadeInDuration(Duration.millis(50));
         mediaGridView.setFadeOutDuration(Duration.millis(50));
         mediaGridView.setAutoHide(true);
-        mediaGridView.setContentNode(box);
+        mediaGridView.setContentNode(box);        
         if (!box.getChildren().contains(mediaGrid)) {
             box.getChildren().add(mediaGrid);
         }
+    }
+
+    public void injectMainController(MainViewController mainController) {
+        this.mainController = mainController;
     }
 
     public void injectLightController(LighttableController c) {
@@ -248,16 +264,43 @@ public class EditorMediaViewController implements Initializable {
     }
 
     @FXML
-    private void showGridViewAction(ActionEvent event) {        
-        mediaGridView.show(showGridViewButton);        
-        PauseTransition timer = new PauseTransition(Duration.millis(150));
-        timer.setOnFinished((k) -> {
-            if (mediaGrid.getItems().isEmpty()) {
-                mediaGrid.setItems(lightTableController.getSortedMediaList());
-                selectMediaFileInGrid(selectedMediaFile);                
-            }
-        });
-        timer.play();
+    private void showGridViewAction(ActionEvent event) {
+        mediaGridView.show(showGridViewButton);
+        if (mediaGrid.getItems().isEmpty()) {
+            mediaGrid.setItems(lightTableController.getSortedMediaList());
+            mediaGrid.setOnKeyPressed((t) -> {
+                if (keyCombinationMetaC.match(t)) {
+                    final Clipboard clipboard = Clipboard.getSystemClipboard();
+                    final ClipboardContent content = new ClipboardContent();
+
+                    List<File> fileList = new ArrayList<>();
+                    Set<MediaFile> selection = factory.getSelectionModel().getSelection();
+                    selection.forEach((k) -> {
+                        fileList.add(new File(((MediaFile) k).getName()));
+                    });
+                    content.putFiles(fileList);
+                    clipboard.setContent(content);
+                }
+                if (KeyCode.RIGHT == t.getCode()) {
+                    selectNextImageInGrid();
+                }
+                if (KeyCode.LEFT == t.getCode()) {
+                    selectPreviousImageInGrid();
+                }
+                if (KeyCode.X == t.getCode()) {
+                    bookmarkSelection();
+                }
+                if (KeyCode.B == t.getCode()) {
+                    bookmarkSelection();
+                }
+                if (KeyCode.BACK_SPACE == t.getCode() || KeyCode.DELETE == t.getCode()) {
+                    deleteAction();
+                }
+                t.consume();
+            });
+            factory.getSelectionModel().add(selectedMediaFile);            
+            selectMediaFileInGrid(selectedMediaFile);
+        }
     }
 
     public ObservableList<MediaFile> getFullMediaList() {
@@ -269,9 +312,8 @@ public class EditorMediaViewController implements Initializable {
     }
 
     public void selectMediaFileInGrid(MediaFile item) {
-        int actIndex = lightTableController.getSortedMediaList().indexOf(item);
-        if (actIndex != -1) {
-            EditMediaGridCell actCell = factory.getMediaCellForMediaFile(lightTableController.getSortedMediaList().get(actIndex));
+        EditMediaGridCell actCell = factory.getMediaCellForMediaFile(item);
+        if (actCell != null) {
             actCell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
                     0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
                     false, false, false, false, false, true, null));
@@ -318,7 +360,22 @@ public class EditorMediaViewController implements Initializable {
     public ImageView getEditorImageView() {
         return editorImageView;
     }
-    
-    
+
+    private void bookmarkSelection() {
+        Set<MediaFile> selection = factory.getSelectionModel().getSelection();
+        for (MediaFile m : selection) {
+            mainController.bookmarkMediaFile(m);
+        }
+        mainController.saveBookmarksFile();
+    }
+
+    public void deleteAction() {
+        MediaFile item = lightTableController.getSortedMediaList().get(lightTableController.getSortedMediaList().indexOf(factory.getSelectedMediaFile()));
+        item.setDeleted(true);
+        editorImageView.setImage(null);
+        executor.submit(() -> {
+            factory.getSelectedMediaFile().saveEdits();
+        });
+    }
 
 }

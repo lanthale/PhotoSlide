@@ -218,6 +218,7 @@ public class MainViewController implements Initializable {
         collectionsPaneController.injectLighttableController(lighttablePaneController);
         lighttablePaneController.injectMetaDataController(metadataPaneController);
         editorMetaDataPaneController.injectMetaDataController(metadataPaneController);
+        editorMediaViewPaneController.injectMainController(this);
         editorMediaViewPaneController.injectLightController(lighttablePaneController);
         editorMediaViewPaneController.injectEditorMetaDataController(editorMetaDataPaneController);
         editorMediaViewPaneController.injectEditorToolsController(editorToolsPaneController);

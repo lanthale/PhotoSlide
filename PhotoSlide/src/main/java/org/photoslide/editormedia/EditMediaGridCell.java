@@ -160,18 +160,18 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
             item.setImage(item.setFilters());
-
             //calc cropview based on small imageview
-            //imageView.setViewport(cropView);
+            //imageView.setViewport(item.getCropView());
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
             imageView.setImage(item.getImage());
+            rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());
+            setBookmarked(item.isBookmarked());
             setStacked(item.isStacked(), item.getStackPos());
             if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
-            item.setLoading(false);
         }
     }
 
@@ -240,6 +240,20 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().add(vb);
         } else {
             rootPane.getChildren().remove(vb);
+        }
+    }
+    
+    private void setBookmarked(boolean bookmarked) {
+        if (bookmarked) {
+            VBox vb = new VBox();
+            vb.setAlignment(Pos.TOP_LEFT);
+            HBox hb = new HBox();
+            hb.setPadding(new Insets(0, 0, 0, 3));
+            FontIcon bookmarkIcon = new FontIcon("fa-bookmark");
+            bookmarkIcon.setId("bookmark-icon");
+            hb.getChildren().add(bookmarkIcon);
+            vb.getChildren().add(hb);
+            rootPane.getChildren().add(vb);
         }
     }
 

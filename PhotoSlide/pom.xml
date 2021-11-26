@@ -37,15 +37,7 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>  
-        <repository>
-            <id>bintray-jerady-maven</id>
-            <name>bintray</name>
-            <url>https://dl.bintray.com/jerady/maven</url>            
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository> 
+        </repository>         
         <repository>
             <id>com.springsource.repository.bundles.external</id>
             <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>

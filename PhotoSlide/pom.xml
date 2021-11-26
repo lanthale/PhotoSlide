@@ -536,33 +536,7 @@
             </activation>
             <properties>
                 <platform>win</platform>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>                        
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <executions>
-                            <execution>
-                                <phase>install</phase>
-                                <id>add-launch-to-msi</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <executable>cscript</executable>
-                            <outputFile>${project.build.directory}/msi-result.log</outputFile>
-                            <workingDirectory>${project.build.directory}</workingDirectory>
-                            <arguments>
-                                <argument>${project.build.directory}/packaging/add-launch-to-msi.js</argument>
-                            </arguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
+            </properties>            
         </profile>
         <profile>
             <id>mac-active</id>

@@ -37,12 +37,7 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>         
-        <repository>
-            <id>com.springsource.repository.bundles.external</id>
-            <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
-            <url>http://repository.springsource.com/maven/bundles/external</url>
-        </repository> 
+        </repository>                  
         <repository>
             <id>jcenter</id>
             <name>jcenter</name>

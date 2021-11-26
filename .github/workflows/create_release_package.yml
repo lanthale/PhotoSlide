@@ -29,7 +29,7 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
+      run: mvn clean install -Ppackage -f PhotoSlide/pom.xml
         
     - name: Get release
       id: get_release
@@ -66,7 +66,7 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn -B clean compile package -Ppackage -f PhotoSlide/pom.xml
+      run: mvn -B clean install -Ppackage -f PhotoSlide/pom.xml
         
     - name: Get release
       id: get_release
@@ -103,7 +103,7 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
-      run: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
+      run: mvn clean install -Ppackage -f PhotoSlide/pom.xml
     
     - name: Get release
       id: get_release

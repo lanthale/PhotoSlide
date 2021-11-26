@@ -1,0 +1,27 @@
+--name ${app.name}
+--icon ${project.resources[0].directory}/org/photoslide/img/linux/PhotoSlide.png
+--resource-dir ${project.resources[0].directory}/org/photoslide/img/linux/pkgresource
+--dest ${project.build.directory}
+--main-jar ${project.build.finalName}.jar
+--main-class ${mainClass}
+--input ${project.build.directory}/dependency
+--app-version ${app.version}
+--runtime-image ${project.build.directory}/jvm-image
+--temp ${project.build.directory}/installer-work
+--linux-shortcut
+--java-options -XX:+UseZGC
+--java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED
+--java-options --enable-native-access=ALL-UNNAMED
+--java-options --add-exports=java.desktop/sun.awt.image=ALL-UNNAMED
+--java-options --add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED
+--java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED
+--java-options --add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED
+--java-options --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED
+--java-options --add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED
+--java-options --add-opens=java.base/java.net=ALL-UNNAMED
+--java-options --add-modules=jdk.incubator.foreign

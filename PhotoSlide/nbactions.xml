@@ -1,71 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <actions>
-        <action>
-            <actionName>run</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
-                
-                
-                
-                
-            </goals>
-            <properties>
-                <exec.args>-XX:+UseZGC --add-opens java.base/java.net=com.sothawo.mapjfx --add-modules jdk.incubator.foreign --enable-native-access=org.librawfx --add-exports=java.desktop/sun.awt.image=PhotoSlide --add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx --add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls --add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls --add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls --module-path ${project.build.directory}/modules --module ${moduleName}/${mainClass}</exec.args>
+    <action>
+        <actionName>run</actionName>            
+        <goals>
+            <goal>clean</goal>
+            <goal>javafx:run</goal>
+        </goals>
+    </action>
+    <action>
+        <actionName>debug</actionName>            
+        <goals>
+            <goal>clean</goal>
+            <goal>javafx:run@ide-debug</goal>
+        </goals> 
+        <properties>
+            <jpda.listen>true</jpda.listen>
+        </properties>           
+    </action>
+    <action>
+        <actionName>CUSTOM-create-native-image</actionName>
+        <displayName>create-native-image</displayName>
+        <goals>
+            <goal>clean</goal>
+            <goal>install</goal>                
+        </goals>
+        <activatedProfiles>
+            <activatedProfile>package</activatedProfile>
+        </activatedProfiles>
+    </action>
+    <action>
+        <actionName>profile</actionName>            
+        <goals>
+            <goal>clean</goal>
+            <goal>javafx:run@ide-profile</goal>
+        </goals>            
+        <properties>
+                <exec.args>-classpath %classpath ${packageClassName}</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
-        </action>
-        <action>
-            <actionName>debug</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
-            </goals>
-            <properties>
-                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -XX:+UseZGC --add-opens java.base/java.net=com.sothawo.mapjfx --add-modules jdk.incubator.foreign --enable-native-access=org.librawfx --add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx --add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls --add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls --add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls --module-path ${project.build.directory}/modules --module ${moduleName}/${mainClass} /Users/selfemp/Desktop/enwik9.txt</exec.args>
-                <exec.executable>java</exec.executable>
-                <jpda.listen>true</jpda.listen>
-            </properties>
-        </action>
-        <action>
-            <actionName>CUSTOM-create-native-image</actionName>
-            <displayName>create-native-image</displayName>
-            <goals>
-                <goal>clean</goal>
-                <goal>compile</goal>
-                <goal>package</goal>
-            </goals>
-            <activatedProfiles>
-                <activatedProfile>package</activatedProfile>
-            </activatedProfiles>
-        </action>
-        <action>
-            <actionName>profile</actionName>
-            <packagings>
-                <packaging>jar</packaging>
-            </packagings>
-            <goals>
-                <goal>process-classes</goal>
-                <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
-            </goals>
-            <properties>
-                <exec.args>-XX:+UseZGC --add-opens java.base/java.net=com.sothawo.mapjfx --add-modules jdk.incubator.foreign --enable-native-access=org.librawfx --add-exports=javafx.graphics/com.sun.javafx.iio=org.librawfx --add-exports=javafx.graphics/com.sun.javafx.iio.common=org.librawfx --add-exports=javafx.graphics/com.sun.glass.ui=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.application=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio=PhotoSlide --add-exports=javafx.graphics/com.sun.javafx.iio.common=PhotoSlide --add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=org.controlsfx.controls --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls --add-opens=javafx.controls/javafx.scene.control.skin=org.controlsfx.controls --add-opens=javafx.graphics/javafx.scene=org.controlsfx.controls --module-path ${project.build.directory}/modules --module ${moduleName}/${mainClass}</exec.args>
-                <exec.executable>java</exec.executable>
-            </properties>
-        </action>
-        <action>
-            <actionName>build</actionName>
-            <packagings>
-                <packaging>*</packaging>
-            </packagings>
-            <goals>
-                <goal>verify</goal>
-            </goals>
-        </action>
-    </actions>
+    </action>
+    <action>
+        <actionName>build</actionName>
+        <packagings>
+            <packaging>*</packaging>
+        </packagings>
+        <goals>
+            <goal>verify</goal>
+        </goals>
+    </action>
+</actions>

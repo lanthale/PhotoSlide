@@ -6,6 +6,8 @@
 package org.photoslide;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -41,6 +43,9 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
 
@@ -149,7 +154,7 @@ public class Utility {
         try {
             MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
             Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
-            long memory = Long.parseLong(attribute.toString()) / 1024;            
+            long memory = Long.parseLong(attribute.toString()) / 1024;
             return memory;
         } catch (MalformedObjectNameException | MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException ex) {
             Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
@@ -158,10 +163,10 @@ public class Utility {
     }
 
     public String getAppVersion() {
-        String version = "";
-        InputStream resourceAsStream
+        String version = "1.2.1";
+        /*InputStream resourceAsStream
                 = this.getClass().getResourceAsStream(
-                        "/META-INF/maven/org.photoslide/PhotoSlide/pom.properties"
+                        "/maven-archiver/pom.properties"
                 );
         Properties prop = new Properties();
         try {
@@ -169,7 +174,7 @@ public class Utility {
             version = (String) prop.get("version");
         } catch (IOException ex) {
             Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } */       
         return version;
     }
 

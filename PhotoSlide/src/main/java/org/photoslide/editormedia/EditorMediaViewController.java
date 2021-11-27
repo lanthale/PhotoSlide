@@ -112,25 +112,6 @@ public class EditorMediaViewController implements Initializable {
         stackPane.setOnSwipeLeft((t) -> {
             previousMediaItem();
         });
-        box = new VBox();
-        box.setFillWidth(true);
-        box.setPrefSize(700, 100);
-        box.setMaxSize(700, 100);
-        box.setAlignment(Pos.CENTER);        
-        mediaGrid = new GridView<>();
-        factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
-        mediaGrid.setCellFactory(factory);
-        mediaGridView = new PopOver();
-        mediaGridView.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
-        mediaGridView.setAnimated(true);
-        mediaGridView.setCloseButtonEnabled(true);
-        mediaGridView.setFadeInDuration(Duration.millis(50));
-        mediaGridView.setFadeOutDuration(Duration.millis(50));
-        mediaGridView.setAutoHide(true);
-        mediaGridView.setContentNode(box);        
-        if (!box.getChildren().contains(mediaGrid)) {
-            box.getChildren().add(mediaGrid);
-        }
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -152,7 +133,7 @@ public class EditorMediaViewController implements Initializable {
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
-        }
+        }        
         stackPane.requestFocus();
         selectedMediaFile = f;
         editorImageView.setImage(null);
@@ -265,6 +246,25 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void showGridViewAction(ActionEvent event) {
+        box = new VBox();
+        box.setFillWidth(true);
+        box.setPrefSize(700, 100);
+        box.setMaxSize(700, 100);
+        box.setAlignment(Pos.CENTER);
+        mediaGrid = new GridView<>();
+        factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
+        mediaGrid.setCellFactory(factory);
+        mediaGridView = new PopOver();
+        mediaGridView.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        mediaGridView.setAnimated(true);
+        mediaGridView.setCloseButtonEnabled(true);
+        mediaGridView.setFadeInDuration(Duration.millis(50));
+        mediaGridView.setFadeOutDuration(Duration.millis(50));
+        mediaGridView.setAutoHide(true);
+        mediaGridView.setContentNode(box);
+        if (!box.getChildren().contains(mediaGrid)) {
+            box.getChildren().add(mediaGrid);
+        }
         mediaGridView.show(showGridViewButton);
         if (mediaGrid.getItems().isEmpty()) {
             mediaGrid.setItems(lightTableController.getSortedMediaList());
@@ -297,9 +297,8 @@ public class EditorMediaViewController implements Initializable {
                     deleteAction();
                 }
                 t.consume();
-            });
+            });            
             factory.getSelectionModel().add(selectedMediaFile);            
-            selectMediaFileInGrid(selectedMediaFile);
         }
     }
 

@@ -82,7 +82,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     private void updateIconSize() {
-        DoubleBinding subtract = rootPane.heightProperty().subtract(42);
+        DoubleBinding subtract = rootPane.heightProperty().subtract(28);
         DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
         DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
 
@@ -203,6 +203,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
+            setStacked(item.isStacked(), item.getStackPos());
             if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }

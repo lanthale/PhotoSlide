@@ -18,7 +18,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -223,16 +222,26 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void handleGridCellSelection(Event t) throws MalformedURLException {
-        if (t.getTarget().getClass().equals(MediaFile.class)) {
-            Node target = Utility.pick((MediaGridCell) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
+        /*if (t.getTarget().getClass().equals(StackPane.class)) {
+            Node target = Utility.pick((StackPane) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target.getClass().equals(FontIcon.class)) {
-                handleStackButtonAction(t, ((MediaFile) t.getTarget()).getStackName(), (MediaGridCell) t.getSource());
+                handleStackButtonAction(t, ((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
                 if (lightController.getImageView().getImage() != null) {
                     if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
                         return;
                     }
                 }
             }
+        }*/
+        if (t.getTarget().getClass().equals(FontIcon.class)) {
+            System.out.println("FontIcon pressed");
+            handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
+            /*if (lightController.getImageView().getImage() != null) {
+                if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
+                    return;
+                }
+            }*/
+            t.consume();
         }
         if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
             lightController.getStackButton().setText("Unstack");
@@ -284,7 +293,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 alert.hide();
                 return;
             }
-        }        
+        }
         if (lightController.getShowPreviewPaneToggle().isSelected() == false) {
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -635,7 +644,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         return null;
-    }    
+    }
 
     /**
      * Scrolls the GridView one row up.
@@ -720,23 +729,30 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         return ret;
     }
 
-    public void handleStackButtonAction(Event m, String stackName, Node anchore) {
+    public void handleStackButtonAction(String stackName, Node anchore) {
         FilteredList<MediaFile> filteredMediaList = lightController.getFullMediaList().filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackName));
         SortedList<MediaFile> sortedMediaList = new SortedList<>(filteredMediaList);
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         sortedMediaList.setComparator(stackNameComparator);
-        GridView<MediaFile> imageGrid = new GridView<>(sortedMediaList);
+        GridView<MediaFile> mediaGrid = new GridView<>();
         MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(executor, lightController, sortedMediaList);
-        imageGrid.setCellFactory(factory);
-        double defaultCellWidth = imageGrid.getCellWidth();
-        double defaultCellHight = imageGrid.getCellHeight();
-        imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
-        imageGrid.setCellHeight(defaultCellHight + 3 * 20);
+        mediaGrid.setCellFactory(factory);
+        double defaultCellWidth = mediaGrid.getCellWidth();
+        double defaultCellHight = mediaGrid.getCellHeight();
+        mediaGrid.setCellWidth(defaultCellWidth + 3 * 10);
+        mediaGrid.setCellHeight(defaultCellHight + 3 * 10);
+        VBox vbox = new VBox();
+        vbox.setSpacing(5);
         PopOver popOver = new PopOver();
         popOver.setDetachable(false);
         popOver.setAnimated(true);
-        VBox vbox = new VBox();
-        vbox.setSpacing(5);
+        popOver.setContentNode(vbox);
+        popOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        popOver.setFadeInDuration(new Duration(1000));
+        popOver.setCloseButtonEnabled(true);
+        popOver.setAutoFix(true);
+        popOver.setHeaderAlwaysVisible(true);
+        popOver.setTitle("Stack view and ordering via drag and drop");
         HBox hb = new HBox();
         hb.setSpacing(5);
         hb.setAlignment(Pos.CENTER);
@@ -781,31 +797,27 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         hb.getChildren().add(orderOneDownButton);
         hb.getChildren().add(orderOneUpButton);
         hb.getChildren().add(orderToTheButtomButton);
-        Slider zoomSlider = new Slider(0, 100, 20);
+        Slider zoomSlider = new Slider(0, 100, 10);
         zoomSlider.setScaleX(0.7);
         zoomSlider.setScaleY(0.7);
         zoomSlider.setOrientation(Orientation.HORIZONTAL);
         zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
-            imageGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
-            imageGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
+            mediaGrid.setCellWidth(defaultCellWidth + 3 * zoomSlider.getValue());
+            mediaGrid.setCellHeight(defaultCellHight + 3 * zoomSlider.getValue());
         });
         hb.getChildren().add(zoomSlider);
         vbox.getChildren().add(hb);
-        vbox.getChildren().add(imageGrid);
+        vbox.getChildren().add(mediaGrid);
         vbox.setAlignment(Pos.TOP_LEFT);
         int width = sortedMediaList.size() * 95 * 2;
         if (width > 600) {
             width = 600;
         }
         vbox.setPrefSize(width, 130 + 3 * 20);
-        popOver.setContentNode(vbox);
-        popOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
-        popOver.setFadeInDuration(new Duration(1000));
-        popOver.setCloseButtonEnabled(true);
-        popOver.setAutoFix(true);
-        popOver.setHeaderAlwaysVisible(true);
-        popOver.setTitle("Stack view and ordering via drag and drop");
         popOver.show(anchore);
+        if (mediaGrid.getItems().isEmpty()) {
+           mediaGrid.setItems(sortedMediaList); 
+        }
         popOver.requestFocus();
         popOver.setOnHidden((t) -> {
             if (factory.isChanged()) {
@@ -815,7 +827,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         false, false, false, false, false, true, null));
             }
         });
-    }    
-    
+    }
 
 }

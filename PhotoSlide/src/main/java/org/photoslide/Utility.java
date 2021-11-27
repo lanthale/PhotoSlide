@@ -6,16 +6,12 @@
 package org.photoslide;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
@@ -43,9 +39,6 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
 
@@ -163,18 +156,18 @@ public class Utility {
     }
 
     public String getAppVersion() {
-        String version = "1.2.1";
-        /*InputStream resourceAsStream
-                = this.getClass().getResourceAsStream(
-                        "/maven-archiver/pom.properties"
-                );
+        String version = "";                
+        InputStream resourceAsStream
+                = getClass().getClassLoader().getResourceAsStream(
+                        "properties-from-pom.properties"
+                );        
         Properties prop = new Properties();
         try {
             prop.load(resourceAsStream);
-            version = (String) prop.get("version");
+            version = (String) prop.get("app.version");
         } catch (IOException ex) {
             Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
-        } */       
+        }    
         return version;
     }
 

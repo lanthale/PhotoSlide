@@ -82,7 +82,7 @@ import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
 
-/*import org.openimaj.image.ImageUtilities;
+import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.processing.face.detection.DetectedFace;
 import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
 import boofcv.abst.tracker.TrackerObjectQuad;
@@ -94,7 +94,8 @@ import boofcv.io.wrapper.DefaultMediaManager;
 import boofcv.misc.BoofMiscOps;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
-import georegression.struct.shapes.Quadrilateral_F64;*/
+import georegression.struct.shapes.Quadrilateral_F64;
+import java.awt.image.BufferedImage;
 /**
  *
  * @author selfemp
@@ -1127,7 +1128,7 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void faceRecognitationAction(ActionEvent event) {
-        /*HaarCascadeDetector detector = new HaarCascadeDetector(100);
+        HaarCascadeDetector detector = new HaarCascadeDetector(100);
         List<DetectedFace> faces = null;
         MediaManager media = DefaultMediaManager.INSTANCE;
         String fileName = "file.jpg";
@@ -1145,7 +1146,7 @@ public class LighttableController implements Initializable {
         f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY(),
         f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight());
         break;
-        }*/
+        }
     }
 
     public Button getBookmarkButton() {

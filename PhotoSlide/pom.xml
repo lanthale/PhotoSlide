@@ -64,8 +64,12 @@
             <releases>
                 <enabled>false</enabled>
             </releases>
-        </repository>                  
-    </repositories>        
+        </repository>         
+        <repository>
+            <id>OpenIMAJ maven releases repository</id>
+            <url>https://maven.openimaj.org</url>
+        </repository>        
+    </repositories>                        
     
     <pluginRepositories>
         <pluginRepository>

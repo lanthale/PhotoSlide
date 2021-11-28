@@ -71,11 +71,11 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 
 
 ## Steps to create your own build
-- Install AdoptOpenJDK 17 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 16 (usage of Shendoah GC) or later.
+- Install AdoptOpenJDK 17 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 16 (usage of ZGC GC) or later.
 - Set env var JAVA_HOME
 - Install maven
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools
-- Run maven with: mvn clean compile package -Ppackage -f PhotoSlide/pom.xml
+- Run maven with: mvn clean install -Ppackage -f PhotoSlide/pom.xml
 
 If you are stuck at JDK 11 than remove in pom.xml the dependency for librawfx and comment in App.java out the line `RAWImageLoaderFactory.install();` and you are ready to build it under JDK11.
 

@@ -6,13 +6,14 @@
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <?import org.kordamp.ikonli.javafx.StackedFontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
     <children>
         <Label layoutX="16.0" layoutY="14.0" text="Photo store" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
             <font>
@@ -25,35 +26,20 @@
                <graphic>
                   <FontIcon iconLiteral="ti-plus" />
                </graphic>
+               <tooltip>
+                  <Tooltip text="Creates a new event (directory)" />
+               </tooltip>
                 </Button>
             <Button id="toolbutton" fx:id="refreshButton" mnemonicParsing="false" onAction="#refreshMenuAction">
                <graphic>
                   <FontIcon iconLiteral="ti-loop" />
                </graphic>
+               <tooltip>
+                  <Tooltip text="Refreshes the directory tree" />
+               </tooltip>
             </Button>
             <MenuButton fx:id="menuButton" mnemonicParsing="false">
               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#addCollectionAction" text="Add collection">
-                     <graphic>
-                        <StackedFontIcon alignment="CENTER_LEFT">
-                           <children>
-                              <FontIcon iconLiteral="ti-book" />
-                              <FontIcon iconLiteral="ti-plus" iconSize="6" />
-                           </children>
-                        </StackedFontIcon>
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="Remove collection">
-                     <graphic>
-                        <StackedFontIcon alignment="CENTER_RIGHT">
-                           <children>
-                              <FontIcon iconLiteral="ti-book" />
-                              <FontIcon iconLiteral="ti-minus" iconSize="6" />
-                           </children>
-                        </StackedFontIcon>
-                     </graphic>
-                  </MenuItem>
-                  <SeparatorMenuItem mnemonicParsing="false" />
                 <MenuItem mnemonicParsing="false" onAction="#createEventAction" text="Create a new event">
                      <graphic>
                         <StackedFontIcon>
@@ -87,6 +73,27 @@
                   <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteEventAction" text="Delete event">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" />
+                     </graphic>
+                  </MenuItem>
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#addCollectionAction" text="Add collection">
+                     <graphic>
+                        <StackedFontIcon alignment="CENTER_LEFT">
+                           <children>
+                              <FontIcon iconLiteral="ti-book" />
+                              <FontIcon iconLiteral="ti-plus" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="Remove collection">
+                     <graphic>
+                        <StackedFontIcon alignment="CENTER_RIGHT">
+                           <children>
+                              <FontIcon iconLiteral="ti-book" />
+                              <FontIcon iconLiteral="ti-minus" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
                      </graphic>
                   </MenuItem>
               </items>

@@ -1,11 +1,7 @@
 # PhotoSlide
 This is application uses concepts from Lightzone and Lightroom and represents a simple Photo management application with a modern and reactive user interface written in JavaFX.
 
-[
-  ![Donate with PayPal]
-  (https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png)
-]
-(https://www.paypal.com/donate/?hosted_button_id=CXWX6CAQ5MMV4)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](clemens@lanthaler.cc)
 
 Actually it is only a picture viewer / video file viewer with some small editing features and metadata support.
 

@@ -278,7 +278,7 @@ public class SoftwareUpdater {
 
     private void downloadUpdate(String nextAppVersion) {
         Alert downloadDialog = new Alert(Alert.AlertType.INFORMATION, "Download software", ButtonType.CANCEL);
-        downloadDialog.setHeaderText("Downloading new Photoslide software");
+        downloadDialog.setHeaderText("Downloading new Photoslide "+nextAppVersion+" software");
         downloadDialog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
         downloadDialog.setTitle("Downloadmanager");
         ProgressBar pgr = new ProgressBar();

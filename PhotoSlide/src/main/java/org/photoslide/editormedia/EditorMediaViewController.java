@@ -112,6 +112,14 @@ public class EditorMediaViewController implements Initializable {
         stackPane.setOnSwipeLeft((t) -> {
             previousMediaItem();
         });
+        mediaGridView = new PopOver();
+        mediaGridView.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        mediaGridView.setAnimated(true);
+        mediaGridView.setCloseButtonEnabled(true);
+        mediaGridView.setFadeInDuration(Duration.millis(50));
+        mediaGridView.setFadeOutDuration(Duration.millis(50));
+        mediaGridView.setAutoHide(true);
+        mediaGridView.setHideOnEscape(true);
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -246,6 +254,9 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void showGridViewAction(ActionEvent event) {
+        if (mediaGridView.isShowing()){
+            mediaGridView.hide();
+        }
         box = new VBox();
         box.setFillWidth(true);
         box.setPrefSize(700, 100);
@@ -253,14 +264,7 @@ public class EditorMediaViewController implements Initializable {
         box.setAlignment(Pos.CENTER);
         mediaGrid = new GridView<>();
         factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
-        mediaGrid.setCellFactory(factory);
-        mediaGridView = new PopOver();
-        mediaGridView.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
-        mediaGridView.setAnimated(true);
-        mediaGridView.setCloseButtonEnabled(true);
-        mediaGridView.setFadeInDuration(Duration.millis(50));
-        mediaGridView.setFadeOutDuration(Duration.millis(50));
-        mediaGridView.setAutoHide(true);
+        mediaGrid.setCellFactory(factory);        
         mediaGridView.setContentNode(box);
         if (!box.getChildren().contains(mediaGrid)) {
             box.getChildren().add(mediaGrid);

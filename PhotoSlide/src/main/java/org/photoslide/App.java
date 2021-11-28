@@ -106,8 +106,8 @@ public class App extends Application {
 
         stage.setOnCloseRequest((final WindowEvent event) -> {
             MainViewController controller = fxmlLoader.getController();
-            saveSettings(stage, controller);
-            controller.Shutdown();
+            saveSettings(stage, controller);            
+            System.exit(0);
         });
 
         scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);

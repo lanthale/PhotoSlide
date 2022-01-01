@@ -670,7 +670,7 @@ public class MetadataController implements Initializable {
         if (mfKeyw == null) {
             mfKeyw = "";
         }
-        StringTokenizer defaultTokenizer = new StringTokenizer(mf.getKeywords(), ";");
+        StringTokenizer defaultTokenizer = new StringTokenizer(mfKeyw, ";");
         while (defaultTokenizer.hasMoreTokens()) {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }

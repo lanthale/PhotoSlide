@@ -54,6 +54,8 @@ public class ExportDialogController implements Initializable {
     private CheckBox exportBasicMetadataBox;
     @FXML
     private CheckBox overwriteFilesBox;
+    @FXML
+    private Label errorLabelDirectory;
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -67,7 +69,7 @@ public class ExportDialogController implements Initializable {
                     qualitySlider.setDisable(false);
                     qualitySlider.setMin(40);
                     qualitySlider.setMax(100);                    
-                    qualitySlider.setValue(96);
+                    qualitySlider.setValue(94);
                     qualitySlider.setMajorTickUnit(1);
                     qualitySlider.setMinorTickCount(0);
                     qualitySlider.setBlockIncrement(1);
@@ -105,6 +107,8 @@ public class ExportDialogController implements Initializable {
             }
             if (selectedItem.equalsIgnoreCase("Orginial filename")) {
                 filenamePrefixText.setDisable(true);
+                filenamePrefixText.clear();
+                filenamePrefixText.setText("<Original>");
             }
         });
         fileSequenceCombo.getSelectionModel().select("Title/Caption based");
@@ -173,6 +177,10 @@ public class ExportDialogController implements Initializable {
 
     public CheckBox getOverwriteFilesBox() {
         return overwriteFilesBox;
+    }
+
+    public Label getErrorLabelDirectory() {
+        return errorLabelDirectory;
     }
     
     

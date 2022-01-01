@@ -7,27 +7,35 @@ package org.photoslide;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collection;
 import java.util.ResourceBundle;
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.photoslide.browsermetadata.Tag;
 
 /**
  *
  * @author selfemp
  */
 public class ExportDialogController implements Initializable {
-    
+
+    private Collection<String> keywordList;
     @FXML
     private ComboBox<String> fileSequenceCombo;
     @FXML
@@ -38,7 +46,7 @@ public class ExportDialogController implements Initializable {
     private ComboBox<String> fileFormatCombo;
     @FXML
     private Label exampleLabel;
-    
+
     private Stage root;
     @FXML
     private CheckBox exportSelectedBox;
@@ -47,7 +55,7 @@ public class ExportDialogController implements Initializable {
     @FXML
     private Slider qualitySlider;
     @FXML
-    private Tooltip qSliderToolTip;    
+    private Tooltip qSliderToolTip;
     @FXML
     private CheckBox exportAllMetaData;
     @FXML
@@ -56,7 +64,19 @@ public class ExportDialogController implements Initializable {
     private CheckBox overwriteFilesBox;
     @FXML
     private Label errorLabelDirectory;
-    
+    @FXML
+    private FlowPane keywordText;
+    @FXML
+    private TextField addKeywordTextField;
+    @FXML
+    private CheckBox replaceKeywordChoiceBox;
+    @FXML
+    private CheckBox replaceTitleBox;
+    @FXML
+    private TextField titleTextBox;
+    @FXML
+    private Button plusButton;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         fileFormatCombo.getItems().add("JPG");
@@ -68,8 +88,8 @@ public class ExportDialogController implements Initializable {
                 case "JPG":
                     qualitySlider.setDisable(false);
                     qualitySlider.setMin(40);
-                    qualitySlider.setMax(100);                    
-                    qualitySlider.setValue(94);
+                    qualitySlider.setMax(100);
+                    qualitySlider.setValue(93);
                     qualitySlider.setMajorTickUnit(1);
                     qualitySlider.setMinorTickCount(0);
                     qualitySlider.setBlockIncrement(1);
@@ -77,7 +97,7 @@ public class ExportDialogController implements Initializable {
                 case "PNG":
                     qualitySlider.setDisable(false);
                     qualitySlider.setMin(1);
-                    qualitySlider.setMax(9);                    
+                    qualitySlider.setMax(9);
                     qualitySlider.setValue(6);
                     qualitySlider.setMajorTickUnit(1);
                     qualitySlider.setMinorTickCount(0);
@@ -90,8 +110,8 @@ public class ExportDialogController implements Initializable {
         });
         exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));
         qualitySlider.valueChangingProperty().addListener((o) -> {
-            
-        });        
+
+        });
         qSliderToolTip.textProperty().bind(qualitySlider.valueProperty().asString());
         qSliderToolTip.textProperty().bind(Bindings.format("%.0f", qualitySlider.valueProperty()));
         qSliderToolTip.setShowDelay(Duration.ZERO);
@@ -124,8 +144,25 @@ public class ExportDialogController implements Initializable {
                 exportBasicMetadataBox.setSelected(false);
             }
         });
+        replaceTitleBox.setOnAction((t) -> {
+            if (replaceTitleBox.isSelected()) {
+                titleTextBox.setDisable(false);
+            } else {
+                titleTextBox.setDisable(true);
+            }
+        });
+        replaceKeywordChoiceBox.setOnAction((t) -> {
+            if (replaceKeywordChoiceBox.isSelected()) {
+                keywordText.setDisable(false);
+                addKeywordTextField.setDisable(false);
+            } else {
+                keywordText.setDisable(true);
+                addKeywordTextField.setDisable(true);
+            }
+        });
+        keywordList = FXCollections.observableArrayList();
     }
-    
+
     @FXML
     private void outputSelectionButtonAction(ActionEvent event) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
@@ -133,23 +170,23 @@ public class ExportDialogController implements Initializable {
         File selectedDirectory = directoryChooser.showDialog((Stage) fileSequenceCombo.getScene().getWindow());
         outputDirText.setText(selectedDirectory.getAbsolutePath());
     }
-    
+
     public String getFileFormat() {
         return fileFormatCombo.getSelectionModel().getSelectedItem();
     }
-    
+
     public String getFilename() {
         return filenamePrefixText.getText() + "_";
     }
-    
+
     public String getOutputDir() {
         return outputDirText.getText();
     }
-    
+
     public void setInitOutDir(String dir) {
         outputDirText.setText(dir);
     }
-    
+
     public void setTitel(String titel) {
         if (titel != null) {
             filenamePrefixText.setText(titel);
@@ -158,19 +195,19 @@ public class ExportDialogController implements Initializable {
             fileSequenceCombo.getSelectionModel().select("Custom filname");
         }
     }
-    
+
     public CheckBox getExportSelectedBox() {
         return exportSelectedBox;
     }
-    
+
     public CheckBox getExportDeletedFileBox() {
         return exportDeletedFileBox;
-    }    
-    
+    }
+
     public CheckBox getExportAllMetaData() {
         return exportAllMetaData;
     }
-    
+
     public CheckBox getExportBasicMetadataBox() {
         return exportBasicMetadataBox;
     }
@@ -182,7 +219,49 @@ public class ExportDialogController implements Initializable {
     public Label getErrorLabelDirectory() {
         return errorLabelDirectory;
     }
-    
-    
-    
+
+    @FXML
+    private void addKeywordAction(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
+            addKeywordTextField.clear();
+            event.consume();
+        }
+    }
+
+    public Collection<String> getKeywordList() {
+        return keywordList;
+    }
+
+    public String getKeywordsAsString() {
+        StringBuilder sb = new StringBuilder();
+        if (!keywordText.getChildren().isEmpty()) {
+            keywordText.getChildren().forEach((tagitem) -> {
+                sb.append(((Tag) tagitem).getText()).append(";");
+            });
+            String substring = sb.toString().substring(0, sb.toString().length() - 1);
+            return substring;
+        } else {
+            return "";
+        }
+    }
+
+    public String getTitle() {
+        return titleTextBox.getText();
+    }
+
+    public CheckBox getReplaceTitleBox() {
+        return replaceTitleBox;
+    }
+
+    public CheckBox getReplaceKeywordChoiceBox() {
+        return replaceKeywordChoiceBox;
+    }
+
+    @FXML
+    private void plusButtonAction(ActionEvent event) {
+        keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
+        addKeywordTextField.clear();
+    }
+
 }

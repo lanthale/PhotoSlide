@@ -374,7 +374,7 @@ public class MainViewController implements Initializable {
                                         break;
                                 }
                                 String outFileStr;
-                                System.out.println("Option: "+diag.getController().getFilename());
+                                System.out.println("Option: " + diag.getController().getFilename());
                                 if (diag.getController().getFilename().equalsIgnoreCase("<Original>_")) {
                                     outFileStr = outputDir + File.separator + mediaItem.getName() + (i + 1) + "." + imageType.getExtension();
                                 } else {
@@ -433,7 +433,7 @@ public class MainViewController implements Initializable {
                                         break;
                                     case JPG:
                                         JPGOptions jpegOptions = new JPGOptions();
-                                        jpegOptions.setQuality(96);
+                                        jpegOptions.setQuality(93);
                                         jpegOptions.setColorSpace(JPGOptions.COLOR_SPACE_RGB);
                                         jpegOptions.setWriteICCProfile(true);
                                         builder.imageOptions(jpegOptions);
@@ -451,10 +451,22 @@ public class MainViewController implements Initializable {
                                 fo.close();
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
+                                    if (diag.getController().getReplaceTitleBox().isSelected()) {
+                                        mediaItem.setTitle(diag.getController().getTitle());
+                                    }
+                                    if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
+                                        mediaItem.setKeywords(diag.getController().getKeywordsAsString());
+                                    }
                                     metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension());
                                 }
                                 if (diag.getController().getExportBasicMetadataBox().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
+                                    if (diag.getController().getReplaceTitleBox().isSelected()) {
+                                        mediaItem.setTitle(diag.getController().getTitle());
+                                    }
+                                    if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
+                                        mediaItem.setKeywords(diag.getController().getKeywordsAsString());
+                                    }
                                     metadataPaneController.exportBasicMetadata(mediaItem, outFileStr);
                                 }
                             } catch (FileNotFoundException ex) {

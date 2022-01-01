@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="306.0" prefWidth="511.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="538.0" prefWidth="511.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="161.0" />
@@ -54,5 +59,35 @@
          </tooltip>
       </Slider>
       <Label fx:id="errorLabelDirectory" layoutX="367.0" layoutY="143.0" text="Label" textFill="#ff0101" visible="false" />
+      <VBox layoutX="81.0" layoutY="356.0" prefHeight="123.0" prefWidth="350.0" spacing="2.0">
+         <children>
+            <CheckBox fx:id="replaceKeywordChoiceBox" mnemonicParsing="false" text="Replace keywords during export" />
+            <ScrollPane fitToWidth="true" minViewportHeight="90.0" minViewportWidth="100.0" prefViewportWidth="230.0">
+               <content>
+                  <FlowPane fx:id="keywordText" disable="true" hgap="5.0" prefHeight="100.0" prefWidth="230.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </FlowPane>
+               </content>
+            </ScrollPane>
+            <HBox spacing="5.0">
+               <children>
+                  <TextField fx:id="addKeywordTextField" disable="true" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="Add Keywords..." HBox.hgrow="ALWAYS" />
+                  <Button fx:id="plusButton" mnemonicParsing="false" onAction="#plusButtonAction">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-plus" />
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <HBox alignment="CENTER_LEFT" layoutX="81.0" layoutY="319.0" prefHeight="25.0" prefWidth="350.0" spacing="10.0">
+         <children>
+            <CheckBox fx:id="replaceTitleBox" mnemonicParsing="false" text="Replace Title during export" />
+            <TextField fx:id="titleTextBox" disable="true" HBox.hgrow="ALWAYS" />
+         </children>
+      </HBox>
    </children>
 </AnchorPane>

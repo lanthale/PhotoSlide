@@ -559,7 +559,7 @@ public class MainViewController implements Initializable {
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
         Text txtHeader = new Text("PhotoSlide\n" + appVersion + "\n");
-        txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: #e17c08;-fx-font-size:16pt;-fx-font-weight: bold;");
+        txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: white;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
@@ -576,7 +576,7 @@ public class MainViewController implements Initializable {
                          License: GPL v3
                          (c) lanthale 2021""";
         Text txt = new Text(aboutText);
-        txt.setStyle("-fx-fill: #e17c08;-fx-font-size:10pt;");
+        txt.setStyle("-fx-fill: white;-fx-font-size:10pt;");
         txt.setLineSpacing(4);
         txt.setTextAlignment(TextAlignment.LEFT);
         txt.setTextOrigin(VPos.CENTER);

@@ -1291,9 +1291,13 @@ public class MetadataController implements Initializable {
         VBox vb = new VBox();
         vb.setPadding(new Insets(10));
         vb.setSpacing(5);
+        popOver.setContentNode(vb);
+        popOver.show(gpsPosButton);
         HBox hb = new HBox();
+        hb.setAlignment(Pos.CENTER_LEFT);
         hb.setSpacing(5);
         CustomTextField searchField = new CustomTextField();
+        HBox.setHgrow(searchField, Priority.ALWAYS);
         Button searchButton = new Button();
         searchButton.setGraphic(new FontIcon("ti-search:16"));
         searchButton.setId("toolbutton");
@@ -1304,7 +1308,7 @@ public class MetadataController implements Initializable {
             event.consume();
         });
         Button saveButton=new Button();
-        saveButton.setGraphic(new FontIcon("ti-save:16"));
+        saveButton.setGraphic(new FontIcon("ti-save:20"));
         saveButton.setId("toolbutton");
         saveButton.setOnAction((q) -> {
             try {
@@ -1316,13 +1320,16 @@ public class MetadataController implements Initializable {
         hb.getChildren().add(new Label("Place:"));
         hb.getChildren().add(searchField);
         hb.getChildren().add(searchButton);
-        hb.getChildren().add(saveButton);
-        HBox hbHeight = new HBox();
-        hbHeight.setSpacing(5);
-        hbHeight.getChildren().add(new Label("Heigth:"));
+        hb.getChildren().add(new Label("Heigth:"));
         CustomTextField heightField=new CustomTextField();
-        hbHeight.getChildren().add(heightField);
-        vb.getChildren().add(hbHeight);
+        heightField.setPrefWidth(80);
+        heightField.setMinWidth(80);
+        hb.getChildren().add(heightField);
+        HBox hbSaveBox=new HBox();
+        hbSaveBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(hbSaveBox, Priority.ALWAYS);
+        hbSaveBox.getChildren().add(saveButton);
+        vb.getChildren().add(hbSaveBox);
         vb.getChildren().add(hb);
         map.setZoom(19);
         double lat = actualMediaFile.getGpsLatPosAsDouble();
@@ -1340,8 +1347,6 @@ public class MetadataController implements Initializable {
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
-        popOver.setContentNode(vb);
-        popOver.show(gpsPosButton);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }

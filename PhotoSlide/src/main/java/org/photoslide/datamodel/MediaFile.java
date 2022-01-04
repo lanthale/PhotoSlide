@@ -46,6 +46,10 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Callback;
+import org.photoslide.browsermetadata.Coordinate;
+import org.photoslide.browsermetadata.DMSCoordinate;
+import org.photoslide.browsermetadata.DegreeCoordinate;
+import org.photoslide.browsermetadata.Point;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -81,7 +85,7 @@ public class MediaFile {
     private FileTime creationTime;
     private boolean subViewSelected;
     private ObservableList<ImageFilter> filterList;
-    private String gpsPosition;
+    private Point gpsPosition;
     private LocalDateTime gpsDateTime;
     private double gpsHeight;
     private final SimpleBooleanProperty bookmarked;
@@ -239,7 +243,7 @@ public class MediaFile {
                 prop.setProperty("gpsHeight", "" + gpsHeight);
             }
             if (gpsPosition != null) {
-                prop.setProperty("gpsPosition", gpsPosition);
+                prop.setProperty("gpsPosition", gpsPosition.latitude + ";" + gpsPosition.longitude);
             }
             prop.store(output, null);
 
@@ -343,11 +347,15 @@ public class MediaFile {
                     }
                 }
             }
-            if (gpsHeight != -1) {
+            if (prop.getProperty("gpsHeight", null) != null) {
                 gpsHeight = Double.parseDouble(prop.getProperty("gpsHeight", "-1"));
             }
-            if (gpsPosition != null) {
-                gpsPosition = prop.getProperty("gpsPosition", null);
+            if (prop.getProperty("gpsPosition") != null) {
+                String property = prop.getProperty("gpsPosition");
+                StringTokenizer token = new StringTokenizer(property, ";");
+                double lat = Double.parseDouble(token.nextToken());
+                double lon = Double.parseDouble(token.nextToken());
+                gpsPosition = new Point(lat, lon);
             }
         } catch (IOException ex) {
             //Do nothing if file not found
@@ -626,55 +634,128 @@ public class MediaFile {
     }
 
     public String getGpsPosition() {
-        return gpsPosition;
+        String latRef, lonRef;
+        DegreeCoordinate fromDegreesLat = Coordinate.fromDegrees(gpsPosition.latitude);
+        DegreeCoordinate fromDegreesLon = Coordinate.fromDegrees(gpsPosition.longitude);
+        if (gpsPosition.latitude < 0) {
+            latRef = "S";
+        } else {
+            latRef = "N";
+        }
+        if (gpsPosition.longitude < 0) {
+            lonRef = "W";
+        } else {
+            lonRef = "E";
+        }
+        DMSCoordinate toDMSCoordinateLat = fromDegreesLat.toDMSCoordinate();
+        DMSCoordinate toDMSCoordinateLon = fromDegreesLon.toDMSCoordinate();
+        String ret = toDMSCoordinateLat.wholeDegrees + "°" + toDMSCoordinateLat.minutes + "'" + toDMSCoordinateLat.seconds + "''" + latRef;
+        ret = ret + ";" + toDMSCoordinateLon.wholeDegrees + "°" + toDMSCoordinateLon.minutes + "'" + toDMSCoordinateLon.seconds + "''" + lonRef;
+        return ret;
     }
 
     public double getGpsLatPosAsDouble() {
-        if (gpsPosition == null || gpsPosition.equalsIgnoreCase(";")) {
-            return -1;
-        }
-        String degree = gpsPosition.substring(0, gpsPosition.indexOf("°"));
-        String minutes = gpsPosition.substring(gpsPosition.indexOf("°") + 1, gpsPosition.indexOf("'"));
-        String seconds = gpsPosition.substring(gpsPosition.indexOf("'") + 1, gpsPosition.indexOf("\""));
-        if (seconds.contains(",")) {
-            seconds = seconds.replace(",", ".");
-        }
-        if (minutes.contains(",")) {
-            minutes = minutes.replace(",", ".");
-        }
-        double d = Double.parseDouble(degree);
-        double m = Double.parseDouble(minutes);
-        double s = Double.parseDouble(seconds);
-        double dd = Math.signum(d) * (Math.abs(d) + (m / 60.0) + (s / 3600.0));
-        return dd;
-    }
+        return gpsPosition.latitude;
 
+    }
+    
     public double getGpsLonPosAsDouble() {
-        if (gpsPosition == null || gpsPosition.equalsIgnoreCase(";")) {
+        return gpsPosition.longitude;
+
+    }
+
+    public double parseGPSString(String source) {
+        if (source == null || source.equalsIgnoreCase(";")) {
             return -1;
         }
-        int start = gpsPosition.indexOf(";") + 1;
-        String degree = gpsPosition.substring(start, gpsPosition.lastIndexOf("°"));
-        String minutes = gpsPosition.substring(gpsPosition.lastIndexOf("°") + 1, gpsPosition.lastIndexOf("'"));
-        String seconds = gpsPosition.substring(gpsPosition.lastIndexOf("'") + 1, gpsPosition.lastIndexOf("\""));
+        String degree = source.substring(0, source.indexOf("°"));
+        String minutes = source.substring(source.indexOf("°") + 1, source.indexOf("'"));
+        String seconds = source.substring(source.indexOf("'") + 1, source.indexOf("\""));
         if (seconds.contains(",")) {
             seconds = seconds.replace(",", ".");
         }
         if (minutes.contains(",")) {
             minutes = minutes.replace(",", ".");
         }
-        if (degree.contains(",")) {
-            degree = degree.replace(",", ".");
-        }
         double d = Double.parseDouble(degree);
         double m = Double.parseDouble(minutes);
         double s = Double.parseDouble(seconds);
         double dd = Math.signum(d) * (Math.abs(d) + (m / 60.0) + (s / 3600.0));
-        return dd;
+        DMSCoordinate dms = new DMSCoordinate(d, m, s);
+        return dms.toDegreeCoordinate().decimalDegrees;
     }
 
-    public void setGpsPosition(String gpsPosition) {
-        this.gpsPosition = gpsPosition;
+    public int[] getGpsLatPosAsRational() {
+        int[] rat1 = new int[6];
+        DegreeCoordinate fromDegreesLat = Coordinate.fromDegrees(gpsPosition.latitude);
+        DMSCoordinate toDMSCoordinate = fromDegreesLat.toDMSCoordinate();
+        double d = toDMSCoordinate.wholeDegrees;
+        double m = toDMSCoordinate.minutes;
+        double s = toDMSCoordinate.seconds;
+        rat1[0] = (int) d;
+        rat1[1] = 1;
+        rat1[2] = (int) m;
+        rat1[3] = 1;
+        rat1[4] = (int) s;
+        rat1[5] = 100;
+        return rat1;
+    }
+
+    public String getGpsLatPosRef() {
+        String latRef;
+        if (gpsPosition.latitude < 0) {
+            latRef = "S";
+        } else {
+            latRef = "N";
+        }
+        return latRef;
+    }
+
+    public int[] getGpsLonPosAsRational() {
+        int[] rat1 = new int[6];
+        DegreeCoordinate fromDegrees = Coordinate.fromDegrees(gpsPosition.longitude);
+        DMSCoordinate toDMSCoordinate = fromDegrees.toDMSCoordinate();
+        double d = toDMSCoordinate.wholeDegrees;
+        double m = toDMSCoordinate.minutes;
+        double s = toDMSCoordinate.seconds;
+        rat1[0] = (int) d;
+        rat1[1] = 1;
+        rat1[2] = (int) m;
+        rat1[3] = 1;
+        rat1[4] = (int) s;
+        rat1[5] = 100;
+        return rat1;
+    }
+    
+    public int[] getGpsHeightAsRational(){
+      int[] rat1 = new int[2]; 
+      rat1[0]=(int)gpsHeight*10000;
+      rat1[1]=10000;
+      return rat1;
+    }
+
+    public String getGpsLonPosRef() {
+        String lonRef;
+        if (gpsPosition.latitude < 0) {
+            lonRef = "W";
+        } else {
+            lonRef = "E";
+        }
+        return lonRef;
+    }
+
+    public void setGpsPositionFromDMS(String gpsPosition) {
+        StringTokenizer token = new StringTokenizer(gpsPosition, ";");
+        double lat = parseGPSString(token.nextToken());
+        double lon = parseGPSString(token.nextToken());
+        this.gpsPosition = new Point(lat, lon);
+    }
+    
+    public void setGpsPositionFromDegree(String gpsPosition) {
+        StringTokenizer token = new StringTokenizer(gpsPosition, ";");
+        double lat = Double.parseDouble(token.nextToken());
+        double lon = Double.parseDouble(token.nextToken());
+        this.gpsPosition = new Point(lat, lon);
     }
 
     public LocalDateTime getGpsDateTime() {

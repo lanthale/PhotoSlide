@@ -23,7 +23,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
+<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
    <children>
       <Label layoutX="21.0" layoutY="81.0" text="MetaData" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -67,7 +67,7 @@
                                           <TextField fx:id="addKeywordTextField" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="Add Keywords..." />
                                           <HBox alignment="CENTER_RIGHT">
                                              <children>
-                                                <Button mnemonicParsing="false" onAction="#applyKeywordsToAllAction" text="Apply to all images...">
+                                                <Button mnemonicParsing="false" onAction="#applyKeywordsToAllAction" text="Apply to all/sel. mediafiles...">
                                                    <font>
                                                       <Font size="10.0" />
                                                    </font>
@@ -111,9 +111,18 @@
                                           </TextField>
                                        </children>
                                     </GridPane>
+                                    <HBox alignment="TOP_RIGHT">
+                                       <children>
+                                          <Button fx:id="gpsPosButton" mnemonicParsing="false" onAction="#changeGPSPosAction" text="Change GPS position">
+                                             <font>
+                                                <Font size="10.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
                                  </children>
                               </VBox>
-                              <VBox layoutX="18.4" layoutY="315.4" prefHeight="120.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="410.0">
+                              <VBox layoutX="-8.0" layoutY="428.0" prefHeight="120.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="428.0">
                                  <children>
                                     <Label text="Comments" />
                                     <TextArea fx:id="commentText" prefHeight="200.0" prefWidth="200.0" wrapText="true" />

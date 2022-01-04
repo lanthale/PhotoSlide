@@ -91,6 +91,7 @@ import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
 import org.photoslide.bookmarksboard.BookmarkBoardController;
+import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
@@ -374,7 +375,6 @@ public class MainViewController implements Initializable {
                                         break;
                                 }
                                 String outFileStr;
-                                System.out.println("Option: " + diag.getController().getFilename());
                                 if (diag.getController().getFilename().equalsIgnoreCase("<Original>_")) {
                                     outFileStr = outputDir + File.separator + mediaItem.getName() + (i + 1) + "." + imageType.getExtension();
                                 } else {
@@ -457,7 +457,13 @@ public class MainViewController implements Initializable {
                                     if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
                                         mediaItem.setKeywords(diag.getController().getKeywordsAsString());
                                     }
-                                    metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension());
+                                    if (diag.getController().getReplaceGPSCheckBox().isSelected()) {
+                                        if (!diag.getController().getHeightTextField().getText().equalsIgnoreCase("")) {
+                                            mediaItem.setGpsHeight(Double.parseDouble(diag.getController().getHeightTextField().getText()));
+                                        }
+                                        mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
+                                    }
+                                    metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension(), diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }
                                 if (diag.getController().getExportBasicMetadataBox().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
@@ -467,7 +473,13 @@ public class MainViewController implements Initializable {
                                     if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
                                         mediaItem.setKeywords(diag.getController().getKeywordsAsString());
                                     }
-                                    metadataPaneController.exportBasicMetadata(mediaItem, outFileStr);
+                                    if (!diag.getController().getHeightTextField().getText().equalsIgnoreCase("")) {
+                                        mediaItem.setGpsHeight(Double.parseDouble(diag.getController().getHeightTextField().getText()));
+                                    }
+                                    if (diag.getController().getReplaceGPSCheckBox().isSelected()) {
+                                        mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
+                                    }
+                                    metadataPaneController.exportBasicMetadata(mediaItem, outFileStr, diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }
                             } catch (FileNotFoundException ex) {
                                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);

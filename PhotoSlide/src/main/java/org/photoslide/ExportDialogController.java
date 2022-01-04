@@ -5,12 +5,18 @@
  */
 package org.photoslide;
 
+import com.sothawo.mapjfx.Coordinate;
+import com.sothawo.mapjfx.MapType;
+import com.sothawo.mapjfx.MapView;
+import com.sothawo.mapjfx.Marker;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -18,15 +24,23 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.controlsfx.control.textfield.AutoCompletionBinding;
+import org.controlsfx.control.textfield.CustomTextField;
+import org.controlsfx.control.textfield.TextFields;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.browsermetadata.Tag;
 
 /**
@@ -76,6 +90,20 @@ public class ExportDialogController implements Initializable {
     private TextField titleTextBox;
     @FXML
     private Button plusButton;
+    @FXML
+    private CheckBox replaceGPSCheckBox;
+    @FXML
+    private MapView mapView;
+    private GeoCoding geoCoding;
+    @FXML
+    private CustomTextField customField;
+    @FXML
+    private Button searchButton;
+    private Marker markerPos;
+    @FXML
+    private VBox mapSelectionPane;
+    @FXML
+    private CustomTextField heightTextField;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -160,7 +188,24 @@ public class ExportDialogController implements Initializable {
                 addKeywordTextField.setDisable(true);
             }
         });
+        replaceGPSCheckBox.setOnAction((t) -> {
+            if (replaceGPSCheckBox.isSelected()) {
+                mapSelectionPane.setDisable(false);
+            } else {
+                mapSelectionPane.setDisable(true);
+            }
+        });
         keywordList = FXCollections.observableArrayList();
+        geoCoding = new GeoCoding();
+        customField.setRight(new FontIcon("ti-close"));
+        mapView.setMapType(MapType.OSM);
+        mapView.setPrefSize(350, 90);
+        mapView.setMaxSize(350, 90);
+        mapView.initialize();
+        Coordinate c = new Coordinate(48.135125, 11.581981);
+        mapView.setCenter(c);
+        markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
+        mapView.setEffect(new ColorAdjust(0, -0.5, 0, 0));
     }
 
     @FXML
@@ -225,8 +270,8 @@ public class ExportDialogController implements Initializable {
         if (event.getCode() == KeyCode.ENTER) {
             keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
             addKeywordTextField.clear();
-            event.consume();
         }
+        event.consume();
     }
 
     public Collection<String> getKeywordList() {
@@ -263,5 +308,86 @@ public class ExportDialogController implements Initializable {
         keywordText.getChildren().add(new Tag(addKeywordTextField.getText()));
         addKeywordTextField.clear();
     }
+
+    @FXML
+    private void searchButtonAction(ActionEvent event) {
+        String name = customField.getText();
+
+        Task<ObservableList<String>> task = new Task<>() {
+            @Override
+            protected ObservableList<String> call() throws Exception {
+                return geoCoding.geoSearchForNameAsStrings(name);
+            }
+        };
+        task.setOnScheduled((t) -> {
+            ProgressIndicator ind = new ProgressIndicator();
+            ind.setPrefSize(10, 10);
+            ind.setMinSize(10, 10);
+            ind.setMaxSize(10, 10);
+            customField.setRight(ind);
+        });
+        task.setOnSucceeded((t) -> {
+            customField.setRight(null);
+            ObservableList<String> geoSearchForNameAsStrings = (ObservableList<String>) t.getSource().getValue();
+            //set autocomplete
+            AutoCompletionBinding<String> autoComp = TextFields.bindAutoCompletion(customField, geoSearchForNameAsStrings);
+            customField.setText(geoSearchForNameAsStrings.get(0));
+            customField.requestFocus();
+            autoComp.setUserInput(name);
+            autoComp.setOnAutoCompleted((o) -> {
+                int index = geoSearchForNameAsStrings.indexOf(customField.getText());
+                if (index == -1) {
+                    index = 0;
+                }
+                geoCoding.setLastSearchGPSResult(geoCoding.getLastSearchResult().get(index));
+                Coordinate c = new Coordinate(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
+                mapView.setCenter(c);
+                markerPos.setPosition(c).setVisible(true);
+                mapView.addMarker(markerPos);
+            });
+        });
+        task.setOnFailed((t) -> {
+            customField.setRight(null);
+        });
+        new Thread(task).start();
+    }
+
+    @FXML
+    private void searchTFPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            searchButtonAction(null);
+        }
+        event.consume();
+    }
+
+    public CheckBox getReplaceGPSCheckBox() {
+        return replaceGPSCheckBox;
+    }
+    
+    public String getSelectedGPSPos(){
+        if (replaceGPSCheckBox.isSelected()){
+            return geoCoding.getLastSearchGPSResult().getLatitude()+";"+geoCoding.getLastSearchGPSResult().getLongitude();
+        }
+        return "";
+    }
+    
+    public double getSelectedGPSPosLat(){
+        if (replaceGPSCheckBox.isSelected()){
+            return geoCoding.getLastSearchGPSResult().getLatitude();
+        }
+        return -1;
+    }
+    
+    public double getSelectedGPSPosLon(){
+        if (replaceGPSCheckBox.isSelected()){
+            return geoCoding.getLastSearchGPSResult().getLongitude();
+        }
+        return -1;
+    }
+
+    public CustomTextField getHeightTextField() {
+        return heightTextField;
+    }
+    
 
 }

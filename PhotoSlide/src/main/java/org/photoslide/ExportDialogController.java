@@ -6,9 +6,12 @@
 package org.photoslide;
 
 import com.sothawo.mapjfx.Coordinate;
+import com.sothawo.mapjfx.MapCircle;
 import com.sothawo.mapjfx.MapType;
 import com.sothawo.mapjfx.MapView;
 import com.sothawo.mapjfx.Marker;
+import com.sothawo.mapjfx.event.MapViewEvent;
+import fr.dudie.nominatim.model.Address;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
@@ -104,6 +107,7 @@ public class ExportDialogController implements Initializable {
     private VBox mapSelectionPane;
     @FXML
     private CustomTextField heightTextField;
+    private MapCircle circle;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -206,6 +210,29 @@ public class ExportDialogController implements Initializable {
         mapView.setCenter(c);
         markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
         mapView.setEffect(new ColorAdjust(0, -0.5, 0, 0));
+        mapView.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
+            eventMap.consume();
+            final Coordinate newPosition = eventMap.getCoordinate().normalize();
+            mapView.setCenter(newPosition);
+            markerPos.setPosition(newPosition).setVisible(true);
+            mapView.addMarker(markerPos);
+            circle = new MapCircle(newPosition, 3);
+            circle.setVisible(true);
+            circle.setColor(javafx.scene.paint.Color.BLUE);
+            circle.setWidth(1);
+            mapView.addMapCircle(circle);
+            //set name in textbox
+            Task<Address> taskFind = new Task<>() {
+                @Override
+                protected Address call() throws Exception {
+                    return geoCoding.geoSearchForGPS(newPosition.getLongitude(), newPosition.getLatitude());
+                }
+            };
+            taskFind.setOnSucceeded((k) -> {
+                customField.setText(((Address) k.getSource().getValue()).getDisplayName());
+            });
+            new Thread(taskFind).start();
+        });
     }
 
     @FXML
@@ -363,23 +390,23 @@ public class ExportDialogController implements Initializable {
     public CheckBox getReplaceGPSCheckBox() {
         return replaceGPSCheckBox;
     }
-    
-    public String getSelectedGPSPos(){
-        if (replaceGPSCheckBox.isSelected()){
-            return geoCoding.getLastSearchGPSResult().getLatitude()+";"+geoCoding.getLastSearchGPSResult().getLongitude();
+
+    public String getSelectedGPSPos() {
+        if (replaceGPSCheckBox.isSelected()) {
+            return geoCoding.getLastSearchGPSResult().getLatitude() + ";" + geoCoding.getLastSearchGPSResult().getLongitude();
         }
         return "";
     }
-    
-    public double getSelectedGPSPosLat(){
-        if (replaceGPSCheckBox.isSelected()){
+
+    public double getSelectedGPSPosLat() {
+        if (replaceGPSCheckBox.isSelected()) {
             return geoCoding.getLastSearchGPSResult().getLatitude();
         }
         return -1;
     }
-    
-    public double getSelectedGPSPosLon(){
-        if (replaceGPSCheckBox.isSelected()){
+
+    public double getSelectedGPSPosLon() {
+        if (replaceGPSCheckBox.isSelected()) {
             return geoCoding.getLastSearchGPSResult().getLongitude();
         }
         return -1;
@@ -388,6 +415,5 @@ public class ExportDialogController implements Initializable {
     public CustomTextField getHeightTextField() {
         return heightTextField;
     }
-    
 
 }

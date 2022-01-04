@@ -37,6 +37,8 @@ import com.sothawo.mapjfx.MapCircle;
 import com.sothawo.mapjfx.MapType;
 import com.sothawo.mapjfx.MapView;
 import com.sothawo.mapjfx.Marker;
+import com.sothawo.mapjfx.event.MapViewEvent;
+import fr.dudie.nominatim.model.Address;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -113,6 +115,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import org.controlsfx.control.PopOver;
@@ -133,20 +136,20 @@ import org.photoslide.imageops.SampleFilter2;
  * @author selfemp
  */
 public class MetadataController implements Initializable {
-    
+
     private ExecutorService executor;
     private MainViewController mainController;
     private LighttableController lightController;
     private Collection<String> keywordList;
     private MediaFile actualMediaFile;
-    
+
     private Exif exifdata;
     private IPTC iptcdata;
     private XMP xmpdata;
     private List<String> commentsdata;
     private HashMap<String, String> rawMetaData;
     private GeoCoding geoCoding;
-    
+
     @FXML
     private Accordion accordionPane;
     @FXML
@@ -167,7 +170,7 @@ public class MetadataController implements Initializable {
     private TextField recordDateField;
     @FXML
     private AnchorPane anchorKeywordPane;
-    
+
     private Task<Boolean> task;
     private KeywordChangeListener keywordsChangeListener;
     private CommentsChangeListener commentsChangeListener;
@@ -200,7 +203,7 @@ public class MetadataController implements Initializable {
     private MapCircle circle;
     @FXML
     private Button gpsPosButton;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("metaDataController"));
@@ -239,15 +242,15 @@ public class MetadataController implements Initializable {
         });
         geoCoding = new GeoCoding();
     }
-    
+
     public void injectMainController(MainViewController mainController) {
         this.mainController = mainController;
     }
-    
+
     public void injectLightController(LighttableController lightController) {
         this.lightController = lightController;
     }
-    
+
     public void setSelectedFile(MediaFile file) {
         actualMediaFile = file;
         resetGUI();
@@ -288,10 +291,10 @@ public class MetadataController implements Initializable {
             }
             anchorKeywordPane.setDisable(false);
             commentText.textProperty().addListener(commentsChangeListener);
-            
+
             keywordText.getChildren().addListener(keywordsChangeListener);
             captionTextField.textProperty().addListener(captionChangeListener);
-            
+
             if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
                 Label key = new Label("File name");
                 Label value = new Label(file.getName());
@@ -300,7 +303,7 @@ public class MetadataController implements Initializable {
                 metaDataGrid.addRow(0, key, value);
             } else {
                 updateUIWithExtendedMetadata();
-                
+
                 gpsPlace.setText(actualMediaFile.getGpsPosition());
                 if (actualMediaFile.getGpsHeight() != -1) {
                     gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
@@ -320,7 +323,7 @@ public class MetadataController implements Initializable {
         });
         executor.submit(task);
     }
-    
+
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
             return;
@@ -513,7 +516,7 @@ public class MetadataController implements Initializable {
             }
         }
     }
-    
+
     private String formatTime(String source) {
         if (source == null) {
             return "";
@@ -556,11 +559,11 @@ public class MetadataController implements Initializable {
         }
         return finalStr;
     }
-    
+
     private void updateUIWithExtendedMetadata() {
         AtomicInteger i = new AtomicInteger(1);
         Iterator<MetadataEntry> iterator;
-        
+
         if (rawMetaData != null) {
             rawMetaData.entrySet().stream().sorted(Map.Entry.<String, String>comparingByKey()).forEach((entry) -> {
                 Label key = new Label(entry.getKey());
@@ -621,10 +624,10 @@ public class MetadataController implements Initializable {
                 });
             }
         }
-        
+
         metaDataGrid.setDisable(false);
     }
-    
+
     public void resetGUI() {
         Platform.runLater(() -> {
             metaDataGrid.getChildren().clear();
@@ -639,7 +642,7 @@ public class MetadataController implements Initializable {
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
-        
+
         gpsDateTime.clear();
         gpsHeight.clear();
         gpsPlace.clear();
@@ -651,7 +654,7 @@ public class MetadataController implements Initializable {
         apertureSlider.setValue(1);
         exposerFilter = null;
     }
-    
+
     @FXML
     private void addKeywordAction(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
@@ -659,7 +662,7 @@ public class MetadataController implements Initializable {
             addKeywordTextField.clear();
         }
     }
-    
+
     public void exportBasicMetadata(MediaFile mf, String exportFilePath, boolean overwriteGPS) throws FileNotFoundException, IOException {
         if (exportFilePath.contains(".png")) {
             return;
@@ -676,7 +679,7 @@ public class MetadataController implements Initializable {
             dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
         }
         keywordListLocal.clear();
-        
+
         String mfKeyw = mf.getKeywords();
         if (mfKeyw == null) {
             mfKeyw = "";
@@ -737,7 +740,7 @@ public class MetadataController implements Initializable {
         }
         fin.close();
         bout.close();
-        
+
         fin = new FileInputStream(exportFilePath);
         bout = new ByteArrayOutputStream();
         if (commentsdata != null) {
@@ -748,7 +751,7 @@ public class MetadataController implements Initializable {
         }
         fin.close();
         bout.close();
-        
+
         if (overwriteGPS == true) {
             //write GPS INfo
             fin = new FileInputStream(exportFilePath);
@@ -772,7 +775,7 @@ public class MetadataController implements Initializable {
             bout.close();
         }
     }
-    
+
     public void exportCompleteMetdata(MediaFile mf, String exportFilePath, String extension, boolean overwriteGPS) throws IOException {
         if (exportFilePath.contains(".png")) {
             return;
@@ -787,9 +790,9 @@ public class MetadataController implements Initializable {
             exportExif = new TiffExif();
         }
         exportExif.setExifIFD(exifdata.getExifIFD());
-        
+
         exportExif.setGPSIFD(exifdata.getGPSIFD());
-        
+
         if (!exportFilePath.contains(".tif")) {
             exportExif.setImageIFD(exifdata.getImageIFD());
         }
@@ -840,7 +843,7 @@ public class MetadataController implements Initializable {
         }
         bout.close();
     }
-    
+
     private void saveComments() {
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -858,9 +861,9 @@ public class MetadataController implements Initializable {
                 try {
                     bout = new ByteArrayOutputStream();
                     fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-                    
+
                     Metadata.insertComment(fin, bout, commentText.getText());
-                    
+
                     try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
@@ -887,7 +890,7 @@ public class MetadataController implements Initializable {
         });
         executor.submit(taskSaveComments);
     }
-    
+
     private String getKeywordsAsString(FlowPane kewordPane) {
         StringBuilder sb = new StringBuilder();
         if (!kewordPane.getChildren().isEmpty()) {
@@ -960,9 +963,9 @@ public class MetadataController implements Initializable {
         }
         try {
             bout = new ByteArrayOutputStream();
-            
+
             fin = new FileInputStream(file.getPathStorage().toFile());
-            
+
             if (iptcdata == null) {
                 iptcdata = new IPTC();
             }
@@ -973,7 +976,7 @@ public class MetadataController implements Initializable {
                 dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
             }
             keywordListLocal.clear();
-            
+
             StringTokenizer defaultTokenizer = new StringTokenizer(keywords, ";");
             while (defaultTokenizer.hasMoreTokens()) {
                 keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
@@ -998,7 +1001,7 @@ public class MetadataController implements Initializable {
                 dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);
             }
             captionList.add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, title));
-            
+
             List<IPTCDataSet> iptcs = new ArrayList<>();
             dataSets.entrySet().forEach((t) -> {
                 List<IPTCDataSet> tagValues = t.getValue();
@@ -1023,7 +1026,7 @@ public class MetadataController implements Initializable {
             }
         }
     }
-    
+
     @FXML
     private void applyKeywordsToAllAction(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Apply Caption/Title and keywords to all mediafiles in event\n" + this.actualMediaFile.getPathStorage(), ButtonType.CANCEL, ButtonType.OK);
@@ -1076,7 +1079,7 @@ public class MetadataController implements Initializable {
             addKeywordToAllField.requestFocus();
         });
         content.addRow(2, new Pane(), addKeywordToAllField, addKewordButton);
-        
+
         dialogPane.setContent(content);
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
@@ -1088,14 +1091,14 @@ public class MetadataController implements Initializable {
         alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         alert.showAndWait();
         if (alert.getResult() == ButtonType.OK) {
-            
+
             resetGUI();
             mainController.getProgressPane().setVisible(true);
             mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
             mainController.getProgressbarLabel().setText("Setting metadata...");
             mainController.getStatusLabelLeft().setText("Setting metadata");
             mainController.getStatusLabelLeft().setVisible(true);
-            
+
             Task<Boolean> taskApplyToAll = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -1145,13 +1148,13 @@ public class MetadataController implements Initializable {
             executor.submit(taskApplyToAll);
         }
     }
-    
+
     public void saveSettings() {
     }
-    
+
     public void restoreSettings() {
     }
-    
+
     @FXML
     private void resetAction(ActionEvent event) {
         actualMediaFile.removeImageFilter(exposerFilter);
@@ -1163,13 +1166,13 @@ public class MetadataController implements Initializable {
             exposerFilter = null;
         });
     }
-    
+
     @FXML
     private void showGPSPosition(ActionEvent event) {
         //System.out.println("action");
         showMap();
     }
-    
+
     private void showMap() {
         if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase(";")) {
             return;
@@ -1256,27 +1259,27 @@ public class MetadataController implements Initializable {
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
-    
+
     @FXML
     private void showGPSPositionTouch(TouchEvent event) {
         showMap();
     }
-    
+
     @FXML
     private void showGPSPositionMouse(MouseEvent event) {
         showMap();
     }
-    
+
     @FXML
     private void showGPSPositionIconMouse(MouseEvent event) {
         showMap();
     }
-    
+
     @FXML
     private void showGPSPositionIconTouch(TouchEvent event) {
         showMap();
     }
-    
+
     @FXML
     private void changeGPSPosAction(ActionEvent event) {
         if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase(";")) {
@@ -1285,6 +1288,7 @@ public class MetadataController implements Initializable {
         Utility util = new Utility();
         PopOver popOver = new PopOver();
         popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);
+        popOver.setTitle("Change GPS position/altitude");
         Label message = new Label("");
         message.setVisible(false);
         message.setManaged(false);
@@ -1307,7 +1311,7 @@ public class MetadataController implements Initializable {
         searchField.setOnKeyPressed((p) -> {
             event.consume();
         });
-        Button saveButton=new Button();
+        Button saveButton = new Button();
         saveButton.setGraphic(new FontIcon("ti-save:20"));
         saveButton.setId("toolbutton");
         saveButton.setOnAction((q) -> {
@@ -1321,11 +1325,11 @@ public class MetadataController implements Initializable {
         hb.getChildren().add(searchField);
         hb.getChildren().add(searchButton);
         hb.getChildren().add(new Label("Heigth:"));
-        CustomTextField heightField=new CustomTextField();
+        CustomTextField heightField = new CustomTextField();
         heightField.setPrefWidth(80);
         heightField.setMinWidth(80);
         hb.getChildren().add(heightField);
-        HBox hbSaveBox=new HBox();
+        HBox hbSaveBox = new HBox();
         hbSaveBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(hbSaveBox, Priority.ALWAYS);
         hbSaveBox.getChildren().add(saveButton);
@@ -1340,7 +1344,7 @@ public class MetadataController implements Initializable {
         map.addMarker(markerPos);
         circle = new MapCircle(c, 3);
         circle.setVisible(true);
-        //circle.setFillColor(Color.TRANSPARENT);        
+        circle.setFillColor(Color.TRANSPARENT);
         circle.setColor(javafx.scene.paint.Color.BLUE);
         circle.setWidth(1);
         map.addMapCircle(circle);
@@ -1349,11 +1353,32 @@ public class MetadataController implements Initializable {
         vb.getChildren().add(message);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
+        map.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
+            eventMap.consume();
+            final Coordinate newPosition = eventMap.getCoordinate().normalize();
+            map.setCenter(newPosition);
+            markerPos.setPosition(newPosition).setVisible(true);
+            circle = new MapCircle(newPosition, 3);
+            circle.setVisible(true);
+            circle.setColor(javafx.scene.paint.Color.BLUE);
+            circle.setWidth(1);
+            //set name in textbox
+            Task<Address> taskFind = new Task<>() {
+                @Override
+                protected Address call() throws Exception {
+                    return geoCoding.geoSearchForGPS(newPosition.getLongitude(), newPosition.getLatitude());
+                }
+            };
+            taskFind.setOnSucceeded((k) -> {
+                searchField.setText(((Address) k.getSource().getValue()).getDisplayName());
+            });
+            new Thread(taskFind).start();
+        });
     }
-    
+
     private void searchButtonAction(CustomTextField customField) {
         String name = customField.getText();
-        
+
         Task<ObservableList<String>> task = new Task<>() {
             @Override
             protected ObservableList<String> call() throws Exception {
@@ -1392,42 +1417,42 @@ public class MetadataController implements Initializable {
         });
         new Thread(task).start();
     }
-    
+
     private class KeywordChangeListener implements ListChangeListener {
-        
+
         @Override
         public void onChanged(Change change) {
             saveKeywordsTitle(actualMediaFile);
         }
-        
+
     }
-    
+
     private class CommentsChangeListener implements ChangeListener<String> {
-        
+
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveComments();
         }
-        
+
     }
-    
+
     private class CaptionChangeListener implements ChangeListener<String> {
-        
+
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
             saveKeywordsTitle(actualMediaFile);
         }
-        
+
     }
-    
+
     public void setActualMediaFile(MediaFile actualMediaFile) {
         this.actualMediaFile = actualMediaFile;
     }
-    
+
     public TextField getRecordDateField() {
         return recordDateField;
     }
-    
+
     public void cancelTasks() {
         if (task != null) {
             keywordText.getChildren().removeListener(keywordsChangeListener);
@@ -1437,23 +1462,23 @@ public class MetadataController implements Initializable {
             task.cancel();
         }
     }
-    
+
     public Slider getApertureSlider() {
         return apertureSlider;
     }
-    
+
     public Exif getExifdata() {
         return exifdata;
     }
-    
+
     public IPTC getIptcdata() {
         return iptcdata;
     }
-    
+
     public XMP getXmpdata() {
         return xmpdata;
     }
-    
+
     public List<String> getCommentsdata() {
         return commentsdata;
     }
@@ -1504,15 +1529,15 @@ public class MetadataController implements Initializable {
         }*/
         return sb.toString();
     }
-    
+
     public void setExposerFilter(ImageFilter exposerFilter) {
         this.exposerFilter = exposerFilter;
     }
-    
+
     public HashMap<String, String> getRawMetaData() {
         return rawMetaData;
     }
-    
+
     public void Shutdown() {
         if (task != null) {
             task.cancel();

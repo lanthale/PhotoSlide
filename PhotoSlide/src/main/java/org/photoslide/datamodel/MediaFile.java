@@ -635,6 +635,9 @@ public class MediaFile {
 
     public String getGpsPosition() {
         String latRef, lonRef;
+        if (gpsPosition == null) {
+            return "";
+        }
         DegreeCoordinate fromDegreesLat = Coordinate.fromDegrees(gpsPosition.latitude);
         DegreeCoordinate fromDegreesLon = Coordinate.fromDegrees(gpsPosition.longitude);
         if (gpsPosition.latitude < 0) {
@@ -658,7 +661,7 @@ public class MediaFile {
         return gpsPosition.latitude;
 
     }
-    
+
     public double getGpsLonPosAsDouble() {
         return gpsPosition.longitude;
 
@@ -726,12 +729,12 @@ public class MediaFile {
         rat1[5] = 100;
         return rat1;
     }
-    
-    public int[] getGpsHeightAsRational(){
-      int[] rat1 = new int[2]; 
-      rat1[0]=(int)gpsHeight*10000;
-      rat1[1]=10000;
-      return rat1;
+
+    public int[] getGpsHeightAsRational() {
+        int[] rat1 = new int[2];
+        rat1[0] = (int) gpsHeight * 10000;
+        rat1[1] = 10000;
+        return rat1;
     }
 
     public String getGpsLonPosRef() {
@@ -750,7 +753,7 @@ public class MediaFile {
         double lon = parseGPSString(token.nextToken());
         this.gpsPosition = new Point(lat, lon);
     }
-    
+
     public void setGpsPositionFromDegree(String gpsPosition) {
         StringTokenizer token = new StringTokenizer(gpsPosition, ";");
         double lat = Double.parseDouble(token.nextToken());

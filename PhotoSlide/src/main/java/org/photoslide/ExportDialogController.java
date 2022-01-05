@@ -415,5 +415,9 @@ public class ExportDialogController implements Initializable {
     public CustomTextField getHeightTextField() {
         return heightTextField;
     }
+    
+    public String getFoundPlaceName(){
+        return geoCoding.getLastSearchGPSResult().getDisplayName();
+    }
 
 }

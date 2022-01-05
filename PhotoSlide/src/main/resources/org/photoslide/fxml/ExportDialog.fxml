@@ -61,12 +61,12 @@
          </tooltip>
       </Slider>
       <Label fx:id="errorLabelDirectory" layoutX="367.0" layoutY="143.0" text="Label" textFill="#ff0101" visible="false" />
-      <VBox layoutX="523.0" layoutY="77.0" prefHeight="123.0" prefWidth="350.0" spacing="2.0">
+      <VBox layoutX="523.0" layoutY="77.0" prefHeight="115.0" prefWidth="350.0" spacing="2.0">
          <children>
             <CheckBox fx:id="replaceKeywordChoiceBox" mnemonicParsing="false" text="Replace keywords during export" />
-            <ScrollPane fitToWidth="true" minViewportHeight="90.0" minViewportWidth="100.0" prefViewportWidth="230.0" prefWidth="350.0">
+            <ScrollPane fitToWidth="true" minViewportHeight="40.0" minViewportWidth="100.0" prefViewportWidth="230.0" prefWidth="350.0">
                <content>
-                  <FlowPane fx:id="keywordText" disable="true" hgap="5.0" prefHeight="100.0" prefWidth="348.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
+                  <FlowPane fx:id="keywordText" disable="true" hgap="5.0" prefHeight="50.0" prefWidth="348.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
                      <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
@@ -91,8 +91,8 @@
             <TextField fx:id="titleTextBox" disable="true" HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
-      <CheckBox fx:id="replaceGPSCheckBox" layoutX="523.0" layoutY="258.0" mnemonicParsing="false" text="Replace GPS information" />
-      <VBox fx:id="mapSelectionPane" disable="true" layoutX="523.0" layoutY="278.0" spacing="5.0">
+      <CheckBox fx:id="replaceGPSCheckBox" layoutX="523.0" layoutY="218.0" mnemonicParsing="false" text="Replace GPS information" />
+      <VBox fx:id="mapSelectionPane" disable="true" layoutX="523.0" layoutY="242.0" prefHeight="156.0" prefWidth="350.0" spacing="5.0">
          <children>
             <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="302.0" spacing="5.0">
                <children>
@@ -106,7 +106,7 @@
                   <CustomTextField fx:id="heightTextField" prefHeight="25.0" prefWidth="95.0" />
                </children>
             </HBox>
-            <MapView fx:id="mapView" prefHeight="90.0" prefWidth="350.0" />
+            <MapView fx:id="mapView" prefHeight="125.0" prefWidth="350.0" />
          </children>
       </VBox>
    </children>

@@ -773,6 +773,34 @@ public class MetadataController implements Initializable {
             }
             fin.close();
             bout.close();
+            fin = new FileInputStream(exportFilePath);
+            bout = new ByteArrayOutputStream();
+            if (iptcdata.getDataSet(IPTCApplicationTag.CITY) != null) {
+                iptcdata.getDataSet(IPTCApplicationTag.CITY).clear();
+                iptcdata.getDataSet(IPTCApplicationTag.CITY).add(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placesProperty().get()));
+            } else {
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placesProperty().get()));
+            }
+            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CITY), true);
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+                bout.writeTo(outputStream);
+            }
+            fin.close();
+            bout.close();
+            fin = new FileInputStream(exportFilePath);
+            bout = new ByteArrayOutputStream();
+            if (iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION) != null) {
+                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).clear();
+                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).add(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placesProperty().get()));
+            } else {
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placesProperty().get()));
+            }
+            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION), true);
+            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+                bout.writeTo(outputStream);
+            }
+            fin.close();
+            bout.close();
         }
     }
 
@@ -1287,8 +1315,10 @@ public class MetadataController implements Initializable {
         }
         Utility util = new Utility();
         PopOver popOver = new PopOver();
-        popOver.setArrowLocation(PopOver.ArrowLocation.RIGHT_CENTER);
+        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_RIGHT);
         popOver.setTitle("Change GPS position/altitude");
+        popOver.setAnimated(true);
+        popOver.setHeaderAlwaysVisible(true);
         Label message = new Label("");
         message.setVisible(false);
         message.setManaged(false);

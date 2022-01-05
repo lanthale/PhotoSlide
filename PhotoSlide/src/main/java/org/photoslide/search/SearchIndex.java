@@ -322,7 +322,7 @@ public class SearchIndex {
                     //removeMediaFileInSearchDB(m.getName());
                     ret = true;
                 } else {
-                    ret = true;
+                    ret = false;
                 }
             }
         } catch (SQLException ex) {

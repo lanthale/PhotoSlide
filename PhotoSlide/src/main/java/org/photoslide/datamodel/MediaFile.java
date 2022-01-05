@@ -73,7 +73,7 @@ public class MediaFile {
     private final SimpleStringProperty comments;
     private final SimpleDoubleProperty rotationAngle;
     private final SimpleIntegerProperty rating;
-    private final SimpleStringProperty places;
+    private final SimpleStringProperty place;
     private final SimpleStringProperty faces;
     private Rectangle2D cropView;
     private LocalDateTime recordTime;
@@ -112,7 +112,7 @@ public class MediaFile {
         stackName = new SimpleStringProperty();
         stackPos = new SimpleIntegerProperty(-1);
         stacked = new SimpleBooleanProperty(false);
-        places = new SimpleStringProperty();
+        place = new SimpleStringProperty();
         faces = new SimpleStringProperty();
         filterList = FXCollections.observableArrayList();
 
@@ -236,6 +236,9 @@ public class MediaFile {
                     }
                 }
             }
+            if (place.getValue() != null) {
+                prop.setProperty("place", place.getValue());
+            }
             if (gpsDateTime != null) {
                 prop.setProperty("gpsDateTime", gpsDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
@@ -346,6 +349,9 @@ public class MediaFile {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert GPS date/time!", e);
                     }
                 }
+            }
+            if (prop.getProperty("place") != null) {
+                place.setValue(prop.getProperty("place"));
             }
             if (prop.getProperty("gpsHeight", null) != null) {
                 gpsHeight = Double.parseDouble(prop.getProperty("gpsHeight", "-1"));
@@ -621,8 +627,8 @@ public class MediaFile {
         this.unModifiyAbleImage = unModifiyAbleImage;
     }
 
-    public SimpleStringProperty placesProperty() {
-        return places;
+    public SimpleStringProperty placeProperty() {
+        return place;
     }
 
     public SimpleStringProperty facesProperty() {
@@ -829,7 +835,7 @@ public class MediaFile {
                 editFile.delete();
             });
             deleted.set(false);
-            places.set("");
+            place.set("");
             faces.set("");
             rotationAngle.set(0.0);
             rating.set(0);

@@ -462,7 +462,7 @@ public class MainViewController implements Initializable {
                                             mediaItem.setGpsHeight(Double.parseDouble(diag.getController().getHeightTextField().getText()));
                                         }
                                         mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
-                                        mediaItem.placesProperty().setValue(diag.getController().getFoundPlaceName());
+                                        mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
                                     }
                                     metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension(), diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }
@@ -479,7 +479,7 @@ public class MainViewController implements Initializable {
                                     }
                                     if (diag.getController().getReplaceGPSCheckBox().isSelected()) {
                                         mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
-                                        mediaItem.placesProperty().setValue(diag.getController().getFoundPlaceName());
+                                        mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
                                     }
                                     metadataPaneController.exportBasicMetadata(mediaItem, outFileStr, diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }

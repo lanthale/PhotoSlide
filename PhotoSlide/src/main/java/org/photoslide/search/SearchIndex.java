@@ -217,8 +217,8 @@ public class SearchIndex {
             }
             int rating = m.getRatingProperty().getValue();
             String places = null;
-            if (m.placesProperty().get() != null) {
-                places = "'" + m.placesProperty().get() + "'";
+            if (m.placeProperty().get() != null) {
+                places = "'" + m.placeProperty().get() + "'";
             }
             String gpspos = null;
             if (m.getGpsPosition() != null) {
@@ -265,6 +265,9 @@ public class SearchIndex {
                 }
                 if (m.getRatingProperty().getValue() > 0) {
                     strb.append("RATING=").append(m.getRatingProperty().getValue()).append(",");
+                }
+                if (m.placeProperty().getValue() != null) {
+                    strb.append("PLACES=").append(m.placeProperty().getValue()).append(",");
                 }
                 String stm = strb.toString();
                 if (stm.lastIndexOf(",") == stm.length() - 1) {

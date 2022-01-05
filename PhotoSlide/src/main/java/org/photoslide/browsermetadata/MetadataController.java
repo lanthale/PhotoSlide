@@ -777,9 +777,9 @@ public class MetadataController implements Initializable {
             bout = new ByteArrayOutputStream();
             if (iptcdata.getDataSet(IPTCApplicationTag.CITY) != null) {
                 iptcdata.getDataSet(IPTCApplicationTag.CITY).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.CITY).add(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placesProperty().get()));
+                iptcdata.getDataSet(IPTCApplicationTag.CITY).add(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placeProperty().get()));
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placesProperty().get()));
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placeProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CITY), true);
             try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
@@ -791,9 +791,9 @@ public class MetadataController implements Initializable {
             bout = new ByteArrayOutputStream();
             if (iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION) != null) {
                 iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).add(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placesProperty().get()));
+                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).add(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placesProperty().get()));
+                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION), true);
             try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {

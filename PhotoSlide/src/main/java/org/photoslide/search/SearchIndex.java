@@ -5,6 +5,7 @@
  */
 package org.photoslide.search;
 
+import fr.dudie.nominatim.model.Address;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browsercollections.PathItem;
+import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
@@ -87,6 +89,13 @@ public class SearchIndex {
                                 if (checkIfIndexed(m) == false) {
                                     m.readEdits();
                                     m.getCreationTime();
+                                    if (!m.getGpsPosition().equalsIgnoreCase("")) {
+                                        if (m.placeProperty().getValue() == null) {
+                                            GeoCoding geoCoding = new GeoCoding();
+                                            Address geoSearchForGPS = geoCoding.geoSearchForGPS(m.getGpsLonPosAsDouble(), m.getGpsLatPosAsDouble());
+                                            m.placeProperty().setValue(geoSearchForGPS.getDisplayName());
+                                        }
+                                    }
                                     if (FileTypes.isValidVideo(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
                                         insertMediaFileIntoSearchDB(collectionName, m);
@@ -317,13 +326,8 @@ public class SearchIndex {
             Statement indexStatment = App.getSearchDBConnection().createStatement();
             ResultSet rs = indexStatment.executeQuery("SELECT name, places from MediaFiles where NAME='" + m.getName() + "' and PATHSTORAGE='" + m.getPathStorage() + "'");
             if (rs.next()) {
-                String place = rs.getString("places");
-                if (place == null) {
-                    //removeMediaFileInSearchDB(m.getName());
-                    ret = true;
-                } else {
-                    ret = false;
-                }
+                String place = rs.getString("name");
+                ret = true;
             }
         } catch (SQLException ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);

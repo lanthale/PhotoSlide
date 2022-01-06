@@ -85,15 +85,8 @@ import org.photoslide.browsercollections.DirectoryWatcher;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.processing.face.detection.DetectedFace;
 import org.openimaj.image.processing.face.detection.HaarCascadeDetector;
-import boofcv.abst.tracker.TrackerObjectQuad;
-import boofcv.factory.tracker.FactoryTrackerObjectQuad;
 import boofcv.io.MediaManager;
-import boofcv.io.image.ConvertBufferedImage;
-import boofcv.io.image.SimpleImageSequence;
 import boofcv.io.wrapper.DefaultMediaManager;
-import boofcv.misc.BoofMiscOps;
-import boofcv.struct.image.GrayU8;
-import boofcv.struct.image.ImageBase;
 import georegression.struct.shapes.Quadrilateral_F64;
 import java.awt.image.BufferedImage;
 /**

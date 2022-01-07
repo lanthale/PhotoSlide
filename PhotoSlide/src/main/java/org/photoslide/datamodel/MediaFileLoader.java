@@ -137,7 +137,7 @@ public class MediaFileLoader {
         if (memory > 4000000) {            
             executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
         } else {
-            executorParallel = Executors.newFixedThreadPool(1, new ThreadFactoryPS("mediaFileLoaderThread"));
+            executorParallel = Executors.newFixedThreadPool(6, new ThreadFactoryPS("mediaFileLoaderThread"));
         }        
     }
 }

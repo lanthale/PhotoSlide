@@ -356,7 +356,7 @@ public class MediaFile {
             if (prop.getProperty("gpsHeight", null) != null) {
                 gpsHeight = Double.parseDouble(prop.getProperty("gpsHeight", "-1"));
             }
-            if (prop.getProperty("gpsPosition") != null) {
+            if (prop.getProperty("gpsPosition") != null && prop.getProperty("gpsPosition").length() > 2) {
                 String property = prop.getProperty("gpsPosition");
                 StringTokenizer token = new StringTokenizer(property, ";");
                 double lat = Double.parseDouble(token.nextToken());

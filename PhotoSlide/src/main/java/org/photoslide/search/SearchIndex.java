@@ -230,7 +230,7 @@ public class SearchIndex {
                 places = "'" + m.placeProperty().get() + "'";
             }
             String gpspos = null;
-            if (m.getGpsPosition() != null) {
+            if (!m.getGpsPosition().equalsIgnoreCase("")) {
                 gpspos = "'" + m.getGpsLatPosAsDouble() + ";" + m.getGpsLonPosAsDouble() + "'";
             }
             String faces = null;

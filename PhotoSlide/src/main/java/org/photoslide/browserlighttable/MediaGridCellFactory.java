@@ -55,6 +55,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.imageops.ImageFilter;
 
@@ -234,7 +235,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }*/
         if (t.getTarget().getClass().equals(FontIcon.class)) {
-            System.out.println("FontIcon pressed");
+            if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
+                return;
+            }
             handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
             /*if (lightController.getImageView().getImage() != null) {
                 if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
@@ -816,7 +819,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         vbox.setPrefSize(width, 130 + 3 * 20);
         popOver.show(anchore);
         if (mediaGrid.getItems().isEmpty()) {
-           mediaGrid.setItems(sortedMediaList); 
+            mediaGrid.setItems(sortedMediaList);
         }
         popOver.requestFocus();
         popOver.setOnHidden((t) -> {

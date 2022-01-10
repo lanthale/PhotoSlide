@@ -332,7 +332,24 @@ public class MetadataController implements Initializable {
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
-            file.setRecordTime(ofEpochSecond);
+            double alti = -1;
+            try {
+                alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+            } catch (NumberFormatException ex) {
+            }
+            final double altitude = alti;
+            Platform.runLater(() -> {
+                if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                    file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                }
+                if (altitude != -1) {
+                    if (altitude != 0.0) {
+                        file.setGpsHeight(altitude);
+                    }
+                }
+                file.setRecordTime(ofEpochSecond);
+                file.setCamera(rawMetaData.get("CameraModel"));
+            });
         }
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {

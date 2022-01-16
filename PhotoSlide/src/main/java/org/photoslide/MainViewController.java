@@ -57,6 +57,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -68,6 +69,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -78,6 +80,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -85,8 +88,12 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Callback;
 import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
+import org.controlsfx.control.TaskProgressView;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.controlsfx.glyphfont.FontAwesome.Glyph;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
@@ -191,13 +198,13 @@ public class MainViewController implements Initializable {
     @FXML
     private Button searchButton;
     @FXML
-    private Button bookmarksBoardButton;
+    private Button bookmarksBoardButton;    
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
     private PrintDialog printDialog;
     private Properties bookmarks;
     private BookmarkBoardController bookmarksController;
-    private BMBIcon bmbIcon;
+    private BMBIcon bmbIcon;    
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -236,7 +243,7 @@ public class MainViewController implements Initializable {
             if (newScene != null && browseButton != null) {
                 swUpdater.checkForSoftwareUpdates();
             }
-        });
+        });        
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -1062,6 +1069,6 @@ public class MainViewController implements Initializable {
 
     public CollectionsController getCollectionsPaneController() {
         return collectionsPaneController;
-    }
+    }    
 
 }

@@ -185,6 +185,8 @@ public class CollectionsController implements Initializable {
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
                 }
             });
+            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 5, true);
+            util.hideNodeAfterTime(mainController.getProgressPane(), 5, true);            
         });
         executorParallel.submit(task);
         executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
@@ -392,10 +394,6 @@ public class CollectionsController implements Initializable {
     }
 
     private void loadDirectoryTree(String selectedRootPath) {
-        Platform.runLater(() -> {
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getProgressPane().setVisible(true);
-        });
         String path = selectedRootPath;
 
         ProgressIndicator waitPrg = new ProgressIndicator();
@@ -458,9 +456,7 @@ public class CollectionsController implements Initializable {
                     selectedPath = selectedItem.getValue().getFilePath();
                     lighttablePaneController.setSelectedPath(selectedItem.getValue().getFilePath());
                 }
-            });            
-            mainController.getStatusLabelLeft().setVisible(false);
-            mainController.getProgressPane().setVisible(false);
+            });
         });
         task.setOnFailed((WorkerStateEvent t) -> {
             FontIcon redIcon = new FontIcon("ti-agenda");
@@ -470,8 +466,6 @@ public class CollectionsController implements Initializable {
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
             Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
             actCollectionTitlePane.setTooltip(tip);
-            mainController.getStatusLabelLeft().setVisible(false);
-            mainController.getProgressPane().setVisible(false);
         });
         executorParallel.submit(task);
     }

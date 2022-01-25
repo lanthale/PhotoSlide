@@ -32,6 +32,7 @@ import javax.imageio.spi.ServiceRegistry;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import org.h2.fulltext.FullText;
+import org.libheiffx.HEIFImageLoaderFactory;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
@@ -96,6 +97,7 @@ public class App extends Application {
         //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
         
         RAWImageLoaderFactory.install();
+        HEIFImageLoaderFactory.install();
         notifyPreloader(new ProgressNotification(0.8));
     }
 

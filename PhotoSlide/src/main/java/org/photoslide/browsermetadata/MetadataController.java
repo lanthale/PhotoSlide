@@ -51,12 +51,14 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -123,6 +125,7 @@ import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.libheiffx.LibheifImage;
 import org.librawfx.LibrawImage;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
@@ -349,6 +352,37 @@ public class MetadataController implements Initializable {
                 }
                 file.setRecordTime(ofEpochSecond);
                 file.setCamera(rawMetaData.get("CameraModel"));
+            });
+        }
+        if (file.isHEIFImage()) {
+            rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
+            String timeStr = rawMetaData.get("Date/Time Digitized");
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+            LocalDateTime date = LocalDateTime.parse(timeStr, formatter);
+
+            double alti = -1;
+            try {
+                if (rawMetaData.get("GPS Altitude") != null) {
+                    alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+                }
+            } catch (NumberFormatException ex) {
+            }
+            final double altitude = alti;
+            final LocalDateTime recordT = date;
+            Platform.runLater(() -> {
+                if (rawMetaData.get("GPS Position") != null) {
+                    if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                        file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                    }
+                }
+                if (altitude != -1) {
+                    if (altitude != 0.0) {
+                        file.setGpsHeight(altitude);
+                    }
+                }
+                file.setRecordTime(recordT);
+                file.setCamera(rawMetaData.get("Model"));
             });
         }
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());

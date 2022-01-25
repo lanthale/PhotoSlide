@@ -870,4 +870,21 @@ public class MediaFile {
         return true;
     }
 
+    /**
+     * checks if the mediafile is a raw image format e.g. NEF, CR2, X3F, ...
+     *
+     * @return true if file is a raw file
+     */
+    public boolean isHEIFImage() {
+        if (mediaType == MediaTypes.IMAGE) {
+            String ext = name.substring(name.lastIndexOf("."));
+            if (ext.toLowerCase().contains("heic")) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
+
 }

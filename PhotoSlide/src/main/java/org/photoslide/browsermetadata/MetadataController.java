@@ -342,12 +342,14 @@ public class MetadataController implements Initializable {
             }
             final double altitude = alti;
             Platform.runLater(() -> {
-                if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                    file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
-                }
-                if (altitude != -1) {
-                    if (altitude != 0.0) {
-                        file.setGpsHeight(altitude);
+                if (rawMetaData.get("GPS Position") != null) {
+                    if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                        file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                    }
+                    if (altitude != -1) {
+                        if (altitude != 0.0) {
+                            file.setGpsHeight(altitude);
+                        }
                     }
                 }
                 file.setRecordTime(ofEpochSecond);

@@ -366,16 +366,20 @@ public class MetadataController implements Initializable {
             double alti = -1;
             try {
                 if (rawMetaData.get("GPS Altitude") != null) {
-                    alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+                    String altStr = rawMetaData.get("GPS Altitude").substring(0, rawMetaData.get("GPS Altitude").indexOf(" "));
+                    if (altStr.contains(",")) {
+                        altStr = altStr.replace(",", ".");
+                    }
+                    alti = Double.parseDouble(altStr);
                 }
             } catch (NumberFormatException ex) {
             }
             final double altitude = alti;
             final LocalDateTime recordT = date;
             Platform.runLater(() -> {
-                if (rawMetaData.get("GPS Position") != null) {
-                    if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                        file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                if (rawMetaData.get("GPS Longitude") != null) {
+                    if (!rawMetaData.get("GPS Longitude").equalsIgnoreCase("0;0")) {
+                        file.setGpsPositionFromDMS(rawMetaData.get("GPS Latitude") + rawMetaData.get("GPS Latitude Ref") + ";" + rawMetaData.get("GPS Longitude") + rawMetaData.get("GPS Longitude Ref"));
                     }
                 }
                 if (altitude != -1) {
@@ -384,6 +388,7 @@ public class MetadataController implements Initializable {
                     }
                 }
                 file.setRecordTime(recordT);
+                file.setGpsDateTime(timeStr);
                 file.setCamera(rawMetaData.get("Model"));
             });
         }

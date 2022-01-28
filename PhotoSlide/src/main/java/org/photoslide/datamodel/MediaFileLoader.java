@@ -31,10 +31,10 @@ public class MediaFileLoader {
 
     public MediaFileLoader() {
         memory = Utility.getNativeMemorySize();
-        if (memory > 4194500) {            
+        if (memory > 4194500) {
             executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
         } else {
-            executorParallel = Executors.newFixedThreadPool(6, new ThreadFactoryPS("mediaFileLoaderThread"));
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
         }
         taskList = new HashMap<>();
     }
@@ -134,10 +134,10 @@ public class MediaFileLoader {
         });
         taskList.clear();
         executorParallel.shutdownNow();
-        if (memory > 4000000) {            
+        if (memory > 4000000) {
             executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
         } else {
-            executorParallel = Executors.newFixedThreadPool(6, new ThreadFactoryPS("mediaFileLoaderThread"));
-        }        
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
+        }
     }
 }

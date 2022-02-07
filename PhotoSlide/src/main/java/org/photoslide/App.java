@@ -98,9 +98,6 @@ public class App extends Application {
         
         RAWImageLoaderFactory.install();
         HEIFImageLoaderFactory.install();
-        ModuleLayer.boot().modules().stream()
-                .map(Module::getName)
-                .forEach(System.out::println);
         notifyPreloader(new ProgressNotification(0.8));
     }
 

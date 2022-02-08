@@ -358,10 +358,11 @@ public class MediaFile {
             }
             if (prop.getProperty("gpsPosition") != null && prop.getProperty("gpsPosition").length() > 2) {
                 String property = prop.getProperty("gpsPosition");
-                StringTokenizer token = new StringTokenizer(property, ";");
-                double lat = Double.parseDouble(token.nextToken());
-                double lon = Double.parseDouble(token.nextToken());
-                gpsPosition = new Point(lat, lon);
+                if (property.contains("°")) {
+                    setGpsPositionFromDMS(property);
+                } else {
+                    setGpsPositionFromDegree(property);
+                }
             }
         } catch (IOException ex) {
             //Do nothing if file not found

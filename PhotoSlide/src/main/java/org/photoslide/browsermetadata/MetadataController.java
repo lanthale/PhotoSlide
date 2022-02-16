@@ -5,6 +5,9 @@
  */
 package org.photoslide.browsermetadata;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Directory;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
@@ -62,6 +65,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
@@ -304,6 +308,7 @@ public class MetadataController implements Initializable {
                 key.setStyle("-fx-font-size:8pt;");
                 value.setStyle("-fx-font-size:8pt;");
                 metaDataGrid.addRow(0, key, value);
+                updateUIWithExtendedMetadata();
             } else {
                 updateUIWithExtendedMetadata();
 
@@ -328,9 +333,6 @@ public class MetadataController implements Initializable {
     }
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
-        if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
-            return;
-        }
         if (file.isRawImage()) {
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
@@ -361,8 +363,11 @@ public class MetadataController implements Initializable {
             String timeStr = rawMetaData.get("Date/Time Digitized");
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-            LocalDateTime date = LocalDateTime.parse(timeStr, formatter);
-
+            LocalDateTime date = null;
+            try {
+                date = LocalDateTime.parse(timeStr, formatter);
+            } catch (DateTimeParseException ef) {
+            }
             double alti = -1;
             try {
                 if (rawMetaData.get("GPS Altitude") != null) {
@@ -391,6 +396,54 @@ public class MetadataController implements Initializable {
                 file.setGpsDateTime(timeStr);
                 file.setCamera(rawMetaData.get("Model"));
             });
+        }
+        if (file.isVideoFile()) {
+            try {
+                com.drew.metadata.Metadata metadata = ImageMetadataReader.readMetadata(file.getPathStorage().toFile());
+                for (Directory directory : metadata.getDirectories()) {
+                    for (com.drew.metadata.Tag tag : directory.getTags()) {
+                        rawMetaData.put(tag.getTagName(), tag.getDescription());
+                    }
+                }
+                String timeStrRaw = rawMetaData.get("Creation Time");
+                StringTokenizer st = new StringTokenizer(timeStrRaw, " ");
+                String wday = st.nextToken();
+                String month = st.nextToken();
+                String day = st.nextToken();
+                String time = st.nextToken();
+                String zone = st.nextToken();
+                String year = st.nextToken();
+                String timeStr = year + ":" + month + ":" + day + " " + time;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
+                LocalDateTime date = null;
+                try {
+                    date = LocalDateTime.parse(timeStr, formatter);
+                } catch (DateTimeParseException ef) {
+                }
+                double alti = -1;
+                try {
+                    alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+                } catch (NumberFormatException ex) {
+                }
+                final double altitude = alti;
+                final LocalDateTime recordT = date;
+                Platform.runLater(() -> {
+                    if (rawMetaData.get("GPS Position") != null) {
+                        if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                            file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                        }
+                        if (altitude != -1) {
+                            if (altitude != 0.0) {
+                                file.setGpsHeight(altitude);
+                            }
+                        }
+                    }
+                    file.setRecordTime(recordT);
+                    file.setCamera(rawMetaData.get("CameraModel"));
+                });
+            } catch (ImageProcessingException ex) {
+                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {

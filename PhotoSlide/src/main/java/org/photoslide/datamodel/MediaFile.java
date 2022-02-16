@@ -888,4 +888,12 @@ public class MediaFile {
         return false;
     }
 
+    public boolean isVideoFile() {
+        if (mediaType == MediaTypes.VIDEO) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

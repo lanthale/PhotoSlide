@@ -5,8 +5,11 @@
  */
 package org.photoslide.browsermetadata;
 
-import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
+import com.drew.imaging.avi.AviMetadataReader;
+import com.drew.imaging.mp4.Mp4MetadataReader;
+import com.drew.imaging.quicktime.QuickTimeMetadataReader;
+import com.drew.imaging.webp.WebpMetadataReader;
 import com.drew.metadata.Directory;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
@@ -19,7 +22,6 @@ import com.icafe4j.image.meta.Metadata;
 import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.MetadataType;
 import com.icafe4j.image.meta.exif.Exif;
-import com.icafe4j.image.meta.exif.ExifTag;
 import com.icafe4j.image.meta.exif.GPSTag;
 import com.icafe4j.image.meta.image.Comments;
 import com.icafe4j.image.meta.iptc.IPTC;
@@ -32,8 +34,6 @@ import com.icafe4j.image.meta.xmp.XMP;
 import com.icafe4j.image.options.PNGOptions;
 import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.FieldType;
-import com.icafe4j.image.tiff.IFD;
-import com.icafe4j.image.tiff.TiffField;
 import com.icafe4j.image.writer.ImageWriter;
 import com.sothawo.mapjfx.Coordinate;
 import com.sothawo.mapjfx.MapCircle;
@@ -54,14 +54,12 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -399,48 +397,61 @@ public class MetadataController implements Initializable {
         }
         if (file.isVideoFile()) {
             try {
-                com.drew.metadata.Metadata metadata = ImageMetadataReader.readMetadata(file.getPathStorage().toFile());
-                for (Directory directory : metadata.getDirectories()) {
-                    for (com.drew.metadata.Tag tag : directory.getTags()) {
-                        rawMetaData.put(tag.getTagName(), tag.getDescription());
-                    }
+                com.drew.metadata.Metadata metadata = null;
+                String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);                
+                switch (extension.toLowerCase()) {
+                    case "mp4" ->
+                        metadata = Mp4MetadataReader.readMetadata(file.getPathStorage().toFile());
+                    case "mov" ->
+                        metadata = QuickTimeMetadataReader.readMetadata(file.getPathStorage().toFile());
+                    case "webP" ->
+                        metadata = WebpMetadataReader.readMetadata(file.getPathStorage().toFile());
+                    case "avi" ->
+                        metadata = AviMetadataReader.readMetadata(file.getPathStorage().toFile());
                 }
-                String timeStrRaw = rawMetaData.get("Creation Time");
-                StringTokenizer st = new StringTokenizer(timeStrRaw, " ");
-                String wday = st.nextToken();
-                String month = st.nextToken();
-                String day = st.nextToken();
-                String time = st.nextToken();
-                String zone = st.nextToken();
-                String year = st.nextToken();
-                String timeStr = year + ":" + month + ":" + day + " " + time;
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
-                LocalDateTime date = null;
-                try {
-                    date = LocalDateTime.parse(timeStr, formatter);
-                } catch (DateTimeParseException ef) {
-                }
-                double alti = -1;
-                try {
-                    alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
-                } catch (NumberFormatException ex) {
-                }
-                final double altitude = alti;
-                final LocalDateTime recordT = date;
-                Platform.runLater(() -> {
-                    if (rawMetaData.get("GPS Position") != null) {
-                        if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                            file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                if (metadata != null) {
+                    for (Directory directory : metadata.getDirectories()) {
+                        for (com.drew.metadata.Tag tag : directory.getTags()) {
+                            rawMetaData.put(tag.getTagName(), tag.getDescription());
                         }
-                        if (altitude != -1) {
-                            if (altitude != 0.0) {
-                                file.setGpsHeight(altitude);
+                    }
+                    String timeStrRaw = rawMetaData.get("Creation Time");
+                    StringTokenizer st = new StringTokenizer(timeStrRaw, " ");
+                    String wday = st.nextToken();
+                    String month = st.nextToken();
+                    String day = st.nextToken();
+                    String time = st.nextToken();
+                    String zone = st.nextToken();
+                    String year = st.nextToken();
+                    String timeStr = year + ":" + month + ":" + day + " " + time;
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
+                    LocalDateTime date = null;
+                    try {
+                        date = LocalDateTime.parse(timeStr, formatter);
+                    } catch (DateTimeParseException ef) {
+                    }
+                    double alti = -1;
+                    try {
+                        alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+                    } catch (NumberFormatException ex) {
+                    }
+                    final double altitude = alti;
+                    final LocalDateTime recordT = date;
+                    Platform.runLater(() -> {
+                        if (rawMetaData.get("GPS Position") != null) {
+                            if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                                file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                            }
+                            if (altitude != -1) {
+                                if (altitude != 0.0) {
+                                    file.setGpsHeight(altitude);
+                                }
                             }
                         }
-                    }
-                    file.setRecordTime(recordT);
-                    file.setCamera(rawMetaData.get("CameraModel"));
-                });
+                        file.setRecordTime(recordT);
+                        file.setCamera(rawMetaData.get("CameraModel"));
+                    });
+                }
             } catch (ImageProcessingException ex) {
                 Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
             }

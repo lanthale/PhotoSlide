@@ -23,6 +23,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -223,27 +224,20 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void handleGridCellSelection(Event t) throws MalformedURLException {
-        /*if (t.getTarget().getClass().equals(StackPane.class)) {
-            Node target = Utility.pick((StackPane) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
-            if (target.getClass().equals(FontIcon.class)) {
-                handleStackButtonAction(t, ((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
-                if (lightController.getImageView().getImage() != null) {
-                    if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
-                        return;
-                    }
-                }
-            }
-        }*/
         if (t.getTarget().getClass().equals(FontIcon.class)) {
             if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
+                String name = ((MediaGridCell) t.getSource()).getItem().getName();
+                setStdGUIState();
+                Platform.runLater(() -> {
+                    lightController.getFilenameLabel().setVisible(true);
+                    lightController.getFilenameLabel().setText(name);
+                });
                 return;
             }
-            handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
-            /*if (lightController.getImageView().getImage() != null) {
-                if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImage().getUrl())) {
-                    return;
-                }
-            }*/
+            String code = ((FontIcon) t.getTarget()).getIconLiteral();
+            if (code.equalsIgnoreCase("ti-view-grid")) {
+                handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
+            }
             t.consume();
         }
         if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
@@ -319,7 +313,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             case VIDEO:
                 metadataController.setSelectedFile(selectedMediaItem);
                 try {
-                    Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
                     Platform.runLater(() -> {
                         lightController.getImageView().setVisible(false);
                         lightController.getMediaView().setVisible(true);
@@ -328,41 +321,38 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         lightController.getPlayIcon().setVisible(true);
                         lightController.getMediaView().toFront();
                         lightController.getPlayIcon().toFront();
+                        lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     });
-                    MediaPlayer mp = new MediaPlayer(media);
-                    if (lightController.getMediaView().getMediaPlayer() != null) {
-                        lightController.getMediaView().getMediaPlayer().stop();
-                    }
-                    Platform.runLater(() -> {
-                        lightController.getMediaView().setMediaPlayer(mp);
-                    });
-                    lightController.getMediaView().setOnMouseMoved((k) -> {
-                        Platform.runLater(() -> {
-                            lightController.getPlayIcon().setVisible(true);
-                        });
+                    Task mediaTask = new Task() {
+                        @Override
+                        protected MediaPlayer call() throws Exception {
+                            Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                            MediaPlayer mp = new MediaPlayer(media);
+                            return mp;
+                        }
+                    };
+                    mediaTask.setOnSucceeded((p) -> {
+                        lightController.getMediaView().setMediaPlayer((MediaPlayer) mediaTask.getValue());
                         if (lightController.getMediaView().getMediaPlayer() != null) {
-                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                Platform.runLater(() -> {
-                                    lightController.getPlayIcon().setVisible(true);
-                                });
-                                lightController.getPlayIcon().setIconLiteral("fa-pause");
-                            } else {
-                                lightController.getPlayIcon().setIconLiteral("fa-play");
+                            lightController.getMediaView().getMediaPlayer().stop();
+                        }
+                        lightController.getMediaView().setOnMouseMoved((k) -> {
+                            Platform.runLater(() -> {
+                                lightController.getPlayIcon().setVisible(true);
+                            });
+                            if (lightController.getMediaView().getMediaPlayer() != null) {
+                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                                    Platform.runLater(() -> {
+                                        lightController.getPlayIcon().setVisible(true);
+                                    });
+                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
+                                } else {
+                                    lightController.getPlayIcon().setIconLiteral("fa-play");
+                                }
+                                util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
                             }
-                            util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
-                        }
-                    });
-                    lightController.getPlayIcon().setOnMouseClicked((k2) -> {
-                        if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                            lightController.getMediaView().getMediaPlayer().pause();
-                        } else {
-                            lightController.getMediaView().getMediaPlayer().play();
-                            lightController.getPlayIcon().setIconLiteral("fa-pause");
-                            util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
-                        }
-                    });
-                    lightController.getMediaView().setOnKeyPressed((k3) -> {
-                        if (k3.getCode() == KeyCode.SPACE) {
+                        });
+                        lightController.getPlayIcon().setOnMouseClicked((k2) -> {
                             if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
                                 lightController.getMediaView().getMediaPlayer().pause();
                             } else {
@@ -370,8 +360,20 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                 lightController.getPlayIcon().setIconLiteral("fa-pause");
                                 util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
                             }
-                        }
+                        });
+                        lightController.getMediaView().setOnKeyPressed((k3) -> {
+                            if (k3.getCode() == KeyCode.SPACE) {
+                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                                    lightController.getMediaView().getMediaPlayer().pause();
+                                } else {
+                                    lightController.getMediaView().getMediaPlayer().play();
+                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
+                                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
+                                }
+                            }
+                        });
                     });
+                    executor.submit(mediaTask);
                 } catch (MediaException e) {
                     if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
                         VBox vb = new VBox();

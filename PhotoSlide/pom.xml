@@ -6,7 +6,7 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.2.11</version>   
+    <version>1.2.12</version>   
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
@@ -237,7 +237,7 @@
         <dependency>
             <groupId>com.drewnoakes</groupId>
             <artifactId>metadata-extractor</artifactId>
-            <version>2.16.0</version>
+            <version>2.16.0</version>            
         </dependency>
 
         <!-- This downloads the platform specific JavaFX libraries used by the project. -->

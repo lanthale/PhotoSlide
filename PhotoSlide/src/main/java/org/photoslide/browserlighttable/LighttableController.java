@@ -278,6 +278,7 @@ public class LighttableController implements Initializable {
         ratingControl.setVisible(false);
         zoomSlider.setDisable(false);
         imageView.setImage(null);
+        mediaView.setMediaPlayer(null);
         metadataController.resetGUI();
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;

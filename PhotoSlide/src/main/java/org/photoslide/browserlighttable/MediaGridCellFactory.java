@@ -224,16 +224,16 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     private void handleGridCellSelection(Event t) throws MalformedURLException {
-        if (t.getTarget().getClass().equals(FontIcon.class)) {
-            if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
-                String name = ((MediaGridCell) t.getSource()).getItem().getName();
+        if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
+            String name = ((MediaGridCell) t.getSource()).getItem().getName();            
+            Platform.runLater(() -> {
                 setStdGUIState();
-                Platform.runLater(() -> {
-                    lightController.getFilenameLabel().setVisible(true);
-                    lightController.getFilenameLabel().setText(name);
-                });
-                return;
-            }
+                lightController.getFilenameLabel().setVisible(true);
+                lightController.getFilenameLabel().setText(name);
+            });
+            return;
+        }
+        if (t.getTarget().getClass().equals(FontIcon.class)) {
             String code = ((FontIcon) t.getTarget()).getIconLiteral();
             if (code.equalsIgnoreCase("ti-view-grid")) {
                 handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
@@ -310,10 +310,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getMediaView().setMediaPlayer(null);
         });
         switch (selectedMediaItem.getMediaType()) {
-            case VIDEO:
+            case VIDEO:                
                 metadataController.setSelectedFile(selectedMediaItem);
                 try {
                     Platform.runLater(() -> {
+                        lightController.getImageProgress().setVisible(true);
                         lightController.getImageView().setVisible(false);
                         lightController.getMediaView().setVisible(true);
                         lightController.getImageProgress().setVisible(false);
@@ -331,7 +332,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             return mp;
                         }
                     };
-                    mediaTask.setOnSucceeded((p) -> {
+                    mediaTask.setOnSucceeded((p) -> {                                                                        
                         lightController.getMediaView().setMediaPlayer((MediaPlayer) mediaTask.getValue());
                         if (lightController.getMediaView().getMediaPlayer() != null) {
                             lightController.getMediaView().getMediaPlayer().stop();
@@ -371,7 +372,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                                     util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
                                 }
                             }
-                        });
+                        });                        
+                        util.hideNodeAfterTime(lightController.getImageProgress(), 1, true);
                     });
                     executor.submit(mediaTask);
                 } catch (MediaException e) {
@@ -566,6 +568,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getMainController().handleMenuDisable(false);
         lightController.getImageView().rotateProperty().unbind();
         lightController.getImageView().setRotate(0);
+        lightController.getMediaView().setVisible(false);
+        lightController.getMediaView().setMediaPlayer(null);
+        lightController.getPlayIcon().setVisible(false);
         lightController.getImageProgress().setVisible(false);
         //lightController.getBookmarkButton().setDisable(false);
         if (selectionModel.getSelection().size() > 1) {

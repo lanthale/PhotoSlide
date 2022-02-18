@@ -24,7 +24,7 @@
 <?import org.controlsfx.control.ToggleSwitch?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
       <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -41,8 +41,8 @@
                      </children>
                   </HBox>
                   <MediaView fx:id="mediaView" StackPane.alignment="CENTER" />
-                  <ProgressIndicator fx:id="imageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
                   <FontIcon fx:id="playIcon" iconLiteral="ti-control-play" iconSize="80" />
+                  <ProgressIndicator fx:id="imageProgress" maxHeight="80.0" maxWidth="80.0" progress="0.0" />
                   <VBox fx:id="infoPane" alignment="BOTTOM_LEFT" focusTraversable="true" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                      <children>
                         <Label fx:id="titleLabel" text="Title" visible="false">

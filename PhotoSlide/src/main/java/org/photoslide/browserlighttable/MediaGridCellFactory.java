@@ -36,6 +36,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.skin.VirtualFlow;
@@ -314,7 +315,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 metadataController.setSelectedFile(selectedMediaItem);
                 try {
                     Platform.runLater(() -> {
-                        lightController.getImageProgress().setVisible(true);
+                        lightController.getImageProgress().progressProperty().unbind();
+                        lightController.getImageProgress().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                        lightController.getImageProgress().setVisible(true);                        
                         lightController.getImageView().setVisible(false);
                         lightController.getMediaView().setVisible(true);
                         lightController.getImageProgress().setVisible(false);
@@ -327,7 +330,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     Task mediaTask = new Task() {
                         @Override
                         protected MediaPlayer call() throws Exception {
-                            Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                            Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());                            
                             MediaPlayer mp = new MediaPlayer(media);
                             return mp;
                         }

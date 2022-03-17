@@ -332,6 +332,7 @@ public class MetadataController implements Initializable {
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.isRawImage()) {
+            long startraw = System.currentTimeMillis();
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
@@ -355,8 +356,11 @@ public class MetadataController implements Initializable {
                 file.setRecordTime(ofEpochSecond);
                 file.setCamera(rawMetaData.get("CameraModel"));
             });
+            long endraw = System.currentTimeMillis();
+            System.out.println("reading time raw: " + (endraw - startraw) + " ms");
         }
         if (file.isHEIFImage()) {
+            long startheif = System.currentTimeMillis();
             rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
             String timeStr = rawMetaData.get("Date/Time Digitized");
 
@@ -394,11 +398,14 @@ public class MetadataController implements Initializable {
                 file.setGpsDateTime(timeStr);
                 file.setCamera(rawMetaData.get("Model"));
             });
+            long endheif = System.currentTimeMillis();
+            System.out.println("reading time heif: " + (endheif - startheif) + " ms");
         }
         if (file.isVideoFile()) {
+            long startvideo = System.currentTimeMillis();
             try {
                 com.drew.metadata.Metadata metadata = null;
-                String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);                
+                String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
                 switch (extension.toLowerCase()) {
                     case "mp4" ->
                         metadata = Mp4MetadataReader.readMetadata(file.getPathStorage().toFile());
@@ -455,7 +462,10 @@ public class MetadataController implements Initializable {
             } catch (ImageProcessingException ex) {
                 Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
             }
+            long endvideo = System.currentTimeMillis();
+            System.out.println("reading time video: " + (endvideo - startvideo) + " ms");
         }
+        long startimage = System.currentTimeMillis();
         Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
         for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
             if (actTask.isCancelled() == false) {
@@ -637,6 +647,8 @@ public class MetadataController implements Initializable {
                 break;
             }
         }
+        long endimage = System.currentTimeMillis();
+        System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
     }
 
     private String formatTime(String source) {

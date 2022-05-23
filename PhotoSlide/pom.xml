@@ -6,7 +6,7 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.2.14-SNAPSHOT</version>   
+    <version>1.2.14</version>   
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
@@ -19,8 +19,8 @@
         <app.version>${project.version}</app.version>        
         <jvm.modules>java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,javafx.web,java.logging,jdk.charsets,jdk.incubator.foreign,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target> 
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target> 
         <!-- UUID via https://www.uuidgenerator.net -->
         <windows.upgrade.uuid>5be0a831-ee20-4692-8c71-6616381d9ccf</windows.upgrade.uuid>        
         <windows.vendor>ITArchitects</windows.vendor>        
@@ -202,12 +202,12 @@
         <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
-            <version>1.7.8</version>
+            <version>1.7.9</version>
         </dependency>
         <dependency>  
             <groupId>org.libheiffx</groupId>    
             <artifactId>LibHeifFX</artifactId>  
-            <version>1.1.7</version>  
+            <version>1.1.8</version>  
         </dependency>
         <dependency>
             <groupId>com.sothawo</groupId>

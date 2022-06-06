@@ -224,7 +224,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.requestLayout();
     }
 
-    private void handleGridCellSelection(Event t) throws MalformedURLException {
+    public void handleGridCellSelection(Event t) throws MalformedURLException {
         if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
             String name = ((MediaGridCell) t.getSource()).getItem().getName();            
             Platform.runLater(() -> {
@@ -327,57 +327,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         lightController.getPlayIcon().toFront();
                         lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     });
-                    Task mediaTask = new Task() {
-                        @Override
-                        protected MediaPlayer call() throws Exception {
-                            Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());                            
-                            MediaPlayer mp = new MediaPlayer(media);
-                            return mp;
-                        }
-                    };
-                    mediaTask.setOnSucceeded((p) -> {                                                                        
-                        lightController.getMediaView().setMediaPlayer((MediaPlayer) mediaTask.getValue());
-                        if (lightController.getMediaView().getMediaPlayer() != null) {
-                            lightController.getMediaView().getMediaPlayer().stop();
-                        }
-                        lightController.getMediaView().setOnMouseMoved((k) -> {
-                            Platform.runLater(() -> {
-                                lightController.getPlayIcon().setVisible(true);
-                            });
-                            if (lightController.getMediaView().getMediaPlayer() != null) {
-                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                    Platform.runLater(() -> {
-                                        lightController.getPlayIcon().setVisible(true);
-                                    });
-                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                } else {
-                                    lightController.getPlayIcon().setIconLiteral("fa-play");
-                                }
-                                util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
-                            }
-                        });
-                        lightController.getPlayIcon().setOnMouseClicked((k2) -> {
-                            if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                lightController.getMediaView().getMediaPlayer().pause();
-                            } else {
-                                lightController.getMediaView().getMediaPlayer().play();
-                                lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
-                            }
-                        });
-                        lightController.getMediaView().setOnKeyPressed((k3) -> {
-                            if (k3.getCode() == KeyCode.SPACE) {
-                                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                                    lightController.getMediaView().getMediaPlayer().pause();
-                                } else {
-                                    lightController.getMediaView().getMediaPlayer().play();
-                                    lightController.getPlayIcon().setIconLiteral("fa-pause");
-                                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
-                                }
-                            }
-                        });                        
-                        util.hideNodeAfterTime(lightController.getImageProgress(), 1, true);
-                    });
+                    Task mediaTask = loadVideo();
                     executor.submit(mediaTask);
                 } catch (MediaException e) {
                     if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
@@ -480,7 +430,62 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
     }
 
-    private void loadImage() throws MalformedURLException {
+    public Task loadVideo() {
+        Task mediaTask = new Task() {
+            @Override
+            protected MediaPlayer call() throws Exception {
+                Media media = new Media(selectedMediaItem.getPathStorage().toUri().toURL().toExternalForm());
+                MediaPlayer mp = new MediaPlayer(media);
+                return mp;
+            }
+        };
+        mediaTask.setOnSucceeded((p) -> {
+            lightController.getMediaView().setMediaPlayer((MediaPlayer) mediaTask.getValue());
+            if (lightController.getMediaView().getMediaPlayer() != null) {
+                lightController.getMediaView().getMediaPlayer().stop();
+            }
+            lightController.getMediaView().setOnMouseMoved((k) -> {
+                Platform.runLater(() -> {
+                    lightController.getPlayIcon().setVisible(true);
+                });
+                if (lightController.getMediaView().getMediaPlayer() != null) {
+                    if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                        Platform.runLater(() -> {
+                            lightController.getPlayIcon().setVisible(true);
+                        });
+                        lightController.getPlayIcon().setIconLiteral("fa-pause");
+                    } else {
+                        lightController.getPlayIcon().setIconLiteral("fa-play");
+                    }
+                    util.hideNodeAfterTime(lightController.getPlayIcon(), 2, true);
+                }
+            });
+            lightController.getPlayIcon().setOnMouseClicked((k2) -> {
+                if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                    lightController.getMediaView().getMediaPlayer().pause();
+                } else {
+                    lightController.getMediaView().getMediaPlayer().play();
+                    lightController.getPlayIcon().setIconLiteral("fa-pause");
+                    util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
+                }
+            });
+            lightController.getMediaView().setOnKeyPressed((k3) -> {
+                if (k3.getCode() == KeyCode.SPACE) {
+                    if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                        lightController.getMediaView().getMediaPlayer().pause();
+                    } else {
+                        lightController.getMediaView().getMediaPlayer().play();
+                        lightController.getPlayIcon().setIconLiteral("fa-pause");
+                        util.hideNodeAfterTime(lightController.getPlayIcon(), 1, true);
+                    }
+                }
+            });
+            util.hideNodeAfterTime(lightController.getImageProgress(), 1, true);
+        });
+        return mediaTask;
+    }
+
+    public void loadImage() throws MalformedURLException {
         String url = selectedMediaItem.getImageUrl().toString();
         img = new Image(url, true);
         Platform.runLater(() -> {

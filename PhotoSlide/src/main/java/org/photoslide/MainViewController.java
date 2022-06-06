@@ -15,8 +15,6 @@ import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
 import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +44,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -57,7 +55,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -69,7 +66,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
@@ -80,7 +76,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -88,18 +83,14 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Callback;
 import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
-import org.controlsfx.control.TaskProgressView;
-import org.controlsfx.glyphfont.FontAwesome;
-import org.controlsfx.glyphfont.FontAwesome.Glyph;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
 import org.photoslide.bookmarksboard.BookmarkBoardController;
-import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.datamodel.FileTypes;
+import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
@@ -198,13 +189,13 @@ public class MainViewController implements Initializable {
     @FXML
     private Button searchButton;
     @FXML
-    private Button bookmarksBoardButton;    
+    private Button bookmarksBoardButton;
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
     private PrintDialog printDialog;
     private Properties bookmarks;
     private BookmarkBoardController bookmarksController;
-    private BMBIcon bmbIcon;    
+    private BMBIcon bmbIcon;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -243,7 +234,7 @@ public class MainViewController implements Initializable {
             if (newScene != null && browseButton != null) {
                 swUpdater.checkForSoftwareUpdates();
             }
-        });        
+        });
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -1065,10 +1056,25 @@ public class MainViewController implements Initializable {
     private void wipeAllMediaFileEdits(ActionEvent event) {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
         selectedMediaItem.removeAllEdits();
+        int indexOf = lighttablePaneController.getFullMediaList().indexOf(selectedMediaItem);
+        if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+            new MediaFileLoader().loadImage(selectedMediaItem);
+            lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
+            try {
+                lighttablePaneController.getFactory().loadImage();
+            } catch (MalformedURLException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {
+            new MediaFileLoader().loadVideo(selectedMediaItem);
+            lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
+            executorParallel.submit(lighttablePaneController.getFactory().loadVideo());
+        }
     }
 
     public CollectionsController getCollectionsPaneController() {
         return collectionsPaneController;
-    }    
+    }
 
 }

@@ -38,6 +38,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
@@ -76,6 +77,7 @@ public class MediaFile {
     private final SimpleStringProperty place;
     private final SimpleStringProperty faces;
     private Rectangle2D cropView;
+    private Point2D orignalImageSize;
     private LocalDateTime recordTime;
     private final SimpleBooleanProperty deleted;
     private final SimpleBooleanProperty selected;
@@ -124,6 +126,8 @@ public class MediaFile {
         rotationAngle = new SimpleDoubleProperty(0.0);
         rating = new SimpleIntegerProperty(0);
         gpsHeight = -1;
+        orignalImageSize = null;
+        cropView = null;
     }
 
     public static Callback<MediaFile, Observable[]> extractor() {
@@ -208,6 +212,9 @@ public class MediaFile {
             }
             if (cropView != null) {
                 prop.setProperty("crop", cropView.getMinX() + ";" + cropView.getMinY() + ";" + cropView.getWidth() + ";" + cropView.getHeight());
+            }
+            if (orignalImageSize != null) {
+                prop.setProperty("orgImgSize", orignalImageSize.getX() + ";" + orignalImageSize.getY());
             }
             if (stacked.getValue() != null) {
                 prop.setProperty("stacked", stacked.getValue() + "");
@@ -318,6 +325,18 @@ public class MediaFile {
                     i++;
                 }
                 cropView = new Rectangle2D(rectValues[0], rectValues[1], rectValues[2], rectValues[3]);
+            }
+            String sizeValue = prop.getProperty("orgImgSize");
+            if (sizeValue != null) {
+                StringTokenizer defaultTokenizer = new StringTokenizer(sizeValue, ";");
+                double[] pointValues = new double[2];
+                int i = 0;
+                while (defaultTokenizer.hasMoreTokens()) {
+                    String nextToken = defaultTokenizer.nextToken();
+                    pointValues[i] = Double.parseDouble(nextToken);
+                    i++;
+                }
+                orignalImageSize = new Point2D(pointValues[0],pointValues[1]);                
             }
             ObjectMapper mapper = new ObjectMapper();
             ArrayList<ImageFilter> rawList = new ArrayList<>();
@@ -449,6 +468,14 @@ public class MediaFile {
     public void setCropView(Rectangle2D cropView) {
         this.cropView = cropView;
     }
+
+    public Point2D getOrignalImageSize() {
+        return orignalImageSize;
+    }
+
+    public void setOrignalImageSize(Point2D orignalImageSize) {
+        this.orignalImageSize = orignalImageSize;
+    }        
 
     public SimpleStringProperty titleProperty() {
         return title;
@@ -841,6 +868,8 @@ public class MediaFile {
             rotationAngle.set(0.0);
             rating.set(0);
             gpsHeight = -1;
+            cropView = null;
+            orignalImageSize = null;
         }
     }
 

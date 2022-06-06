@@ -11,6 +11,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -56,6 +57,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
         imageView.fitHeightProperty().bind(heightProperty().subtract(15));
         imageView.fitWidthProperty().bind(widthProperty().subtract(15));
         imageView.rotateProperty().bind(rotationAngle);
+        imageView.setViewport(null);
         mediaview = new MediaView();
         mediaview.setPreserveRatio(true);
         mediaview.fitHeightProperty().bind(heightProperty());
@@ -147,16 +149,16 @@ public class MediaGridCell extends GridCell<MediaFile> {
 
     public final void setError(MediaFile item) {
         rootPane.getChildren().clear();
-        dummyIcon.setIconLiteral("ti-bolt");        
-        Label errorLabel=new Label("Error loading");        
-        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
+        dummyIcon.setIconLiteral("ti-bolt");
+        Label errorLabel = new Label("Error loading");
+        Tooltip tp = new Tooltip("Cannot load mediafile, because format is not supported!");
         tp.setFont(new Font(13));
         errorLabel.setPadding(new Insets(-5));
-        errorLabel.setTooltip(tp);                
-        errorLabel.setStyle("-fx-font-size:6");        
+        errorLabel.setTooltip(tp);
+        errorLabel.setStyle("-fx-font-size:6");
         errorLabel.setGraphic(dummyIcon);
         errorLabel.setContentDisplay(ContentDisplay.TOP);
-        HBox hb=new HBox();
+        HBox hb = new HBox();
         hb.setAlignment(Pos.BOTTOM_CENTER);
         hb.getChildren().add(errorLabel);
         rootPane.getChildren().add(hb);
@@ -173,10 +175,28 @@ public class MediaGridCell extends GridCell<MediaFile> {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
             item.setImage(item.setFilters());
-            //calc cropview based on small imageview
-            //imageView.setViewport(item.getCropView());
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
+            if (item.getCropView() != null) {
+                if (item.getOrignalImageSize() != null) {
+                    //calc cropview based on small imageview                
+                    double wPreview = item.getImage().getWidth();
+                    double hPreview = item.getImage().getHeight();
+                    double ratioW = item.getOrignalImageSize().getX() / item.getImage().getWidth();
+                    double ratioH = item.getOrignalImageSize().getY() / item.getImage().getHeight();
+
+                    double fW = item.getCropView().getWidth() / ratioW;
+                    double fH = item.getCropView().getHeight() / ratioH;
+                    double fWX = item.getCropView().getMinX() / ratioW;
+                    double fHY = item.getCropView().getMinY() / ratioH;
+                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
+                    imageView.setViewport(viewP);
+                } else {
+                    imageView.setViewport(null);
+                }
+            } else {
+                imageView.setViewport(null);
+            }
             imageView.setImage(item.getImage());
             rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());

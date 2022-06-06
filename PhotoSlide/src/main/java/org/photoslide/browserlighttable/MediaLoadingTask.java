@@ -163,7 +163,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         } else if (FileTypes.isValidImage(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (sort.equalsIgnoreCase("Capture time")) {
-                try {
+                try {                    
                     metadataController.readBasicMetadata(this, m);
                 } catch (IOException ex) {
                     Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);

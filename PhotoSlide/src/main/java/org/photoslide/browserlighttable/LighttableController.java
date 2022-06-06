@@ -720,6 +720,8 @@ public class LighttableController implements Initializable {
                 }
                 if (KeyCode.ENTER == t.getCode()) {
                     Rectangle2D selection = snapshotView.getSelection();
+                    Point2D imgSize=new Point2D(imageView.getImage().getWidth(), imageView.getImage().getHeight());
+                    factory.getSelectedCell().getItem().setOrignalImageSize(imgSize);
                     imageView.setViewport(new Rectangle2D(0, 0, imageView.getImage().getWidth(), imageView.getImage().getHeight()));
                     Point2D imageViewToImageUp = util.imageViewToImage(imageView, new Point2D(selection.getMinX(), selection.getMinY()));
                     Point2D imageViewToImageLow = util.imageViewToImage(imageView, new Point2D(selection.getMaxX(), selection.getMaxY()));

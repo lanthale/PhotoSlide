@@ -85,6 +85,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
@@ -334,7 +335,7 @@ public class MetadataController implements Initializable {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
+            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");            
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
             double alti = -1;
             try {
@@ -362,7 +363,7 @@ public class MetadataController implements Initializable {
         if (file.isHEIFImage()) {
             long startheif = System.currentTimeMillis();
             rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Date/Time Digitized");
+            String timeStr = rawMetaData.get("Date/Time Digitized");            
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
             LocalDateTime date = null;
@@ -647,7 +648,7 @@ public class MetadataController implements Initializable {
                 break;
             }
         }
-        long endimage = System.currentTimeMillis();
+        long endimage = System.currentTimeMillis();        
         System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
     }
 

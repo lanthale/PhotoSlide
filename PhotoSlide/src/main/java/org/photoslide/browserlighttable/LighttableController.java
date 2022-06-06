@@ -89,6 +89,7 @@ import boofcv.io.MediaManager;
 import boofcv.io.wrapper.DefaultMediaManager;
 import georegression.struct.shapes.Quadrilateral_F64;
 import java.awt.image.BufferedImage;
+
 /**
  *
  * @author selfemp
@@ -720,7 +721,7 @@ public class LighttableController implements Initializable {
                 }
                 if (KeyCode.ENTER == t.getCode()) {
                     Rectangle2D selection = snapshotView.getSelection();
-                    Point2D imgSize=new Point2D(imageView.getImage().getWidth(), imageView.getImage().getHeight());
+                    Point2D imgSize = new Point2D(imageView.getImage().getWidth(), imageView.getImage().getHeight());
                     factory.getSelectedCell().getItem().setOrignalImageSize(imgSize);
                     imageView.setViewport(new Rectangle2D(0, 0, imageView.getImage().getWidth(), imageView.getImage().getHeight()));
                     Point2D imageViewToImageUp = util.imageViewToImage(imageView, new Point2D(selection.getMinX(), selection.getMinY()));
@@ -750,15 +751,16 @@ public class LighttableController implements Initializable {
         if (snapshotView != null) {
             double ratio = 1;
             snapshotView.setSelectionRatioFixed(false);
-            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();
+            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();            
             snapshotView.requestFocus();
             final double ratioF = ratio;
             snapshotView.setFixedSelectionRatio(ratioF);
             snapshotView.setSelectionRatioFixed(true);
             PauseTransition pause = new PauseTransition(Duration.millis(100));
             pause.setOnFinished((t) -> {
-                if (factory.getSelectedCell().getItem().getCropView() == null) {
-                    snapshotView.setSelection(new Rectangle2D(imageView.getFitWidth() / 2 - 100, imageView.getFitHeight() / 2 - 100, 100 * ratioF, 100));
+                if (factory.getSelectedCell().getItem().getCropView() == null) {                    
+                    Rectangle2D rect = new Rectangle2D(20, 20, 100 * ratioF, 100);                    
+                    snapshotView.setSelection(rect);
                 } else {
                     Rectangle2D viewport = imageView.getViewport();
                     imageView.setViewport(null);
@@ -1128,20 +1130,20 @@ public class LighttableController implements Initializable {
         List<DetectedFace> faces = null;
         MediaManager media = DefaultMediaManager.INSTANCE;
         String fileName = "file.jpg";
-        
+
         BufferedImage img = null;
-        
+
         faces = detector.detectFaces(ImageUtilities.createFImage(img));
         System.out.println("detect faces size = " + faces.size());
         Quadrilateral_F64 location = new Quadrilateral_F64();
         for (DetectedFace f : faces) {
-        System.out.println("bounds: " + f.getBounds());
-        location = new Quadrilateral_F64(
-        f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY(),
-        f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight(),
-        f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY(),
-        f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight());
-        break;
+            System.out.println("bounds: " + f.getBounds());
+            location = new Quadrilateral_F64(
+                    f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY(),
+                    f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight(),
+                    f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY(),
+                    f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight());
+            break;
         }
     }
 
@@ -1164,6 +1166,6 @@ public class LighttableController implements Initializable {
 
     public ToggleSwitch getShowPreviewPaneToggle() {
         return showPreviewPaneToggle;
-    }    
+    }
 
 }

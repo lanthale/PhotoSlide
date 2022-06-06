@@ -79,6 +79,6 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools
 - Run maven with: mvn clean install -Ppackage -f PhotoSlide/pom.xml
 
-If you are stuck at JDK 11 than remove in pom.xml the dependency for librawfx and comment in App.java out the line `RAWImageLoaderFactory.install();` and you are ready to build it under JDK11.
+If you are stuck at JDK 11 than remove in pom.xml the dependency for librawfx/libheiffx and comment in App.java out the line `RAWImageLoaderFactory.install();` and you are ready to build it under JDK11.
 
 The maven file is downloading every dependency automatically in the background.

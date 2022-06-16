@@ -21,7 +21,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<VBox prefHeight="750.0" prefWidth="1280.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.MainViewController">
+<VBox prefHeight="750.0" prefWidth="1280.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.MainViewController">
     <children>
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
             <menus>
@@ -84,8 +84,8 @@
                             </graphic>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" text="Select All" />
-                        <MenuItem mnemonicParsing="false" text="Unselect All" />
+                        <MenuItem mnemonicParsing="false" onAction="#selectAllAction" text="Select All" />
+                        <MenuItem mnemonicParsing="false" onAction="#deSelectAllAction" text="Unselect All" />
                         <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="Search">
                             <graphic>
                                 <FontIcon iconLiteral="ti-search" />

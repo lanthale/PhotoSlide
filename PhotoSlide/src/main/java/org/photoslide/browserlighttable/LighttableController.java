@@ -362,12 +362,9 @@ public class LighttableController implements Initializable {
                 clipboard.setContent(content);
             }
             if (keyCombinationMetaA.match(t)) {
-                System.out.println("code "+t.getCode());
                 fullMediaList.forEach((mediafile) -> {
                     factory.getSelectionModel().add(mediafile);
-                    //mediafile.requestLayout();
                 });
-                System.out.println("meta");
             }
             if (KeyCode.RIGHT == t.getCode()) {
                 selectNextImageInGrid();

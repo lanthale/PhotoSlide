@@ -1077,4 +1077,16 @@ public class MainViewController implements Initializable {
         return collectionsPaneController;
     }
 
+    @FXML
+    private void selectAllAction(ActionEvent event) {
+        lighttablePaneController.getFullMediaList().forEach((mediafile) -> {
+            lighttablePaneController.getFactory().getSelectionModel().add(mediafile);
+        });
+    }
+
+    @FXML
+    private void deSelectAllAction(ActionEvent event) {
+        lighttablePaneController.getFactory().getSelectionModel().clear();
+    }
+
 }

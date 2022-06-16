@@ -112,6 +112,7 @@ public class LighttableController implements Initializable {
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
+    private final KeyCombination keyCombinationMetaA = new KeyCodeCombination(KeyCode.A, KeyCombination.SHORTCUT_DOWN);
     private Preferences pref;
 
     @FXML
@@ -143,7 +144,6 @@ public class LighttableController implements Initializable {
     private StackPane invalidStackPane;
     @FXML
     private FontIcon playIcon;
-    private final KeyCombination keyMetaA = new KeyCodeCombination(KeyCode.A, KeyCombination.META_DOWN);
     private MediaGridCellFactory factory;
     @FXML
     private Button stackButton;
@@ -361,11 +361,13 @@ public class LighttableController implements Initializable {
                 content.putFiles(fileList);
                 clipboard.setContent(content);
             }
-            if (keyMetaA.match(t)) {
+            if (keyCombinationMetaA.match(t)) {
+                System.out.println("code "+t.getCode());
                 fullMediaList.forEach((mediafile) -> {
                     factory.getSelectionModel().add(mediafile);
                     //mediafile.requestLayout();
                 });
+                System.out.println("meta");
             }
             if (KeyCode.RIGHT == t.getCode()) {
                 selectNextImageInGrid();

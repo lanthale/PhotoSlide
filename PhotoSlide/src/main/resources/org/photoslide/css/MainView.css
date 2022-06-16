@@ -341,4 +341,9 @@
     -fx-background-color: rgb(80, 80, 80);
 }
 
+.check-menu-item:checked
+{
+    -fx-mark-color: rgb(140, 140, 140);
+}
+
 

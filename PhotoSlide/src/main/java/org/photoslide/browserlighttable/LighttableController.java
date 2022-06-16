@@ -89,6 +89,9 @@ import boofcv.io.MediaManager;
 import boofcv.io.wrapper.DefaultMediaManager;
 import georegression.struct.shapes.Quadrilateral_F64;
 import java.awt.image.BufferedImage;
+import java.util.prefs.Preferences;
+import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.ToggleGroup;
 
 /**
  *
@@ -96,6 +99,7 @@ import java.awt.image.BufferedImage;
  */
 public class LighttableController implements Initializable {
 
+    private static final String NODE_NAME = "PhotoSlide";
     private MainViewController mainController;
     private Path selectedPath;
     private ExecutorService executor;
@@ -108,6 +112,7 @@ public class LighttableController implements Initializable {
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
+    private Preferences pref;
 
     @FXML
     private ImageView imageView;
@@ -171,17 +176,7 @@ public class LighttableController implements Initializable {
     private Button pasteButton;
     private Image dialogIcon;
     @FXML
-    private ToggleButton showDeletedButton;
-    @FXML
-    private MenuItem fiveStarMenuFilter;
-    @FXML
-    private MenuItem fourStarMenuFilter;
-    @FXML
-    private MenuItem threeStarMenu;
-    @FXML
-    private MenuItem twoStarMenu;
-    @FXML
-    private MenuItem oneStarMenu;
+    private ToggleButton showDeletedButton;    
     @FXML
     private ToggleButton facesButton;
     @FXML
@@ -189,10 +184,23 @@ public class LighttableController implements Initializable {
     private DirectoryWatcher directorywatch;
     @FXML
     private ToggleSwitch showPreviewPaneToggle;
+    @FXML
+    private CheckMenuItem fiveStarMenu;
+    @FXML
+    private CheckMenuItem fourStarMenu;
+    @FXML
+    private CheckMenuItem threeStarMenu;
+    @FXML
+    private CheckMenuItem twoStarMenu;
+    @FXML
+    private CheckMenuItem oneStarMenu;
+    @FXML
+    private CheckMenuItem noStarMenu;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         util = new Utility();
+        pref = Preferences.userRoot().node(NODE_NAME);
         imageProgress.setVisible(false);
         zoomSlider.setDisable(true);
         imageView.fitWidthProperty().bind(stackPane.widthProperty());
@@ -214,6 +222,8 @@ public class LighttableController implements Initializable {
         executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("lightTableControllerScheduled"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelection"));
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        //ToggleGroup myToggleGroup = new ToggleGroup();
+        //myToggleGroup.getToggles().add(oneStarMenu);
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -293,6 +303,7 @@ public class LighttableController implements Initializable {
         });
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
+        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
         imageGrid = new GridView<>(sortedMediaList);
         double defaultCellWidth = imageGrid.getCellWidth();
@@ -309,7 +320,7 @@ public class LighttableController implements Initializable {
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
-            filteredMediaList.setPredicate(standardFilter());
+            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             //sort if needed
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
@@ -751,15 +762,15 @@ public class LighttableController implements Initializable {
         if (snapshotView != null) {
             double ratio = 1;
             snapshotView.setSelectionRatioFixed(false);
-            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();            
+            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();
             snapshotView.requestFocus();
             final double ratioF = ratio;
             snapshotView.setFixedSelectionRatio(ratioF);
             snapshotView.setSelectionRatioFixed(true);
             PauseTransition pause = new PauseTransition(Duration.millis(100));
             pause.setOnFinished((t) -> {
-                if (factory.getSelectedCell().getItem().getCropView() == null) {                    
-                    Rectangle2D rect = new Rectangle2D(20, 20, 100 * ratioF, 100);                    
+                if (factory.getSelectedCell().getItem().getCropView() == null) {
+                    Rectangle2D rect = new Rectangle2D(20, 20, 100 * ratioF, 100);
                     snapshotView.setSelection(rect);
                 } else {
                     Rectangle2D viewport = imageView.getViewport();
@@ -1091,33 +1102,105 @@ public class LighttableController implements Initializable {
     }
 
     public void saveSettings() {
+        pref.putBoolean("showDeletedButton", showDeletedButton.isSelected());
     }
 
     public void restoreSettings() {
+        boolean aBoolean = pref.getBoolean("showDeletedButton", false);
+        showDeletedButton.setSelected(aBoolean);
+    }
+
+    private Predicate<MediaFile> filterDeleted(boolean showDeleted) {
+        if (showDeleted == false) {
+            return mFile -> mFile.isDeleted() == false;
+        } else {
+            return mFile -> true;
+        }
+    }
+
+    private Predicate<MediaFile> filterStar(int starRating) {
+        switch (starRating) {
+            case 5 -> {
+                return mFile -> mFile.getRatingProperty().get() == 5;
+            }
+            case 4 -> {
+                return mFile -> mFile.getRatingProperty().get() == 4;
+            }
+            case 3 -> {
+                return mFile -> mFile.getRatingProperty().get() == 3;
+            }
+            case 2 -> {
+                return mFile -> mFile.getRatingProperty().get() == 2;
+            }
+            case 1 -> {
+                return mFile -> mFile.getRatingProperty().get() == 1;
+            }
+            case 0 -> {
+                return mFile -> true;
+            }
+        }
+        return mFile -> true;
+    }
+    
+    private Predicate<MediaFile> getStarFilter(){
+        Predicate<MediaFile> baseFilter = standardFilter().and(filterDeleted(showDeletedButton.isSelected()));
+        if (oneStarMenu.isSelected()){
+            baseFilter=baseFilter.and(filterStar(1));
+        }
+        if (twoStarMenu.isSelected()){
+            baseFilter=baseFilter.and(filterStar(2));
+        }
+        if (threeStarMenu.isSelected()){
+            baseFilter=baseFilter.and(filterStar(3));
+        }
+        if (fourStarMenu.isSelected()){
+            baseFilter=baseFilter.and(filterStar(4));
+        }
+        if (fiveStarMenu.isSelected()){
+            baseFilter=baseFilter.and(filterStar(5));
+        }
+        return baseFilter;
     }
 
     @FXML
     private void showDeletedButtonAction(ActionEvent event) {
+        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
     }
 
     @FXML
-    private void fiveStarMenuAction(ActionEvent event) {
+    private void fiveStarMenuAction(ActionEvent event) {        
+        filteredMediaList.setPredicate(getStarFilter());
     }
 
     @FXML
     private void fourStarMenuAction(ActionEvent event) {
+        filteredMediaList.setPredicate(getStarFilter());
     }
 
     @FXML
     private void threeStarMenuAction(ActionEvent event) {
+        filteredMediaList.setPredicate(getStarFilter());
     }
 
     @FXML
     private void twoStarMenuAction(ActionEvent event) {
+        filteredMediaList.setPredicate(getStarFilter());
     }
 
     @FXML
     private void oneStarMenuAction(ActionEvent event) {
+        filteredMediaList.setPredicate(getStarFilter());
+    }
+
+    @FXML
+    private void noStarMenuAction(ActionEvent event) {
+        oneStarMenu.setSelected(false);
+        twoStarMenu.setSelected(false);
+        threeStarMenu.setSelected(false);
+        fourStarMenu.setSelected(false);
+        fiveStarMenu.setSelected(false);
+        noStarMenu.setSelected(false);
+        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
     }
 
     public GridView<MediaFile> getImageGrid() {

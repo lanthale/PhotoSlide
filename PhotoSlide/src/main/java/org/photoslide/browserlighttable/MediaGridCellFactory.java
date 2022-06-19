@@ -187,7 +187,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         }
                     }
                 }
-            }
+            }            
         });
         return cell;
     }
@@ -226,7 +226,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public void handleGridCellSelection(Event t) throws MalformedURLException {
         if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
-            String name = ((MediaGridCell) t.getSource()).getItem().getName();            
+            String name = ((MediaGridCell) t.getSource()).getItem().getName();
             Platform.runLater(() -> {
                 setStdGUIState();
                 lightController.getFilenameLabel().setVisible(true);
@@ -311,13 +311,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getMediaView().setMediaPlayer(null);
         });
         switch (selectedMediaItem.getMediaType()) {
-            case VIDEO:                
+            case VIDEO:
                 metadataController.setSelectedFile(selectedMediaItem);
                 try {
                     Platform.runLater(() -> {
                         lightController.getImageProgress().progressProperty().unbind();
                         lightController.getImageProgress().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-                        lightController.getImageProgress().setVisible(true);                        
+                        lightController.getImageProgress().setVisible(true);
                         lightController.getImageView().setVisible(false);
                         lightController.getMediaView().setVisible(true);
                         lightController.getImageProgress().setVisible(false);

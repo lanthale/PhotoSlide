@@ -176,7 +176,7 @@ public class LighttableController implements Initializable {
     private Button pasteButton;
     private Image dialogIcon;
     @FXML
-    private ToggleButton showDeletedButton;    
+    private ToggleButton showDeletedButton;
     @FXML
     private ToggleButton facesButton;
     @FXML
@@ -363,9 +363,10 @@ public class LighttableController implements Initializable {
             }
             if (keyCombinationMetaA.match(t)) {
                 fullMediaList.forEach((mediafile) -> {
-                    factory.getSelectionModel().add(mediafile);
-                });
+                    factory.getSelectionModel().add(mediafile);                    
+                });                
             }
+            
             if (KeyCode.RIGHT == t.getCode()) {
                 selectNextImageInGrid();
             }
@@ -1140,23 +1141,23 @@ public class LighttableController implements Initializable {
         }
         return mFile -> true;
     }
-    
-    private Predicate<MediaFile> getStarFilter(){
+
+    private Predicate<MediaFile> getStarFilter() {
         Predicate<MediaFile> baseFilter = standardFilter().and(filterDeleted(showDeletedButton.isSelected()));
-        if (oneStarMenu.isSelected()){
-            baseFilter=baseFilter.and(filterStar(1));
+        if (oneStarMenu.isSelected()) {
+            baseFilter = baseFilter.and(filterStar(1));
         }
-        if (twoStarMenu.isSelected()){
-            baseFilter=baseFilter.and(filterStar(2));
+        if (twoStarMenu.isSelected()) {
+            baseFilter = baseFilter.and(filterStar(2));
         }
-        if (threeStarMenu.isSelected()){
-            baseFilter=baseFilter.and(filterStar(3));
+        if (threeStarMenu.isSelected()) {
+            baseFilter = baseFilter.and(filterStar(3));
         }
-        if (fourStarMenu.isSelected()){
-            baseFilter=baseFilter.and(filterStar(4));
+        if (fourStarMenu.isSelected()) {
+            baseFilter = baseFilter.and(filterStar(4));
         }
-        if (fiveStarMenu.isSelected()){
-            baseFilter=baseFilter.and(filterStar(5));
+        if (fiveStarMenu.isSelected()) {
+            baseFilter = baseFilter.and(filterStar(5));
         }
         return baseFilter;
     }
@@ -1167,7 +1168,7 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void fiveStarMenuAction(ActionEvent event) {        
+    private void fiveStarMenuAction(ActionEvent event) {
         filteredMediaList.setPredicate(getStarFilter());
     }
 

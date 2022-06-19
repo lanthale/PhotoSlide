@@ -130,8 +130,13 @@ public class MediaFile {
         cropView = null;
     }
 
+    /**
+     * This method steers on which properties a re-draw is occuring on the visible cells.
+     * One of the most important functions to show in the UI any changes inside of the mediafiles
+     * @return the list of mediafiles with the properties changed which is th base for the re-draw happening
+     */
     public static Callback<MediaFile, Observable[]> extractor() {
-        return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating};
+        return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating, p.selected};
     }
 
     public Image setFilters() {

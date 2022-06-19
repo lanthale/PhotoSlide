@@ -156,7 +156,9 @@ public class SearchToolsController implements Initializable {
             task.cancel();
             task.shutdown();
         }
-        factory.shutdown();
+        if (factory != null) {
+            factory.shutdown();
+        }
         executor.shutdown();
         executorParallel.shutdown();
     }

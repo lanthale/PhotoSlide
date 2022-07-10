@@ -95,9 +95,13 @@ public class App extends Application {
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
         //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
-        
-        RAWImageLoaderFactory.install();
-        HEIFImageLoaderFactory.install();
+
+        try {
+            RAWImageLoaderFactory.install();
+            HEIFImageLoaderFactory.install();
+        } catch (UnsatisfiedLinkError e) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
+        }
         notifyPreloader(new ProgressNotification(0.8));
     }
 
@@ -108,7 +112,7 @@ public class App extends Application {
 
         stage.setOnCloseRequest((final WindowEvent event) -> {
             MainViewController controller = fxmlLoader.getController();
-            saveSettings(stage, controller);            
+            saveSettings(stage, controller);
             System.exit(0);
         });
 

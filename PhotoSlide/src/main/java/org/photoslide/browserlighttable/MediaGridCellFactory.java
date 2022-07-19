@@ -106,9 +106,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
             double ratio = (double) lightController.getImageView().getImage().getHeight() / lightController.getImageView().getImage().getWidth();
             if (z.getZoomFactor() > 1) {
-                handleZoomIn(ratio);
+                handleZoomIn(ratio, z.getX(), z.getY());
             } else {
-                handleZoomOut(ratio);
+                handleZoomOut(ratio, z.getX(), z.getY());
             }
             z.consume();
         });
@@ -133,11 +133,21 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 y = viewport.getMinY() - 10;
             }
             if (x > 0 || y > 0) {
+                if (y < 0) {
+                    y = 0;
+                }
+                if (x < 0) {
+                    x = 0;
+                }
                 Rectangle2D cropView = new Rectangle2D(x, y, width, height);
                 lightController.getImageView().setViewport(cropView);
                 xMouse.set((int) t.getX());
                 yMouse.set((int) t.getY());
             }
+            //TODO: Check if bounds crossed
+            System.out.println("bounds found x:" + x + ",y:" + y);
+            System.out.println("bounds found width:" + width + ",height:" + height);
+            System.out.println("bsize x:" + lightController.getImageView().getImage().getWidth() + ",y:" + lightController.getImageView().getImage().getHeight());
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         resetCrop = new Button();
@@ -187,7 +197,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         }
                     }
                 }
-            }            
+            }
         });
         return cell;
     }
@@ -534,7 +544,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
     }
 
-    private void handleZoomIn(double ratio) {
+    private void handleZoomIn(double ratio, double mouseX, double mouseY) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() + 20;
         double y = viewport.getMinY() + 20 * ratio;
@@ -546,7 +556,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
     }
 
-    private void handleZoomOut(double ratio) {
+    private void handleZoomOut(double ratio, double mouseX, double mouseY) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
         double x = viewport.getMinX() - 20;
         double y = viewport.getMinY() - 20 * ratio;

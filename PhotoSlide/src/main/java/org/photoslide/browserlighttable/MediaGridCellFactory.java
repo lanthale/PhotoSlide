@@ -139,15 +139,17 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 if (x < 0) {
                     x = 0;
                 }
+                if (x + width > lightController.getImageView().getImage().getWidth()) {
+                    x = x - (x + width - lightController.getImageView().getImage().getWidth());
+                }
+                if (y + height > lightController.getImageView().getImage().getHeight()) {
+                    y = y - (y + height - lightController.getImageView().getImage().getHeight());
+                }                
                 Rectangle2D cropView = new Rectangle2D(x, y, width, height);
                 lightController.getImageView().setViewport(cropView);
                 xMouse.set((int) t.getX());
                 yMouse.set((int) t.getY());
-            }
-            //TODO: Check if bounds crossed
-            System.out.println("bounds found x:" + x + ",y:" + y);
-            System.out.println("bounds found width:" + width + ",height:" + height);
-            System.out.println("bsize x:" + lightController.getImageView().getImage().getWidth() + ",y:" + lightController.getImageView().getImage().getHeight());
+            }            
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         resetCrop = new Button();

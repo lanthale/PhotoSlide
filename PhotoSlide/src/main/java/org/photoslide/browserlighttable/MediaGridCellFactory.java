@@ -5,6 +5,7 @@
  */
 package org.photoslide.browserlighttable;
 
+import java.awt.Desktop;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
@@ -341,6 +342,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     });
                     Task mediaTask = loadVideo();
                     executor.submit(mediaTask);
+                    this.lightController.getMainController().getTaskProgressView().getTasks().add(mediaTask);
                 } catch (MediaException e) {
                     if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
                         VBox vb = new VBox();

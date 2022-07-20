@@ -48,7 +48,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         sort = sortParm;
         metadataController = metaControllerParam;
         this.factory = factory;
-        this.fullMediaList = fullMediaList;
+        this.fullMediaList = fullMediaList;        
     }
 
     @Override

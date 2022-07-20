@@ -320,6 +320,11 @@
                         </Label>
                     </children>
                 </StackPane>
+            <Button id="toolbutton" fx:id="showProcessButton" mnemonicParsing="false" onAction="#showProcessListButtonAction" HBox.hgrow="NEVER">
+               <graphic>
+                  <FontIcon fx:id="processListIcon" iconLiteral="ti-pulse" />
+               </graphic>
+            </Button>
                 <Pane minHeight="20.0" prefHeight="20.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
                 <Label fx:id="statusLabelRight" font="$x3" maxWidth="-1.0" text="Right status" textFill="#9f9f9f" HBox.hgrow="NEVER" />
             </children>

@@ -124,18 +124,6 @@ public class MainViewController implements Initializable {
     private AnchorPane metadataPane;
     @FXML
     private AnchorPane editorToolsPane;
-    @FXML
-    private CollectionsController collectionsPaneController;
-    @FXML
-    private LighttableController lighttablePaneController;
-    @FXML
-    private MetadataController metadataPaneController;
-    @FXML
-    private EditorMetadataController editorMetaDataPaneController;
-    @FXML
-    private EditorMediaViewController editorMediaViewPaneController;
-    @FXML
-    private EditorToolsController editorToolsPaneController;
 
     @FXML
     private StackPane progressPane;
@@ -190,12 +178,28 @@ public class MainViewController implements Initializable {
     private Button searchButton;
     @FXML
     private Button bookmarksBoardButton;
+    @FXML
+    private CollectionsController collectionsPaneController;
+    @FXML
+    private LighttableController lighttablePaneController;
+    @FXML
+    private MetadataController metadataPaneController;
+    @FXML
+    private EditorMetadataController editorMetaDataPaneController;
+    @FXML
+    private EditorMediaViewController editorMediaViewPaneController;
+    @FXML
+    private EditorToolsController editorToolsPaneController;
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
     private PrintDialog printDialog;
     private Properties bookmarks;
     private BookmarkBoardController bookmarksController;
     private BMBIcon bmbIcon;
+    @FXML
+    private Button showProcessButton;
+    @FXML
+    private FontIcon processListIcon;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -1087,6 +1091,10 @@ public class MainViewController implements Initializable {
     @FXML
     private void deSelectAllAction(ActionEvent event) {
         lighttablePaneController.getFactory().getSelectionModel().clear();
+    }
+
+    @FXML
+    private void showProcessListButtonAction(ActionEvent event) {
     }
 
 }

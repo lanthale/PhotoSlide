@@ -189,7 +189,9 @@ public class CollectionsController implements Initializable {
             util.hideNodeAfterTime(mainController.getProgressPane(), 5, true);            
         });
         executorParallel.submit(task);
+        mainController.getTaskProgressView().getTasks().add(task);
         executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        mainController.getTaskProgressView().getTasks().add(indexTask);
     }
 
     public void saveSettings() {
@@ -312,7 +314,7 @@ public class CollectionsController implements Initializable {
                                 util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
                             });
                             executor.submit(taskTree);
-
+mainController.getTaskProgressView().getTasks().add(taskTree);
                         }
                     };
                     node.addEventHandler(TreeItem.branchExpandedEvent(), eventH);
@@ -468,6 +470,7 @@ public class CollectionsController implements Initializable {
             actCollectionTitlePane.setTooltip(tip);
         });
         executorParallel.submit(task);
+        mainController.getTaskProgressView().getTasks().add(task);
     }
 
     public Path getSelectedPath() {
@@ -730,6 +733,7 @@ public class CollectionsController implements Initializable {
                 Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, "Cannot cut/copy collection!", t.getSource().getException());
             });
             executor.submit(taskDelete);
+            mainController.getTaskProgressView().getTasks().add(taskDelete);
         }
     }
 
@@ -792,6 +796,7 @@ public class CollectionsController implements Initializable {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, "Cannot cut/copy collection!", t.getSource().getException());
         });
         executor.submit(taskPaste);
+        mainController.getTaskProgressView().getTasks().add(taskPaste);
     }
 
     public void copyMoveFolder(Path source, Path target, ClipboardMode mode, CopyOption... options)

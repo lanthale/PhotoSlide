@@ -73,7 +73,7 @@ public class MediaFileLoader {
                 });
                 if (taskList.get(newMediaItem.getName()) == null) {
                     taskList.put(newMediaItem.getName(), task);
-                    executorParallel.submit(task);
+                    executorParallel.submit(task);                    
                 }
             }
         }

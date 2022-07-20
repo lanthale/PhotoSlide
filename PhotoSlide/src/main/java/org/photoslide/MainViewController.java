@@ -85,6 +85,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
+import org.controlsfx.control.TaskProgressView;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
@@ -200,6 +201,8 @@ public class MainViewController implements Initializable {
     private Button showProcessButton;
     @FXML
     private FontIcon processListIcon;
+    private TaskProgressView taskProgressView;
+    private PopOver taskPopOver;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -209,6 +212,16 @@ public class MainViewController implements Initializable {
         executor = Executors.newSingleThreadExecutor();
         executorParallelScheduled = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("mainviewControllerParallelScheduled"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("mainviewControllerParallel"));
+        taskProgressView = new TaskProgressView();
+        taskPopOver = new PopOver();
+        taskPopOver.setAnimated(true);
+        taskPopOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        taskPopOver.setDetachable(false);
+        taskPopOver.setTitle("Taskmanager");
+        taskPopOver.setHeaderAlwaysVisible(true);
+        taskPopOver.setFadeInDuration(new Duration(100));
+        taskPopOver.setContentNode(taskProgressView);
+        taskProgressView.setPrefSize(300, 200);
         menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
         browseButton.setToggleGroup(group);
@@ -521,6 +534,7 @@ public class MainViewController implements Initializable {
                 errorDiag.show();
             });
             executor.submit(task);
+            taskProgressView.getTasks().add(task);
         } else {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
@@ -1093,8 +1107,15 @@ public class MainViewController implements Initializable {
         lighttablePaneController.getFactory().getSelectionModel().clear();
     }
 
+    public TaskProgressView getTaskProgressView() {
+        return taskProgressView;
+    }
+
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {
+    private void showProcessListButtonAction(ActionEvent event) {        
+        taskPopOver.show(showProcessButton);
+        ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
 
 }

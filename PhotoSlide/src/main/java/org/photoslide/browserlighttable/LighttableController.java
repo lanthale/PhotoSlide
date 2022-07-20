@@ -918,6 +918,7 @@ public class LighttableController implements Initializable {
                 mainController.getProgressbarLabel().textProperty().unbind();
                 mainController.getProgressbarLabel().textProperty().bind(taskMeta.messageProperty());
                 executor.submit(taskMeta);
+                mainController.getTaskProgressView().getTasks().add(taskMeta);
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("Filename")) {
@@ -1037,6 +1038,7 @@ public class LighttableController implements Initializable {
         });
         if (clipboard.hasFiles()) {
             executorParallel.submit(pasteTask);
+            mainController.getTaskProgressView().getTasks().add(pasteTask);
         } else {
             Platform.runLater(() -> {
                 mainController.getProgressbarLabel().textProperty().unbind();

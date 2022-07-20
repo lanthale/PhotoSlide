@@ -148,6 +148,7 @@ public class BookmarkBoardController implements Initializable {
             statusLabel.setVisible(false);
         });
         executor.submit(task);
+        mainViewController.getTaskProgressView().getTasks().add(task);
 
     }
 

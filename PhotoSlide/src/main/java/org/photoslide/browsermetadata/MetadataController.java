@@ -329,6 +329,7 @@ public class MetadataController implements Initializable {
             commentText.textProperty().removeListener(commentsChangeListener);
         });
         executor.submit(task);
+        mainController.getTaskProgressView().getTasks().add(task);
     }
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
@@ -1052,6 +1053,7 @@ public class MetadataController implements Initializable {
             progressPane.setVisible(true);
         });
         executor.submit(taskSaveComments);
+        mainController.getTaskProgressView().getTasks().add(taskSaveComments);
     }
 
     private String getKeywordsAsString(FlowPane kewordPane) {
@@ -1097,6 +1099,7 @@ public class MetadataController implements Initializable {
             progressPane.setVisible(true);
         });
         executor.submit(taskKeywordsTitle);
+        mainController.getTaskProgressView().getTasks().add(taskKeywordsTitle);
     }
 
     /**
@@ -1309,6 +1312,7 @@ public class MetadataController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbarLabel().textProperty().bind(taskApplyToAll.messageProperty());
             executor.submit(taskApplyToAll);
+            mainController.getTaskProgressView().getTasks().add(taskApplyToAll);
         }
     }
 

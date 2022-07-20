@@ -189,7 +189,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                     double fH = item.getCropView().getHeight() / ratioH;
                     double fWX = item.getCropView().getMinX() / ratioW;
                     double fHY = item.getCropView().getMinY() / ratioH;
-                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
+                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);                    
                     imageView.setViewport(viewP);
                 } else {
                     imageView.setViewport(null);

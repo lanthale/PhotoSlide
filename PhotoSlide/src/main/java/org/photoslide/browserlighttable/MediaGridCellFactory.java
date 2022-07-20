@@ -548,8 +548,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     private void handleZoomIn(double ratio, double mouseX, double mouseY) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
-        double x = viewport.getMinX() + 20;
-        double y = viewport.getMinY() + 20 * ratio;
+        double x = viewport.getMinX() + 20;        
+        double y = viewport.getMinY() + 20 * ratio;        
         double width = viewport.getWidth() - 40;
         double height = viewport.getHeight() - 40 * ratio;
         if (height > 0) {

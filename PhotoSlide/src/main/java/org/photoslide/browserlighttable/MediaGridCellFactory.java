@@ -12,6 +12,7 @@ import org.photoslide.datamodel.MediaFile;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
@@ -191,7 +192,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if (newMediaItem != null && oldMediaItem == null) {
                 if (newMediaItem.isLoading() == true) {
                     if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
-                        if (isCellVisible(cell)) {
+                        if (isCellVisible(cell)) {                            
                             fileLoader.loadImage(newMediaItem);
                         }
                     } else {

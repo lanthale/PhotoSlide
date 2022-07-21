@@ -42,7 +42,7 @@ public class MediaFileLoader {
     public void loadImage(MediaFile newMediaItem) {
         Task<Image> task = new Task<Image>() {
             @Override
-            public Image call() throws Exception {
+            public Image call() throws Exception {                
                 Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
                 image.progressProperty().addListener((o) -> {
                     if (this.isCancelled()) {

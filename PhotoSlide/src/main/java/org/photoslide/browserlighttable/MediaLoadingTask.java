@@ -56,6 +56,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         final long qty;
         List<MediaFile> content = new ArrayList<>();
         try {
+            updateTitle("Reading mediafiles...");
             qty = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).count();

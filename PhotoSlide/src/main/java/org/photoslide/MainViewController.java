@@ -356,6 +356,7 @@ public class MainViewController implements Initializable {
             Task<Boolean> task = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
+                    updateTitle("Exporting mediafiles...");
                     String outputDir = diag.getController().getOutputDir();
                     List<MediaFile> exportList = new ArrayList<>();
                     if (diag.getController().getExportSelectedBox().isSelected() == true) {

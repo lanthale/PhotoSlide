@@ -144,6 +144,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (this.isCancelled()) {
             return;
         }
+        //TODO: load in background or load during real media loading to speed up
         m.readEdits();        
         if (this.isCancelled()) {
             return;

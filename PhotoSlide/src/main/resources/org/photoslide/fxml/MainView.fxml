@@ -191,6 +191,11 @@
                   <MenuItem mnemonicParsing="false" onAction="#wipeAllMediaFileEdits" text="Wipe all edits" />
                     </items>
                 </Menu>
+            <Menu mnemonicParsing="false" text="Window">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
+              </items>
+            </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
                         <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="About PhotoSlide" />
@@ -305,6 +310,11 @@
         
         <HBox id="HBox" alignment="CENTER_LEFT" maxHeight="26.0" minHeight="26.0" prefHeight="26.0" prefWidth="1280.0" spacing="5.0" style="-fx-background-color: rgb(80, 80, 80)rgb(80, 80, 80);" VBox.vgrow="NEVER">
             <children>
+            <Button id="toolbutton" fx:id="showProcessButton" mnemonicParsing="false" onAction="#showProcessListButtonAction" HBox.hgrow="NEVER">
+               <graphic>
+                  <FontIcon fx:id="processListIcon" iconLiteral="ti-pulse" />
+               </graphic>
+            </Button>
                 <Label fx:id="statusLabelLeft" maxHeight="1.7976931348623157E308" maxWidth="-1.0" text="Left status" textFill="#9f9f9f" HBox.hgrow="ALWAYS">
                     <font>
                         <Font size="11.0" fx:id="x3" />
@@ -320,11 +330,6 @@
                         </Label>
                     </children>
                 </StackPane>
-            <Button id="toolbutton" fx:id="showProcessButton" mnemonicParsing="false" onAction="#showProcessListButtonAction" HBox.hgrow="NEVER">
-               <graphic>
-                  <FontIcon fx:id="processListIcon" iconLiteral="ti-pulse" />
-               </graphic>
-            </Button>
                 <Pane minHeight="20.0" prefHeight="20.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
                 <Label fx:id="statusLabelRight" font="$x3" maxWidth="-1.0" text="Right status" textFill="#9f9f9f" HBox.hgrow="NEVER" />
             </children>

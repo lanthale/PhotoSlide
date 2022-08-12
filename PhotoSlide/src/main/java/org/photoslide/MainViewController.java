@@ -215,7 +215,7 @@ public class MainViewController implements Initializable {
         taskProgressView = new TaskProgressView();
         taskPopOver = new PopOver();
         taskPopOver.setAnimated(true);
-        taskPopOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_CENTER);
+        taskPopOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_LEFT);
         taskPopOver.setDetachable(false);
         taskPopOver.setTitle("Taskmanager");
         taskPopOver.setHeaderAlwaysVisible(true);
@@ -1114,6 +1114,13 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void showProcessListButtonAction(ActionEvent event) {        
+        taskPopOver.show(showProcessButton);
+        ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
+    }
+    
+    @FXML
+    private void showBackgroundProcessListMenu(ActionEvent event) {        
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());

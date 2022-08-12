@@ -85,6 +85,7 @@ import org.photoslide.browsercollections.DirectoryWatcher;
 import boofcv.io.MediaManager;
 import boofcv.io.wrapper.DefaultMediaManager;
 import georegression.struct.shapes.Quadrilateral_F64;
+import java.util.Optional;
 import java.util.prefs.Preferences;
 import javafx.scene.control.CheckMenuItem;
 
@@ -359,10 +360,10 @@ public class LighttableController implements Initializable {
             }
             if (keyCombinationMetaA.match(t)) {
                 fullMediaList.forEach((mediafile) -> {
-                    factory.getSelectionModel().add(mediafile);                    
-                });                
+                    factory.getSelectionModel().add(mediafile);
+                });
             }
-            
+
             if (KeyCode.RIGHT == t.getCode()) {
                 selectNextImageInGrid();
             }
@@ -423,8 +424,19 @@ public class LighttableController implements Initializable {
         });*/
     }
 
-    public void selectPreviousImageInGrid() {
-        int actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
+    /**
+     * selects the next image
+     *
+     * @param idx option parameter - if provided it it selects an the next item
+     * based on the provided index-1
+     */
+    public void selectPreviousImageInGrid(int... idx) {
+        int actIndex = -1;
+        if (idx.length == 0) {
+            actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
+        } else {
+            actIndex = idx[0] - 1;
+        }
         actIndex = actIndex - 1;
         if (actIndex >= 0) {
             MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
@@ -438,8 +450,19 @@ public class LighttableController implements Initializable {
         }
     }
 
-    public void selectNextImageInGrid() {
-        int actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
+    /**
+     * selects the next image
+     *
+     * @param idx option parameter - if provided it it selects an the next item
+     * based on the provided index-1
+     */
+    public void selectNextImageInGrid(int... idx) {
+        int actIndex = -1;
+        if (idx.length == 0) {
+            actIndex = sortedMediaList.indexOf(factory.getSelectedMediaItem());
+        } else {
+            actIndex = idx[0] - 1;
+        }
         actIndex = actIndex + 1;
         if (actIndex < sortedMediaList.size()) {
             MediaGridCell nextCell = factory.getMediaCellForMediaFile(sortedMediaList.get(actIndex));
@@ -629,29 +652,27 @@ public class LighttableController implements Initializable {
         deleteAction();
     }
 
-    public void deleteAction() {
-        /*Alert alert = new Alert(AlertType.CONFIRMATION, "Mark MediaFile " + factory.getSelectedCell().getItem().getName() + " \n as deleted ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
-        
-        DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.getStylesheets().add(
-        getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-        alert.showAndWait();
-        if (alert.getResult() == ButtonType.YES) {*/
-        //new File(factory.getSelectedCell().getItem().getName()).delete();
-        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
+    public void deleteAction() {        
+        final int sIdx = sortedMediaList.indexOf(factory.getSelectedCell().getItem());
+        final int idx = fullMediaList.indexOf(factory.getSelectedCell().getItem());
+        final MediaFile item = fullMediaList.get(idx);
         item.setDeleted(true);
         imageView.setImage(null);
         getTitleLabel().setVisible(false);
         getCameraLabel().setVisible(false);
         getFilenameLabel().setVisible(false);
-        getRatingControl().setVisible(false);
-        /*} else {
-        alert.hide();
-        }
-        factory.getSelectedCell().requestLayout();*/
-        executorParallel.submit(() -> {
-            factory.getSelectedCell().getItem().saveEdits();
+        getRatingControl().setVisible(false);        
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                item.saveEdits();
+                return true;
+            }
+        };
+        task.setOnSucceeded((t) -> {
+            selectNextImageInGrid(sIdx);
         });
+        executorParallel.submit(task);
     }
 
     @FXML

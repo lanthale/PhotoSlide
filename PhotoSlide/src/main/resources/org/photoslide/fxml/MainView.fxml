@@ -193,7 +193,7 @@
                 </Menu>
             <Menu fx:id="windowMenu" mnemonicParsing="false" text="Window">
               <items>
-                <MenuItem fx:id="backgroundProcessMenu" mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
+                <MenuItem mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
               </items>
             </Menu>
                 <Menu mnemonicParsing="false" text="Help">

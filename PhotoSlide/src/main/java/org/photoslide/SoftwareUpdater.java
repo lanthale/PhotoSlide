@@ -44,11 +44,12 @@ public class SoftwareUpdater {
     private Task<String> downloadTask;
     private final MainViewController controller;
     private final Image dialogIcon;
+    private final static String architecture=System.getProperty("os.arch");
 
     public SoftwareUpdater(ExecutorService executorParallel, MainViewController mc) {
         this.executorParallel = executorParallel;
         this.controller = mc;
-        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));        
     }
 
     public void Shutdown() {
@@ -68,7 +69,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();
+                String actVersion = util.getAppVersion();                                
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -160,7 +161,7 @@ public class SoftwareUpdater {
             parseInt = Integer.parseInt(version);
             parseInt = parseInt + 1;
             newVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + parseInt;
-            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".msi";
             myUrl = new URL(httpsURL);
             conn = (HttpsURLConnection) myUrl.openConnection();
             inputStream = conn.getInputStream();
@@ -168,7 +169,7 @@ public class SoftwareUpdater {
             try {
                 version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
                 newVersion = actVersion + ".0";
-                httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+                httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".msi";
                 myUrl = new URL(httpsURL);
                 conn = (HttpsURLConnection) myUrl.openConnection();
                 inputStream = conn.getInputStream();
@@ -220,7 +221,7 @@ public class SoftwareUpdater {
             parseInt = Integer.parseInt(version2);
             parseInt = parseInt + 1;
             newVersion = actVersion.substring(0, actVersion.indexOf(".") + 1) + parseInt;
-            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".msi";
             myUrl = new URL(httpsURL);
             conn = (HttpsURLConnection) myUrl.openConnection();
             inputStream = conn.getInputStream();
@@ -260,7 +261,7 @@ public class SoftwareUpdater {
         String version = "";
         int parseInt = 0;
         try {
-            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".msi";
             myUrl = new URL(httpsURL);
             conn = (HttpsURLConnection) myUrl.openConnection();
             inputStream = conn.getInputStream();
@@ -315,10 +316,10 @@ public class SoftwareUpdater {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".msi";
                         filename = "PhotoSlide-" + nextAppVersion + ".msi";
                     } else if (OS.contains("MAC")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".pkg";
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".pkg";
                         filename = "PhotoSlide-" + nextAppVersion + ".pkg";
                     } else if (OS.contains("NUX")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".deb";
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";
                     } else {
                         httpsURL = "";

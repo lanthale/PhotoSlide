@@ -319,7 +319,7 @@ public class SoftwareUpdater {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".pkg";
                         filename = "PhotoSlide-" + nextAppVersion + ".pkg";
                     } else if (OS.contains("NUX")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".deb";
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+ nextAppVersion + "_amd64.deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";
                     } else {
                         httpsURL = "";

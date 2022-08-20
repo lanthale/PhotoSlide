@@ -577,7 +577,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide\n" + appVersion + "\n");
+        Text txtHeader = new Text("PhotoSlide\n" +System.getProperty("os.arch") +"_"+ appVersion + "\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: white;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
@@ -585,15 +585,19 @@ public class MainViewController implements Initializable {
         String aboutText = """
                          Thanks to the opensource community:
                           - OpenJFX for this great GUI tookit
+                          - Gluon for support of OpenJFX and provide binary's including mobile support! 
+                          
                           - ControlsFX for very nice components
                           - iCafe for the image codecs and metadata implementation
                           - iKonli for nice icons
                           - UndoFX for undo support
                           - Worldwind for mapsupport
+                          - JMonkey for additional image format support 
                           - Libraw for support of raw image formats
+                          - Libheif for support for raw image formats 
                          
                          License: GPL v3
-                         (c) lanthale 2021""";
+                         (c) lanthale 2022""";
         Text txt = new Text(aboutText);
         txt.setStyle("-fx-fill: white;-fx-font-size:10pt;");
         txt.setLineSpacing(4);

@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -29,8 +28,6 @@ import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ServiceRegistry;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import org.h2.fulltext.FullText;
 import org.libheiffx.HEIFImageLoaderFactory;
 import org.librawfx.RAWImageLoaderFactory;
@@ -167,7 +164,7 @@ public class App extends Application {
             logger.addHandler(handler);
             logger.setLevel(Level.INFO);
             handler.setFormatter(new SimpleFormatter());
-            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
+            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());            
             Application.launch(App.class, args);
             //com.sun.javafx.application.LauncherImpl.launchApplication(App.class, PSPreloader.class, args);
         } catch (IOException ex) {

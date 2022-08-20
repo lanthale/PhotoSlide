@@ -40,13 +40,13 @@
                                 <FontIcon iconLiteral="fa-folder-o" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="Quit">
+                        <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="Quit PhotoSlide">
                             <graphic>
                                 <FontIcon iconLiteral="ti-power-off" />
                             </graphic>
-                            <accelerator>
-                                <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
-                            </accelerator>
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                     </accelerator>
                         </MenuItem>
                     </items>
                 </Menu>
@@ -191,9 +191,9 @@
                   <MenuItem mnemonicParsing="false" onAction="#wipeAllMediaFileEdits" text="Wipe all edits" />
                     </items>
                 </Menu>
-            <Menu mnemonicParsing="false" text="Window">
+            <Menu fx:id="windowMenu" mnemonicParsing="false" text="Window">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
+                <MenuItem fx:id="backgroundProcessMenu" mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
               </items>
             </Menu>
                 <Menu mnemonicParsing="false" text="Help">

@@ -14,6 +14,7 @@ import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
+import de.jangassen.MenuToolkit;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -61,9 +63,11 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
@@ -72,6 +76,8 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -171,9 +177,11 @@ public class MainViewController implements Initializable {
     @FXML
     private MenuItem unstackMenu;
     @FXML
-    private MenuItem openMenu;
+    private MenuItem openMenu;    
     @FXML
     private MenuItem bookmarkMenu;
+    @FXML
+    private Menu windowMenu;
     private Image dialogIcon;
     @FXML
     private Button searchButton;
@@ -222,7 +230,29 @@ public class MainViewController implements Initializable {
         taskPopOver.setFadeInDuration(new Duration(100));
         taskPopOver.setContentNode(taskProgressView);
         taskProgressView.setPrefSize(300, 200);
-        menuBar.useSystemMenuBarProperty().set(true);
+        String OS = System.getProperty("os.name").toUpperCase();
+        if (OS.contains("MAC")) {
+            Platform.runLater(() -> {
+                MenuToolkit tk = MenuToolkit.toolkit(Locale.getDefault());
+                tk.setForceQuitOnCmdQ(true);
+                Menu createDefaultApplicationMenu = tk.createDefaultApplicationMenu("PhotoSlide");
+                tk.setApplicationMenu(createDefaultApplicationMenu);
+                createDefaultApplicationMenu.getItems().set(0, aboutMenu);
+                createDefaultApplicationMenu.getItems().add(1, new SeparatorMenuItem());
+                createDefaultApplicationMenu.getItems().add(2, preferencesMenu);
+                createDefaultApplicationMenu.getItems().add(3, new SeparatorMenuItem());
+                createDefaultApplicationMenu.getItems().set(createDefaultApplicationMenu.getItems().size()-1, quitMenu);  
+                windowMenu.getItems().add(new SeparatorMenuItem());
+                windowMenu.getItems().add(tk.createMinimizeMenuItem());
+                windowMenu.getItems().add(tk.createZoomMenuItem());
+                windowMenu.getItems().add(tk.createCycleWindowsItem());
+                windowMenu.getItems().add(new SeparatorMenuItem());
+                windowMenu.getItems().add(tk.createBringAllToFrontItem());
+                windowMenu.getItems().add(new SeparatorMenuItem());                
+                menuBar.useSystemMenuBarProperty().set(true);
+            });
+        }
+        //menuBar.useSystemMenuBarProperty().set(true);
         group = new ToggleGroup();
         browseButton.setToggleGroup(group);
         editButton.setToggleGroup(group);
@@ -577,7 +607,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide\n" +System.getProperty("os.arch") +"_"+ appVersion + "\n");
+        Text txtHeader = new Text("PhotoSlide\n" + System.getProperty("os.arch") + "_" + appVersion + "\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: white;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
@@ -1117,14 +1147,14 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {        
+    private void showProcessListButtonAction(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
-    
+
     @FXML
-    private void showBackgroundProcessListMenu(ActionEvent event) {        
+    private void showBackgroundProcessListMenu(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());

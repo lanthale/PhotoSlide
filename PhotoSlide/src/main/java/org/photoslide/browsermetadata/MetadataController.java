@@ -85,7 +85,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
@@ -123,6 +122,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
+import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.CustomTextField;
@@ -133,9 +133,8 @@ import org.librawfx.LibrawImage;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.imageops.ExposureFilter;
+import org.photoslide.imageops.GainFilter;
 import org.photoslide.imageops.ImageFilter;
-import org.photoslide.imageops.SampleFilter;
-import org.photoslide.imageops.SampleFilter2;
 
 /**
  *
@@ -155,6 +154,16 @@ public class MetadataController implements Initializable {
     private List<String> commentsdata;
     private HashMap<String, String> rawMetaData;
     private GeoCoding geoCoding;
+    
+    private Task<Boolean> task;
+    private KeywordChangeListener keywordsChangeListener;
+    private CommentsChangeListener commentsChangeListener;
+    private CaptionChangeListener captionChangeListener;
+    
+    private ExecutorService executorParallel;
+    private Image shownImage;
+    private ImageFilter exposerFilter;
+    private ImageFilter gainFilter;
 
     @FXML
     private Accordion accordionPane;
@@ -176,11 +185,7 @@ public class MetadataController implements Initializable {
     private TextField recordDateField;
     @FXML
     private AnchorPane anchorKeywordPane;
-
-    private Task<Boolean> task;
-    private KeywordChangeListener keywordsChangeListener;
-    private CommentsChangeListener commentsChangeListener;
-    private CaptionChangeListener captionChangeListener;
+    
     @FXML
     private StackPane stackPane;
     @FXML
@@ -190,14 +195,7 @@ public class MetadataController implements Initializable {
     @FXML
     private VBox progressPane;
     @FXML
-    private GridPane metaDataGrid;
-    @FXML
-    private Slider apertureSlider;
-    private ExecutorService executorParallel;
-    private Image shownImage;
-    private SampleFilter greyFilter;
-    private SampleFilter2 greyFilter2;
-    private ImageFilter exposerFilter;
+    private GridPane metaDataGrid;        
     @FXML
     private TextField gpsPlace;
     @FXML
@@ -209,6 +207,18 @@ public class MetadataController implements Initializable {
     private MapCircle circle;
     @FXML
     private Button gpsPosButton;
+    @FXML
+    private TextField exposureTextField;
+    @FXML
+    private TextField gainTextField;
+    @FXML
+    private TextField biasTextField;
+    @FXML
+    private Slider exposureSlider;
+    @FXML
+    private Slider gainSlider;    
+    @FXML
+    private Slider biasSlider;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -229,13 +239,14 @@ public class MetadataController implements Initializable {
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
-        apertureSlider.valueProperty().addListener((o) -> {
+        exposureTextField.textProperty().bind(exposureSlider.valueProperty().asString());
+        exposureSlider.valueProperty().addListener((o) -> {
             if (exposerFilter == null) {
                 exposerFilter = new ExposureFilter();
                 actualMediaFile.addImageFilter(exposerFilter);
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
             }
-            double val = apertureSlider.getValue();
+            double val = exposureSlider.getValue();
             executorParallel.submit(() -> {
                 exposerFilter.filter(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
@@ -244,7 +255,44 @@ public class MetadataController implements Initializable {
                 }
                 actualMediaFile.saveEdits();
             });
-            //actualMediaFile.requestLayout();
+        });        
+        gainTextField.textProperty().bindBidirectional(gainSlider.valueProperty(), new NumberStringConverter("#.##"));
+        biasTextField.textProperty().bindBidirectional(biasSlider.valueProperty(), new NumberStringConverter("#.##"));
+        gainSlider.valueProperty().addListener((o) -> {
+            if (gainFilter == null) {
+                gainFilter = new GainFilter();
+                actualMediaFile.addImageFilter(gainFilter);
+                lightController.getImageView().setImage(gainFilter.load(lightController.getImageView().getImage()));
+            }
+
+            double valGain = gainSlider.getValue();
+            double valBias = biasSlider.getValue();
+            executorParallel.submit(() -> {
+                gainFilter.filter(new float[]{(float) valGain, (float) valBias});
+                ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
+                if (filterForName != null) {
+                    filterForName.setValues(gainFilter.getValues());
+                }
+                actualMediaFile.saveEdits();                
+            });
+        });
+        biasSlider.valueProperty().addListener((o) -> {
+            if (gainFilter == null) {
+                gainFilter = new GainFilter();
+                actualMediaFile.addImageFilter(gainFilter);
+                lightController.getImageView().setImage(gainFilter.load(lightController.getImageView().getImage()));
+            }
+
+            double valGain = gainSlider.getValue();
+            double valBias = biasSlider.getValue();
+            executorParallel.submit(() -> {
+                gainFilter.filter(new float[]{(float) valGain, (float) valBias});
+                ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
+                if (filterForName != null) {
+                    filterForName.setValues(gainFilter.getValues());
+                }
+                actualMediaFile.saveEdits();
+            });           
         });
         geoCoding = new GeoCoding();
     }
@@ -336,7 +384,7 @@ public class MetadataController implements Initializable {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
             rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");            
+            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
             double alti = -1;
             try {
@@ -364,7 +412,7 @@ public class MetadataController implements Initializable {
         if (file.isHEIFImage()) {
             long startheif = System.currentTimeMillis();
             rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Date/Time Digitized");            
+            String timeStr = rawMetaData.get("Date/Time Digitized");
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
             LocalDateTime date = null;
@@ -649,7 +697,7 @@ public class MetadataController implements Initializable {
                 break;
             }
         }
-        long endimage = System.currentTimeMillis();        
+        long endimage = System.currentTimeMillis();
         System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
     }
 
@@ -787,7 +835,9 @@ public class MetadataController implements Initializable {
         recordDateField.clear();
         progressPane.setVisible(false);
         anchorKeywordPane.setDisable(true);
-        apertureSlider.setValue(1);
+        exposureSlider.setValue(1);
+        gainSlider.setValue(0.5);
+        biasSlider.setValue(0.5);
         exposerFilter = null;
     }
 
@@ -1323,11 +1373,11 @@ public class MetadataController implements Initializable {
     }
 
     @FXML
-    private void resetAction(ActionEvent event) {
+    private void resetExposureAction(ActionEvent event) {
         actualMediaFile.removeImageFilter(exposerFilter);
         actualMediaFile.saveEdits();
         Platform.runLater(() -> {
-            apertureSlider.setValue(1);
+            exposureSlider.setValue(1);
             lightController.getImageView().setImage(exposerFilter.reset());
             actualMediaFile.setImage(exposerFilter.reset());
             exposerFilter = null;
@@ -1587,6 +1637,21 @@ public class MetadataController implements Initializable {
         new Thread(task).start();
     }
 
+    @FXML
+    private void resetGainFilterAction(ActionEvent event) {
+        actualMediaFile.removeImageFilter(gainFilter);
+        actualMediaFile.saveEdits();
+        Platform.runLater(() -> {
+            gainSlider.setValue(0.5);
+            biasSlider.setValue(0.5);
+            if (gainFilter != null) {
+                lightController.getImageView().setImage(gainFilter.reset());
+                actualMediaFile.setImage(gainFilter.reset());
+                gainFilter = null;
+            }
+        });
+    }
+
     private class KeywordChangeListener implements ListChangeListener {
 
         @Override
@@ -1633,7 +1698,7 @@ public class MetadataController implements Initializable {
     }
 
     public Slider getApertureSlider() {
-        return apertureSlider;
+        return exposureSlider;
     }
 
     public Exif getExifdata() {
@@ -1701,6 +1766,18 @@ public class MetadataController implements Initializable {
 
     public void setExposerFilter(ImageFilter exposerFilter) {
         this.exposerFilter = exposerFilter;
+    }
+
+    public void setGainFilter(ImageFilter gainFilter) {
+        this.gainFilter = gainFilter;
+    }
+
+    public Slider getGainSlider() {
+        return gainSlider;
+    }
+
+    public Slider getBiasSlider() {
+        return biasSlider;
     }
 
     public HashMap<String, String> getRawMetaData() {

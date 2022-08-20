@@ -355,7 +355,7 @@ public class MediaFile {
                     } catch (JsonProcessingException | ClassNotFoundException ex) {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
                     }
-                    if (ifm != null) {
+                    if (ifm != null) {                        
                         rawList.add(ifm);
                     }
                 }

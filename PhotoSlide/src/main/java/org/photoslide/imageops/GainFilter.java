@@ -14,25 +14,29 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 
 /**
- *
+ * Set the gain.
+ * @min-value: 0
+ * @max-value: 1
  * @author selfemp
  */
-public class ExposureFilter implements ImageFilter {
+public class GainFilter implements ImageFilter {
 
     private Image image;
-    private WritableImage filteredImage;    
+    private WritableImage filteredImage;
     private final String name;
     private int pos;
     private float[] values;
     private byte[] buffer;
     private int height;
     private int width;
-    private float exposure;
+    private float gain;
+    private float bias;
     protected int[] rTable, gTable, bTable;
 
-    public ExposureFilter() {
-        name = "ExposureFilter";
-        exposure = 1.0f;
+    public GainFilter() {
+        name = "GainFilter";
+        gain = 0.5f;
+        bias = 0.5f;
         rTable = gTable = bTable = makeTable();
     }
 
@@ -44,13 +48,14 @@ public class ExposureFilter implements ImageFilter {
         width = (int) image.getWidth();
         buffer = new byte[width * height * 4];
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
-        filteredImage = new WritableImage(pixelReader, width, height);        
+        filteredImage = new WritableImage(pixelReader, width, height);
         return filteredImage;
     }
 
     @Override
     public Image reset() {
-        this.exposure = 1.0f;
+        gain = 0.5f;
+        bias = 0.5f;
         rTable = gTable = bTable = makeTable();
         return image;
     }
@@ -62,13 +67,14 @@ public class ExposureFilter implements ImageFilter {
 
     @Override
     public float[] getValues() {
-        return new float[]{exposure};
+        return new float[]{gain,bias};
     }
 
     @Override
-    public void filter(float[] values) {
+    public synchronized void filter(float[] values) {
         this.values = values;
-        this.exposure = values[0];
+        this.gain = values[0];
+        this.bias = values[1];
         rTable = gTable = bTable = makeTable();
         PixelWriter pixelWriter = filteredImage.getPixelWriter();
         byte[] targetBuffer = new byte[width * height * 4];
@@ -76,14 +82,15 @@ public class ExposureFilter implements ImageFilter {
             int rgba = buffer[i];
             int res = filterRGB(rgba);
             targetBuffer[i] = (byte) (res);
-        }        
+        }
         pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
     }
 
     @Override
     public void setValues(float[] values) {
         this.values = values;
-        this.exposure = values[0];
+        this.gain = values[0];
+        this.bias = values[1];
     }
 
     private int filterRGB(int rgba) {
@@ -98,7 +105,9 @@ public class ExposureFilter implements ImageFilter {
     }
 
     private float transferFunction(float f) {
-        return 1 - (float) Math.exp(-f * exposure);
+        f = ImageMath.gain(f, gain);
+        f = ImageMath.bias(f, bias);
+        return f;
     }
 
     private int[] makeTable() {
@@ -125,12 +134,12 @@ public class ExposureFilter implements ImageFilter {
      */
     @Override
     public Object clone() throws CloneNotSupportedException {
-        ExposureFilter tmp = null;
+        GainFilter tmp = null;
         try {
-            tmp = (ExposureFilter) super.clone();
+            tmp = (GainFilter) super.clone();
             tmp.values = values;
             tmp.pos = pos;
-            tmp.exposure = exposure;
+            tmp.gain = gain;
         } catch (CloneNotSupportedException e) {
         }
         return tmp;
@@ -142,7 +151,7 @@ public class ExposureFilter implements ImageFilter {
         hash = 79 * hash + Objects.hashCode(this.name);
         hash = 79 * hash + this.pos;
         hash = 79 * hash + Arrays.hashCode(this.values);
-        hash = 79 * hash + Float.floatToIntBits(this.exposure);
+        hash = 79 * hash + Float.floatToIntBits(this.gain);
         return hash;
     }
 
@@ -157,11 +166,11 @@ public class ExposureFilter implements ImageFilter {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ExposureFilter other = (ExposureFilter) obj;
+        final GainFilter other = (GainFilter) obj;
         if (this.pos != other.pos) {
             return false;
         }
-        if (Float.floatToIntBits(this.exposure) != Float.floatToIntBits(other.exposure)) {
+        if (Float.floatToIntBits(this.gain) != Float.floatToIntBits(other.gain)) {
             return false;
         }
         if (!Objects.equals(this.name, other.name)) {
@@ -175,7 +184,7 @@ public class ExposureFilter implements ImageFilter {
 
     @Override
     public String toString() {
-        return "ExposureFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", exposure=" + exposure + '}';
+        return "GainFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", gain=" + gain + ", bias=" + bias + '}';
     }
     
     

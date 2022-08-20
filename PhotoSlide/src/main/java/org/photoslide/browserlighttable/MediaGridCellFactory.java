@@ -146,12 +146,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 }
                 if (y + height > lightController.getImageView().getImage().getHeight()) {
                     y = y - (y + height - lightController.getImageView().getImage().getHeight());
-                }                
+                }
                 Rectangle2D cropView = new Rectangle2D(x, y, width, height);
                 lightController.getImageView().setViewport(cropView);
                 xMouse.set((int) t.getX());
                 yMouse.set((int) t.getY());
-            }            
+            }
         });
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         resetCrop = new Button();
@@ -192,7 +192,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if (newMediaItem != null && oldMediaItem == null) {
                 if (newMediaItem.isLoading() == true) {
                     if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
-                        if (isCellVisible(cell)) {                            
+                        if (isCellVisible(cell)) {
                             fileLoader.loadImage(newMediaItem);
                         }
                     } else {
@@ -513,11 +513,16 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 filterList = selectedMediaItem.getFilterListWithoutImageData();
                 for (ImageFilter imageFilter : filterList) {
                     imageWithFilters = imageFilter.load(imageWithFilters);
-                    imageFilter.filter(imageFilter.getValues());
+                    imageFilter.filter(imageFilter.getValues());                    
                     switch (imageFilter.getName()) {
-                        case "ExposureFilter": {
+                        case "ExposureFilter" ->  {                            
                             metadataController.setExposerFilter(imageFilter);
                             metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
+                        }
+                        case "GainFilter" ->  {                            
+                            metadataController.setGainFilter(imageFilter);                            
+                            metadataController.getGainSlider().setValue(imageFilter.getValues()[0]);
+                            metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
                         }
                     }
                 }
@@ -551,8 +556,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     private void handleZoomIn(double ratio, double mouseX, double mouseY) {
         Rectangle2D viewport = lightController.getImageView().getViewport();
-        double x = viewport.getMinX() + 20;        
-        double y = viewport.getMinY() + 20 * ratio;        
+        double x = viewport.getMinX() + 20;
+        double y = viewport.getMinY() + 20 * ratio;
         double width = viewport.getWidth() - 40;
         double height = viewport.getHeight() - 40 * ratio;
         if (height > 0) {

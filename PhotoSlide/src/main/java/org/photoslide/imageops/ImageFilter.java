@@ -6,6 +6,7 @@
 package org.photoslide.imageops;
 
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 
 /**
  * This interface declares the basic methods which are used to apply the filter. The filter 

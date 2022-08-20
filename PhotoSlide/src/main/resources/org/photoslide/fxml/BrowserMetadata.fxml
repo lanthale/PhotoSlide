@@ -6,12 +6,14 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.effect.Blend?>
+<?import javafx.scene.effect.ColorAdjust?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
@@ -23,7 +25,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
+<AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
    <children>
       <Label layoutX="21.0" layoutY="81.0" text="MetaData" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
@@ -162,18 +164,46 @@
           </TitledPane>
           <TitledPane fx:id="quickDevPane" alignment="TOP_LEFT" animated="false" text="Quick Develop">
                <content>
-                  <VBox>
+                  <VBox spacing="10.0">
                      <children>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
                               <FontIcon iconLiteral="ti-eye" iconSize="14" />
-                              <Slider fx:id="apertureSlider" blockIncrement="0.01" max="10.0" minorTickCount="1" value="1.0" />
+                              <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" minorTickCount="1" value="1.0" HBox.hgrow="ALWAYS" />
                               <FontIcon iconLiteral="ti-eye" iconSize="20" />
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetAction" text="Reset">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                               </Button>
+                              <TextField fx:id="exposureTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" HBox.hgrow="NEVER" />
+                           </children>
+                        </HBox>
+                        <Separator focusTraversable="false" prefWidth="200.0" VBox.vgrow="NEVER">
+                           <effect>
+                              <ColorAdjust brightness="-0.43" />
+                           </effect>
+                        </Separator>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontIcon iconLiteral="ti-palette" iconSize="20" />
+                              <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Slider fx:id="gainSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" VBox.vgrow="ALWAYS" />
+                                    <Slider fx:id="biasSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" VBox.vgrow="ALWAYS" />
+                                 </children>
+                              </VBox>
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetGainFilterAction" text="Reset" HBox.hgrow="NEVER">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fa-undo" />
+                                 </graphic>
+                              </Button>
+                              <VBox alignment="CENTER_LEFT" spacing="3.0">
+                                 <children>
+                                    <TextField fx:id="gainTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" VBox.vgrow="NEVER" />
+                                    <TextField fx:id="biasTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" VBox.vgrow="NEVER" />
+                                 </children>
+                              </VBox>
                            </children>
                         </HBox>
                      </children>

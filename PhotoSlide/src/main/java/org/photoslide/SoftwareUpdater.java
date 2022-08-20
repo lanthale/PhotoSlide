@@ -315,9 +315,12 @@ public class SoftwareUpdater {
                     if (OS.contains("WIN")) {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".msi";
                         filename = "PhotoSlide-" + nextAppVersion + ".msi";
-                    } else if (OS.contains("MAC")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".pkg";
+                    } else if (OS.contains("MAC") && !architecture.equalsIgnoreCase("aarch64")) {
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".pkg";
                         filename = "PhotoSlide-" + nextAppVersion + ".pkg";
+                    } else if (OS.contains("MAC") && architecture.equalsIgnoreCase("aarch64")) {
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".pkg";
+                        filename = "PhotoSlide_" +architecture+"-" + nextAppVersion + ".pkg";                        
                     } else if (OS.contains("NUX")) {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+ nextAppVersion + "_amd64.deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";

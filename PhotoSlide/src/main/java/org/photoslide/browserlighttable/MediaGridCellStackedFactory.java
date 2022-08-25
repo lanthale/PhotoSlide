@@ -19,6 +19,7 @@ import javafx.util.Callback;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaGridCellStackedDetailView;
 
@@ -34,13 +35,17 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     private final Comparator<MediaFile> stackNameComparator;    
     private final ExecutorService executor;
     private boolean changed;
+    private final MediaFileLoader fileLoader;
+    private GridView<MediaFile> mediaGrid;
 
-    public MediaGridCellStackedFactory(ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellStackedFactory(ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList, GridView<MediaFile> mediaGrid) {
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         this.executor = executor;        
         changed = false;
+        fileLoader = new MediaFileLoader();
+        this.mediaGrid=mediaGrid;
     }
 
     @Override
@@ -53,6 +58,21 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
             handleGridCellSelection(t);
             //cell.requestFocus();
             t.consume();
+        });
+        cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
+            if (newMediaItem != null && oldMediaItem == null) {
+                if (newMediaItem.isLoading() == true) {
+                    if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadImage(newMediaItem);
+                        }
+                    } else {
+                        if (isCellVisible(cell)) {
+                            fileLoader.loadVideo(newMediaItem);
+                        }
+                    }
+                }
+            }
         });
         return cell;
     }
@@ -100,6 +120,30 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
             changeStackPosition(sortedMediaList.size(), selectedCell.getItem());
             changed = true;
         }
+    }
+    
+    /**
+     *
+     * @param input Mediacell to check
+     * @return true if cell is actual visible
+     */
+    public boolean isCellVisible(MediaGridCellStackedDetailView input) {
+        VirtualFlow vf = (VirtualFlow) mediaGrid.getChildrenUnmodifiable().get(0);
+        boolean ret = false;
+        if (vf.getFirstVisibleCell() == null) {
+            return false;
+        }
+        int start = vf.getFirstVisibleCell().getIndex();
+        int end = vf.getLastVisibleCell().getIndex();
+        if (start == end) {
+            return true;
+        }
+        for (int i = start; i <= end; i++) {
+            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+                return true;
+            }
+        }
+        return ret;
     }
 
     /**

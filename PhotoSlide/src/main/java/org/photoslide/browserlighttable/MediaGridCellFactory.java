@@ -5,14 +5,12 @@
  */
 package org.photoslide.browserlighttable;
 
-import java.awt.Desktop;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
@@ -206,7 +204,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         return cell;
     }
 
-    private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
+    private void manageGUISelection(MouseEvent t, MediaGridCell cell) {        
         if (t.isShiftDown()) {
             //select all nodes in between
             int indexOfStart = lightController.getFullMediaList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
@@ -234,8 +232,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 selectionModel.clear();
                 selectionModel.add(((MediaGridCell) t.getSource()).getItem());
             }
-        }
-        cell.requestLayout();
+        }        
     }
 
     public void handleGridCellSelection(Event t) throws MalformedURLException {
@@ -773,7 +770,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         sortedMediaList.setComparator(stackNameComparator);
         GridView<MediaFile> mediaGrid = new GridView<>();
-        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(executor, lightController, sortedMediaList);
+        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(executor, lightController, sortedMediaList, mediaGrid);
         mediaGrid.setCellFactory(factory);
         double defaultCellWidth = mediaGrid.getCellWidth();
         double defaultCellHight = mediaGrid.getCellHeight();

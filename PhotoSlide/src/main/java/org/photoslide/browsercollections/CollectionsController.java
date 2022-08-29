@@ -169,6 +169,16 @@ public class CollectionsController implements Initializable {
                 } else {
                     collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((dTree) -> {
                         if (this.isCancelled() == false) {
+                            executorParallel.submit(() -> {
+                                DirectoryWatcher dw = new DirectoryWatcher(CollectionsController.this);
+                                try {
+                                    dw.startWatch(Path.of(dTree.getValue()));
+                                } catch (IOException ex) {
+                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                                } catch (InterruptedException ex) {
+                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            });
                             loadDirectoryTree(dTree.getValue());
                         }
                     });
@@ -186,7 +196,7 @@ public class CollectionsController implements Initializable {
                 }
             });
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 5, true);
-            util.hideNodeAfterTime(mainController.getProgressPane(), 5, true);            
+            util.hideNodeAfterTime(mainController.getProgressPane(), 5, true);
         });
         executorParallel.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
@@ -314,7 +324,7 @@ public class CollectionsController implements Initializable {
                                 util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
                             });
                             executor.submit(taskTree);
-mainController.getTaskProgressView().getTasks().add(taskTree);
+                            mainController.getTaskProgressView().getTasks().add(taskTree);
                         }
                     };
                     node.addEventHandler(TreeItem.branchExpandedEvent(), eventH);
@@ -504,7 +514,35 @@ mainController.getTaskProgressView().getTasks().add(taskTree);
                 createTree(filePath, parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
                 parent.getChildren().setAll(sorted);
-                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
+                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();                                
+                treeView.getSelectionModel().select(findFirst.get());
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+            util.showError(this.accordionPane, "Cannot create directory tree", ex);
+        }
+    }
+    
+    public void refreshTreeParent() {
+        try {
+            TreeItem<PathItem> parent;
+            TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+            TreeItem<PathItem> selectedItems = treeView.getSelectionModel().getSelectedItems().get(0).getParent();
+            String selectedItemName = selectedItems.getValue().toString();
+            if (selectedItems.getParent() == null) {
+                parent = selectedItems;
+                parent.getChildren().clear();                
+                createRootTree(parent.getValue().getFilePath(), parent);
+                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
+                parent.getChildren().setAll(sorted);                
+            } else {
+                parent = selectedItems.getParent();
+                Path filePath = selectedItems.getValue().getFilePath();
+                parent.getChildren().remove(selectedItems);
+                createTree(filePath, parent);
+                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
+                parent.getChildren().setAll(sorted);
+                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();                                
                 treeView.getSelectionModel().select(findFirst.get());
             }
         } catch (IOException ex) {

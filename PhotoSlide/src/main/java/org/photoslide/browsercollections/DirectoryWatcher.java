@@ -39,13 +39,15 @@ public class DirectoryWatcher {
                 StandardWatchEventKinds.ENTRY_MODIFY);
 
         while ((key = watchService.take()) != null) {
-            /*for (WatchEvent<?> event : key.pollEvents()) {
-            System.out.println(
-            "Event kind:" + event.kind()
-            + ". File affected: " + event.context() + ".");
-            }*/
+            for (WatchEvent<?> event : key.pollEvents()) {                
+                Path resolve = watchPath.resolve((Path)event.context());
+                if (controller.getSelectedPath().startsWith(resolve)) {                    
+                    controller.refreshTreeParent();
+                }
+            }
             List<WatchEvent<?>> pollEvents = key.pollEvents();
-            //if (pollEvents.isEmpty()==false) controller.refreshTree();
+            if (pollEvents.isEmpty() == false) {
+            }
             key.reset();
         }
     }

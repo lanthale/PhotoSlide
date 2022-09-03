@@ -39,6 +39,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.controlsfx.control.textfield.TextFields;
@@ -108,6 +109,8 @@ public class ExportDialogController implements Initializable {
     @FXML
     private CustomTextField heightTextField;
     private MapCircle circle;
+    @FXML
+    private TextField qualityTextField;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -140,13 +143,11 @@ public class ExportDialogController implements Initializable {
                     break;
             }
         });
-        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));
-        qualitySlider.valueChangingProperty().addListener((o) -> {
-
-        });
+        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));        
         qSliderToolTip.textProperty().bind(qualitySlider.valueProperty().asString());
         qSliderToolTip.textProperty().bind(Bindings.format("%.0f", qualitySlider.valueProperty()));
         qSliderToolTip.setShowDelay(Duration.ZERO);
+        qualityTextField.textProperty().bindBidirectional(qualitySlider.valueProperty(), new NumberStringConverter("##"));
         fileSequenceCombo.getItems().add("Title/Caption based");
         fileSequenceCombo.getItems().add("Orginial filename");
         fileSequenceCombo.getItems().add("Custom filname");

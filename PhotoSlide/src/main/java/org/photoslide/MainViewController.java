@@ -1,5 +1,6 @@
 package org.photoslide;
 
+import animatefx.animation.Bounce;
 import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browserlighttable.LighttableController;
@@ -48,6 +49,7 @@ import java.util.stream.Stream;
 import javafx.animation.FadeTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
@@ -76,8 +78,6 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -177,7 +177,7 @@ public class MainViewController implements Initializable {
     @FXML
     private MenuItem unstackMenu;
     @FXML
-    private MenuItem openMenu;    
+    private MenuItem openMenu;
     @FXML
     private MenuItem bookmarkMenu;
     @FXML
@@ -210,7 +210,7 @@ public class MainViewController implements Initializable {
     @FXML
     private FontIcon processListIcon;
     private TaskProgressView taskProgressView;
-    private PopOver taskPopOver;
+    private PopOver taskPopOver;    
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -228,7 +228,14 @@ public class MainViewController implements Initializable {
         taskPopOver.setTitle("Taskmanager");
         taskPopOver.setHeaderAlwaysVisible(true);
         taskPopOver.setFadeInDuration(new Duration(100));
-        taskPopOver.setContentNode(taskProgressView);
+        taskPopOver.setContentNode(taskProgressView);                
+        taskProgressView.getTasks().addListener((Observable taskChange) -> {
+            if (!taskProgressView.getTasks().isEmpty()) {
+                processListIcon.setIconColor(Paint.valueOf("lightgreen"));
+            } else {
+                processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+            }
+        });
         taskProgressView.setPrefSize(300, 200);
         String OS = System.getProperty("os.name").toUpperCase();
         if (OS.contains("MAC")) {
@@ -241,14 +248,14 @@ public class MainViewController implements Initializable {
                 createDefaultApplicationMenu.getItems().add(1, new SeparatorMenuItem());
                 createDefaultApplicationMenu.getItems().add(2, preferencesMenu);
                 createDefaultApplicationMenu.getItems().add(3, new SeparatorMenuItem());
-                createDefaultApplicationMenu.getItems().set(createDefaultApplicationMenu.getItems().size()-1, quitMenu);  
+                createDefaultApplicationMenu.getItems().set(createDefaultApplicationMenu.getItems().size() - 1, quitMenu);
                 windowMenu.getItems().add(new SeparatorMenuItem());
                 windowMenu.getItems().add(tk.createMinimizeMenuItem());
                 windowMenu.getItems().add(tk.createZoomMenuItem());
                 windowMenu.getItems().add(tk.createCycleWindowsItem());
                 windowMenu.getItems().add(new SeparatorMenuItem());
                 windowMenu.getItems().add(tk.createBringAllToFrontItem());
-                windowMenu.getItems().add(new SeparatorMenuItem());                
+                windowMenu.getItems().add(new SeparatorMenuItem());
                 menuBar.useSystemMenuBarProperty().set(true);
             });
         }
@@ -377,7 +384,8 @@ public class MainViewController implements Initializable {
         diag.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         Optional<ButtonType> result = diag.showAndWait();
         if (result.get() == ButtonType.OK) {
-            // ... user chose OK
+            Bounce bc = new Bounce(showProcessButton);
+            bc.play();
             progressPane.setVisible(true);
             progressbar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
             progressbarLabel.setText("Exporting files...");
@@ -488,11 +496,6 @@ public class MainViewController implements Initializable {
                                         break;
                                 }
                                 writer.setImageParam(builder.build());
-                                //int height = (int) newImage.getHeight();
-                                //int width = (int) newImage.getWidth();
-                                //int[] buffer = new int[width * height];
-                                //newImage.getPixelReader().getPixels(0, 0, width, height, PixelFormat.getIntArgbInstance(), buffer, 0, width);
-                                //writer.write(buffer, i, i, fo);
                                 writer.write(fromFXImage, fo);
                                 fo.close();
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
@@ -1147,17 +1150,17 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {
+    private void showProcessListButtonAction(ActionEvent event) {                   
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
-                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());        
     }
 
     @FXML
     private void showBackgroundProcessListMenu(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
-                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm()); 
     }
 
 }

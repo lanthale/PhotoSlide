@@ -169,16 +169,7 @@ public class CollectionsController implements Initializable {
                 } else {
                     collectionStorage.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((dTree) -> {
                         if (this.isCancelled() == false) {
-                            /*executorParallel.submit(() -> {
-                                DirectoryWatcher dw = new DirectoryWatcher(CollectionsController.this);
-                                try {
-                                    dw.startWatch(Path.of(dTree.getValue()));
-                                } catch (IOException ex) {
-                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                } catch (InterruptedException ex) {
-                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            });*/
+                            //Directorywatch is installed in LightTabelController for selected path only
                             loadDirectoryTree(dTree.getValue());
                         }
                     });
@@ -492,7 +483,7 @@ public class CollectionsController implements Initializable {
         refreshTree();
     }
 
-    public void refreshTree() {
+    public synchronized void refreshTree() {
         try {
             TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -523,7 +514,7 @@ public class CollectionsController implements Initializable {
         }
     }
     
-    public void refreshTreeParent() {
+    public synchronized void refreshTreeParent() {
         try {
             TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();

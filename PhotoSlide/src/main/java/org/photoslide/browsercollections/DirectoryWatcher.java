@@ -35,16 +35,23 @@ public class DirectoryWatcher {
         watchPath.register(
                 watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_DELETE,
-                StandardWatchEventKinds.ENTRY_MODIFY);
-
+                StandardWatchEventKinds.ENTRY_DELETE);
+        Path parent = watchPath.getParent();
+        parent.register(
+                watchService,
+                StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_DELETE);
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {                
-                Path resolve = watchPath.resolve((Path) event.context());                
-                if (resolve.endsWith(".edit") == false) {
+                Path resolve = watchPath.resolve((Path) event.context());  
+                Path resolveParent = parent.resolve((Path) event.context());                  
+                if (resolve.toString().endsWith(".edit") == false) {
                     if (controller.getSelectedPath().startsWith(resolve)) {
                         controller.refreshTreeParent();
                     }
+                }
+                if (resolveParent.toString().endsWith(".edit") == false) {                    
+                    controller.refreshTreeParent();
                 }
             }
             List<WatchEvent<?>> pollEvents = key.pollEvents();

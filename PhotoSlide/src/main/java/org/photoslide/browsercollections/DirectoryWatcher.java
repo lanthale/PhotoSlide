@@ -40,9 +40,11 @@ public class DirectoryWatcher {
 
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {                
-                Path resolve = watchPath.resolve((Path)event.context());
-                if (controller.getSelectedPath().startsWith(resolve)) {                    
-                    controller.refreshTreeParent();
+                Path resolve = watchPath.resolve((Path) event.context());                
+                if (resolve.endsWith(".edit") == false) {
+                    if (controller.getSelectedPath().startsWith(resolve)) {
+                        controller.refreshTreeParent();
+                    }
                 }
             }
             List<WatchEvent<?>> pollEvents = key.pollEvents();

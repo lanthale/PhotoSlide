@@ -90,8 +90,7 @@ public class App extends Application {
         setDefaultTIFFCodec();
         notifyPreloader(new ProgressNotification(0.7));
         TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install();
-        //RAWImageLoaderFactory.install(Utility.getAppData()+File.separator+"libs");
+        PSDImageLoaderFactory.install();        
 
         try {
             RAWImageLoaderFactory.install();

@@ -36,6 +36,7 @@ public class MediaFileLoader {
         } else {
             executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
         }
+        //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         taskList = new HashMap<>();
     }
 

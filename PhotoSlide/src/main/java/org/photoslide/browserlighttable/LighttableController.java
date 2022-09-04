@@ -217,9 +217,8 @@ public class LighttableController implements Initializable {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableController"));
         executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("lightTableControllerScheduled"));
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelection"));
-        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-        //ToggleGroup myToggleGroup = new ToggleGroup();
-        //myToggleGroup.getToggles().add(oneStarMenu);
+        //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));        
     }
     
     public void injectMainController(MainViewController mainController) {
@@ -254,8 +253,9 @@ public class LighttableController implements Initializable {
         directorywatch = new DirectoryWatcher(mainController.getCollectionsPaneController());
         executorParallel.submit(() -> {
             try {
-                directorywatch.startWatch(sPath.getParent());
+                directorywatch.startWatch(sPath);
             } catch (IOException | InterruptedException ex) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.WARNING, null, ex);
             }
         });
         

@@ -7,16 +7,12 @@ package org.photoslide.datamodel;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import org.photoslide.ThreadFactoryPS;
-import org.photoslide.Utility;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
 /**
@@ -24,19 +20,11 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  * @author selfemp
  */
 public class MediaFileLoader {
-
-    private ExecutorService executorParallel;
+    
     private final HashMap<String, Task> taskList;
     private long memory;
 
-    public MediaFileLoader() {
-        memory = Utility.getNativeMemorySize();
-        if (memory > 4194500) {
-            executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
-        } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
-        }
-        //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
+    public MediaFileLoader() {        
         taskList = new HashMap<>();
     }
 
@@ -74,7 +62,7 @@ public class MediaFileLoader {
                 });
                 if (taskList.get(newMediaItem.getName()) == null) {
                     taskList.put(newMediaItem.getName(), task);
-                    executorParallel.submit(task);                    
+                    Thread.ofVirtual().start(task);                    
                 }
             }
         }
@@ -115,7 +103,7 @@ public class MediaFileLoader {
                 });
                 if (taskList.get(fileItem.getName()) == null) {
                     taskList.put(fileItem.getName(), task);
-                    executorParallel.submit(task);
+                    Thread.ofVirtual().start(task);
                 }
             }
         }
@@ -124,8 +112,7 @@ public class MediaFileLoader {
     public void shutdown() {
         taskList.values().forEach(t -> {
             t.cancel();
-        });
-        executorParallel.shutdownNow();
+        });        
         taskList.clear();
     }
 
@@ -133,12 +120,6 @@ public class MediaFileLoader {
         taskList.values().forEach(t -> {
             t.cancel();
         });
-        taskList.clear();
-        executorParallel.shutdownNow();
-        if (memory > 4000000) {
-            executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
-        } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
-        }
+        taskList.clear();        
     }
 }

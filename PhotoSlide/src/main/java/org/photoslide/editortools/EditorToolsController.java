@@ -33,8 +33,7 @@ import org.photoslide.imageops.ImageFilter;
  */
 public class EditorToolsController implements Initializable {
 
-    private static final double OPACITY = 0.8;
-    private ExecutorService executor;
+    private static final double OPACITY = 0.8;    
     private MediaFile selectedMediaFile;
     private Histogram histogram;
     private GraphicsContext gc;
@@ -50,8 +49,7 @@ public class EditorToolsController implements Initializable {
     private Task<Boolean> task;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorToolsController"));
+    public void initialize(URL url, ResourceBundle rb) {        
         drawingCanvas.widthProperty().bind(histoAnchorPane.widthProperty());
         drawingCanvas.heightProperty().bind(histoAnchorPane.heightProperty());
         gc = drawingCanvas.getGraphicsContext2D();
@@ -107,7 +105,7 @@ public class EditorToolsController implements Initializable {
             ft1.setToValue(1.0);
             ft1.play();
         });
-        executor.submit(task);
+        Thread.ofVirtual().start(task);
     }
 
     private void drawHistogram() {
@@ -143,7 +141,6 @@ public class EditorToolsController implements Initializable {
     }
 
     public void shutdown() {
-        executor.shutdownNow();
     }
 
 }

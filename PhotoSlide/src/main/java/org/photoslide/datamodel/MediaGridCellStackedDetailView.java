@@ -5,7 +5,6 @@
  */
 package org.photoslide.datamodel;
 
-import javafx.animation.PauseTransition;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -16,7 +15,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
-import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
 

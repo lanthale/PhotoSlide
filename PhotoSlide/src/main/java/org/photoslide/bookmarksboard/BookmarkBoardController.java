@@ -10,8 +10,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -29,7 +27,6 @@ import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile;
 
@@ -42,9 +39,7 @@ public class BookmarkBoardController implements Initializable {
     private ObservableList<MediaFile> fullMediaList;
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
-    private GridView<MediaFile> imageGrid;
-    private ExecutorService executor;
-    private ExecutorService executorParallel;
+    private GridView<MediaFile> imageGrid;    
     private List<String> mediaFileList;
     private BMBMediaLoadingTask task;
 
@@ -68,11 +63,9 @@ public class BookmarkBoardController implements Initializable {
         mediaFileList = new ArrayList<>();
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
-        sortedMediaList = new SortedList<>(filteredMediaList);
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutorParallel"));
+        sortedMediaList = new SortedList<>(filteredMediaList);        
         imageGrid = new GridView<>(sortedMediaList);
-        factory = new MediaGridCellBMBFactory(executor, this, sortedMediaList);
+        factory = new MediaGridCellBMBFactory(this, sortedMediaList);
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
@@ -99,9 +92,7 @@ public class BookmarkBoardController implements Initializable {
         if (task != null) {
             task.shutdown();
         }
-        factory.shutdown();
-        executor.shutdown();
-        executorParallel.shutdown();
+        factory.shutdown();        
     }
 
     @FXML
@@ -147,7 +138,7 @@ public class BookmarkBoardController implements Initializable {
             progressIndicator.setVisible(false);
             statusLabel.setVisible(false);
         });
-        executor.submit(task);
+        Thread.ofVirtual().start(task);        
         mainViewController.getTaskProgressView().getTasks().add(task);
 
     }

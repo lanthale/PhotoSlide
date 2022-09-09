@@ -10,8 +10,6 @@ import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -20,7 +18,6 @@ import javafx.concurrent.Task;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 import org.photoslide.browsermetadata.MetadataController;
 import org.photoslide.datamodel.MediaFileLoader;
@@ -40,11 +37,9 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
     private final ArrayList<String> queryList;
     private final MainViewController mainController;
     private final MetadataController metaController;
-    private final ScheduledExecutorService executor;
     
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid, MetadataController mc, MainViewController mv) {
-        this.searchController = control;
-        executor = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SRMediaLoadingTask"));
+        this.searchController = control;        
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();
@@ -83,8 +78,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
         return null;
     }
     
-    public void shutdown() {
-        executor.shutdownNow();
+    public void shutdown() {        
     }
     
     private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws Exception {        

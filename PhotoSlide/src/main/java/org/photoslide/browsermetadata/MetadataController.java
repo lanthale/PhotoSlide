@@ -15,7 +15,6 @@ import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browserlighttable.LighttableController;
 import com.icafe4j.image.meta.Metadata;
@@ -67,8 +66,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -141,8 +138,7 @@ import org.photoslide.imageops.ImageFilter;
  * @author selfemp
  */
 public class MetadataController implements Initializable {
-
-    private ExecutorService executor;
+    
     private MainViewController mainController;
     private LighttableController lightController;
     private Collection<String> keywordList;
@@ -159,8 +155,7 @@ public class MetadataController implements Initializable {
     private KeywordChangeListener keywordsChangeListener;
     private CommentsChangeListener commentsChangeListener;
     private CaptionChangeListener captionChangeListener;
-    
-    private ExecutorService executorParallel;
+        
     private Image shownImage;
     private ImageFilter exposerFilter;
     private ImageFilter gainFilter;
@@ -221,9 +216,7 @@ public class MetadataController implements Initializable {
     private Slider biasSlider;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("metaDataController"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("metaDataControllerParallel"));
+    public void initialize(URL url, ResourceBundle rb) {        
         keywordList = FXCollections.observableArrayList();
         Platform.runLater(() -> {
             anchorKeywordPane.setDisable(true);
@@ -247,7 +240,7 @@ public class MetadataController implements Initializable {
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
             }
             double val = exposureSlider.getValue();
-            executorParallel.submit(() -> {
+            Thread.ofVirtual().start(() -> {
                 exposerFilter.filter(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
                 if (filterForName != null) {
@@ -267,7 +260,7 @@ public class MetadataController implements Initializable {
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
-            executorParallel.submit(() -> {
+            Thread.ofVirtual().start(() -> {
                 gainFilter.filter(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
@@ -285,7 +278,7 @@ public class MetadataController implements Initializable {
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
-            executorParallel.submit(() -> {
+            Thread.ofVirtual().start(() -> {
                 gainFilter.filter(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
@@ -376,7 +369,7 @@ public class MetadataController implements Initializable {
             captionTextField.textProperty().removeListener(captionChangeListener);
             commentText.textProperty().removeListener(commentsChangeListener);
         });
-        executor.submit(task);
+        Thread.ofVirtual().start(task);        
         mainController.getTaskProgressView().getTasks().add(task);
     }
 
@@ -1101,8 +1094,8 @@ public class MetadataController implements Initializable {
         });
         taskSaveComments.setOnFailed((t) -> {
             progressPane.setVisible(true);
-        });
-        executor.submit(taskSaveComments);
+        });        
+        Thread.ofVirtual().start(taskSaveComments);
         mainController.getTaskProgressView().getTasks().add(taskSaveComments);
     }
 
@@ -1148,7 +1141,7 @@ public class MetadataController implements Initializable {
         taskKeywordsTitle.setOnFailed((t) -> {
             progressPane.setVisible(true);
         });
-        executor.submit(taskKeywordsTitle);
+        Thread.ofVirtual().start(taskKeywordsTitle);
         mainController.getTaskProgressView().getTasks().add(taskKeywordsTitle);
     }
 
@@ -1361,7 +1354,7 @@ public class MetadataController implements Initializable {
             mainController.getProgressbar().progressProperty().bind(taskApplyToAll.progressProperty());
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbarLabel().textProperty().bind(taskApplyToAll.messageProperty());
-            executor.submit(taskApplyToAll);
+            Thread.ofVirtual().start(taskApplyToAll);
             mainController.getTaskProgressView().getTasks().add(taskApplyToAll);
         }
     }
@@ -1408,7 +1401,7 @@ public class MetadataController implements Initializable {
         Button saveAs = new Button("Save map to image");
         saveAs.setOnAction((t) -> {
             WritableImage image = map.snapshot(new SnapshotParameters(), null);
-            executorParallel.submit(() -> {
+            Thread.ofVirtual().start(() -> {
                 BufferedImage renderedImage = SwingFXUtils.fromFXImage(image, null);
                 //Write the snapshot to the chosen file
                 String files = actualMediaFile.getPathStorage().getParent().toString().toString() + File.separator + "MapScreen" + System.currentTimeMillis() + ".png";
@@ -1787,12 +1780,6 @@ public class MetadataController implements Initializable {
     public void Shutdown() {
         if (task != null) {
             task.cancel();
-        }
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-        if (executorParallel != null) {
-            executorParallel.shutdownNow();
         }
     }
 }

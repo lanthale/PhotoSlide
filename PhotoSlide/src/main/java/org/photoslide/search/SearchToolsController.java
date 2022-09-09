@@ -12,9 +12,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.ResourceBundle;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
@@ -48,7 +45,6 @@ import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.browsermetadata.MetadataController;
@@ -63,9 +59,7 @@ public class SearchToolsController implements Initializable {
     private ObservableList<MediaFile> fullMediaList;
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
-    private GridView<MediaFile> imageGrid;
-    private ScheduledExecutorService executor;
-    private ScheduledExecutorService executorParallel;
+    private GridView<MediaFile> imageGrid;    
     private SRMediaLoadingTask task;
     @FXML
     private CustomTextField searchTextField;
@@ -127,11 +121,9 @@ public class SearchToolsController implements Initializable {
         toolbar.setManaged(false);
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
-        sortedMediaList = new SortedList<>(filteredMediaList);
-        executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SearchToolExecutorScheduledParallel"));
+        sortedMediaList = new SortedList<>(filteredMediaList);        
         imageGrid = new GridView<>(sortedMediaList);
-        MediaGridCellSearchFactory factory = new MediaGridCellSearchFactory(executor, this, sortedMediaList);
+        MediaGridCellSearchFactory factory = new MediaGridCellSearchFactory(this, sortedMediaList);
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
@@ -158,9 +150,7 @@ public class SearchToolsController implements Initializable {
         }
         if (factory != null) {
             factory.shutdown();
-        }
-        executor.shutdown();
-        executorParallel.shutdown();
+        }        
     }
 
     private void searchTextFieldAction(ActionEvent event) {
@@ -221,7 +211,6 @@ public class SearchToolsController implements Initializable {
                         progressInd.setVisible(false);
                     }
                 });
-                executor.schedule(srTask, 500, TimeUnit.MILLISECONDS);
                 dialogPane.getScene().getWindow().setHeight(400);
                 mediaFileInfoLabel.setText("");
             }
@@ -275,7 +264,7 @@ public class SearchToolsController implements Initializable {
             imageGrid = new GridView<>(sortedMediaList);
             double defaultCellWidth = imageGrid.getCellWidth();
             double defaultCellHight = imageGrid.getCellHeight();
-            factory = new MediaGridCellSearchFactory(executorParallel, this, sortedMediaList);
+            factory = new MediaGridCellSearchFactory(this, sortedMediaList);
             imageGrid.setCellFactory(factory);
             Platform.runLater(() -> {
                 searchResultVBox.getChildren().add(imageGrid);
@@ -303,8 +292,7 @@ public class SearchToolsController implements Initializable {
                 imageGrid.setCellWidth(defaultCellWidth + 3 * mediaZoomSlider.getValue());
                 imageGrid.setCellHeight(defaultCellHight + 3 * mediaZoomSlider.getValue());
             });
-            executorParallel.schedule(task, 500, TimeUnit.MILLISECONDS);
-
+            Thread.ofVirtual().start(task);
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
         }

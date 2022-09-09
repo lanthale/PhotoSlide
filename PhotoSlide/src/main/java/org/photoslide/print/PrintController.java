@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -55,7 +53,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
 
 /**
@@ -63,9 +60,7 @@ import org.photoslide.datamodel.MediaFile;
  * @author selfemp
  */
 public class PrintController implements Initializable {
-
-    private ExecutorService executor;
-    private ExecutorService executorParallel;
+    
     private DialogPane dialogPane;
     @FXML
     private ComboBox<Printer> printerCombo;
@@ -107,9 +102,7 @@ public class PrintController implements Initializable {
     private HBox pageBox;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutor"));
+    public void initialize(URL url, ResourceBundle rb) {        
         tGroup = new ToggleGroup();
         prefHeight = -1;
         prefWidth = -1;
@@ -203,7 +196,7 @@ public class PrintController implements Initializable {
                 }
             }
         });
-        executorParallel.submit(() -> {
+        Thread.ofVirtual().start(() -> {
             ObservableSet<Printer> printers = Printer.getAllPrinters();
             printerCombo.setItems(FXCollections.observableArrayList(new ArrayList<>(printers)));
             Printer defaultprinter = Printer.getDefaultPrinter();
@@ -221,9 +214,7 @@ public class PrintController implements Initializable {
         });
     }
 
-    public void shutdown() {
-        executor.shutdown();
-        executorParallel.shutdown();
+    public void shutdown() {        
     }
 
     public void setDialogPane(DialogPane pane) {

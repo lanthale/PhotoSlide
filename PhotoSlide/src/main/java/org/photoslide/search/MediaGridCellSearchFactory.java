@@ -30,17 +30,15 @@ public class MediaGridCellSearchFactory implements Callback<GridView<MediaFile>,
     private final SortedList<MediaFile> sortedMediaList;
     private MediaGridCellSR selectedCell;
     private MediaFile selectedMediaFile;
-    private final Comparator<MediaFile> stackNameComparator;
-    private final ExecutorService executor;
+    private final Comparator<MediaFile> stackNameComparator;    
     private final SearchToolsController searchTools;
     private final GridCellSelectionModel selectionModel;
     private final MediaFileLoader fileLoader;
 
-    public MediaGridCellSearchFactory(ExecutorService executor, SearchToolsController controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellSearchFactory(SearchToolsController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.searchTools = controller;
-        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        this.executor = executor;
+        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);        
         selectionModel = new GridCellSelectionModel();
         fileLoader = new MediaFileLoader();
     }

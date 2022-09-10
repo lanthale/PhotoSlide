@@ -6,6 +6,7 @@
 package org.photoslide.browserlighttable;
 
 import java.util.Comparator;
+import java.util.concurrent.ExecutorService;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -31,15 +32,17 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     private final SortedList<MediaFile> sortedMediaList;
     private MediaGridCellStackedDetailView selectedCell;
     private final LighttableController lighttableController;
-    private final Comparator<MediaFile> stackNameComparator;        
+    private final Comparator<MediaFile> stackNameComparator;    
+    private final ExecutorService executor;
     private boolean changed;
     private final MediaFileLoader fileLoader;
     private GridView<MediaFile> mediaGrid;
 
-    public MediaGridCellStackedFactory(LighttableController controller, SortedList<MediaFile> sortedMediaList, GridView<MediaFile> mediaGrid) {
+    public MediaGridCellStackedFactory(ExecutorService executor, LighttableController controller, SortedList<MediaFile> sortedMediaList, GridView<MediaFile> mediaGrid) {
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
-        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);        
+        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
+        this.executor = executor;        
         changed = false;
         fileLoader = new MediaFileLoader();
         this.mediaGrid=mediaGrid;
@@ -168,10 +171,10 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         } else {
             actuaMediaFile.setSelected(false);
         }
-        Thread.ofVirtual().start(() -> {
+        executor.submit(() -> {
             selectedMediaFile.saveEdits();
             actuaMediaFile.saveEdits();
-        });        
+        });
         sortedMediaList.setComparator(stackNameComparator);
         lighttableController.updateSortFiltering();
         Platform.runLater(() -> {

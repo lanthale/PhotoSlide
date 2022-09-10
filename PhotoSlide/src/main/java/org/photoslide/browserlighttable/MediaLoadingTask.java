@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +26,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.photoslide.ThreadFactoryPS;
 
 /**
  *
@@ -39,6 +42,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
     private final MediaFileLoader fileLoader;
+    private ExecutorService executorParallel;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
@@ -49,6 +53,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         metadataController = metaControllerParam;
         this.factory = factory;
         this.fullMediaList = fullMediaList;
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelectionMediaLoading"));
     }
 
     @Override
@@ -75,7 +80,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     mediaQTYLabel.setText(qty + " media files");
                 });
             }
-
+                        
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted();
@@ -109,7 +114,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         });
                     }
                 }
-            });
+            });            
             if (this.isCancelled()) {
                 return null;
             }
@@ -140,10 +145,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
             return;
         }
         //TODO: load in background or load during real media loading to speed up
-        m.readEdits();
+        m.readEdits();        
         if (this.isCancelled()) {
             return;
-        }
+        }        
         m.getCreationTime();
         if (this.isCancelled()) {
             return;
@@ -187,7 +192,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);
+                fullMediaList.add(v);                
             });
         }
     }
@@ -195,6 +200,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
     @Override
     protected void succeeded() {
         super.succeeded();
+        executorParallel.shutdown();
     }
 
 }

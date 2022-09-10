@@ -8,11 +8,14 @@ package org.photoslide.bookmarksboard;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
 import org.controlsfx.control.GridView;
+import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaFileLoader;
@@ -27,10 +30,12 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
     private final ObservableList<MediaFile> fullMediaList;
     private final GridView<MediaFile> imageGrid;
     private final MediaFileLoader fileLoader;
-    private final List<String> mediaList;    
+    private final List<String> mediaList;
+    private final ExecutorService executor;
 
     public BMBMediaLoadingTask(List<String> queryList, BookmarkBoardController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
-        this.bmbController = control;        
+        this.bmbController = control;
+        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("BMBMediaLoadingTask"));
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();
@@ -60,7 +65,8 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
         return null;
     }
 
-    public void shutdown() {        
+    public void shutdown() {
+        executor.shutdownNow();
     }
 
     private void loadItem(Task task, MediaFile mediaItem, String mediaURL) throws IOException {

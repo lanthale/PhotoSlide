@@ -6,6 +6,7 @@
 package org.photoslide.bookmarksboard;
 
 import java.util.Comparator;
+import java.util.concurrent.ExecutorService;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -17,6 +18,7 @@ import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaFileLoader;
+import org.photoslide.datamodel.MediaGridCell;
 
 /**
  *
@@ -27,15 +29,17 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
     private final SortedList<MediaFile> sortedMediaList;
     private MediaGridCellBMB selectedCell;
     private MediaFile selectedMediaFile;
-    private final Comparator<MediaFile> stackNameComparator;    
+    private final Comparator<MediaFile> stackNameComparator;
+    private final ExecutorService executor;
     private final BookmarkBoardController bmbTools;
     private final GridCellSelectionModel selectionModel;
     private final MediaFileLoader fileLoader;
 
-    public MediaGridCellBMBFactory(BookmarkBoardController controller, SortedList<MediaFile> sortedMediaList) {
+    public MediaGridCellBMBFactory(ExecutorService executor, BookmarkBoardController controller, SortedList<MediaFile> sortedMediaList) {
         this.sortedMediaList = sortedMediaList;
         this.bmbTools = controller;
-        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);        
+        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
+        this.executor = executor;
         selectionModel = new GridCellSelectionModel();
         fileLoader = new MediaFileLoader();
     }

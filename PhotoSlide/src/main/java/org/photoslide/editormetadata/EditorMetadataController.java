@@ -10,6 +10,8 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,15 +20,19 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 
@@ -35,7 +41,8 @@ import org.photoslide.browsermetadata.MetadataController;
  * @author selfemp
  */
 public class EditorMetadataController implements Initializable {
-    
+
+    private ExecutorService executor;
     @FXML
     private Accordion editorAccordion;
     private MediaFile selectedMediaFile;
@@ -56,7 +63,8 @@ public class EditorMetadataController implements Initializable {
     private Task<Boolean> taskMetaData;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) {        
+    public void initialize(URL url, ResourceBundle rb) {
+        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMetadataController"));
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -127,8 +135,8 @@ public class EditorMetadataController implements Initializable {
             ft1.setToValue(1.0);
             ft1.play();
         });
-        Thread.ofVirtual().start(taskMetaData);
-        Thread.ofVirtual().start(task);
+        executor.submit(taskMetaData);
+        executor.submit(task);
     }
 
     private void updateUIWithExtendedMetadata() {
@@ -224,6 +232,7 @@ public class EditorMetadataController implements Initializable {
     }
 
     public void shutdown() {
+        executor.shutdownNow();
     }
 
 }

@@ -53,7 +53,8 @@ import org.photoslide.imageops.ImageFilter;
  * @author selfemp
  */
 public class EditorMediaViewController implements Initializable {
-    
+
+    private ExecutorService executor;
     private MainViewController mainController;
     private MediaFile selectedMediaFile;
     private VBox box;
@@ -90,7 +91,8 @@ public class EditorMediaViewController implements Initializable {
     private PopOver mediaGridView;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) {        
+    public void initialize(URL url, ResourceBundle rb) {
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMediaViewController"));
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
         stackPane.setOnKeyPressed((t) -> {
@@ -185,11 +187,12 @@ public class EditorMediaViewController implements Initializable {
                 return true;
             }
         };
-        Thread.ofVirtual().start(task);
+        executor.submit(task);
     }
 
     public void shutdown() {
-        factory.shutdown();        
+        factory.shutdown();
+        executor.shutdownNow();
     }
 
     @FXML
@@ -257,7 +260,7 @@ public class EditorMediaViewController implements Initializable {
         box.setMaxSize(700, 100);
         box.setAlignment(Pos.CENTER);
         mediaGrid = new GridView<>();
-        factory = new EditMediaGridCellFactory(EditorMediaViewController.this);
+        factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
         mediaGrid.setCellFactory(factory);        
         mediaGridView.setContentNode(box);
         if (!box.getChildren().contains(mediaGrid)) {
@@ -370,9 +373,9 @@ public class EditorMediaViewController implements Initializable {
         MediaFile item = lightTableController.getSortedMediaList().get(lightTableController.getSortedMediaList().indexOf(factory.getSelectedMediaFile()));
         item.setDeleted(true);
         editorImageView.setImage(null);
-        Thread.ofVirtual().start(() -> {
+        executor.submit(() -> {
             factory.getSelectedMediaFile().saveEdits();
-        });        
+        });
     }
 
 }

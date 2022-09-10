@@ -6,6 +6,7 @@
 package org.photoslide.editormedia;
 
 import java.util.Comparator;
+import java.util.concurrent.ExecutorService;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -20,6 +21,7 @@ import org.controlsfx.control.GridView;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaFileLoader;
+import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -30,15 +32,17 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
 
     private EditMediaGridCell selectedCell;
     private MediaFile selectedMediaFile;
-    private final Comparator<MediaFile> stackNameComparator;    
+    private final Comparator<MediaFile> stackNameComparator;
+    private final ExecutorService executor;
     private final EditorMediaViewController mediaViewController;
     private final GridCellSelectionModel selectionModel;
     private final MediaFileLoader fileLoader;
     private Task<Object> task;
 
-    public EditMediaGridCellFactory(EditorMediaViewController controller) {
+    public EditMediaGridCellFactory(ExecutorService executor, EditorMediaViewController controller) {
         this.mediaViewController = controller;
-        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);        
+        stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
+        this.executor = executor;
         selectionModel = new GridCellSelectionModel();
         fileLoader = new MediaFileLoader();
     }
@@ -130,7 +134,7 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
                 return true;
             }
         };
-        Thread.ofVirtual().start(task);
+        executor.submit(task);
     }
 
     public MediaFile getSelectedMediaFile() {

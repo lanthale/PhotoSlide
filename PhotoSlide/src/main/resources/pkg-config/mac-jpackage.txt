@@ -24,4 +24,4 @@
 --java-options --add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED
 --java-options --add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED
 --java-options --add-opens=java.base/java.net=ALL-UNNAMED
---java-options --enable-preview
+--java-options --add-modules=jdk.incubator.foreign

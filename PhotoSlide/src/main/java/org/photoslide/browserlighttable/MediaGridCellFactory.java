@@ -72,7 +72,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Utility util;
     private final MetadataController metadataController;
     private final GridCellSelectionModel selectionModel;
-    private GridView<MediaFile> grid;    
+    private GridView<MediaFile> grid;
+    private final ExecutorService executor;
     private MediaGridCell selectedCell;
     private final LighttableController lightController;
     private MediaFile selectedMediaItem;
@@ -84,7 +85,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final Button resetCrop;
     private final MediaFileLoader fileLoader;
 
-    public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {        
+    public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
         this.util = util;
         this.metadataController = metadataController;
         this.grid = grid;
@@ -167,6 +169,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public void shutdown() {
         fileLoader.shutdown();
+        executor.shutdownNow();
     }
 
     @Override
@@ -292,9 +295,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);
-                Thread.ofVirtual().start(() -> {
+                executor.submit(() -> {
                     selectedMediaItem.saveEdits();
-                });                
+                });
             } else {
                 alert.hide();
                 return;
@@ -336,7 +339,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     });
                     Task mediaTask = loadVideo();
-                    Thread.ofVirtual().start(mediaTask);                    
+                    executor.submit(mediaTask);
                     this.lightController.getMainController().getTaskProgressView().getTasks().add(mediaTask);
                 } catch (MediaException e) {
                     if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
@@ -767,7 +770,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Comparator<MediaFile> stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
         sortedMediaList.setComparator(stackNameComparator);
         GridView<MediaFile> mediaGrid = new GridView<>();
-        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(lightController, sortedMediaList, mediaGrid);
+        MediaGridCellStackedFactory factory = new MediaGridCellStackedFactory(executor, lightController, sortedMediaList, mediaGrid);
         mediaGrid.setCellFactory(factory);
         double defaultCellWidth = mediaGrid.getCellWidth();
         double defaultCellHight = mediaGrid.getCellHeight();

@@ -280,7 +280,7 @@ public class MainViewController implements Initializable {
         progressPane.setVisible(false);
         handleMenuDisable(true);
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-        swUpdater = new SoftwareUpdater(this);
+        swUpdater = new SoftwareUpdater(executorParallel, this);
         bmbIcon = new BMBIcon((FontIcon) bookmarksBoardButton.getGraphic());
         bookmarksBoardButton.setGraphic(bmbIcon);
         readBookmarksFile();
@@ -610,7 +610,7 @@ public class MainViewController implements Initializable {
         iv.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
         hb.getChildren().add(iv);
         VBox vbText = new VBox();
-        Text txtHeader = new Text("PhotoSlide\n" + System.getProperty("os.arch") + " - " + appVersion + "\n");
+        Text txtHeader = new Text("PhotoSlide\n" + System.getProperty("os.arch") + "_" + appVersion + "\n");
         txtHeader.setStyle("-fx-font-family: 'Silom';-fx-fill: white;-fx-font-size:16pt;-fx-font-weight: bold;");
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);

@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
@@ -37,14 +38,16 @@ import org.kordamp.ikonli.javafx.FontIcon;
  * @author selfemp
  */
 public class SoftwareUpdater {
-    
+
+    private final ExecutorService executorParallel;
     private Task<String> checkTask;
     private Task<String> downloadTask;
     private final MainViewController controller;
     private final Image dialogIcon;
     private final static String architecture=System.getProperty("os.arch");
 
-    public SoftwareUpdater(MainViewController mc) {        
+    public SoftwareUpdater(ExecutorService executorParallel, MainViewController mc) {
+        this.executorParallel = executorParallel;
         this.controller = mc;
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));        
     }
@@ -142,7 +145,7 @@ public class SoftwareUpdater {
                         pause.play();
                     }
                 });
-        Thread.ofVirtual().start(checkTask);        
+        executorParallel.submit(checkTask);
     }
 
     private String checkMajorVersion(String actVersion) {
@@ -398,7 +401,7 @@ public class SoftwareUpdater {
                             .getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
                 });
         pgr.progressProperty().bind(downloadTask.progressProperty());
-        Thread.ofVirtual().start(downloadTask);        
+        executorParallel.submit(downloadTask);
     }
 
 }

@@ -154,12 +154,12 @@ public class MetadataController implements Initializable {
     private List<String> commentsdata;
     private HashMap<String, String> rawMetaData;
     private GeoCoding geoCoding;
-    
+
     private Task<Boolean> task;
     private KeywordChangeListener keywordsChangeListener;
     private CommentsChangeListener commentsChangeListener;
     private CaptionChangeListener captionChangeListener;
-    
+
     private ExecutorService executorParallel;
     private Image shownImage;
     private ImageFilter exposerFilter;
@@ -185,7 +185,7 @@ public class MetadataController implements Initializable {
     private TextField recordDateField;
     @FXML
     private AnchorPane anchorKeywordPane;
-    
+
     @FXML
     private StackPane stackPane;
     @FXML
@@ -195,7 +195,7 @@ public class MetadataController implements Initializable {
     @FXML
     private VBox progressPane;
     @FXML
-    private GridPane metaDataGrid;        
+    private GridPane metaDataGrid;
     @FXML
     private TextField gpsPlace;
     @FXML
@@ -216,7 +216,7 @@ public class MetadataController implements Initializable {
     @FXML
     private Slider exposureSlider;
     @FXML
-    private Slider gainSlider;    
+    private Slider gainSlider;
     @FXML
     private Slider biasSlider;
 
@@ -255,7 +255,7 @@ public class MetadataController implements Initializable {
                 }
                 actualMediaFile.saveEdits();
             });
-        });        
+        });
         gainTextField.textProperty().bindBidirectional(gainSlider.valueProperty(), new NumberStringConverter("#.##"));
         biasTextField.textProperty().bindBidirectional(biasSlider.valueProperty(), new NumberStringConverter("#.##"));
         gainSlider.valueProperty().addListener((o) -> {
@@ -273,7 +273,7 @@ public class MetadataController implements Initializable {
                 if (filterForName != null) {
                     filterForName.setValues(gainFilter.getValues());
                 }
-                actualMediaFile.saveEdits();                
+                actualMediaFile.saveEdits();
             });
         });
         biasSlider.valueProperty().addListener((o) -> {
@@ -292,7 +292,7 @@ public class MetadataController implements Initializable {
                     filterForName.setValues(gainFilter.getValues());
                 }
                 actualMediaFile.saveEdits();
-            });           
+            });
         });
         geoCoding = new GeoCoding();
     }
@@ -376,7 +376,8 @@ public class MetadataController implements Initializable {
             captionTextField.textProperty().removeListener(captionChangeListener);
             commentText.textProperty().removeListener(commentsChangeListener);
         });
-        executor.submit(task);
+        Thread.ofVirtual().start(task);
+        //executor.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
     }
 
@@ -839,6 +840,7 @@ public class MetadataController implements Initializable {
         gainSlider.setValue(0.5);
         biasSlider.setValue(0.5);
         exposerFilter = null;
+        gainFilter = null;
     }
 
     @FXML

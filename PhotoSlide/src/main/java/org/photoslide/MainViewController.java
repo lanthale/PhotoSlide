@@ -979,7 +979,7 @@ public class MainViewController implements Initializable {
     }
 
     public void saveBookmarksFile() {
-        executor.submit(() -> {
+        Thread.ofVirtual().start(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
             try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
                 bookmarks.store(output, null);
@@ -991,7 +991,7 @@ public class MainViewController implements Initializable {
     }
 
     private void readBookmarksFile() {
-        executor.submit(() -> {
+        Thread.ofVirtual().start(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
             if (new File(fileNameWithExt).exists() == false) {
                 bookmarks = new Properties();
@@ -1126,7 +1126,7 @@ public class MainViewController implements Initializable {
         if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {
             new MediaFileLoader().loadVideo(selectedMediaItem);
             lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
-            executorParallel.submit(lighttablePaneController.getFactory().loadVideo());
+            Thread.ofVirtual().start(lighttablePaneController.getFactory().loadVideo());
         }
     }
 

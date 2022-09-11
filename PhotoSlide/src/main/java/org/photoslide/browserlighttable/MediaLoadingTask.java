@@ -11,6 +11,7 @@ import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -21,12 +22,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
 import org.photoslide.ThreadFactoryPS;
+import org.photoslide.browsercollections.FilenameComparator;
 
 /**
  *
@@ -80,10 +83,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     mediaQTYLabel.setText(qty + " media files");
                 });
             }
-                        
+
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
-            }).sorted();
+            }).sorted(new FilenameComparator());
             AtomicInteger iatom = new AtomicInteger(1);
             fileList.forEachOrdered((fileItem) -> {
                 if (this.isCancelled()) {
@@ -114,7 +117,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         });
                     }
                 }
-            });            
+            });
             if (this.isCancelled()) {
                 return null;
             }
@@ -145,10 +148,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
             return;
         }
         //TODO: load in background or load during real media loading to speed up
-        m.readEdits();        
+        m.readEdits();
         if (this.isCancelled()) {
             return;
-        }        
+        }
         m.getCreationTime();
         if (this.isCancelled()) {
             return;
@@ -192,7 +195,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);                
+                fullMediaList.add(v);
             });
         }
     }

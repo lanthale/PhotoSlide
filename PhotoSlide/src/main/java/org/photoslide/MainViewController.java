@@ -210,7 +210,7 @@ public class MainViewController implements Initializable {
     @FXML
     private FontIcon processListIcon;
     private TaskProgressView taskProgressView;
-    private PopOver taskPopOver;    
+    private PopOver taskPopOver;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -228,7 +228,7 @@ public class MainViewController implements Initializable {
         taskPopOver.setTitle("Taskmanager");
         taskPopOver.setHeaderAlwaysVisible(true);
         taskPopOver.setFadeInDuration(new Duration(100));
-        taskPopOver.setContentNode(taskProgressView);                
+        taskPopOver.setContentNode(taskProgressView);
         taskProgressView.getTasks().addListener((Observable taskChange) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
@@ -402,7 +402,13 @@ public class MainViewController implements Initializable {
                             exportList.add(mfile);
                         });
                     } else {
-                        exportList.addAll(mediaListToExport);
+                        if (diag.getController().getExportDeletedFileBox().isSelected() == false) {
+                            mediaListToExport.stream().filter(c -> c.isDeleted() == false).forEach((mfile) -> {
+                                exportList.add(mfile);
+                            });
+                        } else {
+                            exportList.addAll(mediaListToExport);
+                        }
                     }
                     int i = 0;
                     for (MediaFile mediaItem : exportList) {
@@ -410,11 +416,6 @@ public class MainViewController implements Initializable {
                             updateProgress(i + 1, exportList.size());
                             updateMessage("" + (i + 1) + "/" + exportList.size());
                             try {
-                                if (diag.getController().getExportDeletedFileBox().isSelected() == false) {
-                                    if (mediaItem.isDeleted() == true) {
-                                        continue;
-                                    }
-                                }
                                 String fileFormat = diag.getController().getFileFormat();
                                 ImageType imageType = ImageType.JPG;
                                 switch (fileFormat) {
@@ -1150,17 +1151,17 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {                   
+    private void showProcessListButtonAction(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
-                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());        
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
 
     @FXML
     private void showBackgroundProcessListMenu(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
-                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm()); 
+                .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
     }
 
 }

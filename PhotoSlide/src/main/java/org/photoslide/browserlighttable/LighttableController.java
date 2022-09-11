@@ -52,7 +52,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
@@ -82,10 +81,6 @@ import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
 
-import boofcv.io.MediaManager;
-import boofcv.io.wrapper.DefaultMediaManager;
-import georegression.struct.shapes.Quadrilateral_F64;
-import java.util.Optional;
 import java.util.prefs.Preferences;
 import javafx.scene.control.CheckMenuItem;
 
@@ -558,7 +553,7 @@ public class LighttableController implements Initializable {
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
         }
-        SavingEdits(factory.getSelectedCell().getItem());
+        savingMediaFileEdits(factory.getSelectedCell().getItem());
     }
 
     @FXML
@@ -615,7 +610,7 @@ public class LighttableController implements Initializable {
                 imageView.fitHeightProperty().bind(stackPane.widthProperty());
                 break;
         }
-        SavingEdits(factory.getSelectedCell().getItem());
+        savingMediaFileEdits(factory.getSelectedCell().getItem());
     }
 
     @FXML
@@ -640,7 +635,7 @@ public class LighttableController implements Initializable {
             popOver.hide();
         });
         popOver.setOnHidden((t) -> {
-            SavingEdits(factory.getSelectedCell().getItem());
+            savingMediaFileEdits(factory.getSelectedCell().getItem());
         });
         rate.ratingProperty().bindBidirectional(factory.getSelectedCell().getItem().getRatingProperty());
         popOver.show(rateButton);
@@ -660,7 +655,7 @@ public class LighttableController implements Initializable {
         getCameraLabel().setVisible(false);
         getFilenameLabel().setVisible(false);
         getRatingControl().setVisible(false);
-        SavingEdits(item);
+        savingMediaFileEdits(item);
     }
 
     /**
@@ -668,7 +663,7 @@ public class LighttableController implements Initializable {
      *
      * @param item media items to be saved
      */
-    private void SavingEdits(final MediaFile item) {
+    private void savingMediaFileEdits(final MediaFile item) {
         final int sIdx = sortedMediaList.indexOf(factory.getSelectedCell().getItem());
         Task<Boolean> task = new Task<>() {
             @Override
@@ -702,7 +697,7 @@ public class LighttableController implements Initializable {
                 ((MediaFile) mediaF).setStacked(true);
                 ((MediaFile) mediaF).setStackName(stackName);
                 ((MediaFile) mediaF).setStackPos(i.addAndGet(1));
-                SavingEdits(((MediaFile) mediaF));
+                savingMediaFileEdits(((MediaFile) mediaF));
             }
             filteredMediaList.setPredicate(standardFilter());
         } else {
@@ -712,7 +707,7 @@ public class LighttableController implements Initializable {
                 mediaFile.setStackPos(-1);
                 mediaFile.setStackName(null);
                 mediaFile.setStacked(false);
-                SavingEdits(mediaFile);
+                savingMediaFileEdits(mediaFile);
             });
             filteredMediaList.setPredicate(standardFilter());
             stackButton.setText("Stack");
@@ -779,7 +774,7 @@ public class LighttableController implements Initializable {
                     optionPane.setDisable(false);
                     snapshotView.setSelectionRatioFixed(false);
                     snapshotView = null;
-                    SavingEdits(factory.getSelectedCell().getItem());
+                    savingMediaFileEdits(factory.getSelectedCell().getItem());
                 }
                 t.consume();
             });

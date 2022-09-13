@@ -514,7 +514,8 @@ public class CollectionsController implements Initializable {
         }
     }
     
-    public synchronized void refreshTreeParent() {
+    public synchronized void refreshTreeParent(String path, String eventKind) {
+        System.out.println("Params "+path+" - "+eventKind);
         try {
             TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();

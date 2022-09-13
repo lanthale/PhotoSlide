@@ -31,7 +31,7 @@ public class PSDImageLoaderFactory implements ImageLoaderFactory {
     public static final void install(DimensionProvider dimensionProvider) {
         PSDImageLoaderFactory.dimensionProvider = dimensionProvider;
 
-        ImageStorage.addImageLoaderFactory(instance);
+        ImageStorage.getInstance().addImageLoaderFactory(instance);
     }
 
     public static final ImageLoaderFactory getInstance() {

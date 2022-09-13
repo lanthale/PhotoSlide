@@ -31,7 +31,7 @@ public class TIFFImageLoaderFactory implements ImageLoaderFactory {
     public static final void install(DimensionProvider dimensionProvider) {
         TIFFImageLoaderFactory.dimensionProvider = dimensionProvider;
 
-        ImageStorage.addImageLoaderFactory(instance);        
+        ImageStorage.getInstance().addImageLoaderFactory(instance);        
     }
 
     public static final ImageLoaderFactory getInstance() {

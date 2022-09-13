@@ -42,15 +42,17 @@ public class DirectoryWatcher {
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE);
         while ((key = watchService.take()) != null) {
-            for (WatchEvent<?> event : key.pollEvents()) {                
-                Path resolve = watchPath.resolve((Path) event.context());  
-                Path resolveParent = parent.resolve((Path) event.context());                  
+            for (WatchEvent<?> event : key.pollEvents()) {
+                Path resolve = watchPath.resolve((Path) event.context());
+                Path resolveParent = parent.resolve((Path) event.context());
                 if (resolve.toString().endsWith(".edit") == false) {
                     if (controller.getSelectedPath().startsWith(resolve)) {
+                        System.out.println("changes " + controller.getSelectedPath());
                         controller.refreshTreeParent();
                     }
                 }
-                if (resolveParent.toString().endsWith(".edit") == false) {                    
+                if (resolveParent.toString().endsWith(".edit") == false) {
+                    System.out.println("changes " + controller.getSelectedPath());
                     controller.refreshTreeParent();
                 }
             }

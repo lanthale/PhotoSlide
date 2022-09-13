@@ -20,10 +20,12 @@ public class TIFFDescriptor extends ImageDescriptor {
     private static final Signature[] signatures = {
         new Signature(hexStringToByteArray("492049")), new Signature(hexStringToByteArray("49492B00")), new Signature(hexStringToByteArray("4D4D002A")), new Signature(hexStringToByteArray("4D4D002B")), new Signature(hexStringToByteArray("49492A000E30"))};
 
+    private static final String[] mimesubtype = {"tif", "tiff"};
+    
     private static ImageDescriptor theInstance = null;
 
     private TIFFDescriptor() {
-        super(formatName, extensions, signatures);
+        super(formatName, extensions, signatures, mimesubtype);
     }
 
     public static synchronized ImageDescriptor getInstance() {

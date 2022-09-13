@@ -232,8 +232,10 @@ public class MainViewController implements Initializable {
         taskProgressView.getTasks().addListener((Observable taskChange) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
+                //System.out.println("green size: "+taskProgressView.getTasks().size());
             } else {
                 processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+                //System.out.println("gray size: "+taskProgressView.getTasks().size());
             }
         });
         taskProgressView.setPrefSize(300, 200);

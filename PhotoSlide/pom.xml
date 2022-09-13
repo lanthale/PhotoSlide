@@ -13,7 +13,7 @@
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
 
     <properties>
-        <javafx.version>18.0.2</javafx.version>
+        <javafx.version>19</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>        
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>

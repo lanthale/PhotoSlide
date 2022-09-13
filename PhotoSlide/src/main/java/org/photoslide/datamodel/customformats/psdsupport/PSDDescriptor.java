@@ -20,11 +20,13 @@ public class PSDDescriptor extends ImageDescriptor {
 
     private static final Signature[] signatures = {
         new Signature(hexStringToByteArray("38425053"))};
+    
+    private static final String[] mimesubtype = {"psd"};
 
     private static ImageDescriptor theInstance = null;
 
     private PSDDescriptor() {
-        super(formatName, extensions, signatures);
+        super(formatName, extensions, signatures, mimesubtype);
     }
 
     public static synchronized ImageDescriptor getInstance() {

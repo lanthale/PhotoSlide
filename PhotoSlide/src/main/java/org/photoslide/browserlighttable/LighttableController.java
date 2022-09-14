@@ -245,14 +245,6 @@ public class LighttableController implements Initializable {
         if (directorywatch != null) {
             directorywatch.stopWatch();
         }
-        directorywatch = new DirectoryWatcher(mainController.getCollectionsPaneController());
-        executorParallel.submit(() -> {
-            try {
-                directorywatch.startWatch(sPath);
-            } catch (IOException | InterruptedException ex) {
-                Logger.getLogger(LighttableController.class.getName()).log(Level.WARNING, null, ex);
-            }
-        });
 
         if (Platform.isFxApplicationThread()) {
             imageGridPane.getChildren().clear();

@@ -8,11 +8,18 @@ package org.photoslide.browsercollections;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardWatchEventKinds;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import org.photoslide.datamodel.FileTypes;
 
@@ -25,6 +32,8 @@ public class DirectoryWatcher {
     private CollectionsController controller;
     private WatchService watchService;
     private WatchKey key;
+    private String pathElement;
+    private String eventType;
 
     public DirectoryWatcher(CollectionsController c) {
         controller = c;
@@ -37,27 +46,36 @@ public class DirectoryWatcher {
         watchPath.register(
                 watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_DELETE);
-        Path parent = watchPath.getParent();
-        parent.register(
-                watchService,
-                StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_DELETE);
+                StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+        registerRecursive(watchPath);
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {
-                Path resolve = parent.resolve((Path) event.context());
-                System.out.println("element "+resolve);
-                boolean validFileType = FileTypes.isValidType(resolve.toString());
-                if (validFileType == false) {
-                    controller.refreshTreeParent(resolve.toString(), event.kind().toString());
-                }
+                Path resolveP = watchPath.resolve((Path) event.context());
+                pathElement=resolveP.toString();
+                eventType=event.kind().toString();
+                System.out.println("element "+resolveP);
             }
             List<WatchEvent<?>> pollEvents = key.pollEvents();
-            if (pollEvents.isEmpty() == false) {
+            if (pollEvents.isEmpty() == true) {
+                boolean validFileType = FileTypes.isValidType(pathElement);
+                if (validFileType == false) {
+                    controller.refreshTreeParent(pathElement, eventType);
+                }
             }
             key.reset();
         }
     }
+    
+    private void registerRecursive(final Path root) throws IOException {
+    // register all subfolders
+    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+            return FileVisitResult.CONTINUE;
+        }
+    });
+}
 
     public void stopWatch() {
         if (key != null) {

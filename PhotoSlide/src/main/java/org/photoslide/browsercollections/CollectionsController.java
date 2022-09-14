@@ -160,6 +160,8 @@ public class CollectionsController implements Initializable {
             }
         };
         Task<Boolean> task = new Task<>() {
+            private DirectoryWatcher directorywatch;
+
             @Override
             protected Boolean call() throws Exception {
                 if (collectionStorage.isEmpty()) {
@@ -171,6 +173,14 @@ public class CollectionsController implements Initializable {
                         if (this.isCancelled() == false) {
                             //Directorywatch is installed in LightTabelController for selected path only
                             loadDirectoryTree(dTree.getValue());
+                            directorywatch = new DirectoryWatcher(mainController.getCollectionsPaneController());
+                            executorParallel.submit(() -> {
+                                try {
+                                    directorywatch.startWatch(Path.of(dTree.getValue()));
+                                } catch (IOException | InterruptedException ex) {
+                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            });
                         }
                     });
                 }
@@ -505,7 +515,7 @@ public class CollectionsController implements Initializable {
                 createTree(filePath, parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
                 parent.getChildren().setAll(sorted);
-                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();                                
+                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
                 treeView.getSelectionModel().select(findFirst.get());
             }
         } catch (IOException ex) {
@@ -513,9 +523,9 @@ public class CollectionsController implements Initializable {
             util.showError(this.accordionPane, "Cannot create directory tree", ex);
         }
     }
-    
+
     public synchronized void refreshTreeParent(String path, String eventKind) {
-        System.out.println("Params "+path+" - "+eventKind);
+        System.out.println("Params " + path + " - " + eventKind);
         try {
             TreeItem<PathItem> parent;
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -523,10 +533,10 @@ public class CollectionsController implements Initializable {
             String selectedItemName = selectedItems.getValue().toString();
             if (selectedItems.getParent() == null) {
                 parent = selectedItems;
-                parent.getChildren().clear();                
+                parent.getChildren().clear();
                 createRootTree(parent.getValue().getFilePath(), parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                parent.getChildren().setAll(sorted);                
+                parent.getChildren().setAll(sorted);
             } else {
                 parent = selectedItems.getParent();
                 Path filePath = selectedItems.getValue().getFilePath();
@@ -534,7 +544,7 @@ public class CollectionsController implements Initializable {
                 createTree(filePath, parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
                 parent.getChildren().setAll(sorted);
-                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();                                
+                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
                 treeView.getSelectionModel().select(findFirst.get());
             }
         } catch (IOException ex) {

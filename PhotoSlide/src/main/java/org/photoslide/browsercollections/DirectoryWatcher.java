@@ -39,7 +39,7 @@ public class DirectoryWatcher {
         controller = c;
     }
 
-    public void startWatch(Path watchPath) throws IOException, InterruptedException {
+    public void startWatch(Path watchPath, boolean recrusive) throws IOException, InterruptedException {
         watchService
                 = FileSystems.getDefault().newWatchService();
 
@@ -47,35 +47,36 @@ public class DirectoryWatcher {
                 watchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
-        registerRecursive(watchPath);
+        if (recrusive == true) {
+            registerRecursive(watchPath);
+        }        
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {
                 Path resolveP = watchPath.resolve((Path) event.context());
-                pathElement=resolveP.toString();
-                eventType=event.kind().toString();
-                System.out.println("element "+resolveP);
-            }
-            List<WatchEvent<?>> pollEvents = key.pollEvents();
-            if (pollEvents.isEmpty() == true) {
-                boolean validFileType = FileTypes.isValidType(pathElement);
-                if (validFileType == false) {
+                pathElement = resolveP.toString();
+                eventType = event.kind().toString();                 
+                boolean validFileType = FileTypes.isValidType(pathElement);          
+                if (validFileType == false) {                                          
                     controller.refreshTreeParent(pathElement, eventType);
                 }
+            }
+            List<WatchEvent<?>> pollEvents = key.pollEvents();
+            if (pollEvents.isEmpty() == true) {                
             }
             key.reset();
         }
     }
-    
+
     private void registerRecursive(final Path root) throws IOException {
-    // register all subfolders
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-            return FileVisitResult.CONTINUE;
-        }
-    });
-}
+        // register all subfolders
+        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
 
     public void stopWatch() {
         if (key != null) {

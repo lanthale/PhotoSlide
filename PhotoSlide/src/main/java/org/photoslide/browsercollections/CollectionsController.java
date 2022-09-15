@@ -45,6 +45,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -94,6 +95,8 @@ public class CollectionsController implements Initializable {
     private MenuItem deleteMenu;
     private Image iconImage;
     private SearchIndex searchIndexProcess;
+    private DirectoryWatcher directorywatchSelected;
+    private DirectoryWatcher directoryRootwatch;
 
     private enum ClipboardMode {
         CUT,
@@ -136,6 +139,8 @@ public class CollectionsController implements Initializable {
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();
         collectionStorageSearchIndex = new LinkedHashMap<>();
+        directorywatchSelected = new DirectoryWatcher(this);
+        directoryRootwatch = new DirectoryWatcher(this);
 
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -160,7 +165,6 @@ public class CollectionsController implements Initializable {
             }
         };
         Task<Boolean> task = new Task<>() {
-            private DirectoryWatcher directorywatch;
 
             @Override
             protected Boolean call() throws Exception {
@@ -173,10 +177,9 @@ public class CollectionsController implements Initializable {
                         if (this.isCancelled() == false) {
                             //Directorywatch is installed in LightTabelController for selected path only
                             loadDirectoryTree(dTree.getValue());
-                            directorywatch = new DirectoryWatcher(mainController.getCollectionsPaneController());
                             executorParallel.submit(() -> {
                                 try {
-                                    directorywatch.startWatch(Path.of(dTree.getValue()));
+                                    directoryRootwatch.startWatch(Path.of(dTree.getValue()), false);
                                 } catch (IOException | InterruptedException ex) {
                                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
@@ -468,6 +471,14 @@ public class CollectionsController implements Initializable {
                 if (selectedItem != null) {
                     selectedPath = selectedItem.getValue().getFilePath();
                     lighttablePaneController.setSelectedPath(selectedItem.getValue().getFilePath());
+                    executorParallel.submit(() -> {
+                        try {
+                            directorywatchSelected.stopWatch();
+                            directorywatchSelected.startWatch(selectedItem.getValue().getFilePath().getParent(), false);
+                        } catch (IOException | InterruptedException ex) {
+                            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    });
                 }
             });
         });
@@ -525,31 +536,34 @@ public class CollectionsController implements Initializable {
     }
 
     public synchronized void refreshTreeParent(String path, String eventKind) {
-        System.out.println("Params " + path + " - " + eventKind);
-        try {
-            TreeItem<PathItem> parent;
+        if (eventKind.equalsIgnoreCase("ENTRY_CREATE")) {
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
-            TreeItem<PathItem> selectedItems = treeView.getSelectionModel().getSelectedItems().get(0).getParent();
-            String selectedItemName = selectedItems.getValue().toString();
-            if (selectedItems.getParent() == null) {
-                parent = selectedItems;
-                parent.getChildren().clear();
-                createRootTree(parent.getValue().getFilePath(), parent);
-                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                parent.getChildren().setAll(sorted);
-            } else {
-                parent = selectedItems.getParent();
-                Path filePath = selectedItems.getValue().getFilePath();
-                parent.getChildren().remove(selectedItems);
-                createTree(filePath, parent);
-                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                parent.getChildren().setAll(sorted);
-                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
-                treeView.getSelectionModel().select(findFirst.get());
+            TreeItem<PathItem> treeItemParent = treeView.getSelectionModel().getSelectedItems().get(0).getParent();
+            if (treeView.getRoot().getValue().getFilePath().compareTo(treeItemParent.getValue().getFilePath()) == 0) {
+                treeItemParent = treeView.getRoot();
             }
-        } catch (IOException ex) {
-            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-            util.showError(this.accordionPane, "Cannot create directory tree", ex);
+            TreeItem<PathItem> node = new TreeItem(new PathItem(Path.of(path)));
+            FilteredList<TreeItem<PathItem>> filtered = treeItemParent.getChildren().filtered((t) -> {
+                return t.getValue().getFilePath().compareTo(Path.of(path))==0;
+            });
+            if (filtered.isEmpty()==true) {
+                treeItemParent.getChildren().add(node);
+                SortedList<TreeItem<PathItem>> sorted = treeItemParent.getChildren().sorted();
+                treeItemParent.getChildren().setAll(sorted);
+                treeView.refresh();
+            }
+        }
+        if (eventKind.equalsIgnoreCase("ENTRY_DELETE")) {
+            TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+            TreeItem<PathItem> treeItemParent = treeView.getSelectionModel().getSelectedItems().get(0).getParent();
+            FilteredList<TreeItem<PathItem>> filtered = treeItemParent.getChildren().filtered((t) -> {
+                return t.getValue().getFilePath().equals(Path.of(path));
+            });
+            if (filtered.isEmpty() == false) {
+                TreeItem<PathItem> removeItem = filtered.get(0);
+                treeItemParent.getChildren().remove(removeItem);
+            }
+
         }
     }
 
@@ -754,8 +768,10 @@ public class CollectionsController implements Initializable {
                 }
             };
             taskDelete.setOnSucceeded((t) -> {
-                refreshTree();
+                TreeItem<PathItem> itemToRemove = treeView.getSelectionModel().getSelectedItem();
                 treeView.getSelectionModel().clearSelection();
+                TreeItem<PathItem> parent = itemToRemove.getParent();
+                parent.getChildren().remove(itemToRemove);
                 mainController.getProgressbar().progressProperty().unbind();
                 mainController.getProgressbarLabel().textProperty().unbind();
                 mainController.getProgressPane().setVisible(false);

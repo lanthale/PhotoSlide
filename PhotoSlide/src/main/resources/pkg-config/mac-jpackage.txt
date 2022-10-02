@@ -1,4 +1,4 @@
---type pkg
+--type dmg
 --name ${app.name}
 --icon ${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns
 --resource-dir ${project.resources[0].directory}/org/photoslide/img/osx/pkgresource
@@ -8,7 +8,6 @@
 --input ${project.build.directory}/dependency
 --app-version ${app.version}
 --runtime-image ${project.build.directory}/jvm-image
---temp ${project.build.directory}/installer-work
 --java-options -XX:+UseZGC
 --java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED
 --java-options --enable-native-access=ALL-UNNAMED

@@ -130,6 +130,7 @@ import org.controlsfx.control.textfield.TextFields;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.libheiffx.LibheifImage;
 import org.librawfx.LibrawImage;
+import org.librawfx.RawDecoderSettings;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.imageops.ExposureFilter;
@@ -384,7 +385,7 @@ public class MetadataController implements Initializable {
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
-            rawMetaData = new LibrawImage(file.getPathStorage().toString()).getMetaData();
+            rawMetaData = new LibrawImage(file.getPathStorage().toString(), new RawDecoderSettings()).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
             double alti = -1;

@@ -20,7 +20,7 @@
 <?import org.controlsfx.control.textfield.CustomTextField?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="399.0" prefWidth="911.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="399.0" prefWidth="911.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="149.0" />
@@ -55,11 +55,17 @@
             <CheckBox fx:id="overwriteFilesBox" mnemonicParsing="false" text="Overwrite existing files" GridPane.rowIndex="2" />
          </children>
       </GridPane>
-      <Slider fx:id="qualitySlider" blockIncrement="1.0" layoutX="164.0" layoutY="174.0" majorTickUnit="1.0" min="40.0" minorTickCount="0" prefHeight="16.0" prefWidth="161.0" showTickLabels="true" snapToTicks="true" value="96.0">
-         <tooltip>
-            <Tooltip fx:id="qSliderToolTip" text="Empty Tooltip" />
-         </tooltip>
-      </Slider>
+      <Label layoutX="117.0" layoutY="178.0" text="Quality" />
+      <HBox alignment="CENTER_LEFT" layoutX="164.0" layoutY="173.0" spacing="5.0">
+         <children>
+            <Slider fx:id="qualitySlider" blockIncrement="1.0" majorTickUnit="1.0" min="40.0" minorTickCount="0" prefHeight="16.0" prefWidth="161.0" snapToTicks="true" value="96.0">
+               <tooltip>
+                  <Tooltip fx:id="qSliderToolTip" text="Empty Tooltip" />
+               </tooltip>
+            </Slider>
+            <TextField fx:id="qualityTextField" prefHeight="26.0" prefWidth="36.0" />
+         </children>
+      </HBox>
       <Label fx:id="errorLabelDirectory" layoutX="367.0" layoutY="143.0" text="Label" textFill="#ff0101" visible="false" />
       <VBox layoutX="523.0" layoutY="77.0" prefHeight="115.0" prefWidth="350.0" spacing="2.0">
          <children>
@@ -109,6 +115,5 @@
             <MapView fx:id="mapView" prefHeight="125.0" prefWidth="350.0" />
          </children>
       </VBox>
-      <TextField fx:id="qualityTextField" layoutX="330.0" layoutY="174.0" prefHeight="26.0" prefWidth="36.0" />
    </children>
 </AnchorPane>

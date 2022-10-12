@@ -484,13 +484,13 @@ public class MainViewController implements Initializable {
                                     case PNG:
                                         PNGOptions pngOptions = new PNGOptions();
                                         pngOptions.setApplyAdaptiveFilter(true);
-                                        pngOptions.setCompressionLevel(6);
+                                        pngOptions.setCompressionLevel(diag.getController().getQualityValue());
                                         pngOptions.setFilterType(Filter.NONE);
                                         builder.imageOptions(pngOptions);
                                         break;
                                     case JPG:
-                                        JPGOptions jpegOptions = new JPGOptions();
-                                        jpegOptions.setQuality(93);
+                                        JPGOptions jpegOptions = new JPGOptions();                                        
+                                        jpegOptions.setQuality(diag.getController().getQualityValue());
                                         jpegOptions.setColorSpace(JPGOptions.COLOR_SPACE_RGB);
                                         jpegOptions.setWriteICCProfile(true);
                                         builder.imageOptions(jpegOptions);
@@ -504,7 +504,7 @@ public class MainViewController implements Initializable {
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
                                     if (diag.getController().getReplaceTitleBox().isSelected()) {
-                                        mediaItem.setTitle(diag.getController().getTitle());
+                                        mediaItem.setTitle(diag.getController().getTitle());                                        
                                     }
                                     if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
                                         mediaItem.setKeywords(diag.getController().getKeywordsAsString());

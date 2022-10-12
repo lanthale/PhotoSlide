@@ -25,7 +25,10 @@
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="149.0" />
       <Label layoutX="67.0" layoutY="143.0" text="Output directory" />
-      <TextField fx:id="outputDirText" editable="false" layoutX="164.0" layoutY="139.0" />
+      <TextField fx:id="outputDirText" editable="false" layoutX="164.0" layoutY="139.0">
+         <tooltip>
+            <Tooltip fx:id="outputDirToolTip" text="Empty Tooltip" />
+         </tooltip></TextField>
       <Button layoutX="332.0" layoutY="139.0" mnemonicParsing="false" onAction="#outputSelectionButtonAction">
          <graphic>
             <FontIcon iconLiteral="fa-folder-open-o" />

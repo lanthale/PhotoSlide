@@ -131,9 +131,12 @@ public class MediaFile {
     }
 
     /**
-     * This method steers on which properties a re-draw is occuring on the visible cells.
-     * One of the most important functions to show in the UI any changes inside of the mediafiles
-     * @return the list of mediafiles with the properties changed which is th base for the re-draw happening
+     * This method steers on which properties a re-draw is occuring on the
+     * visible cells. One of the most important functions to show in the UI any
+     * changes inside of the mediafiles
+     *
+     * @return the list of mediafiles with the properties changed which is th
+     * base for the re-draw happening
      */
     public static Callback<MediaFile, Observable[]> extractor() {
         return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating, p.selected};
@@ -341,7 +344,7 @@ public class MediaFile {
                     pointValues[i] = Double.parseDouble(nextToken);
                     i++;
                 }
-                orignalImageSize = new Point2D(pointValues[0],pointValues[1]);                
+                orignalImageSize = new Point2D(pointValues[0], pointValues[1]);
             }
             ObjectMapper mapper = new ObjectMapper();
             ArrayList<ImageFilter> rawList = new ArrayList<>();
@@ -355,7 +358,7 @@ public class MediaFile {
                     } catch (JsonProcessingException | ClassNotFoundException ex) {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
                     }
-                    if (ifm != null) {                        
+                    if (ifm != null) {
                         rawList.add(ifm);
                     }
                 }
@@ -480,7 +483,7 @@ public class MediaFile {
 
     public void setOrignalImageSize(Point2D orignalImageSize) {
         this.orignalImageSize = orignalImageSize;
-    }        
+    }
 
     public SimpleStringProperty titleProperty() {
         return title;
@@ -787,6 +790,9 @@ public class MediaFile {
     }
 
     public void setGpsPositionFromDMS(String gpsPosition) {
+        if (gpsPosition.length() < 2) {
+            return;
+        }
         StringTokenizer token = new StringTokenizer(gpsPosition, ";");
         double lat = parseGPSString(token.nextToken());
         double lon = parseGPSString(token.nextToken());

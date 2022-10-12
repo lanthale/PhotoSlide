@@ -111,6 +111,8 @@ public class ExportDialogController implements Initializable {
     private MapCircle circle;
     @FXML
     private TextField qualityTextField;
+    @FXML
+    private Tooltip outputDirToolTip;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -143,7 +145,7 @@ public class ExportDialogController implements Initializable {
                     break;
             }
         });
-        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));        
+        exampleLabel.textProperty().bind(filenamePrefixText.textProperty().concat("_1." + fileFormatCombo.getSelectionModel().getSelectedItem()));
         qSliderToolTip.textProperty().bind(qualitySlider.valueProperty().asString());
         qSliderToolTip.textProperty().bind(Bindings.format("%.0f", qualitySlider.valueProperty()));
         qSliderToolTip.setShowDelay(Duration.ZERO);
@@ -233,7 +235,8 @@ public class ExportDialogController implements Initializable {
                 customField.setText(((Address) k.getSource().getValue()).getDisplayName());
             });
             new Thread(taskFind).start();
-        });
+        }); 
+        outputDirToolTip.textProperty().bind(outputDirText.textProperty());
     }
 
     @FXML
@@ -416,9 +419,14 @@ public class ExportDialogController implements Initializable {
     public CustomTextField getHeightTextField() {
         return heightTextField;
     }
-    
-    public String getFoundPlaceName(){
+
+    public String getFoundPlaceName() {
         return geoCoding.getLastSearchGPSResult().getDisplayName();
+    }
+
+    public int getQualityValue() {
+        int val = Integer.parseInt(qualityTextField.getText());
+        return val;
     }
 
 }

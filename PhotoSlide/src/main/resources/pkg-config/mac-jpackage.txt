@@ -1,4 +1,4 @@
---type pkg
+--type dmg
 --name ${app.name}
 --icon ${project.resources[0].directory}/org/photoslide/img/osx/PhotoSlide.icns
 --resource-dir ${project.resources[0].directory}/org/photoslide/img/osx/pkgresource

@@ -94,7 +94,7 @@ public class SoftwareUpdater {
                             parseInt = Integer.parseInt(version);
                             parseInt = parseInt + 1;
                             newVersion = parseInt + ".0";
-                            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".pkg";
+                            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".dmg";
                             myUrl = new URL(httpsURL);
                             conn = (HttpsURLConnection) myUrl.openConnection();
                             inputStream = conn.getInputStream();
@@ -316,11 +316,11 @@ public class SoftwareUpdater {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".msi";
                         filename = "PhotoSlide-" + nextAppVersion + ".msi";
                     } else if (OS.contains("MAC") && !architecture.equalsIgnoreCase("aarch64")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".pkg";
-                        filename = "PhotoSlide-" + nextAppVersion + ".pkg";
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".dmg";
+                        filename = "PhotoSlide-" + nextAppVersion + ".dmg";
                     } else if (OS.contains("MAC") && architecture.equalsIgnoreCase("aarch64")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".pkg";
-                        filename = "PhotoSlide_" +architecture+"-" + nextAppVersion + ".pkg";                        
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".dmg";
+                        filename = "PhotoSlide_" +architecture+"-" + nextAppVersion + ".dmg";                        
                     } else if (OS.contains("NUX")) {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+ nextAppVersion + "_amd64.deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";

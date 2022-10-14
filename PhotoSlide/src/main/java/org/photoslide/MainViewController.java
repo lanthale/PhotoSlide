@@ -17,7 +17,11 @@ import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
 import de.jangassen.MenuToolkit;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -465,9 +469,7 @@ public class MainViewController implements Initializable {
                                 fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                                 // rotate image in FX or swing                            
                                 if (mediaItem.getRotationAngleProperty().get() != 0) {
-                                    if (mediaItem.getRotationAngleProperty().get() != 180) {
-                                        fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
-                                    }
+                                    fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());                                    
                                 }
 
                                 FileOutputStream fo = new FileOutputStream(outFileStr, false);
@@ -584,16 +586,23 @@ public class MainViewController implements Initializable {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
         return false;
-    }
+    }    
 
-    private BufferedImage getRotatedImage(BufferedImage imageToRotate, double angle) {
-        BufferedImage rotatedImage = new BufferedImage(imageToRotate.getHeight(null), imageToRotate.getWidth(null), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = (Graphics2D) rotatedImage.getGraphics();
-        g2d.rotate(Math.toRadians(angle));
-        g2d.drawImage(imageToRotate, 0, -rotatedImage.getWidth(null), null);
-        g2d.dispose();
+    private BufferedImage getRotatedImage(BufferedImage image, double angle) {
+        final double rads = Math.toRadians(angle);
+        final double sin = Math.abs(Math.sin(rads));
+        final double cos = Math.abs(Math.cos(rads));
+        final int w = (int) Math.floor(image.getWidth() * cos + image.getHeight() * sin);
+        final int h = (int) Math.floor(image.getHeight() * cos + image.getWidth() * sin);
+        final BufferedImage rotatedImage = new BufferedImage(w, h, image.getType());
+        final AffineTransform at = new AffineTransform();
+        at.translate(w / 2, h / 2);
+        at.rotate(rads, 0, 0);
+        at.translate(-image.getWidth() / 2, -image.getHeight() / 2);
+        final AffineTransformOp rotateOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+        rotateOp.filter(image, rotatedImage);
         return rotatedImage;
-    }
+    }    
 
     @FXML
     private void preferencesMenuAction(ActionEvent event) {

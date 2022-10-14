@@ -820,7 +820,7 @@ public class MetadataController implements Initializable {
             metaDataGrid.setDisable(true);
             keywordText.getChildren().clear();
         });
-        if (keywordText.getChildren().size() > 0) {
+        if (!keywordText.getChildren().isEmpty()) {
             keywordText.getChildren().removeListener(keywordsChangeListener);
             captionTextField.textProperty().removeListener(captionChangeListener);
             commentText.textProperty().removeListener(commentsChangeListener);
@@ -828,6 +828,13 @@ public class MetadataController implements Initializable {
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
+
+        exifdata = null;
+        iptcdata = null;
+        xmpdata = null;
+        commentsdata = null;
+        rawMetaData = null;
+        geoCoding = null;
 
         gpsDateTime.clear();
         gpsHeight.clear();

@@ -32,7 +32,7 @@ The software is not notarized with developer accounts on OSX/Windows.
 
 - Windows: Execute the installer. If defender is poping up please click on "more info" and then on "run anyway"
 - OSX: Goto in the download folder in Finder and right click on the installer file and click "Open". 
-On OSX 11.x open the app and afterwards goto system settings - general tab in the Security & Privacy pane to instruct macOS to ignore its lack of notarization - click on "open anyway"
+On OSX 11.x open the app and afterwards goto system settings - general tab in the Security & Privacy pane to instruct macOS to ignore its lack of notarization - click on "open anyway" and you have to execute `sudo xattr -r -d com.apple.quarantine /Applications/Photoslide.app`
 - Linux: 
   - Download the deb package
   - Run sudo dpkg -i photoslide_1.0.0-1_amd64.deb

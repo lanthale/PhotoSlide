@@ -438,6 +438,7 @@ public class LighttableController implements Initializable {
                         false, false, false, false, false, true, null));
                 factory.oneRowUp(nextCell, imageGrid.getCellHeight());
                 nextCell.requestLayout();
+                nextCell.requestFocus();
             }
         }
     }
@@ -464,6 +465,7 @@ public class LighttableController implements Initializable {
                         false, false, false, false, false, true, null));
                 factory.oneRowDown(nextCell, imageGrid.getCellHeight());
                 nextCell.requestLayout();
+                nextCell.requestFocus();
             }
         }
     }

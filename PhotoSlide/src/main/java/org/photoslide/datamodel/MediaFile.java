@@ -135,7 +135,7 @@ public class MediaFile {
      * visible cells. One of the most important functions to show in the UI any
      * changes inside of the mediafiles
      *
-     * @return the list of mediafiles with the properties changed which is th
+     * @return the list of mediafiles with the properties changed which is the
      * base for the re-draw happening
      */
     public static Callback<MediaFile, Observable[]> extractor() {

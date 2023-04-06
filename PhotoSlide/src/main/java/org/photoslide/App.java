@@ -33,6 +33,7 @@ import org.libheiffx.HEIFImageLoaderFactory;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
+import org.photoslide.datamodel.customformats.webpsupport.WEBPImageLoaderFactory;
 import org.photoslide.pspreloader.PSPreloader;
 
 /**
@@ -90,10 +91,11 @@ public class App extends Application {
         setDefaultTIFFCodec();
         notifyPreloader(new ProgressNotification(0.7));
         TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install();        
+        PSDImageLoaderFactory.install(); 
+        WEBPImageLoaderFactory.install();
 
         try {
-            RAWImageLoaderFactory.install();
+            RAWImageLoaderFactory.install();            
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);

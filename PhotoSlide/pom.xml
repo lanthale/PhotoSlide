@@ -7,7 +7,7 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.3.2</version>   
+    <version>1.3.3-SNAPSHOT</version>   
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>

@@ -29,6 +29,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -374,6 +375,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     lightController.getImageView().setImage(null);
                     lightController.getInvalidStackPane().setVisible(false);
                     lightController.getImageView().setVisible(true);
+                    lightController.getImageView().setCache(true);
+                    lightController.getImageView().setCacheHint(CacheHint.SPEED);
                     lightController.getMediaView().setVisible(false);
                     lightController.getImageProgress().setProgress(0);
                     lightController.getImageProgress().setVisible(true);
@@ -502,7 +505,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         img = new Image(url, true);
         Platform.runLater(() -> {
             lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-        });
+        });        
         img.progressProperty().addListener((ov, g, g1) -> {
             if ((Double) g1 == 1.0 && !img.isError()) {
                 lightController.getImageProgress().setVisible(false);

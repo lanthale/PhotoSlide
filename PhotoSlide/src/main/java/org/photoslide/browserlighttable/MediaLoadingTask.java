@@ -96,7 +96,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                            m.setMediaType(MediaFile.MediaTypes.IMAGE);                            
                             try {
                                 loadItem(fileItem, m);
                                 updateValue(m);

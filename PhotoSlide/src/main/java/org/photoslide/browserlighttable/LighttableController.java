@@ -12,7 +12,10 @@ import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,6 +85,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
 
 import java.util.prefs.Preferences;
+import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
 
 /**
@@ -289,6 +293,9 @@ public class LighttableController implements Initializable {
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
         imageGrid = new GridView<>(sortedMediaList);
+        imageGrid.setCache(true);
+        imageGrid.setCacheShape(true);
+        imageGrid.setCacheHint(CacheHint.SPEED);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
         factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
@@ -314,6 +321,21 @@ public class LighttableController implements Initializable {
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText("");
+            //serialize objects to disks
+            try {
+                // write object to file
+                FileOutputStream fos = new FileOutputStream(Utility.getAppData()+"Objectsavefile.ser");
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(new ArrayList<MediaFile>(fullMediaList));
+                oos.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // end serialize
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());

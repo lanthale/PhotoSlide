@@ -19,6 +19,7 @@ import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -87,6 +88,8 @@ import org.photoslide.browsercollections.DirectoryWatcher;
 import java.util.prefs.Preferences;
 import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
+import one.microstream.storage.embedded.types.EmbeddedStorage;
+import one.microstream.storage.embedded.types.EmbeddedStorageManager;
 
 /**
  *
@@ -322,9 +325,12 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText("");
             //serialize objects to disks
-            try {
-                // write object to file
-                FileOutputStream fos = new FileOutputStream(Utility.getAppData()+"Objectsavefile.ser");
+            System.out.println("save cache...");
+            EmbeddedStorageManager storageManager = EmbeddedStorage.start(fullMediaList, Paths.get(Utility.getAppData()));
+            storageManager.storeRoot();
+            System.out.println("save cache...done");
+            /*try {
+                FileOutputStream fos = new FileOutputStream(Utility.getAppData() + "Objectsavefile.ser");
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(new ArrayList<MediaFile>(fullMediaList));
                 oos.close();
@@ -333,7 +339,7 @@ public class LighttableController implements Initializable {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             // end serialize
         });

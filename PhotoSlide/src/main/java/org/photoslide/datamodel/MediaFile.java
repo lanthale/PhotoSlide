@@ -7,14 +7,11 @@ package org.photoslide.datamodel;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -60,15 +57,15 @@ import org.photoslide.imageops.ImageFilter;
  *
  * @author selfemp
  */
-public class MediaFile implements Externalizable{
+public class MediaFile {
 
     private static final long serialVersionUID = 1L;
     private String name;
     private Path pathStorage;
     private SimpleBooleanProperty loading;
 
-    private Image image;
-    private Image unModifiyAbleImage;
+    private transient Image image;
+    private transient Image unModifiyAbleImage;
     private Media media;
     private MediaPlayer mediaPlayer;
 
@@ -96,9 +93,8 @@ public class MediaFile implements Externalizable{
     private double gpsHeight;
     private final SimpleBooleanProperty bookmarked;
 
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        //handle null values
+    
+    /*public void writeExternal(ObjectOutput out) throws IOException {    
         out.writeBoolean(loading.getValue());
         out.writeChars(title.getValue());
         out.writeChars(keywords.getValue());
@@ -114,10 +110,10 @@ public class MediaFile implements Externalizable{
         out.writeBoolean(stacked.get());        
     }
 
-    @Override
+    
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    }*/
 
     public enum MediaTypes {
         IMAGE,

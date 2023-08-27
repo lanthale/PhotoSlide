@@ -401,15 +401,10 @@ public class LighttableController implements Initializable {
             Dragboard db = imageGrid.startDragAndDrop(TransferMode.ANY);
             final ClipboardContent content = new ClipboardContent();
             List<File> fileList = new ArrayList<>();
-            Set<MediaFile> selection = factory.getSelectionModel().getSelection();
-            String os = System.getProperty("os.name").toUpperCase();
-            if (os.contains("MAC")) {
-                fileList.add(((MediaFile) selection.iterator().next()).getPathStorage().toFile());
-            } else {
-                selection.forEach((k) -> {
-                    fileList.add(((MediaFile) selection.iterator().next()).getPathStorage().toFile());
-                });
-            }
+            Set<MediaFile> selection = factory.getSelectionModel().getSelection();                        
+            for (MediaFile mediaFile : selection) {                
+                fileList.add(mediaFile.getPathStorage().toFile());
+            }            
             content.putFiles(fileList);
             db.setContent(content);
             t.consume();

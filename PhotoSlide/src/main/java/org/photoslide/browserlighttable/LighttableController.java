@@ -12,10 +12,7 @@ import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -295,6 +292,7 @@ public class LighttableController implements Initializable {
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
+        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getName));        
         imageGrid = new GridView<>(sortedMediaList);
         imageGrid.setCache(true);
         imageGrid.setCacheShape(true);
@@ -315,6 +313,7 @@ public class LighttableController implements Initializable {
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             //sort if needed
+            
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -326,8 +325,8 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setText("");
             //serialize objects to disks
             System.out.println("save cache...");
-            EmbeddedStorageManager storageManager = EmbeddedStorage.start(fullMediaList, Paths.get(Utility.getAppData()));
-            storageManager.storeRoot();
+            //EmbeddedStorageManager storageManager = EmbeddedStorage.start(Paths.get(Utility.getAppData()));
+            //storageManager.store(fullMediaList.get(0));
             System.out.println("save cache...done");
             /*try {
                 FileOutputStream fos = new FileOutputStream(Utility.getAppData() + "Objectsavefile.ser");
@@ -401,10 +400,10 @@ public class LighttableController implements Initializable {
             Dragboard db = imageGrid.startDragAndDrop(TransferMode.ANY);
             final ClipboardContent content = new ClipboardContent();
             List<File> fileList = new ArrayList<>();
-            Set<MediaFile> selection = factory.getSelectionModel().getSelection();                        
-            for (MediaFile mediaFile : selection) {                
+            Set<MediaFile> selection = factory.getSelectionModel().getSelection();
+            for (MediaFile mediaFile : selection) {
                 fileList.add(mediaFile.getPathStorage().toFile());
-            }            
+            }
             content.putFiles(fileList);
             db.setContent(content);
             t.consume();

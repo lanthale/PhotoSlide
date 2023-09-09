@@ -81,6 +81,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     mediaQTYLabel.setText(qty + " media files");
                 });
             }
+            System.out.println("Starting collecting...");
+            long starttime = System.currentTimeMillis();
 
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
@@ -96,13 +98,15 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);                            
-                            try {
-                                loadItem(fileItem, m);
-                                updateValue(m);
-                            } catch (IOException e) {
-                                m.setMediaType(MediaFile.MediaTypes.NONE);
-                            }
+                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                            Thread.ofVirtual().start(() -> {
+                                try {
+                                    loadItem(fileItem, m);
+                                    updateValue(m);
+                                } catch (IOException ex) {
+                                    m.setMediaType(MediaFile.MediaTypes.NONE);
+                                }
+                            });
                         }
                     }
                     updateMessage(iatom.get() + " / " + qty);
@@ -119,11 +123,17 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled()) {
                 return null;
             }
+            long endtime = System.currentTimeMillis();
+            System.out.println("Collect Time in s: " + (endtime - starttime) / 1000);
         } catch (IOException ex) {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
         }
         switch (sort) {
             case "filename":
+                Comparator<MediaFile> comparing2 = Comparator.comparing((MediaFile t) -> {
+                    return t.getName();
+                });
+                content.sort(comparing2);
                 break;
             case "File creation time":
                 Comparator<MediaFile> comparing = Comparator.comparing((MediaFile t) -> {
@@ -190,10 +200,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
     @Override
     protected void updateValue(MediaFile v) {
-        if (v != null) {
+        if (v != null) {            
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);
+                fullMediaList.add(v);                
             });
         }
     }

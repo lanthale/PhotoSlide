@@ -45,7 +45,6 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 import javafx.util.Callback;
 import org.photoslide.browsermetadata.Coordinate;
 import org.photoslide.browsermetadata.DMSCoordinate;
@@ -66,8 +65,7 @@ public class MediaFile {
 
     private transient Image image;
     private transient Image unModifiyAbleImage;
-    private Media media;
-    private MediaPlayer mediaPlayer;
+    private transient Media media;    
 
     private final SimpleStringProperty title;
     private final SimpleStringProperty keywords;
@@ -198,11 +196,7 @@ public class MediaFile {
     public Media getMedia() {
         return media;
     }
-
-    public MediaPlayer getMediaPlayer() {
-        return mediaPlayer;
-    }
-
+    
     public String getName() {
         return name;
     }

@@ -57,7 +57,7 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.imageops.ImageFilter;
@@ -87,7 +87,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final MediaFileLoader fileLoader;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("factoryController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("factoryController").build());
         this.util = util;
         this.metadataController = metadataController;
         this.grid = grid;

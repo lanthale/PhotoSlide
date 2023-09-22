@@ -55,7 +55,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 
 /**
@@ -108,8 +108,8 @@ public class PrintController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutor"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutor").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutor").build());
         tGroup = new ToggleGroup();
         prefHeight = -1;
         prefWidth = -1;

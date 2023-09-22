@@ -222,8 +222,8 @@ public class MainViewController implements Initializable {
         editorMediaViewPane.setVisible(false);
         editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
-        executorParallelScheduled = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("mainviewControllerParallelScheduled"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("mainviewControllerParallel"));
+        executorParallelScheduled = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("mainviewControllerParallelScheduled").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("mainviewControllerParallel").build());
         taskProgressView = new TaskProgressView();
         taskPopOver = new PopOver();
         taskPopOver.setAnimated(true);

@@ -13,15 +13,15 @@
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
 
     <properties>
-        <javafx.version>21-ea+24</javafx.version>
+        <javafx.version>21</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>        
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>${project.version}</app.version>        
         <jvm.modules>java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,javafx.web,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target> 
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target> 
         <!-- UUID via https://www.uuidgenerator.net -->
         <windows.upgrade.uuid>5be0a831-ee20-4692-8c71-6616381d9ccf</windows.upgrade.uuid>        
         <windows.vendor>ITArchitects</windows.vendor>        
@@ -204,12 +204,12 @@
         <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
-            <version>1.8.4</version>
+            <version>1.8.5</version>
         </dependency>
         <dependency>  
             <groupId>org.libheiffx</groupId>    
             <artifactId>LibHeifFX</artifactId>  
-            <version>1.2.3</version>  
+            <version>1.2.4</version>  
         </dependency>
         <dependency>
             <groupId>com.sothawo</groupId>
@@ -312,7 +312,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId> 
                 <artifactId>properties-maven-plugin</artifactId> 
-                <version>1.0.0</version> 
+                <version>1.2.0</version> 
                 <executions> 
                     <execution> 
                         <phase>generate-resources</phase> 
@@ -484,7 +484,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <enablePreview>true</enablePreview>
                         <fork>true</fork>
@@ -497,38 +497,38 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.2</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.4.5</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>3.12.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M9</version>
+                    <version>3.1.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -620,7 +620,7 @@
                                         <arg>--no-header-files</arg>
                                         <arg>--strip-debug</arg>
                                         <arg>--no-man-pages</arg>
-                                        <arg>--compress=2</arg>
+                                        <arg>--compress=zip-6</arg>
                                     </args>
                                 </configuration>
                             </execution>                    

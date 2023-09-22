@@ -20,19 +20,16 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.HPos;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 
@@ -64,7 +61,7 @@ public class EditorMetadataController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newCachedThreadPool(new ThreadFactoryPS("editorMetadataController"));
+        executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("editorMetadataController").build());
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);

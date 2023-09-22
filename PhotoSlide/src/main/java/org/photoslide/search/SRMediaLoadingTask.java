@@ -20,7 +20,7 @@ import javafx.concurrent.Task;
 import org.controlsfx.control.GridView;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 import org.photoslide.browsermetadata.MetadataController;
 import org.photoslide.datamodel.MediaFileLoader;
@@ -44,7 +44,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
     
     public SRMediaLoadingTask(ArrayList<String> queryList, SearchToolsController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid, MetadataController mc, MainViewController mv) {
         this.searchController = control;
-        executor = Executors.newScheduledThreadPool(20, new ThreadFactoryPS("SRMediaLoadingTask"));
+        executor = Executors.newScheduledThreadPool(20, new ThreadFactoryBuilder().setNamePrefix("SRMediaLoadingTask").build());
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();

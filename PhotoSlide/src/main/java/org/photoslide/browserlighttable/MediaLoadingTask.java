@@ -26,7 +26,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browsercollections.FilenameComparator;
 
 /**
@@ -54,7 +54,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         metadataController = metaControllerParam;
         this.factory = factory;
         this.fullMediaList = fullMediaList;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelectionMediaLoading"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").build());
     }
 
     @Override

@@ -15,7 +15,6 @@ import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browserlighttable.LighttableController;
 import com.icafe4j.image.meta.Metadata;
@@ -131,6 +130,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.libheiffx.LibheifImage;
 import org.librawfx.LibrawImage;
 import org.librawfx.RawDecoderSettings;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.imageops.ExposureFilter;
@@ -223,8 +223,8 @@ public class MetadataController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("metaDataController"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("metaDataControllerParallel"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataController").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("metaDataControllerParallel").build());
         keywordList = FXCollections.observableArrayList();
         Platform.runLater(() -> {
             anchorKeywordPane.setDisable(true);

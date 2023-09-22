@@ -8,7 +8,6 @@ package org.photoslide.browserlighttable;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
@@ -87,6 +86,7 @@ import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
 import one.microstream.storage.embedded.types.EmbeddedStorage;
 import one.microstream.storage.embedded.types.EmbeddedStorageManager;
+import org.photoslide.ThreadFactoryBuilder;
 
 /**
  *
@@ -213,9 +213,9 @@ public class LighttableController implements Initializable {
         sortOptions = FXCollections.observableArrayList("Filename", "Capture time", "File creation time");
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("lightTableController"));
-        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("lightTableControllerScheduled"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("lightTableControllerSelection"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("lightTableController").build());
+        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerScheduled").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").build());
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }

@@ -29,7 +29,7 @@ import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile;
 
@@ -69,8 +69,8 @@ public class BookmarkBoardController implements Initializable {
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("SearchToolExecutor"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("SearchToolExecutorParallel"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutor").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutorParallel").build());
         imageGrid = new GridView<>(sortedMediaList);
         factory = new MediaGridCellBMBFactory(executor, this, sortedMediaList);
         imageGrid.setCellFactory(factory);

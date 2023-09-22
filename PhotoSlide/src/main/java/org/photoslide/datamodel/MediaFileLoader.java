@@ -15,7 +15,7 @@ import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
@@ -35,7 +35,7 @@ public class MediaFileLoader {
             //executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
             executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").build());
         }
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         taskList = new HashMap<>();
@@ -139,7 +139,7 @@ public class MediaFileLoader {
         if (memory > 4194500) {
             executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryPS("mediaFileLoaderThread"));
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").build());
         }
     }
 }

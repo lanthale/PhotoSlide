@@ -41,7 +41,7 @@ import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
@@ -92,7 +92,7 @@ public class EditorMediaViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorMediaViewController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("editorMediaViewController").build());
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
         stackPane.setOnKeyPressed((t) -> {

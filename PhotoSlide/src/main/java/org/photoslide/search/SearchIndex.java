@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
 import org.photoslide.App;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browsercollections.PathItem;
 import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.datamodel.FileTypes;
@@ -48,7 +48,7 @@ public class SearchIndex {
         this.metadataController = metc;
         fileWalkRunning = false;
         terminateFileWalk = false;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("searchIndexExecutor"));
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("searchIndexExecutor").build());
     }
 
     public void createSearchIndex(String searchPath) {

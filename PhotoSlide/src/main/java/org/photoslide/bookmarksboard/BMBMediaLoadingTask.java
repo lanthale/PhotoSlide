@@ -15,7 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Tooltip;
 import org.controlsfx.control.GridView;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.MediaFileLoader;
@@ -35,7 +35,7 @@ public class BMBMediaLoadingTask extends Task<MediaFile> {
 
     public BMBMediaLoadingTask(List<String> queryList, BookmarkBoardController control, ObservableList<MediaFile> fullMediaList, GridView<MediaFile> imageGrid) {
         this.bmbController = control;
-        executor = Executors.newFixedThreadPool(20, new ThreadFactoryPS("BMBMediaLoadingTask"));
+        executor = Executors.newFixedThreadPool(20, new ThreadFactoryBuilder().setNamePrefix("BMBMediaLoadingTask").build());
         this.fullMediaList = fullMediaList;
         this.imageGrid = imageGrid;
         fileLoader = new MediaFileLoader();

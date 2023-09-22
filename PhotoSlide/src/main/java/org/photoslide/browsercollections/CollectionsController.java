@@ -7,7 +7,6 @@ package org.photoslide.browsercollections;
 
 import org.photoslide.search.SearchIndex;
 import org.photoslide.MainViewController;
-import org.photoslide.ThreadFactoryPS;
 import org.photoslide.Utility;
 import org.photoslide.browserlighttable.LighttableController;
 import java.io.File;
@@ -82,6 +81,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
+import org.photoslide.ThreadFactoryBuilder;
 
 /**
  *
@@ -132,9 +132,9 @@ public class CollectionsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("collectionsController"));
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryPS("collectionsControllerParallel"));
-        executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryPS("collectionsControllerParallelScheduled"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsController").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallel").build());
+        executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallelScheduled").build());
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         collectionStorage = new LinkedHashMap<>();

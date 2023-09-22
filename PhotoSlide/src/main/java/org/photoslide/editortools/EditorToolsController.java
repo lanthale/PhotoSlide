@@ -23,7 +23,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import org.photoslide.ThreadFactoryPS;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.imageops.ImageFilter;
 
@@ -51,7 +51,7 @@ public class EditorToolsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryPS("editorToolsController"));
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("editorToolsController").build());
         drawingCanvas.widthProperty().bind(histoAnchorPane.widthProperty());
         drawingCanvas.heightProperty().bind(histoAnchorPane.heightProperty());
         gc = drawingCanvas.getGraphicsContext2D();

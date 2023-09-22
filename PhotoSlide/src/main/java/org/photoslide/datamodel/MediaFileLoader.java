@@ -33,9 +33,9 @@ public class MediaFileLoader {
         memory = Utility.getNativeMemorySize();
         if (memory > 4194500) {
             //executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
-            executorParallel = Executors.newVirtualThreadPerTaskExecutor();
+            executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").build());
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         }
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         taskList = new HashMap<>();
@@ -137,9 +137,9 @@ public class MediaFileLoader {
         taskList.clear();
         executorParallel.shutdownNow();
         if (memory > 4194500) {
-            executorParallel = Executors.newVirtualThreadPerTaskExecutor();
+            executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").build());
+            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         }
     }
 }

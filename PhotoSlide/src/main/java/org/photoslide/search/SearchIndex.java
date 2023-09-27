@@ -48,7 +48,7 @@ public class SearchIndex {
         this.metadataController = metc;
         fileWalkRunning = false;
         terminateFileWalk = false;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("searchIndexExecutor").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(3).setNamePrefix("searchIndexExecutor").build());
     }
 
     public void createSearchIndex(String searchPath) {

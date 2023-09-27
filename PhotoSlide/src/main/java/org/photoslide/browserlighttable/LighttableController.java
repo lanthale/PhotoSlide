@@ -87,6 +87,7 @@ import javafx.scene.control.CheckMenuItem;
 import one.microstream.storage.embedded.types.EmbeddedStorage;
 import one.microstream.storage.embedded.types.EmbeddedStorageManager;
 import org.photoslide.ThreadFactoryBuilder;
+import org.photoslide.browsercollections.MediaFilenameComparator;
 
 /**
  *
@@ -214,7 +215,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("lightTableController").build());
-        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerScheduled").build());
+        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerScheduled").build());
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").build());
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
@@ -292,7 +293,7 @@ public class LighttableController implements Initializable {
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
-        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getName));        
+        sortedMediaList.setComparator(new MediaFilenameComparator());        
         imageGrid = new GridView<>(sortedMediaList);
         imageGrid.setCache(true);
         imageGrid.setCacheShape(true);
@@ -313,7 +314,7 @@ public class LighttableController implements Initializable {
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             //sort if needed
-            
+            sortedMediaList.setComparator(new MediaFilenameComparator()); 
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -963,7 +964,7 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                sortedMediaList.setComparator(Comparator.comparing(MediaFile::getName));
+                sortedMediaList.setComparator(new MediaFilenameComparator());
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("File creation time")) {

@@ -88,7 +88,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
             AtomicInteger iatom = new AtomicInteger(1);
-            fileList.forEachOrdered((fileItem) -> {
+            fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
                 }

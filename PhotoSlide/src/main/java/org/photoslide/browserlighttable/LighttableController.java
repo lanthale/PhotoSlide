@@ -87,7 +87,6 @@ import javafx.scene.control.CheckMenuItem;
 import one.microstream.storage.embedded.types.EmbeddedStorage;
 import one.microstream.storage.embedded.types.EmbeddedStorageManager;
 import org.photoslide.ThreadFactoryBuilder;
-import org.photoslide.browsercollections.MediaFilenameComparator;
 
 /**
  *

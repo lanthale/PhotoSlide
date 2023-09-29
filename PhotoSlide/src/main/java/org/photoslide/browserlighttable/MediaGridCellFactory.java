@@ -85,9 +85,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private Image imageWithFilters;
     private final Button resetCrop;
     private final MediaFileLoader fileLoader;
+    private boolean listFilesActive;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("factoryController").build());
+        listFilesActive = true;
         this.util = util;
         this.metadataController = metadataController;
         this.grid = grid;
@@ -187,16 +189,19 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
             t.consume();
         });
+
         cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
-            if (newMediaItem != null && oldMediaItem == null) {
-                if (newMediaItem.isLoading() == true) {
-                    if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
-                        if (isCellVisible(cell)) {
-                            fileLoader.loadImage(newMediaItem);
-                        }
-                    } else {
-                        if (isCellVisible(cell)) {
-                            fileLoader.loadVideo(newMediaItem);
+            if (listFilesActive == false) {
+                if (newMediaItem != null && oldMediaItem == null) {
+                    if (newMediaItem.isLoading() == true) {
+                        if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                            if (isCellVisible(cell)) {
+                                fileLoader.loadImage(newMediaItem);
+                            }
+                        } else {
+                            if (isCellVisible(cell)) {
+                                fileLoader.loadVideo(newMediaItem);
+                            }
                         }
                     }
                 }
@@ -205,7 +210,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         return cell;
     }
 
-    private void manageGUISelection(MouseEvent t, MediaGridCell cell) {        
+    private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
         if (t.isShiftDown()) {
             //select all nodes in between
             int indexOfStart = lightController.getFullMediaList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
@@ -233,7 +238,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 selectionModel.clear();
                 selectionModel.add(((MediaGridCell) t.getSource()).getItem());
             }
-        }        
+        }
     }
 
     public void handleGridCellSelection(Event t) throws MalformedURLException {
@@ -505,7 +510,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         img = new Image(url, true);
         Platform.runLater(() -> {
             lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-        });        
+        });
         img.progressProperty().addListener((ov, g, g1) -> {
             if ((Double) g1 == 1.0 && !img.isError()) {
                 lightController.getImageProgress().setVisible(false);
@@ -513,14 +518,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 filterList = selectedMediaItem.getFilterListWithoutImageData();
                 for (ImageFilter imageFilter : filterList) {
                     imageWithFilters = imageFilter.load(imageWithFilters);
-                    imageFilter.filter(imageFilter.getValues());                    
+                    imageFilter.filter(imageFilter.getValues());
                     switch (imageFilter.getName()) {
-                        case "ExposureFilter" ->  {                            
+                        case "ExposureFilter" -> {
                             metadataController.setExposerFilter(imageFilter);
                             metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
                         }
-                        case "GainFilter" ->  {                            
-                            metadataController.setGainFilter(imageFilter);                            
+                        case "GainFilter" -> {
+                            metadataController.setGainFilter(imageFilter);
                             metadataController.getGainSlider().setValue(imageFilter.getValues()[0]);
                             metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
                         }
@@ -865,6 +870,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         false, false, false, false, false, true, null));
             }
         });
+    }
+
+    public void setListFilesActive(boolean listFilesActive) {
+        this.listFilesActive = listFilesActive;
     }
 
 }

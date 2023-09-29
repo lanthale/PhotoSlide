@@ -311,9 +311,11 @@ public class LighttableController implements Initializable {
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
-            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
-            //sort if needed
-            sortedMediaList.setComparator(new MediaFilenameComparator()); 
+            factory.setListFilesActive(false);
+            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getProgressPane().setVisible(false);
+            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));            
+            sortedMediaList.setComparator(new MediaFilenameComparator());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -322,25 +324,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");
-            //serialize objects to disks
-            System.out.println("save cache...");
-            //EmbeddedStorageManager storageManager = EmbeddedStorage.start(Paths.get(Utility.getAppData()));
-            //storageManager.store(fullMediaList.get(0));
-            System.out.println("save cache...done");
-            /*try {
-                FileOutputStream fos = new FileOutputStream(Utility.getAppData() + "Objectsavefile.ser");
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                oos.writeObject(new ArrayList<MediaFile>(fullMediaList));
-                oos.close();
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }*/
-
-            // end serialize
+            mainController.getStatusLabelLeft().setText("");            
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());

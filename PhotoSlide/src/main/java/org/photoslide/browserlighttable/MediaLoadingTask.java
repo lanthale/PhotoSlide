@@ -34,7 +34,7 @@ import org.photoslide.browsercollections.FilenameComparator;
  * @author selfemp
  */
 public class MediaLoadingTask extends Task<MediaFile> {
-
+    
     private final Path selectedPath;
     private final Label mediaQTYLabel;
     private final MainViewController mainController;
@@ -44,7 +44,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final ObservableList<MediaFile> fullMediaList;
     private final MediaFileLoader fileLoader;
     private ExecutorService executorParallel;
-
+    
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
         fileLoader = new MediaFileLoader();
@@ -56,7 +56,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         this.fullMediaList = fullMediaList;
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").build());
     }
-
+    
     @Override
     protected MediaFile call() throws Exception {
         final long qty;
@@ -79,11 +79,12 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     mainController.getProgressPane().setVisible(true);
                     mainController.getProgressbarLabel().setText(qty + " files found - Loading...");
                     mediaQTYLabel.setText(qty + " media files");
+                    mainController.getStatusLabelRight().setVisible(true);
                 });
             }
-            System.out.println("Starting collecting...");
+            Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
-
+            
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
@@ -111,12 +112,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     }
                     updateMessage(iatom.get() + " / " + qty);
                     iatom.addAndGet(1);
-                    if (iatom.get() == 2) {
-                        Platform.runLater(() -> {
-                            mainController.getStatusLabelLeft().setVisible(false);
-                            mainController.getProgressPane().setVisible(false);
-                            mainController.getStatusLabelRight().setVisible(true);
-                        });
+                    double percentage = (double)iatom.get() / qty * 100;                    
+                    if (percentage > 80) {
+                        factory.setListFilesActive(false);
                     }
                 }
             });
@@ -124,7 +122,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 return null;
             }
             long endtime = System.currentTimeMillis();
-            System.out.println("Collect Time in s: " + (endtime - starttime) / 1000);
+            Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
         } catch (IOException ex) {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -146,11 +144,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 });
                 content.sort(comparing);
                 break;
-
+            
         }
         return null;
     }
-
+    
     public void loadItem(Path fileItem, MediaFile m) throws IOException {
         if (this.isCancelled()) {
             return;
@@ -197,21 +195,21 @@ public class MediaLoadingTask extends Task<MediaFile> {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }
     }
-
+    
     @Override
     protected void updateValue(MediaFile v) {
-        if (v != null) {            
+        if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);                
+                fullMediaList.add(v);
             });
         }
     }
-
+    
     @Override
     protected void succeeded() {
         super.succeeded();
         executorParallel.shutdown();
     }
-
+    
 }

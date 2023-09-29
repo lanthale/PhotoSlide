@@ -5,7 +5,6 @@
 package org.photoslide.browserlighttable;
 
 import java.math.BigInteger;
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.regex.Pattern;
 import org.photoslide.datamodel.MediaFile;

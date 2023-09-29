@@ -5,8 +5,6 @@
  */
 package org.photoslide.datamodel;
 
-import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -22,7 +20,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaView;
 import javafx.scene.text.Font;
-import javafx.util.Duration;
 import org.controlsfx.control.GridCell;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.MediaFile.MediaTypes;

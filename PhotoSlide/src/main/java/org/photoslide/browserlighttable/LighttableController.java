@@ -292,13 +292,13 @@ public class LighttableController implements Initializable {
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
-        sortedMediaList.setComparator(new MediaFilenameComparator());        
+        sortedMediaList.setComparator(new MediaFilenameComparator());
         imageGrid = new GridView<>(sortedMediaList);
         imageGrid.setCache(true);
         imageGrid.setCacheShape(true);
         imageGrid.setCacheHint(CacheHint.SPEED);
         double defaultCellWidth = imageGrid.getCellWidth();
-        double defaultCellHight = imageGrid.getCellHeight();
+        double defaultCellHight = imageGrid.getCellHeight();        
         factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
 
         Platform.runLater(() -> {
@@ -314,7 +314,7 @@ public class LighttableController implements Initializable {
             factory.setListFilesActive(false);
             mainController.getStatusLabelLeft().setVisible(false);
             mainController.getProgressPane().setVisible(false);
-            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));            
+            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             sortedMediaList.setComparator(new MediaFilenameComparator());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
@@ -324,7 +324,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");            
+            mainController.getStatusLabelLeft().setText("");
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());

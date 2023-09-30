@@ -193,7 +193,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
             if (listFilesActive == false) {
                 if (newMediaItem != null && oldMediaItem == null) {
-                    if (newMediaItem.isLoading() == true) {
+                    if (newMediaItem.isLoading() == true) {                        
                         if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
                             if (isCellVisible(cell)) {
                                 fileLoader.loadImage(newMediaItem);
@@ -754,7 +754,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @return true if cell is actual visible
      */
     public boolean isCellVisible(MediaGridCell input) {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
         boolean ret = false;
         if (vf.getFirstVisibleCell() == null) {
             return false;

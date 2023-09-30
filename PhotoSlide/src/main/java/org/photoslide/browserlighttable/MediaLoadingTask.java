@@ -88,7 +88,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
-            AtomicInteger iatom = new AtomicInteger(1);
+            AtomicInteger iatom = new AtomicInteger(1);             
             fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {
                     return;

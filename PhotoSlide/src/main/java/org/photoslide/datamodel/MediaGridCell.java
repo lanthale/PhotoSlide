@@ -82,9 +82,18 @@ public class MediaGridCell extends GridCell<MediaFile> {
     }
 
     private void updateIconSize() {
-        DoubleBinding subtract = rootPane.heightProperty().subtract(28);
-        DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
-        DoubleBinding subtract2 = rootPane.heightProperty().subtract(10);
+        DoubleBinding subtract;
+        DoubleBinding subtract1;
+        DoubleBinding subtract2;
+        if (rootPane.widthProperty().get() < rootPane.heightProperty().get()) {
+            subtract = rootPane.widthProperty().subtract(28);
+            subtract1 = rootPane.widthProperty().subtract(28);
+            subtract2 = rootPane.widthProperty().subtract(10);
+        } else {
+            subtract = rootPane.heightProperty().subtract(28);
+            subtract1 = rootPane.heightProperty().subtract(28);
+            subtract2 = rootPane.heightProperty().subtract(10);
+        }
 
         if (subtract.intValue() > 0) {
             layerIcon.setIconSize(subtract.intValue());
@@ -186,7 +195,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
                     double fH = item.getCropView().getHeight() / ratioH;
                     double fWX = item.getCropView().getMinX() / ratioW;
                     double fHY = item.getCropView().getMinY() / ratioH;
-                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);                    
+                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
                     imageView.setViewport(viewP);
                 } else {
                     imageView.setViewport(null);
@@ -198,7 +207,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             rotationAngle.set(item.getRotationAngleProperty().get());
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
-            setStacked(item.isStacked(), item.getStackPos());            
+            setStacked(item.isStacked(), item.getStackPos());
             if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }

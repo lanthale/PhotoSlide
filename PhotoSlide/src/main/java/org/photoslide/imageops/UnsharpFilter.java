@@ -67,14 +67,14 @@ public class UnsharpFilter implements ImageFilter {
 
     @Override
     public float[] getValues() {
-        return new float[]{amount,threshold};
+        return new float[]{amount, threshold};
     }
 
     @Override
     public void filter(float[] values) {
         this.values = values;
         this.amount = values[0];
-        this.threshold = (int)values[1];
+        this.threshold = (int) values[1];
         rTable = gTable = bTable = makeTable();
         PixelWriter pixelWriter = filteredImage.getPixelWriter();
         byte[] targetBuffer = new byte[width * height * 4];
@@ -84,14 +84,16 @@ public class UnsharpFilter implements ImageFilter {
             int res = filterRGB(rgba);
             targetBuffer[i] = (byte) (res);
         }
-        pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        Thread.ofVirtual().start(() -> {
+            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        });
     }
 
     @Override
     public void setValues(float[] values) {
         this.values = values;
         this.amount = values[0];
-        this.threshold = (int)values[1];
+        this.threshold = (int) values[1];
     }
 
     private int filterRGB(int rgba) {
@@ -190,7 +192,5 @@ public class UnsharpFilter implements ImageFilter {
     public String toString() {
         return "UnsharpFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", amount=" + amount + ", threshold=" + threshold + ", radius=" + radius + '}';
     }
-
-    
 
 }

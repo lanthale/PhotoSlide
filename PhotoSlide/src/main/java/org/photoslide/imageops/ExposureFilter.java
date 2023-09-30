@@ -20,7 +20,7 @@ import javafx.scene.image.WritableImage;
 public class ExposureFilter implements ImageFilter {
 
     private Image image;
-    private WritableImage filteredImage;    
+    private WritableImage filteredImage;
     private final String name;
     private int pos;
     private float[] values;
@@ -44,7 +44,7 @@ public class ExposureFilter implements ImageFilter {
         width = (int) image.getWidth();
         buffer = new byte[width * height * 4];
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
-        filteredImage = new WritableImage(pixelReader, width, height);        
+        filteredImage = new WritableImage(pixelReader, width, height);
         return filteredImage;
     }
 
@@ -76,8 +76,10 @@ public class ExposureFilter implements ImageFilter {
             int rgba = buffer[i];
             int res = filterRGB(rgba);
             targetBuffer[i] = (byte) (res);
-        }        
-        pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        }
+        Thread.ofVirtual().start(() -> {
+            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        });        
     }
 
     @Override
@@ -177,7 +179,5 @@ public class ExposureFilter implements ImageFilter {
     public String toString() {
         return "ExposureFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", exposure=" + exposure + '}';
     }
-    
-    
 
 }

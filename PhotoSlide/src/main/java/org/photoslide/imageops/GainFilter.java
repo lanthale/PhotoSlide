@@ -83,7 +83,9 @@ public class GainFilter implements ImageFilter {
             int res = filterRGB(rgba);
             targetBuffer[i] = (byte) (res);
         }
-        pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        Thread.ofVirtual().start(() -> {
+           pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4); 
+        });        
     }
 
     @Override

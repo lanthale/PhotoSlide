@@ -162,6 +162,8 @@ public class MetadataController implements Initializable {
     private CaptionChangeListener captionChangeListener;
 
     private ExecutorService executorParallel;
+    private ExecutorService executorFilter;
+
     private Image shownImage;
     private ImageFilter exposerFilter;
     private ImageFilter gainFilter;
@@ -224,7 +226,8 @@ public class MetadataController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataController").build());
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("metaDataControllerParallel").build());
+        executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataControllerParallel").build());
+        executorFilter = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("metaDataControllerParallel").build());
         keywordList = FXCollections.observableArrayList();
         Platform.runLater(() -> {
             anchorKeywordPane.setDisable(true);
@@ -248,7 +251,7 @@ public class MetadataController implements Initializable {
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
             }
             double val = exposureSlider.getValue();
-            executorParallel.submit(() -> {
+            executorFilter.submit(() -> {
                 exposerFilter.filter(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
                 if (filterForName != null) {
@@ -268,7 +271,7 @@ public class MetadataController implements Initializable {
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
-            executorParallel.submit(() -> {
+            executorFilter.submit(() -> {
                 gainFilter.filter(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
@@ -286,7 +289,7 @@ public class MetadataController implements Initializable {
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
-            executorParallel.submit(() -> {
+            executorFilter.submit(() -> {
                 gainFilter.filter(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
@@ -885,7 +888,7 @@ public class MetadataController implements Initializable {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }
         Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
-        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -900,7 +903,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -916,7 +919,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -931,7 +934,7 @@ public class MetadataController implements Initializable {
             iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
         }
         Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR), true);
-        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -941,7 +944,7 @@ public class MetadataController implements Initializable {
         bout = new ByteArrayOutputStream();
         if (commentsdata != null) {
             Metadata.insertComments(fin, bout, commentsdata);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
         }
@@ -964,7 +967,7 @@ public class MetadataController implements Initializable {
             exportExif.addGPSField(GPSTag.GPS_LONGITUDE_REF, FieldType.ASCII, mf.getGpsLonPosRef());
             exportExif.addGPSField(GPSTag.GPS_ALTITUDE, FieldType.RATIONAL, mf.getGpsHeightAsRational());
             Metadata.insertExif(fin, bout, exportExif);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -978,7 +981,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placeProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CITY), true);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -992,7 +995,7 @@ public class MetadataController implements Initializable {
                 iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
             }
             Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION), true);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -1021,7 +1024,7 @@ public class MetadataController implements Initializable {
             exportExif.setImageIFD(exifdata.getImageIFD());
         }
         Metadata.insertExif(fin, bout, exportExif);
-        try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
             bout.writeTo(outputStream);
         }
         fin.close();
@@ -1030,7 +1033,7 @@ public class MetadataController implements Initializable {
             fin = new FileInputStream(exportFilePath);
             bout = new ByteArrayOutputStream();
             Metadata.insertXMP(fin, bout, xmpdata);
-            try ( OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -1047,7 +1050,7 @@ public class MetadataController implements Initializable {
      */
     private void updateGPSDataForActualMediaFile() throws FileNotFoundException, IOException {
         ByteArrayOutputStream bout;
-        try ( FileInputStream fin = new FileInputStream(actualMediaFile.getPathStorage().toString())) {
+        try (FileInputStream fin = new FileInputStream(actualMediaFile.getPathStorage().toString())) {
             bout = new ByteArrayOutputStream();
             Exif exportExif;
             if (actualMediaFile.getPathStorage().toString().contains(".jpg")) {
@@ -1061,7 +1064,7 @@ public class MetadataController implements Initializable {
             exportExif.addGPSField(GPSTag.GPS_LONGITUDE_REF, FieldType.ASCII, actualMediaFile.getGpsLonPosRef());
             exportExif.addGPSField(GPSTag.GPS_ALTITUDE, FieldType.ASCII, actualMediaFile.getGpsHeight());
             Metadata.insertExif(fin, bout, exportExif, true);
-            try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toString())) {
+            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toString())) {
                 bout.writeTo(outputStream);
             }
         }
@@ -1088,7 +1091,7 @@ public class MetadataController implements Initializable {
 
                     Metadata.insertComment(fin, bout, commentText.getText());
 
-                    try ( OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
+                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
                         bout.writeTo(outputStream);
                     }
                     fin.close();
@@ -1236,7 +1239,7 @@ public class MetadataController implements Initializable {
                 });
             });
             Metadata.insertIPTC(fin, bout, iptcs, false);
-            try ( OutputStream outputStream = new FileOutputStream(file.getPathStorage().toFile())) {
+            try (OutputStream outputStream = new FileOutputStream(file.getPathStorage().toFile())) {
                 bout.writeTo(outputStream);
             }
             fin.close();
@@ -1384,8 +1387,10 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void resetExposureAction(ActionEvent event) {
-        actualMediaFile.removeImageFilter(exposerFilter);
-        actualMediaFile.saveEdits();
+        executorFilter.submit(() -> {
+            actualMediaFile.removeImageFilter(exposerFilter);
+            actualMediaFile.saveEdits();
+        });
         Platform.runLater(() -> {
             exposureSlider.setValue(1);
             lightController.getImageView().setImage(exposerFilter.reset());
@@ -1649,8 +1654,10 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void resetGainFilterAction(ActionEvent event) {
-        actualMediaFile.removeImageFilter(gainFilter);
-        actualMediaFile.saveEdits();
+        executorFilter.submit(() -> {
+            actualMediaFile.removeImageFilter(gainFilter);
+            actualMediaFile.saveEdits();
+        });
         Platform.runLater(() -> {
             gainSlider.setValue(0.5);
             biasSlider.setValue(0.5);

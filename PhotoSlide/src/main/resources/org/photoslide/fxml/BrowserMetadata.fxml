@@ -169,7 +169,7 @@
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
                               <FontIcon iconLiteral="ti-eye" iconSize="14" />
-                              <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" minorTickCount="1" value="1.0" HBox.hgrow="ALWAYS" />
+                              <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" minorTickCount="0" value="1.0" HBox.hgrow="ALWAYS" />
                               <FontIcon iconLiteral="ti-eye" iconSize="20" />
                               <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset">
                                  <graphic>

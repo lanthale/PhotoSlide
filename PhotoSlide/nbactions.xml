@@ -48,4 +48,11 @@
             <goal>verify</goal>
         </goals>
     </action>
+    <action>
+            <actionName>CUSTOM-depn</actionName>
+            <displayName>Dependency check of plugins</displayName>
+            <goals>
+                <goal>site</goal>
+            </goals>
+        </action>
 </actions>

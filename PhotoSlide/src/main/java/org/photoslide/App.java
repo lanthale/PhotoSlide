@@ -84,18 +84,22 @@ public class App extends Application {
                 searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
                 checkSearchDBStructure();
             } catch (ClassNotFoundException | SQLException e) {
-                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
+                if (e.getMessage().startsWith("Unsupported database")) {
+                    new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB").delete();                    
+                } else {
+                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
+                }
             }
         }
         notifyPreloader(new ProgressNotification(0.6));
         setDefaultTIFFCodec();
         notifyPreloader(new ProgressNotification(0.7));
         TIFFImageLoaderFactory.install();
-        PSDImageLoaderFactory.install(); 
+        PSDImageLoaderFactory.install();
         WEBPImageLoaderFactory.install();
 
         try {
-            RAWImageLoaderFactory.install();            
+            RAWImageLoaderFactory.install();
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
@@ -165,7 +169,7 @@ public class App extends Application {
             logger.addHandler(handler);
             logger.setLevel(Level.INFO);
             handler.setFormatter(new SimpleFormatter());
-            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());            
+            System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
             //com.sun.javafx.application.LauncherImpl.launchApplication(App.class, PSPreloader.class, args);
         } catch (IOException ex) {

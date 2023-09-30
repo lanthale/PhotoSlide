@@ -99,7 +99,7 @@
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
-            <version>12.2.0</version>            
+            <version>12.3.1</version>            
         </dependency>        
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
@@ -124,57 +124,57 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-core</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-lang</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-io</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-image</artifactId>
-            <version>3.8.3</version>
+            <version>3.9.4</version>
         </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-psd</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-webp</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-metadata</artifactId>
-            <version>3.7.1</version>
+            <version>3.9.4</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.0-beta1</version>
+            <version>2.0.9</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.0-alpha7</version>
+            <version>2.0.9</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.200</version>            
+            <version>2.2.224</version>            
         </dependency>                
         <dependency>
             <groupId>javax.media.jai</groupId>
@@ -184,17 +184,17 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.12.7.1</version>
+            <version>2.15.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.12.7</version>
+            <version>2.15.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.13.5</version>
+            <version>2.15.2</version>
         </dependency> 
         <dependency>
             <groupId>earth.worldwind</groupId>
@@ -219,7 +219,7 @@
         <dependency>
             <groupId>org.boofcv</groupId>
             <artifactId>boofcv-core</artifactId>
-            <version>0.39.1</version>
+            <version>1.1.1</version>
         </dependency>        
         <dependency>
             <groupId>fr.dudie</groupId>
@@ -229,7 +229,7 @@
         <dependency>
             <groupId>com.drewnoakes</groupId>
             <artifactId>metadata-extractor</artifactId>
-            <version>2.16.0</version>            
+            <version>2.18.0</version>            
         </dependency>
         <dependency>
             <groupId>de.jangassen</groupId>
@@ -555,7 +555,7 @@
                 <configuration>
                     <processDependencyManagementTransitive>false</processDependencyManagementTransitive>
                 </configuration>
-            </plugin>
+            </plugin>            
         </plugins>
     </reporting>
     <profiles>        

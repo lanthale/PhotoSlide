@@ -84,18 +84,18 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
             Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
-            
+                        
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
-            AtomicInteger iatom = new AtomicInteger(1);             
+            AtomicInteger iatom = new AtomicInteger(1);            
             fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
                 }
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {
+                        if (FileTypes.isValidType(fileItem.toString())) {                            
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
@@ -113,7 +113,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     updateMessage(iatom.get() + " / " + qty);
                     iatom.addAndGet(1);
                     double percentage = (double)iatom.get() / qty * 100;                    
-                    if (percentage > 80) {
+                    if (percentage > 75) {
                         factory.setListFilesActive(false);
                     }
                 }

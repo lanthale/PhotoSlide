@@ -703,7 +703,7 @@ public class MetadataController implements Initializable {
             }
         }
         long endimage = System.currentTimeMillis();
-        System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
+        //System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
     }
 
     private String formatTime(String source) {

@@ -16,12 +16,9 @@ import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
 import de.jangassen.MenuToolkit;
-import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -236,10 +233,30 @@ public class MainViewController implements Initializable {
         taskProgressView.getTasks().addListener((Observable taskChange) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
-                //System.out.println("green size: "+taskProgressView.getTasks().size());
             } else {
                 processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
-                //System.out.println("gray size: "+taskProgressView.getTasks().size());
+            }
+        });        
+        showProcessButton.setOnMouseClicked((t) -> {
+            if (!taskProgressView.getTasks().isEmpty()) {
+                Platform.runLater(() -> {
+                    processListIcon.setIconColor(Paint.valueOf("lightgreen"));
+                });
+            } else {
+                Platform.runLater(() -> {
+                    processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+                });
+            }
+        });
+        taskPopOver.setOnHidden((t) -> {
+            if (!taskProgressView.getTasks().isEmpty()) {
+                Platform.runLater(() -> {
+                    processListIcon.setIconColor(Paint.valueOf("lightgreen"));
+                });
+            } else {
+                Platform.runLater(() -> {
+                    processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+                });
             }
         });
         taskProgressView.setPrefSize(300, 200);
@@ -469,7 +486,7 @@ public class MainViewController implements Initializable {
                                 fromFXImage = SwingFXUtils.fromFXImage(newImage, null);
                                 // rotate image in FX or swing                            
                                 if (mediaItem.getRotationAngleProperty().get() != 0) {
-                                    fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());                                    
+                                    fromFXImage = getRotatedImage(fromFXImage, mediaItem.getRotationAngleProperty().get());
                                 }
 
                                 FileOutputStream fo = new FileOutputStream(outFileStr, false);
@@ -586,7 +603,7 @@ public class MainViewController implements Initializable {
             Logger.getLogger(MainViewController.class.getName()).log(Level.FINE, "Export dialog cancled!");
         }
         return false;
-    }    
+    }
 
     private BufferedImage getRotatedImage(BufferedImage image, double angle) {
         final double rads = Math.toRadians(angle);
@@ -602,7 +619,7 @@ public class MainViewController implements Initializable {
         final AffineTransformOp rotateOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
         rotateOp.filter(image, rotatedImage);
         return rotatedImage;
-    }    
+    }
 
     @FXML
     private void preferencesMenuAction(ActionEvent event) {
@@ -1000,7 +1017,7 @@ public class MainViewController implements Initializable {
     public void saveBookmarksFile() {
         Thread.ofVirtual().start(() -> {
             String fileNameWithExt = Utility.getAppData() + File.separator + "bookmarks.prop";
-            try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
+            try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
                 bookmarks.store(output, null);
                 output.flush();
             } catch (IOException ex) {
@@ -1016,7 +1033,7 @@ public class MainViewController implements Initializable {
                 bookmarks = new Properties();
                 return;
             }
-            try ( InputStream input = new FileInputStream(fileNameWithExt)) {
+            try (InputStream input = new FileInputStream(fileNameWithExt)) {
                 bookmarks = new Properties();
                 bookmarks.load(input);
                 Platform.runLater(() -> {
@@ -1170,7 +1187,7 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {
+    private void showProcessListButtonAction(ActionEvent event) {        
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());

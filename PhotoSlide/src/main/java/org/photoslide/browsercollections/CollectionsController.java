@@ -145,7 +145,7 @@ public class CollectionsController implements Initializable {
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                searchIndexProcess = new SearchIndex(mainController.getMetadataPaneController());
+                searchIndexProcess = new SearchIndex(mainController.getMetadataPaneController(), mainController);
                 loadURLs();
             }
         });

@@ -304,7 +304,7 @@ public class SearchToolsController implements Initializable {
                 imageGrid.setCellHeight(defaultCellHight + 3 * mediaZoomSlider.getValue());
             });
             executorParallel.schedule(task, 500, TimeUnit.MILLISECONDS);
-
+            mainViewController.getTaskProgressView().getTasks().add(task);
         } catch (SQLException ex) {
             Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
         }

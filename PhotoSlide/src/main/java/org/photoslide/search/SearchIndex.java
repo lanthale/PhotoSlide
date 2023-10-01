@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.concurrent.Task;
 import org.photoslide.App;
+import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browsercollections.PathItem;
 import org.photoslide.browsermetadata.GeoCoding;
@@ -38,14 +39,16 @@ import org.photoslide.browsermetadata.MetadataController;
 public class SearchIndex {
 
     private final MetadataController metadataController;
+    private final MainViewController mainViewController;
     private final ExecutorService executorParallel;
     private Task<Void> task;
     private Task<Void> taskCheck;
     private boolean terminateFileWalk;
     private boolean fileWalkRunning;
 
-    public SearchIndex(MetadataController metc) {
+    public SearchIndex(MetadataController metc, MainViewController c) {
         this.metadataController = metc;
+        mainViewController = c;
         fileWalkRunning = false;
         terminateFileWalk = false;
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(3).setNamePrefix("searchIndexExecutor").build());
@@ -61,7 +64,7 @@ public class SearchIndex {
                 if (task.isCancelled()) {
                     return null;
                 }
-                updateTitle("createSearchIndex");
+                updateTitle("Creating/Updating search index...");
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
@@ -146,7 +149,7 @@ public class SearchIndex {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
         executorParallel.submit(task);
-
+        mainViewController.getTaskProgressView().getTasks().add(task);
     }
 
     public void checkSearchIndex(String searchPath) {

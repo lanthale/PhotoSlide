@@ -69,11 +69,11 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 ## Missing features
 - Implement face recognizion
 - Map view
-- Porting the photo edit capabilities over from LightZone (edit module is now implemented but editing algorithms are not ported over)
+- Porting the photo edit capabilities over from LightZone (edit module is now implemented but only basic algorithms are now ported over)
 
 
 ## Steps to create your own build
-- Install AdoptOpenJDK 18 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 16 (usage of ZGC GC) or later.
+- Install AdoptOpenJDK 21 or later (you can also use openjdk/Azul/coretto/...). Faster startuptime of the app(40%) is only possible if you use JDK 21 (usage of ZGC GC) or later.
 - Set env var JAVA_HOME
 - Install maven
 - On Windows install WiX 3.xx tools, On OSX install XCode including CMD tools

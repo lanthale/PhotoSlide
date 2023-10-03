@@ -46,7 +46,7 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
   - Click on the icon or run /opt/photoslide/bin/PhotoSlide
 
 ## Features
-- Viewing of JPG/TIFF/PNG/PSD images
+- Viewing of JPG/TIFF/PNG/PSD/WEBP/HEIF images
 - Viewing of RAW files for Canon/Nikon/Fuji/Leica/Sigma/Adobe DNG
 - Viewing of movies with MP4/h264 codec
 - Lossles editing: Rotated / Crop images / rate images

@@ -17,6 +17,13 @@ All of the listed applications had the issue that they could not handle photo's 
 
 During my vacation time in spring I could not travel and therefore I decided to start creating this software. It is far from perfect, but it could handle some of my workflow use cases already.
 
+## System requirements
+- Windows 10 or later
+- OSX 11.0 or later
+- Linux Debian 10 or later/Ubuntu 18.x or later
+- 4 GB ram (16 GB for working with RAW files recommended)
+- Diskspace: Almost nothing: App around 240MB, Userdirectory: 200 MB (depending on the search DB, but only text is stored in it, no media files)
+
 ## Screenshot of the application
 ![PhotoSlide Screenshot](/PhotoSlide-Shot1.png)
 

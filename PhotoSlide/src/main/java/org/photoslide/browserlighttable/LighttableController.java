@@ -298,7 +298,7 @@ public class LighttableController implements Initializable {
         imageGrid.setCacheShape(true);
         imageGrid.setCacheHint(CacheHint.SPEED);
         double defaultCellWidth = imageGrid.getCellWidth();
-        double defaultCellHight = imageGrid.getCellHeight();        
+        double defaultCellHight = imageGrid.getCellHeight();
         factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
 
         Platform.runLater(() -> {
@@ -390,6 +390,20 @@ public class LighttableController implements Initializable {
             }
             content.putFiles(fileList);
             db.setContent(content);
+            t.consume();
+        });
+        imageGrid.setOnDragOver((t) -> {
+            t.acceptTransferModes(TransferMode.COPY);
+            t.consume();
+        });
+        imageGrid.setOnDragDropped((t) -> {
+            System.out.println("Drop Target dragged");
+            Dragboard db = t.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                success = true;
+            }
+            t.setDropCompleted(success);
             t.consume();
         });
         zoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {

@@ -242,10 +242,10 @@
             <version>1.2.4</version>            
         </dependency>
         <dependency>
-		<groupId>one.microstream</groupId>
-		<artifactId>microstream-storage-embedded</artifactId>
-		<version>08.01.01-MS-GA</version>
-	</dependency>
+            <groupId>one.microstream</groupId>
+            <artifactId>microstream-storage-embedded</artifactId>
+            <version>08.01.01-MS-GA</version>
+        </dependency>
 
         <!-- This downloads the platform specific JavaFX libraries used by the project. -->
         <!-- For the final installable, the JavaFX dependencies are provided via modules, but by including these here
@@ -287,16 +287,7 @@
         </dependency>          
     </dependencies>
 
-    <build>
-        <extensions>
-            <!-- Used to inject the OS and architecture values in a consistent manner -->
-            <!-- https://github.com/trustin/os-maven-plugin -->
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.1</version>
-            </extension>
-        </extensions>
+    <build>        
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
@@ -309,6 +300,19 @@
         </resources>
 
         <plugins>
+            <plugin>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>detect</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId> 
                 <artifactId>properties-maven-plugin</artifactId> 

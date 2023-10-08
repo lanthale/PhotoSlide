@@ -241,7 +241,15 @@ public class CollectionsController implements Initializable {
                     }
                 };
                 task.setOnFailed((fail) -> {
-                    //Show error message
+                    Alert alertError = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
+                    alertError.getDialogPane().getStylesheets().add(
+                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+                    alertError.setResizable(false);
+                    alertError.setGraphic(new FontIcon("ti-close:30"));
+                    Utility.centerChildWindowOnStage((Stage) alertError.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+                    Stage stageError = (Stage) alertError.getDialogPane().getScene().getWindow();
+                    stageError.getIcons().add(dialogIcon);
+                    stageError.showAndWait();
                 });
                 task.setOnSucceeded((suc) -> {
                     FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));

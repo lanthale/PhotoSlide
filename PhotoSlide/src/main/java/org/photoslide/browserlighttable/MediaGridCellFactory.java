@@ -213,15 +213,15 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private void manageGUISelection(MouseEvent t, MediaGridCell cell) {
         if (t.isShiftDown()) {
             //select all nodes in between
-            int indexOfStart = lightController.getFullMediaList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
-            int indexOfEnd = lightController.getFullMediaList().indexOf(cell.getItem());
+            int indexOfStart = lightController.getSortedMediaList().indexOf(((MediaFile) selectionModel.getSelection().iterator().next()));
+            int indexOfEnd = lightController.getSortedMediaList().indexOf(cell.getItem());
             if (indexOfStart < indexOfEnd) {
                 for (int i = indexOfStart; i <= indexOfEnd; i++) {
-                    selectionModel.add(lightController.getFullMediaList().get(i));
+                    selectionModel.add(lightController.getSortedMediaList().get(i));
                 }
             } else {
                 for (int i = indexOfEnd; i <= indexOfStart; i++) {
-                    selectionModel.add(lightController.getFullMediaList().get(i));
+                    selectionModel.add(lightController.getSortedMediaList().get(i));
                 }
             }
         } else {

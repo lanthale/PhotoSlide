@@ -521,189 +521,195 @@ public class MetadataController implements Initializable {
             System.out.println("reading time video: " + (endvideo - startvideo) + " ms");
         }
         long startimage = System.currentTimeMillis();
-        Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
-        for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
-            if (actTask.isCancelled() == false) {
-                Metadata meta = entry.getValue();
-                Iterator<MetadataEntry> iterator;
-                switch (meta.getType()) {
-                    case XMP:
-                        xmpdata = ((XMP) meta);
-                    //XMP.showXMP(xmpdata);
-                    case COMMENT:
-                        if (meta instanceof Comments) {
-                            commentsdata = ((Comments) meta).getComments();
-                            StringBuilder sb = new StringBuilder();
-                            commentsdata.forEach(comment -> {
-                                sb.append(comment);
-                            });
-                            if (Platform.isFxApplicationThread() == true) {
-                                file.commentsProperty().set(sb.toString());
-                            } else {
-                                Platform.runLater(() -> {
-                                    file.commentsProperty().set(sb.toString());
+        Map<MetadataType, Metadata> metadataMap;
+        try {
+            metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
+            for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
+                if (actTask.isCancelled() == false) {
+                    Metadata meta = entry.getValue();
+                    Iterator<MetadataEntry> iterator;
+                    switch (meta.getType()) {
+                        case XMP:
+                            xmpdata = ((XMP) meta);
+                        //XMP.showXMP(xmpdata);
+                        case COMMENT:
+                            if (meta instanceof Comments) {
+                                commentsdata = ((Comments) meta).getComments();
+                                StringBuilder sb = new StringBuilder();
+                                commentsdata.forEach(comment -> {
+                                    sb.append(comment);
                                 });
-                            }
-                        }
-                        break;
-                    case IPTC:
-                        iptcdata = ((IPTC) meta);
-                        iterator = meta.iterator();
-                        while (iterator.hasNext()) {
-                            MetadataEntry item = iterator.next();
-                            switch (item.getKey()) {
-                                case "Keywords":
-                                    if (Platform.isFxApplicationThread() == true) {
-                                        file.setKeywords(item.getValue());
-                                    } else {
-                                        Platform.runLater(() -> {
-                                            file.setKeywords(item.getValue());
-                                        });
-                                    }
-                                    break;
-                                case "Caption Abstract":
-                                    if (Platform.isFxApplicationThread() == true) {
-                                        file.setTitle(item.getValue());
-                                    } else {
-                                        Platform.runLater(() -> {
-                                            file.setTitle(item.getValue());
-                                        });
-                                    }
-                                    break;
-                            }
-                        }
-                        break;
-                    case JPG_JFIF:
-                        break;
-                    case EXIF:
-                        if (meta instanceof JpegExif) {
-                            exifdata = ((JpegExif) meta);
-                        }
-                        if (meta instanceof TiffExif) {
-                            exifdata = ((TiffExif) meta);
-                        }
-                        iterator = meta.iterator();
-                        while (iterator.hasNext()) {
-                            MetadataEntry item = iterator.next();
-                            Collection<MetadataEntry> entries = item.getMetadataEntries();
-                            if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
-                                for (MetadataEntry e : entries) {
-                                    if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
-                                        if (!e.getValue().equalsIgnoreCase("")) {
-                                            LocalDateTime date;
-                                            DateTimeFormatter formatter;
-                                            try {
-                                                formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-                                                date = LocalDateTime.parse(e.getValue(), formatter);
-                                            } catch (DateTimeParseException ex) {
-                                                formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-                                                date = LocalDateTime.parse(e.getValue(), formatter);
-                                            }
-                                            file.setRecordTime(date);
-                                        } else {
-                                            file.setRecordTime(LocalDateTime.now());
-                                        }
-                                        break;
-                                    }
+                                if (Platform.isFxApplicationThread() == true) {
+                                    file.commentsProperty().set(sb.toString());
+                                } else {
+                                    Platform.runLater(() -> {
+                                        file.commentsProperty().set(sb.toString());
+                                    });
                                 }
                             }
-                            if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
-                                final StringBuilder gpsLatRefsb = new StringBuilder();
-                                final StringBuilder gpsLatsb = new StringBuilder();
-                                final StringBuilder gpsLongRefsb = new StringBuilder();
-                                final StringBuilder gpsLongsb = new StringBuilder();
-                                final StringBuilder gpsTimesb = new StringBuilder();
-                                final StringBuilder gpsDatesb = new StringBuilder();
-                                final StringBuilder gpsHeightsb = new StringBuilder();
-                                entries.stream().forEach((mediaEntry) -> {
-                                    switch (mediaEntry.getKey()) {
-                                        case "GPS Latitude Ref":
-                                            gpsLatRefsb.append(mediaEntry.getValue());
+                            break;
+                        case IPTC:
+                            iptcdata = ((IPTC) meta);
+                            iterator = meta.iterator();
+                            while (iterator.hasNext()) {
+                                MetadataEntry item = iterator.next();
+                                switch (item.getKey()) {
+                                    case "Keywords":
+                                        if (Platform.isFxApplicationThread() == true) {
+                                            file.setKeywords(item.getValue());
+                                        } else {
+                                            Platform.runLater(() -> {
+                                                file.setKeywords(item.getValue());
+                                            });
+                                        }
+                                        break;
+                                    case "Caption Abstract":
+                                        if (Platform.isFxApplicationThread() == true) {
+                                            file.setTitle(item.getValue());
+                                        } else {
+                                            Platform.runLater(() -> {
+                                                file.setTitle(item.getValue());
+                                            });
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+                        case JPG_JFIF:
+                            break;
+                        case EXIF:
+                            if (meta instanceof JpegExif) {
+                                exifdata = ((JpegExif) meta);
+                            }
+                            if (meta instanceof TiffExif) {
+                                exifdata = ((TiffExif) meta);
+                            }
+                            iterator = meta.iterator();
+                            while (iterator.hasNext()) {
+                                MetadataEntry item = iterator.next();
+                                Collection<MetadataEntry> entries = item.getMetadataEntries();
+                                if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
+                                    for (MetadataEntry e : entries) {
+                                        if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
+                                            if (!e.getValue().equalsIgnoreCase("")) {
+                                                LocalDateTime date;
+                                                DateTimeFormatter formatter;
+                                                try {
+                                                    formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+                                                    date = LocalDateTime.parse(e.getValue(), formatter);
+                                                } catch (DateTimeParseException ex) {
+                                                    formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+                                                    date = LocalDateTime.parse(e.getValue(), formatter);
+                                                }
+                                                file.setRecordTime(date);
+                                            } else {
+                                                file.setRecordTime(LocalDateTime.now());
+                                            }
                                             break;
-                                        case "GPS Latitude":
-                                            gpsLatsb.append(mediaEntry.getValue());
-                                            break;
-                                        case "GPS Longitude Ref":
-                                            gpsLongRefsb.append(mediaEntry.getValue());
-                                            break;
-                                        case "GPS Longitude":
-                                            gpsLongsb.append(mediaEntry.getValue());
-                                            break;
-                                        case "GPS Altitude":
-                                            gpsHeightsb.append(mediaEntry.getValue());
-                                            break;
-                                        case "GPS Time Stamp":
-                                            gpsTimesb.append(mediaEntry.getValue());
-                                            break;
-                                        case "GPS Date Stamp":
-                                            gpsDatesb.append(mediaEntry.getValue());
-                                            break;
+                                        }
                                     }
-                                });
-                                if (gpsHeightsb.toString() != null) {
-                                    if (gpsHeightsb.toString().length() > 0) {
-                                        String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
-                                        double d = -1;
-                                        try {
-                                            DecimalFormat df = new DecimalFormat();
-                                            DecimalFormatSymbols sfs = new DecimalFormatSymbols();
-                                            sfs.setDecimalSeparator(',');
-                                            sfs.setMonetaryDecimalSeparator('.');
-                                            df.setDecimalFormatSymbols(sfs);
-                                            d = df.parse(gpsH).doubleValue();
-                                        } catch (ParseException ex) {
+                                }
+                                if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
+                                    final StringBuilder gpsLatRefsb = new StringBuilder();
+                                    final StringBuilder gpsLatsb = new StringBuilder();
+                                    final StringBuilder gpsLongRefsb = new StringBuilder();
+                                    final StringBuilder gpsLongsb = new StringBuilder();
+                                    final StringBuilder gpsTimesb = new StringBuilder();
+                                    final StringBuilder gpsDatesb = new StringBuilder();
+                                    final StringBuilder gpsHeightsb = new StringBuilder();
+                                    entries.stream().forEach((mediaEntry) -> {
+                                        switch (mediaEntry.getKey()) {
+                                            case "GPS Latitude Ref":
+                                                gpsLatRefsb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Latitude":
+                                                gpsLatsb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Longitude Ref":
+                                                gpsLongRefsb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Longitude":
+                                                gpsLongsb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Altitude":
+                                                gpsHeightsb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Time Stamp":
+                                                gpsTimesb.append(mediaEntry.getValue());
+                                                break;
+                                            case "GPS Date Stamp":
+                                                gpsDatesb.append(mediaEntry.getValue());
+                                                break;
+                                        }
+                                    });
+                                    if (gpsHeightsb.toString() != null) {
+                                        if (gpsHeightsb.toString().length() > 0) {
+                                            String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
+                                            double d = -1;
                                             try {
                                                 DecimalFormat df = new DecimalFormat();
                                                 DecimalFormatSymbols sfs = new DecimalFormatSymbols();
-                                                sfs.setDecimalSeparator('.');
-                                                sfs.setMonetaryDecimalSeparator(',');
+                                                sfs.setDecimalSeparator(',');
+                                                sfs.setMonetaryDecimalSeparator('.');
                                                 df.setDecimalFormatSymbols(sfs);
                                                 d = df.parse(gpsH).doubleValue();
-                                            } catch (ParseException ex2) {
-                                                d = -1;
+                                            } catch (ParseException ex) {
+                                                try {
+                                                    DecimalFormat df = new DecimalFormat();
+                                                    DecimalFormatSymbols sfs = new DecimalFormatSymbols();
+                                                    sfs.setDecimalSeparator('.');
+                                                    sfs.setMonetaryDecimalSeparator(',');
+                                                    df.setDecimalFormatSymbols(sfs);
+                                                    d = df.parse(gpsH).doubleValue();
+                                                } catch (ParseException ex2) {
+                                                    d = -1;
+                                                }
+                                            }
+                                            file.setGpsHeight(d);
+                                        }
+                                    }
+                                    if (gpsDatesb.toString() != null) {
+                                        String gpsDateStr = gpsDatesb.toString().replace(":", ".");
+                                        String formatTime = formatTime(gpsTimesb.toString());
+                                        file.setGpsDateTime(gpsDateStr + "T" + formatTime);
+                                    }
+                                    file.setGpsPositionFromDMS(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
+                                }
+                                if (item.getKey().equalsIgnoreCase("IFD0")) {
+                                    entries.stream().forEach((mediaEntry) -> {
+                                        if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
+                                            if (Platform.isFxApplicationThread() == true) {
+                                                file.setCamera(mediaEntry.getValue());
+                                            } else {
+                                                Platform.runLater(() -> {
+                                                    file.setCamera(mediaEntry.getValue());
+                                                });
                                             }
                                         }
-                                        file.setGpsHeight(d);
-                                    }
+                                    });
                                 }
-                                if (gpsDatesb.toString() != null) {
-                                    String gpsDateStr = gpsDatesb.toString().replace(":", ".");
-                                    String formatTime = formatTime(gpsTimesb.toString());
-                                    file.setGpsDateTime(gpsDateStr + "T" + formatTime);
-                                }
-                                file.setGpsPositionFromDMS(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
                             }
-                            if (item.getKey().equalsIgnoreCase("IFD0")) {
-                                entries.stream().forEach((mediaEntry) -> {
-                                    if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
-                                        if (Platform.isFxApplicationThread() == true) {
-                                            file.setCamera(mediaEntry.getValue());
-                                        } else {
-                                            Platform.runLater(() -> {
-                                                file.setCamera(mediaEntry.getValue());
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                        break;
-                    case ICC_PROFILE:
-                        break;
-                    default:
-                        break;
+                            break;
+                        case ICC_PROFILE:
+                            break;
+                        default:
+                            break;
+                    }
+                    //XMP.showXMP((XMP) meta);
+                    //XMP.showXMP((XMP) meta);
+                    //XMP.showXMP((XMP) meta);
+                    //XMP.showXMP((XMP) meta);
+                    //System.out.println("type: " + meta.getType().toString());
+                } else {
+                    break;
                 }
-                //XMP.showXMP((XMP) meta);
-                //XMP.showXMP((XMP) meta);
-                //XMP.showXMP((XMP) meta);
-                //XMP.showXMP((XMP) meta);
-                //System.out.println("type: " + meta.getType().toString());
-            } else {
-                break;
             }
+            long endimage = System.currentTimeMillis();
+            String loadTime="Reading time for metadata: " + (endimage - startimage) + " ms";
+            Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, loadTime);
+        } catch (java.lang.IllegalArgumentException e) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.WARNING, e.getMessage());
         }
-        long endimage = System.currentTimeMillis();
-        //System.out.println("reading time jmonkey: " + (endimage - startimage) + " ms");
     }
 
     private String formatTime(String source) {

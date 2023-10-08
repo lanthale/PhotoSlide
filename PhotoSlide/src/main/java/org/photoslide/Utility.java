@@ -9,7 +9,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -48,6 +52,8 @@ import org.kordamp.ikonli.javafx.StackedFontIcon;
  * @author selfemp
  */
 public class Utility {
+
+    public static final long nativeMemorySize = getNativeMemorySize();
 
     public void hideNodeAfterTime(Node node, int timeInSec, boolean showInScene) {
         Platform.runLater(() -> {
@@ -157,18 +163,18 @@ public class Utility {
     }
 
     public String getAppVersion() {
-        String version = "";                
+        String version = "";
         InputStream resourceAsStream
                 = getClass().getClassLoader().getResourceAsStream(
                         "properties-from-pom.properties"
-                );        
+                );
         Properties prop = new Properties();
         try {
             prop.load(resourceAsStream);
             version = (String) prop.get("app.version");
         } catch (IOException ex) {
             Logger.getLogger(Utility.class.getName()).log(Level.SEVERE, null, ex);
-        }    
+        }
         return version;
     }
 
@@ -287,4 +293,15 @@ public class Utility {
         return alert;
     }
 
+    public static void copyDir(String src, String dest, boolean overwrite) throws IOException {
+        Files.walk(Paths.get(src)).forEach(a -> {
+            Path b = Paths.get(dest, a.toString().substring(src.length()));
+            try {
+                if (!a.toString().equals(src)) {
+                    Files.copy(a, b, overwrite ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+                }
+            } catch (IOException e) {
+            }
+        });
+    }
 }

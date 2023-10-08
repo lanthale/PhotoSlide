@@ -27,6 +27,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
 import org.photoslide.ThreadFactoryBuilder;
+import org.photoslide.Utility;
 import org.photoslide.browsercollections.FilenameComparator;
 
 /**
@@ -34,7 +35,7 @@ import org.photoslide.browsercollections.FilenameComparator;
  * @author selfemp
  */
 public class MediaLoadingTask extends Task<MediaFile> {
-    
+
     private final Path selectedPath;
     private final Label mediaQTYLabel;
     private final MainViewController mainController;
@@ -44,7 +45,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final ObservableList<MediaFile> fullMediaList;
     private final MediaFileLoader fileLoader;
     private ExecutorService executorParallel;
-    
+    private final int loadingLimit;
+
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
         selectedPath = sPath;
         fileLoader = new MediaFileLoader();
@@ -55,8 +57,13 @@ public class MediaLoadingTask extends Task<MediaFile> {
         this.factory = factory;
         this.fullMediaList = fullMediaList;
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").build());
+        if (Utility.nativeMemorySize > 4194500) {
+            loadingLimit = 75;
+        } else {
+            loadingLimit = 100;
+        }
     }
-    
+
     @Override
     protected MediaFile call() throws Exception {
         final long qty;
@@ -84,36 +91,45 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
             Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
-                        
+
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
-            AtomicInteger iatom = new AtomicInteger(1);            
+            AtomicInteger iatom = new AtomicInteger(1);
             fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {
                     return;
                 }
                 if (this.isCancelled() == false) {
                     if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {                            
+                        if (FileTypes.isValidType(fileItem.toString())) {
                             MediaFile m = new MediaFile();
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);                            
-                            Thread.ofVirtual().start(() -> {
+                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                            if (Utility.nativeMemorySize > 4194500) {
+                                Thread.ofVirtual().start(() -> {
+                                    try {
+                                        loadItem(fileItem, m);
+                                        updateValue(m);
+                                    } catch (IOException ex) {
+                                        m.setMediaType(MediaFile.MediaTypes.NONE);
+                                    }
+                                });
+                            } else {
                                 try {
                                     loadItem(fileItem, m);
                                     updateValue(m);
                                 } catch (IOException ex) {
                                     m.setMediaType(MediaFile.MediaTypes.NONE);
                                 }
-                            });
+                            }
                         }
                     }
                     updateMessage(iatom.get() + " / " + qty);
                     iatom.addAndGet(1);
-                    double percentage = (double)iatom.get() / qty * 100;                    
-                    if (percentage > 75) {
+                    double percentage = (double) iatom.get() / qty * 100;
+                    if (percentage >= loadingLimit) {
                         factory.setListFilesActive(false);
                     }
                 }
@@ -144,11 +160,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 });
                 content.sort(comparing);
                 break;
-            
+
         }
         return null;
     }
-    
+
     public void loadItem(Path fileItem, MediaFile m) throws IOException {
         if (this.isCancelled()) {
             return;
@@ -195,7 +211,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }
     }
-    
+
     @Override
     protected void updateValue(MediaFile v) {
         if (v != null) {
@@ -205,11 +221,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
             });
         }
     }
-    
+
     @Override
     protected void succeeded() {
         super.succeeded();
         executorParallel.shutdown();
     }
-    
+
 }

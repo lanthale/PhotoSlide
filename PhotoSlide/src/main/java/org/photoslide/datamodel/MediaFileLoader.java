@@ -27,11 +27,9 @@ public class MediaFileLoader {
 
     private ExecutorService executorParallel;
     private final HashMap<String, Task> taskList;
-    private long memory;
 
     public MediaFileLoader() {
-        memory = Utility.getNativeMemorySize();
-        if (memory > 4194500) {
+        if (Utility.nativeMemorySize > 4194500) {
             //executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
             executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         } else {
@@ -136,7 +134,7 @@ public class MediaFileLoader {
         });
         taskList.clear();
         executorParallel.shutdownNow();
-        if (memory > 4194500) {
+        if (Utility.nativeMemorySize > 4194500) {
             executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         } else {
             executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());

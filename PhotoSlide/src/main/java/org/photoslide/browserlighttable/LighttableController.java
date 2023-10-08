@@ -400,7 +400,32 @@ public class LighttableController implements Initializable {
             System.out.println("Drop Target dragged");
             Dragboard db = t.getDragboard();
             boolean success = false;
-            if (db.hasString()) {
+            if (db.hasFiles()) {
+                List<File> files = db.getFiles();
+                MediaLoadingTaskFiles taskMLoadingFiles = new MediaLoadingTaskFiles(files, fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
+                executorParallel.submit(taskMLoadingFiles);
+                taskMLoadingFiles.setOnFailed((tf) -> {
+                    Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, tf.getSource().getException());
+                    mainController.getProgressbar().progressProperty().unbind();
+                    mainController.getProgressbarLabel().textProperty().unbind();
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setVisible(false);
+                });
+                taskMLoadingFiles.setOnSucceeded((tc) -> {
+                    mainController.getStatusLabelLeft().setVisible(false);
+                    mainController.getProgressPane().setVisible(false);
+                    filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
+                    sortedMediaList.setComparator(new MediaFilenameComparator());
+                    mainController.getProgressbar().progressProperty().unbind();
+                    mainController.getProgressbarLabel().textProperty().unbind();
+                    mainController.getStatusLabelRight().textProperty().unbind();
+                    util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+                    sortOrderComboBox.setDisable(false);
+                    mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
+                    util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setText("");
+                });
                 success = true;
             }
             t.setDropCompleted(success);

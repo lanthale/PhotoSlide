@@ -241,7 +241,7 @@ public class CollectionsController implements Initializable {
                     }
                 };
                 task.setOnFailed((fail) -> {
-                    Alert alertError = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
+                    Alert alertError = new Alert(AlertType.ERROR, "Error during import of media files", ButtonType.OK);
                     alertError.getDialogPane().getStylesheets().add(
                             getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
                     alertError.setResizable(false);

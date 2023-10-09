@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
@@ -214,16 +215,39 @@ public class CollectionsController implements Initializable {
             if (alert.getResult() == ButtonType.OK) {
                 File dropFile = db.getFiles().get(0);
                 List<File> fileItem = db.getFiles();
+                AtomicLong count=new AtomicLong(0);
+                if (dropFile.isDirectory()) {
+                    try {
+                        count.set(Utility.fileCount(dropFile.toPath()));
+                    } catch (IOException ex) {
+                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    count.set(fileItem.size());
+                }
                 Task<Boolean> task = new Task<>() {
                     @Override
                     protected Boolean call() throws Exception {
                         String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
                         updateTitle("Copy mediafiles to " + Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString());
+                        AtomicInteger iatom = new AtomicInteger(1);
                         if (dropFile.isDirectory()) {
                             Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
                             updateMessage("Copy to target dir...");
                             Files.createDirectory(targetPath);
-                            Utility.copyDir(dropFile.getAbsolutePath(), targetPath.toString(), true);
+                            String src = dropFile.getAbsolutePath();
+                            String dest = targetPath.toString();
+                            Files.walk(Paths.get(src)).forEach(a -> {
+                                Path b = Paths.get(dest, a.toString().substring(src.length()));
+                                try {
+                                    if (!a.toString().equals(src)) {
+                                        Files.copy(a, b, true ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+                                        updateMessage(iatom.get() + " / " + count.get());
+                                        iatom.addAndGet(1);
+                                    }
+                                } catch (IOException e) {
+                                }
+                            });
                         } else {
                             //Create Task
                             String targetDir = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE);
@@ -232,6 +256,8 @@ public class CollectionsController implements Initializable {
                                 try {
                                     updateMessage("Copy " + t.getName());
                                     Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
+                                    updateMessage(iatom.get() + " / " + count.get());
+                                    iatom.addAndGet(1);
                                 } catch (IOException ex) {
                                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
@@ -240,6 +266,12 @@ public class CollectionsController implements Initializable {
                         return true;
                     }
                 };
+                task.setOnScheduled((tk) -> {
+                    mainController.getStatusLabelLeft().setVisible(true);
+                    mainController.getProgressPane().setVisible(true);
+                    mainController.getProgressbarLabel().setText(count + " files found - Loading...");
+                    mainController.getStatusLabelRight().setVisible(true);
+                });
                 task.setOnFailed((fail) -> {
                     Alert alertError = new Alert(AlertType.ERROR, "Error during import of media files", ButtonType.OK);
                     alertError.getDialogPane().getStylesheets().add(

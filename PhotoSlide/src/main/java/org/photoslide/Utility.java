@@ -293,15 +293,10 @@ public class Utility {
         return alert;
     }
 
-    public static void copyDir(String src, String dest, boolean overwrite) throws IOException {
-        Files.walk(Paths.get(src)).forEach(a -> {
-            Path b = Paths.get(dest, a.toString().substring(src.length()));
-            try {
-                if (!a.toString().equals(src)) {
-                    Files.copy(a, b, overwrite ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
-                }
-            } catch (IOException e) {
-            }
-        });
+    public static long fileCount(Path dir) throws IOException {
+        return Files.walk(dir)
+                .parallel()
+                .filter(p -> !p.toFile().isDirectory())
+                .count();
     }
 }

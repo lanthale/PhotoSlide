@@ -936,11 +936,11 @@ public class LighttableController implements Initializable {
                 Task<Boolean> taskMeta = new Task<>() {
                     @Override
                     protected Boolean call() throws IOException {
-                        int i = 0;
-                        for (MediaFile mediaFile : fullMediaList) {
+                        AtomicInteger i=new AtomicInteger(1);
+                        fullMediaList.parallelStream().forEach((mediaFile) -> {
                             if (this.isCancelled() == false) {
-                                updateProgress(i + 1, fullMediaList.size());
-                                updateMessage("Read record time " + (i + 1) + "/" + fullMediaList.size());
+                                updateProgress(i.get(), fullMediaList.size());
+                                updateMessage("Read record time " + i.get() + "/" + fullMediaList.size());
                                 try {
                                     if (mediaFile.getRecordTime() == null) {
                                         metadataController.setActualMediaFile(mediaFile);
@@ -953,8 +953,8 @@ public class LighttableController implements Initializable {
                                     mediaFile.setRecordTime(triggerTime);
                                 }
                             }
-                            i++;
-                        }
+                            i.addAndGet(1);
+                        });
                         return true;
                     }
                 };

@@ -175,8 +175,8 @@ public class CollectionsController implements Initializable {
         boolean success = false;
         if (db.hasFiles()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Select the target for the files", ButtonType.CANCEL, ButtonType.OK);
-            alert.setTitle("Select the target for the files");
-            alert.setHeaderText("Select the target for the files");
+            alert.setTitle("Select the target for the files to be imported/copied");
+            alert.setHeaderText("This function copy's files/folder\n from the source to the destination folder\nselected. If a folder is dropped a yyyymmdd will \nbe added to the target folder name.");
             FontIcon ft = new FontIcon("ti-import:50");
             alert.setGraphic(ft);
             DialogPane dialogPane = alert.getDialogPane();
@@ -187,12 +187,14 @@ public class CollectionsController implements Initializable {
             content.setVgap(5);
             Label cbLabel = new Label("Select collection");
             ComboBox<String> cb = new ComboBox<>();
+            cb.setPrefWidth(200);
             accordionPane.getPanes().forEach((pan) -> {
                 cb.getItems().add(pan.getText());
             });
             content.addRow(0, cbLabel, cb);
             Label cbRootLabel = new Label("Select event");
             ComboBox<String> cbRootFolder = new ComboBox<>();
+            cbRootFolder.setPrefWidth(200);
             content.addRow(1, cbRootLabel, cbRootFolder);
             cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
                 cbRootFolder.getItems().clear();
@@ -202,7 +204,11 @@ public class CollectionsController implements Initializable {
                     cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
                 });
             });
+            cbRootFolder.getSelectionModel().selectedItemProperty().addListener((o) -> {
+                dialogPane.lookupButton(ButtonType.OK).setDisable(false);
+            });
             dialogPane.setContent(content);
+            dialogPane.lookupButton(ButtonType.OK).setDisable(true);
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));

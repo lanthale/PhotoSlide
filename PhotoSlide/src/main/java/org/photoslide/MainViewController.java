@@ -32,8 +32,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
@@ -41,9 +44,11 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -52,6 +57,8 @@ import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
@@ -236,7 +243,7 @@ public class MainViewController implements Initializable {
             } else {
                 processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
             }
-        });        
+        });
         showProcessButton.setOnMouseClicked((t) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 Platform.runLater(() -> {
@@ -378,7 +385,7 @@ public class MainViewController implements Initializable {
     @FXML
     private void exportAction(ActionEvent event) {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
-            Alert alert = new Alert(AlertType.ERROR, "Select an image to export!", ButtonType.OK);
+            Alert alert = new Alert(AlertType.ERROR, "Select a MediaFile to export!", ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             alert.setResizable(false);
@@ -389,10 +396,10 @@ public class MainViewController implements Initializable {
             alert.showAndWait();
             return;
         }
-        exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().titleProperty().getValue(), collectionsPaneController.getSelectedPath().getParent().toString(), lighttablePaneController.getFullMediaList());
+        exportData(lighttablePaneController.getFactory().getSelectedCell().getItem().titleProperty().getValue(), collectionsPaneController.getSelectedPath().getParent().toString(), lighttablePaneController.getSortedMediaList());
     }
 
-    public boolean exportData(String titel, String initOutDir, ObservableList<MediaFile> mediaListToExport) {
+    public boolean exportData(String titel, String initOutDir, SortedList<MediaFile> mediaListToExport) {
         ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
         diag.setGraphic(new FontIcon("ti-export:30"));
         diag.setTitle("Export media files...");
@@ -433,6 +440,27 @@ public class MainViewController implements Initializable {
                             exportList.addAll(mediaListToExport);
                         }
                     }
+                    //sort
+                    if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase("Record time based")) {
+                        AtomicInteger iatom = new AtomicInteger(1);
+                        exportList.forEach((mediaFile) -> {
+                            //updateProgress(iatom.get(), exportList.size());
+                            updateMessage("Read record time " + iatom.get() + "/" + exportList.size());
+                            try {
+                                if (mediaFile.getRecordTime() == null) {
+                                    metadataPaneController.setActualMediaFile(mediaFile);
+                                    metadataPaneController.readBasicMetadata(this, mediaFile);
+                                }
+                            } catch (IOException e) {
+                                long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
+                                LocalDateTime triggerTime
+                                        = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
+                                mediaFile.setRecordTime(triggerTime);
+                            }
+                        });
+                        exportList.sort(Comparator.comparing(MediaFile::getRecordTime));
+                    }
+                    //end sort
                     int i = 0;
                     for (MediaFile mediaItem : exportList) {
                         if (this.isCancelled() == false) {
@@ -1187,7 +1215,7 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void showProcessListButtonAction(ActionEvent event) {        
+    private void showProcessListButtonAction(ActionEvent event) {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());

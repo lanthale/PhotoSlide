@@ -113,6 +113,8 @@ public class ExportDialogController implements Initializable {
     private TextField qualityTextField;
     @FXML
     private Tooltip outputDirToolTip;
+    @FXML
+    private ComboBox<String> sortComboBox;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -237,6 +239,8 @@ public class ExportDialogController implements Initializable {
             new Thread(taskFind).start();
         }); 
         outputDirToolTip.textProperty().bind(outputDirText.textProperty());
+        sortComboBox.getItems().addAll("Record time based", "Actual view");
+        sortComboBox.getSelectionModel().selectFirst();
     }
 
     @FXML
@@ -428,5 +432,11 @@ public class ExportDialogController implements Initializable {
         int val = Integer.parseInt(qualityTextField.getText());
         return val;
     }
+
+    public ComboBox<String> getSortComboBox() {
+        return sortComboBox;
+    }
+    
+    
 
 }

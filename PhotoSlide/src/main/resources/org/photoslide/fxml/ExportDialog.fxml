@@ -20,7 +20,7 @@
 <?import org.controlsfx.control.textfield.CustomTextField?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="399.0" prefWidth="911.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="399.0" prefWidth="911.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
       <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="149.0" />
@@ -40,7 +40,7 @@
       <Label fx:id="exampleLabel" layoutX="392.0" layoutY="106.0" prefHeight="17.0" prefWidth="112.0" text="wildeben_1.jpg" textFill="#a8a4a4" textOverrun="CENTER_ELLIPSIS" />
       <Label layoutX="102.0" layoutY="36.0" text="Fileformat" />
       <ComboBox fx:id="fileFormatCombo" layoutX="164.0" layoutY="31.0" prefHeight="27.0" prefWidth="149.0" />
-      <GridPane hgap="10.0" layoutX="81.0" layoutY="213.0">
+      <GridPane hgap="10.0" layoutX="81.0" layoutY="265.0">
         <columnConstraints>
           <ColumnConstraints hgrow="SOMETIMES" maxWidth="170.0" minWidth="10.0" prefWidth="170.0" />
           <ColumnConstraints hgrow="SOMETIMES" maxWidth="170.0" minWidth="10.0" prefWidth="170.0" />
@@ -118,5 +118,7 @@
             <MapView fx:id="mapView" prefHeight="125.0" prefWidth="350.0" />
          </children>
       </VBox>
+      <Label layoutX="117.0" layoutY="213.0" text="Sorting" />
+      <ComboBox fx:id="sortComboBox" layoutX="164.0" layoutY="209.0" prefWidth="150.0" />
    </children>
 </AnchorPane>

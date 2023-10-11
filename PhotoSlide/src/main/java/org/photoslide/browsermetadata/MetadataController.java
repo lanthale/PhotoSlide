@@ -524,7 +524,8 @@ public class MetadataController implements Initializable {
         Map<MetadataType, Metadata> metadataMap;
         try {
             metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
-            for (Map.Entry<MetadataType, Metadata> entry : metadataMap.entrySet()) {
+            metadataMap.entrySet().parallelStream().forEach((entry) -> {
+                
                 if (actTask.isCancelled() == false) {
                     Metadata meta = entry.getValue();
                     Iterator<MetadataEntry> iterator;
@@ -589,7 +590,7 @@ public class MetadataController implements Initializable {
                                 MetadataEntry item = iterator.next();
                                 Collection<MetadataEntry> entries = item.getMetadataEntries();
                                 if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
-                                    for (MetadataEntry e : entries) {
+                                    entries.parallelStream().forEach((e) -> {
                                         if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
                                             if (!e.getValue().equalsIgnoreCase("")) {
                                                 LocalDateTime date;
@@ -605,9 +606,8 @@ public class MetadataController implements Initializable {
                                             } else {
                                                 file.setRecordTime(LocalDateTime.now());
                                             }
-                                            break;
                                         }
-                                    }
+                                    });
                                 }
                                 if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
                                     final StringBuilder gpsLatRefsb = new StringBuilder();
@@ -617,7 +617,7 @@ public class MetadataController implements Initializable {
                                     final StringBuilder gpsTimesb = new StringBuilder();
                                     final StringBuilder gpsDatesb = new StringBuilder();
                                     final StringBuilder gpsHeightsb = new StringBuilder();
-                                    entries.stream().forEach((mediaEntry) -> {
+                                    entries.stream().parallel().forEach((mediaEntry) -> {
                                         switch (mediaEntry.getKey()) {
                                             case "GPS Latitude Ref":
                                                 gpsLatRefsb.append(mediaEntry.getValue());
@@ -676,7 +676,7 @@ public class MetadataController implements Initializable {
                                     file.setGpsPositionFromDMS(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
                                 }
                                 if (item.getKey().equalsIgnoreCase("IFD0")) {
-                                    entries.stream().forEach((mediaEntry) -> {
+                                    entries.stream().parallel().forEach((mediaEntry) -> {
                                         if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
                                             if (Platform.isFxApplicationThread() == true) {
                                                 file.setCamera(mediaEntry.getValue());
@@ -701,9 +701,11 @@ public class MetadataController implements Initializable {
                     //XMP.showXMP((XMP) meta);
                     //System.out.println("type: " + meta.getType().toString());
                 } else {
-                    break;
+                    //break;
                 }
-            }
+            
+            });
+            
             long endimage = System.currentTimeMillis();
             String loadTime="Reading time for metadata: " + (endimage - startimage) + " ms";
             Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, loadTime);

@@ -180,7 +180,7 @@ public class BookmarkBoardController implements Initializable {
         popover.hide(Duration.millis(500));
         statusLabel.setText("Start export " + fullMediaList.size() + " files to filesystem...");
         String initDir = System.getProperty("user.dir").toUpperCase();
-        mainViewController.exportData("Export bookmarks", initDir, fullMediaList);
+        mainViewController.exportData("Export bookmarks", initDir, sortedMediaList);
         statusLabel.setText("Export " + fullMediaList.size() + " files...finished");
         util.hideNodeAfterTime(statusLabel, 3, true);
     }

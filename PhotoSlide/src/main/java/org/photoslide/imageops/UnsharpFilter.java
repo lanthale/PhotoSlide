@@ -7,6 +7,8 @@ package org.photoslide.imageops;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
@@ -79,12 +81,16 @@ public class UnsharpFilter implements ImageFilter {
         PixelWriter pixelWriter = filteredImage.getPixelWriter();
         byte[] targetBuffer = new byte[width * height * 4];
         //Implement filter itself
-        for (int i = 0; i < buffer.length; i++) {
-            int rgba = buffer[i];
-            int res = filterRGB(rgba);
-            targetBuffer[i] = (byte) (res);
-        }
+
         Thread.ofVirtual().start(() -> {
+            IntStream map = IntStream.range(0, buffer.length).map(i -> buffer[i] & 0xFF);
+            AtomicInteger i = new AtomicInteger();
+            map.parallel().forEachOrdered((value) -> {
+                int rgba = buffer[i.get()];
+                int res = filterRGB(rgba);
+                targetBuffer[i.get()] = (byte) (res);
+                i.addAndGet(1);
+            });
             pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
         });
     }

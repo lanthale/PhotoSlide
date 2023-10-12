@@ -7,6 +7,8 @@ package org.photoslide.imageops;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
@@ -15,6 +17,7 @@ import javafx.scene.image.WritableImage;
 
 /**
  * Set the gain.
+ *
  * @min-value: 0
  * @max-value: 1
  * @author selfemp
@@ -67,7 +70,7 @@ public class GainFilter implements ImageFilter {
 
     @Override
     public float[] getValues() {
-        return new float[]{gain,bias};
+        return new float[]{gain, bias};
     }
 
     @Override
@@ -78,14 +81,17 @@ public class GainFilter implements ImageFilter {
         rTable = gTable = bTable = makeTable();
         PixelWriter pixelWriter = filteredImage.getPixelWriter();
         byte[] targetBuffer = new byte[width * height * 4];
-        for (int i = 0; i < buffer.length; i++) {
-            int rgba = buffer[i];
-            int res = filterRGB(rgba);
-            targetBuffer[i] = (byte) (res);
-        }
         Thread.ofVirtual().start(() -> {
-           pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4); 
-        });        
+            IntStream map = IntStream.range(0, buffer.length).map(i -> buffer[i] & 0xFF);
+            AtomicInteger i = new AtomicInteger();
+            map.parallel().forEachOrdered((value) -> {
+                int rgba = buffer[i.get()];
+                int res = filterRGB(rgba);
+                targetBuffer[i.get()] = (byte) (res);
+                i.addAndGet(1);
+            });
+            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        });
     }
 
     @Override
@@ -188,7 +194,5 @@ public class GainFilter implements ImageFilter {
     public String toString() {
         return "GainFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", gain=" + gain + ", bias=" + bias + '}';
     }
-    
-    
 
 }

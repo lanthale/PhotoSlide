@@ -5,18 +5,20 @@
  */
 package org.photoslide.imageops;
 
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelBuffer;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.util.Callback;
 
 /**
  *
@@ -30,6 +32,8 @@ public class ExposureFilter implements ImageFilter {
     private int pos;
     private float[] values;
     private byte[] buffer;
+    private ByteBuffer byteBuffer;
+    private PixelBuffer<ByteBuffer> pixelBuffer;
     private int height;
     private int width;
     private float exposure;
@@ -48,8 +52,15 @@ public class ExposureFilter implements ImageFilter {
         height = (int) image.getHeight();
         width = (int) image.getWidth();
         buffer = new byte[width * height * 4];
-        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
-        filteredImage = new WritableImage(pixelReader, width, height);
+        byteBuffer = ByteBuffer.allocateDirect(width * height * 4);
+        //pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraPreInstance(), buffer, 0, width * 4);
+        
+        pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());
+        //filteredImage = new WritableImage(pixelReader, width, height);
+        filteredImage = new WritableImage(pixelBuffer);
+        ByteBuffer.wrap(buffer);
+        System.out.println("bytebuffer "+byteBuffer.capacity()); 
         return filteredImage;
     }
 
@@ -72,12 +83,34 @@ public class ExposureFilter implements ImageFilter {
 
     @Override
     public void filter(float[] values) {
+        
         this.values = values;
         this.exposure = values[0];
         rTable = gTable = bTable = makeTable();
-        PixelWriter pixelWriter = filteredImage.getPixelWriter();
+        //PixelWriter pixelWriter = filteredImage.getPixelWriter();
         byte[] targetBuffer = new byte[width * height * 4];
-        Thread.ofVirtual().start(() -> {
+        Callback<PixelBuffer<ByteBuffer>, Rectangle2D> callback = pBuffer -> {
+            System.out.println("Buffer update");
+            ByteBuffer bufferPB = pBuffer.getBuffer();
+            // Update the buffer.
+            IntStream map = IntStream.range(0, buffer.length).map(i -> buffer[i] & 0xFF);
+            AtomicInteger i = new AtomicInteger();
+            map.parallel().forEachOrdered((value) -> {
+                int rgba = buffer[i.get()];
+                int res = filterRGB(rgba);
+                //buffer[i.get()] = (byte) (res);
+                targetBuffer[i.get()] = (byte) (res);
+                bufferPB.put(i.get(), (byte) (res));
+                i.addAndGet(1);
+            });
+            //bufferPB.put(targetBuffer);
+            return new Rectangle2D(0, 0, width, height);
+        };
+        System.out.println("filter...");
+        pixelBuffer.updateBuffer(callback);
+        System.out.println("filter...finished");
+
+        /*Thread.ofVirtual().start(() -> {
             IntStream map = IntStream.range(0, buffer.length).map(i -> buffer[i] & 0xFF);
             AtomicInteger i = new AtomicInteger();
             map.parallel().forEachOrdered((value) -> {
@@ -87,7 +120,8 @@ public class ExposureFilter implements ImageFilter {
                 i.addAndGet(1);
             });
             pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
-        });
+
+        });*/
     }
 
     @Override

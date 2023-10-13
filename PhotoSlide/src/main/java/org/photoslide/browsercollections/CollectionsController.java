@@ -651,7 +651,9 @@ public class CollectionsController implements Initializable {
             actCollectionTitlePane.setTooltip(tip);
         });
         executorParallel.submit(task);
-        mainController.getTaskProgressView().getTasks().add(task);
+        Platform.runLater(() -> {
+            mainController.getTaskProgressView().getTasks().add(task);
+        });
     }
 
     public Path getSelectedPath() {

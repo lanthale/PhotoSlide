@@ -422,7 +422,9 @@ public class MetadataController implements Initializable {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
             LocalDateTime date = null;
             try {
-                date = LocalDateTime.parse(timeStr, formatter);
+                if (timeStr != null) {
+                    date = LocalDateTime.parse(timeStr, formatter);
+                }
             } catch (DateTimeParseException ef) {
             }
             double alti = -1;
@@ -489,7 +491,9 @@ public class MetadataController implements Initializable {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
                     LocalDateTime date = null;
                     try {
-                        date = LocalDateTime.parse(timeStr, formatter);
+                        if (timeStr != null) {
+                            date = LocalDateTime.parse(timeStr, formatter);
+                        }
                     } catch (DateTimeParseException ef) {
                     }
                     double alti = -1;
@@ -525,7 +529,7 @@ public class MetadataController implements Initializable {
         try {
             metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
             metadataMap.entrySet().parallelStream().forEach((entry) -> {
-                
+
                 if (actTask.isCancelled() == false) {
                     Metadata meta = entry.getValue();
                     Iterator<MetadataEntry> iterator;
@@ -703,11 +707,11 @@ public class MetadataController implements Initializable {
                 } else {
                     //break;
                 }
-            
+
             });
-            
+
             long endimage = System.currentTimeMillis();
-            String loadTime="Reading time for metadata: " + (endimage - startimage) + " ms";
+            String loadTime = "Reading time for metadata: " + (endimage - startimage) + " ms";
             Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, loadTime);
         } catch (java.lang.IllegalArgumentException e) {
             Logger.getLogger(MetadataController.class.getName()).log(Level.WARNING, e.getMessage());

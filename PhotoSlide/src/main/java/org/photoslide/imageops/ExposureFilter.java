@@ -52,18 +52,26 @@ public class ExposureFilter implements ImageFilter {
         height = (int) image.getHeight();
         width = (int) image.getWidth();
         buffer = new byte[width * height * 4];
-        byteBuffer = ByteBuffer.allocateDirect(width * height * 4);
-        //pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
-        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraPreInstance(), buffer, 0, width * 4);
-        
-        pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());
-        //filteredImage = new WritableImage(pixelReader, width, height);
+        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+        filteredImage = new WritableImage(pixelReader, width, height);        
+        return filteredImage;
+    }
+
+    /*@Override
+    public Image load(Image img) {
+        image = img;
+        PixelReader pixelReader = image.getPixelReader();
+        height = (int) image.getHeight();
+        width = (int) image.getWidth();
+        buffer = new byte[width * height * 4];
+        byteBuffer = ByteBuffer.allocateDirect(width * height * 4);        
+        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraPreInstance(), buffer, 0, width * 4);        
+        pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());        
         filteredImage = new WritableImage(pixelBuffer);
         ByteBuffer.wrap(buffer);
         System.out.println("bytebuffer "+byteBuffer.capacity()); 
         return filteredImage;
-    }
-
+    }*/
     @Override
     public Image reset() {
         this.exposure = 1.0f;
@@ -83,11 +91,26 @@ public class ExposureFilter implements ImageFilter {
 
     @Override
     public void filter(float[] values) {
-        
         this.values = values;
         this.exposure = values[0];
         rTable = gTable = bTable = makeTable();
-        //PixelWriter pixelWriter = filteredImage.getPixelWriter();
+        PixelWriter pixelWriter = filteredImage.getPixelWriter();
+        Thread.ofVirtual().start(() -> {
+            byte[] targetBuffer = new byte[width * height * 4];
+            for (int i = 0; i < buffer.length; i++) {
+                int rgba = buffer[i];
+                int res = filterRGB(rgba);
+                targetBuffer[i] = (byte) (res);
+            }
+            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
+        });
+    }
+
+    /*@Override
+    public void filter(float[] values) {        
+        this.values = values;
+        this.exposure = values[0];
+        rTable = gTable = bTable = makeTable();        
         byte[] targetBuffer = new byte[width * height * 4];
         Callback<PixelBuffer<ByteBuffer>, Rectangle2D> callback = pBuffer -> {
             System.out.println("Buffer update");
@@ -109,21 +132,7 @@ public class ExposureFilter implements ImageFilter {
         System.out.println("filter...");
         pixelBuffer.updateBuffer(callback);
         System.out.println("filter...finished");
-
-        /*Thread.ofVirtual().start(() -> {
-            IntStream map = IntStream.range(0, buffer.length).map(i -> buffer[i] & 0xFF);
-            AtomicInteger i = new AtomicInteger();
-            map.parallel().forEachOrdered((value) -> {
-                int rgba = buffer[i.get()];
-                int res = filterRGB(rgba);
-                targetBuffer[i.get()] = (byte) (res);
-                i.addAndGet(1);
-            });
-            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
-
-        });*/
-    }
-
+    }*/
     @Override
     public void setValues(float[] values) {
         this.values = values;

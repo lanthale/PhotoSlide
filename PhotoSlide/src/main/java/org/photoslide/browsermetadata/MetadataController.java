@@ -251,12 +251,17 @@ public class MetadataController implements Initializable {
                 lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
             }
             double val = exposureSlider.getValue();
-            executorFilter.submit(() -> {
-                exposerFilter.filter(new float[]{(float) val});
+            exposerFilter.filter(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(exposerFilter.getValues());
                 }
+            executorFilter.submit(() -> {
+                /*exposerFilter.filter(new float[]{(float) val});
+                ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
+                if (filterForName != null) {
+                    filterForName.setValues(exposerFilter.getValues());
+                }*/
                 actualMediaFile.saveEdits();
             });
         });

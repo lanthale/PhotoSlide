@@ -181,7 +181,7 @@ public class MediaFile {
     }
 
     public void setMedia(Media video, VideoTypes videoTypes) {
-        this.media = media;
+        this.media = video;
         this.videoSupported = videoTypes;
     }
 

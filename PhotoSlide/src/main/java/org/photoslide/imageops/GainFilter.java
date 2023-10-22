@@ -195,4 +195,14 @@ public class GainFilter implements ImageFilter {
         return "GainFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", gain=" + gain + ", bias=" + bias + '}';
     }
 
+    @Override
+    public void filterIcon(float[] values) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public Image loadIcon(Image img) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }

@@ -193,7 +193,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
             if (listFilesActive == false) {
                 if (newMediaItem != null && oldMediaItem == null) {
-                    if (newMediaItem.isLoading() == true) {                        
+                    if (newMediaItem.isLoading() == true) {
                         if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
                             if (isCellVisible(cell)) {
                                 fileLoader.loadImage(newMediaItem);
@@ -514,11 +514,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         img.progressProperty().addListener((ov, g, g1) -> {
             if ((Double) g1 == 1.0 && !img.isError()) {
                 lightController.getImageProgress().setVisible(false);
-                imageWithFilters = img;
+                lightController.getImageView().setImage(img);
+                //imageWithFilters = img;
                 filterList = selectedMediaItem.getFilterListWithoutImageData();
                 for (ImageFilter imageFilter : filterList) {
-                    imageWithFilters = imageFilter.load(imageWithFilters);
-                    imageFilter.filter(imageFilter.getValues());
                     switch (imageFilter.getName()) {
                         case "ExposureFilter" -> {
                             metadataController.setExposerFilter(imageFilter);
@@ -530,12 +529,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
                         }
                     }
+                    imageWithFilters = imageFilter.load(img);
+                    imageFilter.filter(imageFilter.getValues());
                 }
-                img = imageWithFilters;
-                lightController.getImageView().setImage(img);
+                img = imageWithFilters;                
             }
         });
         lightController.getImageView().setImage(img);
+
         lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 
         if (selectedCell.getItem().getCropView() != null) {
@@ -754,7 +755,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @return true if cell is actual visible
      */
     public boolean isCellVisible(MediaGridCell input) {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         boolean ret = false;
         if (vf.getFirstVisibleCell() == null) {
             return false;

@@ -175,6 +175,19 @@ public class MediaFile {
             return this.image;
         }
     }
+    
+    public Image setFiltersIcon() {
+        if (this.unModifiyAbleImage != null) {
+            Image imageWithFilters = getClonedImage(unModifiyAbleImage);
+            for (ImageFilter imageFilter : filterList) {
+                imageWithFilters = imageFilter.loadIcon(imageWithFilters);
+                imageFilter.filterIcon(imageFilter.getValues());
+            }
+            return imageWithFilters;
+        } else {
+            return this.image;
+        }
+    }
 
     public void setImage(Image image) {
         this.image = image;
@@ -664,7 +677,7 @@ public class MediaFile {
         int width = (int) image.getWidth();
         byte[] buffer = new byte[width * height * 4];
         try {
-            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);            
             Image filteredImage = new WritableImage(pixelReader, width, height);
             return filteredImage;
         } catch (Exception e) {

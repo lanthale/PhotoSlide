@@ -31,13 +31,12 @@ public class ExposureFilter implements ImageFilter {
     private final String name;
     private int pos;
     private float[] values;
-    private byte[] buffer;
-    private ByteBuffer byteBuffer;
     private PixelBuffer<ByteBuffer> pixelBuffer;
     private int height;
     private int width;
     private float exposure;
     protected int[] rTable, gTable, bTable;
+    private byte[] buffer;
 
     public ExposureFilter() {
         name = "ExposureFilter";
@@ -45,8 +44,8 @@ public class ExposureFilter implements ImageFilter {
         rTable = gTable = bTable = makeTable();
     }
 
-    /*@Override
-    public Image load(Image img) {
+    @Override
+    public Image loadIcon(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         height = (int) image.getHeight();
@@ -55,7 +54,8 @@ public class ExposureFilter implements ImageFilter {
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
         filteredImage = new WritableImage(pixelReader, width, height);        
         return filteredImage;
-    }*/
+    }
+    
     @Override
     public Image load(Image img) {
         image = img;
@@ -63,24 +63,13 @@ public class ExposureFilter implements ImageFilter {
         height = (int) image.getHeight();
         width = (int) image.getWidth();
         buffer = new byte[width * height * 4];
-        byteBuffer = ByteBuffer.allocateDirect(width * height * 4);
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(width * height * 4);
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraPreInstance(), buffer, 0, width * 4);
         pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());
         filteredImage = new WritableImage(pixelBuffer);
-        ByteBuffer.wrap(buffer);                
+        ByteBuffer.wrap(buffer);
         return filteredImage;
     }
-
-    Callback<PixelBuffer<ByteBuffer>, Rectangle2D> callback = pBuffer -> {        
-        ByteBuffer bufferPB = pBuffer.getBuffer();
-        // Update the buffer.                
-        for (int i = 0; i < buffer.length; i++) {
-            int rgba = buffer[i];
-            int res = filterRGB(rgba);            
-            bufferPB.put(i, (byte) (res));
-        }
-        return new Rectangle2D(0, 0, width, height);
-    };
 
     @Override
     public Image reset() {
@@ -99,8 +88,8 @@ public class ExposureFilter implements ImageFilter {
         return new float[]{exposure};
     }
 
-    /*@Override
-    public void filter(float[] values) {
+    @Override
+    public void filterIcon(float[] values) {
         this.values = values;
         this.exposure = values[0];
         rTable = gTable = bTable = makeTable();
@@ -114,7 +103,8 @@ public class ExposureFilter implements ImageFilter {
             }
             pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
         });
-    }*/
+    }
+    
     @Override
     public void filter(float[] values) {
         this.values = values;
@@ -122,8 +112,19 @@ public class ExposureFilter implements ImageFilter {
         rTable = gTable = bTable = makeTable();
         Platform.runLater(() -> {
             pixelBuffer.updateBuffer(callback);
-        });        
+        });
     }
+
+    Callback<PixelBuffer<ByteBuffer>, Rectangle2D> callback = pBuffer -> {
+        ByteBuffer bufferPB = pBuffer.getBuffer();
+        // Update the buffer.        
+        for (int i = 0; i < buffer.length; i++) {
+            int rgba = buffer[i];
+            int res = filterRGB(rgba);
+            bufferPB.put(i, (byte) (res));
+        }
+        return new Rectangle2D(0, 0, width, height);
+    };
 
     @Override
     public void setValues(float[] values) {

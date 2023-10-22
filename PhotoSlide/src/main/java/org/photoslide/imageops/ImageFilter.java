@@ -41,12 +41,16 @@ public interface ImageFilter extends Cloneable {
      */
     public void filter(float[] values);
     
+    public void filterIcon(float[] values);
+    
     /**
      *
      * @param img Image to be loaded into an byte array
      * @return the WriteableImage which should be used in the @ImageView
      */
     public Image load(Image img);
+    
+    public Image loadIcon(Image img);
     
     /**
      *

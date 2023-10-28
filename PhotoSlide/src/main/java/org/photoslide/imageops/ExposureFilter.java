@@ -8,8 +8,6 @@ package org.photoslide.imageops;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
@@ -37,6 +35,7 @@ public class ExposureFilter implements ImageFilter {
     private float exposure;
     protected int[] rTable, gTable, bTable;
     private byte[] buffer;
+    private boolean gpuInit=false;
 
     public ExposureFilter() {
         name = "ExposureFilter";
@@ -57,7 +56,7 @@ public class ExposureFilter implements ImageFilter {
     }
     
     @Override
-    public Image load(Image img) {
+    public Image loadGPU(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         height = (int) image.getHeight();
@@ -68,6 +67,7 @@ public class ExposureFilter implements ImageFilter {
         pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());
         filteredImage = new WritableImage(pixelBuffer);
         ByteBuffer.wrap(buffer);
+        gpuInit=true;
         return filteredImage;
     }
 
@@ -106,7 +106,7 @@ public class ExposureFilter implements ImageFilter {
     }
     
     @Override
-    public void filter(float[] values) {
+    public void filterGPU(float[] values) {
         this.values = values;
         this.exposure = values[0];
         rTable = gTable = bTable = makeTable();
@@ -218,6 +218,12 @@ public class ExposureFilter implements ImageFilter {
         }
         return true;
     }
+
+    public boolean isGpuInit() {
+        return gpuInit;
+    }
+    
+    
 
     @Override
     public String toString() {

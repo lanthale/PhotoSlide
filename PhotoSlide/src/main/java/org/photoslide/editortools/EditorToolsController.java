@@ -83,8 +83,8 @@ public class EditorToolsController implements Initializable {
                 imageWithFilters = img;
                 filterList = selectedMediaFile.getFilterListWithoutImageData();
                 for (ImageFilter imageFilter : filterList) {
-                    imageWithFilters = imageFilter.load(imageWithFilters);
-                    imageFilter.filter(imageFilter.getValues());
+                    imageWithFilters = imageFilter.loadIcon(imageWithFilters);
+                    imageFilter.filterIcon(imageFilter.getValues());
                 }
                 img = imageWithFilters;
                 histogram = new Histogram(img);

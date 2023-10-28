@@ -515,7 +515,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if ((Double) g1 == 1.0 && !img.isError()) {
                 lightController.getImageProgress().setVisible(false);
                 lightController.getImageView().setImage(img);
-                //imageWithFilters = img;
+                imageWithFilters = img;
                 filterList = selectedMediaItem.getFilterListWithoutImageData();
                 for (ImageFilter imageFilter : filterList) {
                     switch (imageFilter.getName()) {
@@ -529,13 +529,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
                         }
                     }
-                    imageWithFilters = imageFilter.load(img);
-                    imageFilter.filter(imageFilter.getValues());
+                    imageWithFilters = imageFilter.loadIcon(img);
+                    imageFilter.filterIcon(imageFilter.getValues());
                 }
-                img = imageWithFilters;                
+                img = imageWithFilters;
+                lightController.getImageView().setImage(img);
             }
         });
-        lightController.getImageView().setImage(img);
 
         lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 

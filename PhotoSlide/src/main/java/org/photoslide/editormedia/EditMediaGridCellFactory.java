@@ -116,8 +116,8 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
                                     imageWithFilters = img;
                                     filterList = selectedMediaFile.getFilterListWithoutImageData();
                                     for (ImageFilter imageFilter : filterList) {
-                                        imageWithFilters = imageFilter.load(imageWithFilters);
-                                        imageFilter.filter(imageFilter.getValues());
+                                        imageWithFilters = imageFilter.loadIcon(imageWithFilters);
+                                        imageFilter.filterIcon(imageFilter.getValues());
                                     }
                                     img = imageWithFilters;
                                     mediaViewController.getEditorImageView().setImage(img);

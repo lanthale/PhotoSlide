@@ -167,8 +167,8 @@ public class MediaFile {
         if (this.unModifiyAbleImage != null) {
             Image imageWithFilters = getClonedImage(unModifiyAbleImage);
             for (ImageFilter imageFilter : filterList) {
-                imageWithFilters = imageFilter.load(imageWithFilters);
-                imageFilter.filter(imageFilter.getValues());
+                imageWithFilters = imageFilter.loadIcon(imageWithFilters);
+                imageFilter.filterIcon(imageFilter.getValues());
             }
             return imageWithFilters;
         } else {

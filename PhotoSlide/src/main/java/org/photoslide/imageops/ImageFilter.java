@@ -39,7 +39,7 @@ public interface ImageFilter extends Cloneable {
      *
      * @param values filter with the given values
      */
-    public void filter(float[] values);
+    public void filterGPU(float[] values);
     
     public void filterIcon(float[] values);
     
@@ -48,7 +48,7 @@ public interface ImageFilter extends Cloneable {
      * @param img Image to be loaded into an byte array
      * @return the WriteableImage which should be used in the @ImageView
      */
-    public Image load(Image img);
+    public Image loadGPU(Image img);
     
     public Image loadIcon(Image img);
     

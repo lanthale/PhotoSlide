@@ -44,7 +44,7 @@ public class GainFilter implements ImageFilter {
     }
 
     @Override
-    public Image load(Image img) {
+    public Image loadIcon(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         height = (int) image.getHeight();
@@ -54,6 +54,17 @@ public class GainFilter implements ImageFilter {
         filteredImage = new WritableImage(pixelReader, width, height);
         return filteredImage;
     }
+    
+    @Override
+    public void filterGPU(float[] values) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public Image loadGPU(Image img) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 
     @Override
     public Image reset() {
@@ -74,7 +85,7 @@ public class GainFilter implements ImageFilter {
     }
 
     @Override
-    public synchronized void filter(float[] values) {
+    public synchronized void filterIcon(float[] values) {
         this.values = values;
         this.gain = values[0];
         this.bias = values[1];
@@ -195,14 +206,5 @@ public class GainFilter implements ImageFilter {
         return "GainFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", gain=" + gain + ", bias=" + bias + '}';
     }
 
-    @Override
-    public void filterIcon(float[] values) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Image loadIcon(Image img) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
+    
 }

@@ -43,7 +43,7 @@ public class UnsharpFilter implements ImageFilter {
     }
 
     @Override
-    public Image load(Image img) {
+    public Image loadIcon(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         height = (int) image.getHeight();
@@ -52,6 +52,16 @@ public class UnsharpFilter implements ImageFilter {
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
         filteredImage = new WritableImage(pixelReader, width, height);
         return filteredImage;
+    }
+    
+    @Override
+    public void filterGPU(float[] values) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public Image loadGPU(Image img) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
@@ -73,7 +83,7 @@ public class UnsharpFilter implements ImageFilter {
     }
 
     @Override
-    public void filter(float[] values) {
+    public void filterIcon(float[] values) {
         this.values = values;
         this.amount = values[0];
         this.threshold = (int) values[1];
@@ -197,16 +207,6 @@ public class UnsharpFilter implements ImageFilter {
     @Override
     public String toString() {
         return "UnsharpFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", amount=" + amount + ", threshold=" + threshold + ", radius=" + radius + '}';
-    }
-
-    @Override
-    public void filterIcon(float[] values) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Image loadIcon(Image img) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    }    
 
 }

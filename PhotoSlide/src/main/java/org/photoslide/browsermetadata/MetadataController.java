@@ -248,20 +248,25 @@ public class MetadataController implements Initializable {
             if (exposerFilter == null) {
                 exposerFilter = new ExposureFilter();
                 actualMediaFile.addImageFilter(exposerFilter);
-                lightController.getImageView().setImage(exposerFilter.load(lightController.getImageView().getImage()));
-            }
+                //lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(exposerFilter.loadIcon(lightController.getImageView().getImage()));
+            } /*else {                
+                if (((ExposureFilter) exposerFilter).isGpuInit() == false) {
+                    lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
+                }
+            }*/
             double val = exposureSlider.getValue();
-            exposerFilter.filter(new float[]{(float) val});
+            /*exposerFilter.filterGPU(new float[]{(float) val});
+            ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
+            if (filterForName != null) {
+                filterForName.setValues(exposerFilter.getValues());
+            }*/
+            executorFilter.submit(() -> {
+                exposerFilter.filterIcon(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(exposerFilter.getValues());
                 }
-            executorFilter.submit(() -> {
-                /*exposerFilter.filter(new float[]{(float) val});
-                ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
-                if (filterForName != null) {
-                    filterForName.setValues(exposerFilter.getValues());
-                }*/
                 actualMediaFile.saveEdits();
             });
         });
@@ -271,13 +276,13 @@ public class MetadataController implements Initializable {
             if (gainFilter == null) {
                 gainFilter = new GainFilter();
                 actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.load(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(gainFilter.loadIcon(lightController.getImageView().getImage()));
             }
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
             executorFilter.submit(() -> {
-                gainFilter.filter(new float[]{(float) valGain, (float) valBias});
+                gainFilter.filterIcon(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(gainFilter.getValues());
@@ -289,13 +294,13 @@ public class MetadataController implements Initializable {
             if (gainFilter == null) {
                 gainFilter = new GainFilter();
                 actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.load(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(gainFilter.loadIcon(lightController.getImageView().getImage()));
             }
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
             executorFilter.submit(() -> {
-                gainFilter.filter(new float[]{(float) valGain, (float) valBias});
+                gainFilter.filterIcon(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(gainFilter.getValues());

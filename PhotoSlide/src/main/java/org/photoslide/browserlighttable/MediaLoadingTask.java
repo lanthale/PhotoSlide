@@ -128,9 +128,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     }
                     updateMessage(iatom.get() + " / " + qty);
                     iatom.addAndGet(1);
-                    double percentage = (double) iatom.get() / qty * 100;
-                    if (percentage >= loadingLimit) {
-                        factory.setListFilesActive(false);
+                    if (qty > 1000) {
+                        double percentage = (double) iatom.get() / qty * 100;
+                        if (percentage >= loadingLimit) {
+                            factory.setListFilesActive(false);
+                        }
                     }
                 }
             });

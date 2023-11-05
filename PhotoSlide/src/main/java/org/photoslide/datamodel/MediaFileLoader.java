@@ -5,12 +5,14 @@
  */
 package org.photoslide.datamodel;
 
+import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
@@ -25,7 +27,7 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
  */
 public class MediaFileLoader {
 
-    private ExecutorService executorParallel;
+    private final ExecutorService executorParallel;
     private final HashMap<String, Task> taskList;
 
     public MediaFileLoader() {
@@ -35,25 +37,30 @@ public class MediaFileLoader {
         } else {
             executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         }
-        //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         taskList = new HashMap<>();
     }
 
     public void loadImage(MediaFile newMediaItem) {
         Task<Image> task = new Task<Image>() {
             @Override
-            public Image call() throws Exception {                
-                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
-                image.progressProperty().addListener((o) -> {
+            public Image call() throws Exception {
+                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
+                image.progressProperty().addListener((ov, g, g1) -> {
                     if (this.isCancelled()) {
                         image.cancel();
                     }
+                    if ((Double) g1 == 1.0 && !image.isError()) {
+                        newMediaItem.setLoading(false);
+                        taskList.remove(newMediaItem.getName());
+                    }
                 });
-                if (image.isError()) {
-                    throw new Exception("Cannot load image '" + newMediaItem.getPathStorage().toUri().toURL().toString() + "'!");
-                }
                 if (this.isCancelled()) {
-                    return image;
+                    image.cancel();
+                }
+                if (image.isError()) {
+                    if (image.getException() instanceof InterruptedIOException == false) {
+                        throw new Exception("Cannot load image '" + newMediaItem.getPathStorage().toUri().toURL().toString() + "'!");
+                    }
                 }
                 newMediaItem.setImage(image);
                 return image;
@@ -62,10 +69,6 @@ public class MediaFileLoader {
         if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
             if (newMediaItem.getImage() == null) {
                 newMediaItem.setImage(task.getValue());
-                task.setOnSucceeded((t) -> {
-                    newMediaItem.setLoading(false);
-                    taskList.remove(newMediaItem.getName());
-                });
                 task.setOnFailed((t) -> {
                     newMediaItem.setLoading(false);
                     newMediaItem.setMediaType(MediaFile.MediaTypes.NONE);
@@ -73,7 +76,7 @@ public class MediaFileLoader {
                 });
                 if (taskList.get(newMediaItem.getName()) == null) {
                     taskList.put(newMediaItem.getName(), task);
-                    executorParallel.submit(task);                    
+                    executorParallel.submit(task);
                 }
             }
         }
@@ -121,7 +124,7 @@ public class MediaFileLoader {
     }
 
     public void shutdown() {
-        taskList.values().forEach(t -> {
+        taskList.values().parallelStream().forEach(t -> {
             t.cancel();
         });
         executorParallel.shutdownNow();
@@ -129,15 +132,13 @@ public class MediaFileLoader {
     }
 
     public void cancleTasks() {
-        taskList.values().forEach(t -> {
-            t.cancel();
+        Thread.ofVirtual().start(() -> {
+            taskList.values().parallelStream().forEach(t -> {
+                t.cancel();
+            });
+            Stream<Task> filter = taskList.values().parallelStream().filter((k) -> k.isCancelled());
+            taskList.values().removeAll(filter.toList());
         });
-        taskList.clear();
         executorParallel.shutdownNow();
-        if (Utility.nativeMemorySize > 4194500) {
-            executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
-        } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
-        }
     }
 }

@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
@@ -149,7 +150,9 @@ public class SearchIndex {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
         executorParallel.submit(task);
-        mainViewController.getTaskProgressView().getTasks().add(task);
+        Platform.runLater(() -> {
+            mainViewController.getTaskProgressView().getTasks().add(task);
+        });
     }
 
     public void checkSearchIndex(String searchPath) {

@@ -529,8 +529,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
                         }
                     }
-                    imageWithFilters = imageFilter.loadIcon(img);
-                    imageFilter.filterIcon(imageFilter.getValues());
+                    imageWithFilters = imageFilter.loadMediaData(img);
+                    imageFilter.filterMediaData(imageFilter.getValues());
                 }
                 img = imageWithFilters;
                 lightController.getImageView().setImage(img);

@@ -499,8 +499,8 @@ public class MainViewController implements Initializable {
                                 ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
                                 Image imageWithFilters = img;
                                 for (ImageFilter imageFilter : filterList) {
-                                    imageWithFilters = imageFilter.loadIcon(imageWithFilters);
-                                    imageFilter.filterIcon(imageFilter.getValues());
+                                    imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
+                                    imageFilter.filterMediaData(imageFilter.getValues());
                                 }
                                 img = imageWithFilters;
                                 PixelReader reader = img.getPixelReader();

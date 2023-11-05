@@ -249,7 +249,7 @@ public class MetadataController implements Initializable {
                 exposerFilter = new ExposureFilter();
                 actualMediaFile.addImageFilter(exposerFilter);
                 //lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
-                lightController.getImageView().setImage(exposerFilter.loadIcon(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(exposerFilter.loadMediaData(lightController.getImageView().getImage()));
             } /*else {                
                 if (((ExposureFilter) exposerFilter).isGpuInit() == false) {
                     lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
@@ -262,7 +262,7 @@ public class MetadataController implements Initializable {
                 filterForName.setValues(exposerFilter.getValues());
             }*/
             executorFilter.submit(() -> {
-                exposerFilter.filterIcon(new float[]{(float) val});
+                exposerFilter.filterMediaData(new float[]{(float) val});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(exposerFilter.getValues());
@@ -276,13 +276,13 @@ public class MetadataController implements Initializable {
             if (gainFilter == null) {
                 gainFilter = new GainFilter();
                 actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.loadIcon(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(gainFilter.loadMediaData(lightController.getImageView().getImage()));
             }
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
             executorFilter.submit(() -> {
-                gainFilter.filterIcon(new float[]{(float) valGain, (float) valBias});
+                gainFilter.filterMediaData(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(gainFilter.getValues());
@@ -294,13 +294,13 @@ public class MetadataController implements Initializable {
             if (gainFilter == null) {
                 gainFilter = new GainFilter();
                 actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.loadIcon(lightController.getImageView().getImage()));
+                lightController.getImageView().setImage(gainFilter.loadMediaData(lightController.getImageView().getImage()));
             }
 
             double valGain = gainSlider.getValue();
             double valBias = biasSlider.getValue();
             executorFilter.submit(() -> {
-                gainFilter.filterIcon(new float[]{(float) valGain, (float) valBias});
+                gainFilter.filterMediaData(new float[]{(float) valGain, (float) valBias});
                 ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
                 if (filterForName != null) {
                     filterForName.setValues(gainFilter.getValues());

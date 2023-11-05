@@ -5,18 +5,13 @@
  */
 package org.photoslide.imageops;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import javafx.application.Platform;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelBuffer;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.util.Callback;
 
 /**
  *
@@ -28,14 +23,12 @@ public class ExposureFilter implements ImageFilter {
     private WritableImage filteredImage;
     private final String name;
     private int pos;
-    private float[] values;
-    private PixelBuffer<ByteBuffer> pixelBuffer;
+    private float[] values;    
     private int height;
     private int width;
     private float exposure;
     protected int[] rTable, gTable, bTable;
-    private byte[] buffer;
-    private boolean gpuInit=false;
+    private byte[] buffer;    
 
     public ExposureFilter() {
         name = "ExposureFilter";
@@ -44,7 +37,7 @@ public class ExposureFilter implements ImageFilter {
     }
 
     @Override
-    public Image loadIcon(Image img) {
+    public Image loadMediaData(Image img) {
         image = img;
         PixelReader pixelReader = image.getPixelReader();
         height = (int) image.getHeight();
@@ -53,23 +46,7 @@ public class ExposureFilter implements ImageFilter {
         pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
         filteredImage = new WritableImage(pixelReader, width, height);        
         return filteredImage;
-    }
-    
-    @Override
-    public Image loadGPU(Image img) {
-        image = img;
-        PixelReader pixelReader = image.getPixelReader();
-        height = (int) image.getHeight();
-        width = (int) image.getWidth();
-        buffer = new byte[width * height * 4];
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(width * height * 4);
-        pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraPreInstance(), buffer, 0, width * 4);
-        pixelBuffer = new PixelBuffer<>(width, height, byteBuffer, PixelFormat.getByteBgraPreInstance());
-        filteredImage = new WritableImage(pixelBuffer);
-        ByteBuffer.wrap(buffer);
-        gpuInit=true;
-        return filteredImage;
-    }
+    }        
 
     @Override
     public Image reset() {
@@ -89,7 +66,7 @@ public class ExposureFilter implements ImageFilter {
     }
 
     @Override
-    public void filterIcon(float[] values) {
+    public void filterMediaData(float[] values) {
         this.values = values;
         this.exposure = values[0];
         rTable = gTable = bTable = makeTable();
@@ -103,28 +80,7 @@ public class ExposureFilter implements ImageFilter {
             }
             pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), targetBuffer, 0, width * 4);
         });
-    }
-    
-    @Override
-    public void filterGPU(float[] values) {
-        this.values = values;
-        this.exposure = values[0];
-        rTable = gTable = bTable = makeTable();
-        Platform.runLater(() -> {
-            pixelBuffer.updateBuffer(callback);
-        });
-    }
-
-    Callback<PixelBuffer<ByteBuffer>, Rectangle2D> callback = pBuffer -> {
-        ByteBuffer bufferPB = pBuffer.getBuffer();
-        // Update the buffer.        
-        for (int i = 0; i < buffer.length; i++) {
-            int rgba = buffer[i];
-            int res = filterRGB(rgba);
-            bufferPB.put(i, (byte) (res));
-        }
-        return new Rectangle2D(0, 0, width, height);
-    };
+    }            
 
     @Override
     public void setValues(float[] values) {
@@ -217,17 +173,12 @@ public class ExposureFilter implements ImageFilter {
             return false;
         }
         return true;
-    }
-
-    public boolean isGpuInit() {
-        return gpuInit;
-    }
-    
+    }    
     
 
     @Override
     public String toString() {
         return "ExposureFilter{" + "name=" + name + ", pos=" + pos + ", values=" + values + ", exposure=" + exposure + '}';
-    }
+    }    
 
 }

@@ -167,27 +167,14 @@ public class MediaFile {
         if (this.unModifiyAbleImage != null) {
             Image imageWithFilters = getClonedImage(unModifiyAbleImage);
             for (ImageFilter imageFilter : filterList) {
-                imageWithFilters = imageFilter.loadIcon(imageWithFilters);
-                imageFilter.filterIcon(imageFilter.getValues());
+                imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
+                imageFilter.filterMediaData(imageFilter.getValues());
             }
             return imageWithFilters;
         } else {
             return this.image;
         }
-    }
-    
-    public Image setFiltersIcon() {
-        if (this.unModifiyAbleImage != null) {
-            Image imageWithFilters = getClonedImage(unModifiyAbleImage);
-            for (ImageFilter imageFilter : filterList) {
-                imageWithFilters = imageFilter.loadIcon(imageWithFilters);
-                imageFilter.filterIcon(imageFilter.getValues());
-            }
-            return imageWithFilters;
-        } else {
-            return this.image;
-        }
-    }
+    }    
 
     public void setImage(Image image) {
         this.image = image;

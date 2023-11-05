@@ -180,7 +180,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             if (item.getUnModifiyAbleImage() == null) {
                 item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
             }
-            item.setImage(item.setFiltersIcon());
+            item.setImage(item.setFilters());
             rootPane.getChildren().clear();
             rootPane.getChildren().add(imageView);
             if (item.getCropView() != null) {

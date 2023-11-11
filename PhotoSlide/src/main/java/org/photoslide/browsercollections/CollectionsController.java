@@ -16,6 +16,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,11 +44,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -170,146 +174,6 @@ public class CollectionsController implements Initializable {
         });
     }
 
-    private void setupDropTarget(DragEvent t) {
-        Dragboard db = t.getDragboard();
-        boolean success = false;
-        if (db.hasFiles()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Select the target for the files", ButtonType.CANCEL, ButtonType.OK);
-            alert.setTitle("Select the target for the files to be imported/copied");
-            alert.setHeaderText("This function copy's files/folder\n from the source to the destination folder\nselected. If a folder is dropped a yyyymmdd will \nbe added to the target folder name.");
-            FontIcon ft = new FontIcon("ti-import:50");
-            alert.setGraphic(ft);
-            DialogPane dialogPane = alert.getDialogPane();
-            alert.setResizable(true);
-            GridPane content = new GridPane();
-            content.setAlignment(Pos.CENTER_RIGHT);
-            content.setHgap(5);
-            content.setVgap(5);
-            Label cbLabel = new Label("Select collection");
-            ComboBox<String> cb = new ComboBox<>();
-            cb.setPrefWidth(200);
-            accordionPane.getPanes().forEach((pan) -> {
-                cb.getItems().add(pan.getText());
-            });
-            content.addRow(0, cbLabel, cb);
-            Label cbRootLabel = new Label("Select event");
-            ComboBox<String> cbRootFolder = new ComboBox<>();
-            cbRootFolder.setPrefWidth(200);
-            content.addRow(1, cbRootLabel, cbRootFolder);
-            cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
-                cbRootFolder.getItems().clear();
-                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
-                TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
-                tree.getRoot().getChildren().forEach((treeitem) -> {
-                    cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
-                });
-            });
-            cbRootFolder.getSelectionModel().selectedItemProperty().addListener((o) -> {
-                dialogPane.lookupButton(ButtonType.OK).setDisable(false);
-            });
-            dialogPane.setContent(content);
-            dialogPane.lookupButton(ButtonType.OK).setDisable(true);
-            dialogPane.getStylesheets().add(
-                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-            Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(dialogIcon);
-            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
-            alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
-            alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-            alert.showAndWait();
-            if (alert.getResult() == ButtonType.OK) {
-                File dropFile = db.getFiles().get(0);
-                List<File> fileItem = db.getFiles();
-                AtomicLong count=new AtomicLong(0);
-                if (dropFile.isDirectory()) {
-                    try {
-                        count.set(Utility.fileCount(dropFile.toPath()));
-                    } catch (IOException ex) {
-                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    count.set(fileItem.size());
-                }
-                Task<Boolean> task = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
-                        updateTitle("Copy mediafiles to " + Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString());
-                        AtomicInteger iatom = new AtomicInteger(1);
-                        if (dropFile.isDirectory()) {
-                            Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
-                            updateMessage("Copy to target dir...");
-                            Files.createDirectory(targetPath);
-                            String src = dropFile.getAbsolutePath();
-                            String dest = targetPath.toString();
-                            Files.walk(Paths.get(src)).forEach(a -> {
-                                Path b = Paths.get(dest, a.toString().substring(src.length()));
-                                try {
-                                    if (!a.toString().equals(src)) {
-                                        Files.copy(a, b, true ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
-                                        updateMessage(iatom.get() + " / " + count.get());
-                                        iatom.addAndGet(1);
-                                    }
-                                } catch (IOException e) {
-                                }
-                            });
-                        } else {
-                            //Create Task
-                            String targetDir = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-                            Files.createDirectory(Path.of(targetDir));
-                            fileItem.forEach((t) -> {
-                                try {
-                                    updateMessage("Copy " + t.getName());
-                                    Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
-                                    updateMessage(iatom.get() + " / " + count.get());
-                                    iatom.addAndGet(1);
-                                } catch (IOException ex) {
-                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            });
-                        }
-                        return true;
-                    }
-                };
-                task.setOnScheduled((tk) -> {
-                    mainController.getStatusLabelLeft().setVisible(true);
-                    mainController.getProgressPane().setVisible(true);
-                    mainController.getProgressbarLabel().setText(count + " files found - Loading...");
-                    mainController.getStatusLabelRight().setVisible(true);
-                });
-                task.setOnFailed((fail) -> {
-                    Alert alertError = new Alert(AlertType.ERROR, "Error during import of media files", ButtonType.OK);
-                    alertError.getDialogPane().getStylesheets().add(
-                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-                    alertError.setResizable(false);
-                    alertError.setGraphic(new FontIcon("ti-close:30"));
-                    Utility.centerChildWindowOnStage((Stage) alertError.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
-                    Stage stageError = (Stage) alertError.getDialogPane().getScene().getWindow();
-                    stageError.getIcons().add(dialogIcon);
-                    stageError.showAndWait();
-                });
-                task.setOnSucceeded((suc) -> {
-                    FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
-                    if (filtered.isEmpty() == false) {
-                        accordionPane.setExpandedPane(filtered.get(0));
-                        TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
-                        FilteredList<TreeItem<PathItem>> filteredTreeItem = tree.getRoot().getChildren().filtered((treeIt) -> treeIt.getValue().getFilePath().compareTo(Path.of(cbRootFolder.getSelectionModel().getSelectedItem())) == 0);
-                        if (filteredTreeItem.isEmpty() == false) {
-                            tree.getSelectionModel().clearSelection();
-                            tree.getSelectionModel().select(filteredTreeItem.get(0));
-                            refreshTree();
-                        }
-                    }
-                });
-                executorParallel.submit(task);
-                mainController.getTaskProgressView().getTasks().add(task);
-            }
-        }
-        t.setDropCompleted(true);
-        t.consume();
-    }
-
     private void loadURLs() {
         Task<Boolean> indexTask = new Task<>() {
             @Override
@@ -409,6 +273,9 @@ public class CollectionsController implements Initializable {
             if (entry.getFileName().toString().startsWith("@")) {
                 res = false;
             }
+            if (!Files.isDirectory(root_file)) {
+                res = false;
+            }
             return res;
         })) {
             Stream<Path> sortedStream = StreamSupport.stream(newDirectoryStream.spliterator(), false).sorted();
@@ -434,6 +301,8 @@ public class CollectionsController implements Initializable {
 
     private void createTree(Path root_file, TreeItem parent) throws IOException {
         if (Files.isDirectory(root_file)) {
+            ProgressIndicator waitPrgMain = new ProgressIndicator();
+            waitPrgMain.setPrefSize(15, 15);
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
             TreeItem placeholder = new TreeItem(new PathItem(Paths.get("Please wait...")));
             parent.getChildren().add(node);
@@ -455,9 +324,23 @@ public class CollectionsController implements Initializable {
                             ProgressIndicator waitPrg = new ProgressIndicator();
                             waitPrg.setPrefSize(15, 15);
                             placeholder.setGraphic(waitPrg);
-                            node.getChildren().add(placeholder);
+                            if (node.getChildren().contains(placeholder) == false) {
+                                node.getChildren().add(placeholder);
+                            }
                         }
                     });
+                    /*Thread.ofVirtual().start(() -> {
+                        try {
+                            long count = Files.find(t, 1, (path, attributes) -> attributes.isDirectory()).count();
+                            if (count == 0) {
+                                Platform.runLater(() -> {
+                                    node.getChildren().remove(placeholder);
+                                });
+                            }
+                        } catch (IOException ex) {
+                            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    });*/
 
                     EventHandler eventH = new EventHandler() {
                         @Override
@@ -466,23 +349,37 @@ public class CollectionsController implements Initializable {
                             Task<Boolean> taskTree = new Task<>() {
                                 @Override
                                 protected Boolean call() throws Exception {
-                                    try {
-                                        createTree(t, node); // Continue the recursive as usual                                        
+                                    try {                                        
+                                        createTree(t, node); // Continue the recursive as usual
+                                    } catch (NotDirectoryException ex2) {
+                                        Platform.runLater(() -> {
+                                            node.setGraphic(null);
+                                        });
                                     } catch (IOException ex) {
+                                        Platform.runLater(() -> {
+                                            node.setGraphic(null);
+                                        });
                                         Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                     return null;
                                 }
                             };
+                            taskTree.setOnScheduled((k) -> {
+                                if (node.getChildren().contains(placeholder)) {
+                                    node.getChildren().remove(placeholder); // Remove placeholder
+                                }
+                            });
+                            taskTree.setOnRunning((t) -> {
+                                node.setGraphic(waitPrgMain);
+                            });
                             taskTree.setOnSucceeded((WorkerStateEvent t) -> {
-                                if (node.getChildren().size() > 0) {
-                                    if (node.getChildren().contains(placeholder)) {
-                                        node.getChildren().remove(placeholder); // Remove placeholder
-                                    }
+                                node.setGraphic(null);
+                                if (!node.getChildren().isEmpty()) {
                                     node.removeEventHandler(TreeItem.branchExpandedEvent(), this); // Remove event 
                                 }
                             });
                             taskTree.setOnFailed((WorkerStateEvent t) -> {
+                                node.setGraphic(null);
                                 mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
                                 util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
                             });
@@ -1118,6 +1015,146 @@ public class CollectionsController implements Initializable {
 
     public SearchIndex getSearchIndexProcess() {
         return searchIndexProcess;
+    }
+
+    private void setupDropTarget(DragEvent t) {
+        Dragboard db = t.getDragboard();
+        boolean success = false;
+        if (db.hasFiles()) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Select the target for the files", ButtonType.CANCEL, ButtonType.OK);
+            alert.setTitle("Select the target for the files to be imported/copied");
+            alert.setHeaderText("This function copy's files/folder\n from the source to the destination folder\nselected. If a folder is dropped a yyyymmdd will \nbe added to the target folder name.");
+            FontIcon ft = new FontIcon("ti-import:50");
+            alert.setGraphic(ft);
+            DialogPane dialogPane = alert.getDialogPane();
+            alert.setResizable(true);
+            GridPane content = new GridPane();
+            content.setAlignment(Pos.CENTER_RIGHT);
+            content.setHgap(5);
+            content.setVgap(5);
+            Label cbLabel = new Label("Select collection");
+            ComboBox<String> cb = new ComboBox<>();
+            cb.setPrefWidth(200);
+            accordionPane.getPanes().forEach((pan) -> {
+                cb.getItems().add(pan.getText());
+            });
+            content.addRow(0, cbLabel, cb);
+            Label cbRootLabel = new Label("Select event");
+            ComboBox<String> cbRootFolder = new ComboBox<>();
+            cbRootFolder.setPrefWidth(200);
+            content.addRow(1, cbRootLabel, cbRootFolder);
+            cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
+                cbRootFolder.getItems().clear();
+                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+                TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
+                tree.getRoot().getChildren().forEach((treeitem) -> {
+                    cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
+                });
+            });
+            cbRootFolder.getSelectionModel().selectedItemProperty().addListener((o) -> {
+                dialogPane.lookupButton(ButtonType.OK).setDisable(false);
+            });
+            dialogPane.setContent(content);
+            dialogPane.lookupButton(ButtonType.OK).setDisable(true);
+            dialogPane.getStylesheets().add(
+                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+            Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+            stage.getIcons().add(dialogIcon);
+            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+            alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
+            alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+            alert.showAndWait();
+            if (alert.getResult() == ButtonType.OK) {
+                File dropFile = db.getFiles().get(0);
+                List<File> fileItem = db.getFiles();
+                AtomicLong count = new AtomicLong(0);
+                if (dropFile.isDirectory()) {
+                    try {
+                        count.set(Utility.fileCount(dropFile.toPath()));
+                    } catch (IOException ex) {
+                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    count.set(fileItem.size());
+                }
+                Task<Boolean> task = new Task<>() {
+                    @Override
+                    protected Boolean call() throws Exception {
+                        String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
+                        updateTitle("Copy mediafiles to " + Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString());
+                        AtomicInteger iatom = new AtomicInteger(1);
+                        if (dropFile.isDirectory()) {
+                            Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
+                            updateMessage("Copy to target dir...");
+                            Files.createDirectory(targetPath);
+                            String src = dropFile.getAbsolutePath();
+                            String dest = targetPath.toString();
+                            Files.walk(Paths.get(src)).forEach(a -> {
+                                Path b = Paths.get(dest, a.toString().substring(src.length()));
+                                try {
+                                    if (!a.toString().equals(src)) {
+                                        Files.copy(a, b, true ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+                                        updateMessage(iatom.get() + " / " + count.get());
+                                        iatom.addAndGet(1);
+                                    }
+                                } catch (IOException e) {
+                                }
+                            });
+                        } else {
+                            //Create Task
+                            String targetDir = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+                            Files.createDirectory(Path.of(targetDir));
+                            fileItem.forEach((t) -> {
+                                try {
+                                    updateMessage("Copy " + t.getName());
+                                    Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
+                                    updateMessage(iatom.get() + " / " + count.get());
+                                    iatom.addAndGet(1);
+                                } catch (IOException ex) {
+                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            });
+                        }
+                        return true;
+                    }
+                };
+                task.setOnScheduled((tk) -> {
+                    mainController.getStatusLabelLeft().setVisible(true);
+                    mainController.getProgressPane().setVisible(true);
+                    mainController.getProgressbarLabel().setText(count + " files found - Loading...");
+                    mainController.getStatusLabelRight().setVisible(true);
+                });
+                task.setOnFailed((fail) -> {
+                    Alert alertError = new Alert(AlertType.ERROR, "Error during import of media files", ButtonType.OK);
+                    alertError.getDialogPane().getStylesheets().add(
+                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+                    alertError.setResizable(false);
+                    alertError.setGraphic(new FontIcon("ti-close:30"));
+                    Utility.centerChildWindowOnStage((Stage) alertError.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+                    Stage stageError = (Stage) alertError.getDialogPane().getScene().getWindow();
+                    stageError.getIcons().add(dialogIcon);
+                    stageError.showAndWait();
+                });
+                task.setOnSucceeded((suc) -> {
+                    FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+                    if (filtered.isEmpty() == false) {
+                        accordionPane.setExpandedPane(filtered.get(0));
+                        TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
+                        FilteredList<TreeItem<PathItem>> filteredTreeItem = tree.getRoot().getChildren().filtered((treeIt) -> treeIt.getValue().getFilePath().compareTo(Path.of(cbRootFolder.getSelectionModel().getSelectedItem())) == 0);
+                        if (filteredTreeItem.isEmpty() == false) {
+                            tree.getSelectionModel().clearSelection();
+                            tree.getSelectionModel().select(filteredTreeItem.get(0));
+                            refreshTree();
+                        }
+                    }
+                });
+                executorParallel.submit(task);
+                mainController.getTaskProgressView().getTasks().add(task);
+            }
+        }
+        t.setDropCompleted(true);
+        t.consume();
     }
 
     @FXML

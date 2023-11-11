@@ -299,4 +299,12 @@ public class Utility {
                 .filter(p -> !p.toFile().isDirectory())
                 .count();
     }
+    
+    public static long dirCount(Path dir) throws IOException {
+        return Files.walk(dir, 1)
+                .parallel()
+                .filter(p -> p.toFile().isDirectory())
+                .count();
+    }
+    
 }

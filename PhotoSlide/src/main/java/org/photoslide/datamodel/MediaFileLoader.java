@@ -139,6 +139,6 @@ public class MediaFileLoader {
             Stream<Task> filter = taskList.values().parallelStream().filter((k) -> k.isCancelled());
             taskList.values().removeAll(filter.toList());
         });
-        executorParallel.shutdownNow();
+        //executorParallel.shutdownNow();
     }
 }

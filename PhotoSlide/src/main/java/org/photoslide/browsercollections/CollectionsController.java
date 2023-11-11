@@ -349,17 +349,12 @@ public class CollectionsController implements Initializable {
                             Task<Boolean> taskTree = new Task<>() {
                                 @Override
                                 protected Boolean call() throws Exception {
-                                    try {                                        
+                                    long count = Files.find(t, 1, (path, attributes) -> attributes.isDirectory()).count();
+                                    if (count == 0) {
+                                        this.cancel();
+                                        return null;
+                                    } else {
                                         createTree(t, node); // Continue the recursive as usual
-                                    } catch (NotDirectoryException ex2) {
-                                        Platform.runLater(() -> {
-                                            node.setGraphic(null);
-                                        });
-                                    } catch (IOException ex) {
-                                        Platform.runLater(() -> {
-                                            node.setGraphic(null);
-                                        });
-                                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                     return null;
                                 }

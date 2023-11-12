@@ -273,8 +273,15 @@ public class CollectionsController implements Initializable {
             if (entry.getFileName().toString().startsWith("@")) {
                 res = false;
             }
-            if (!Files.isDirectory(root_file)) {
+            if (entry.getFileName().toString().startsWith("Ω")) {
                 res = false;
+            }
+            int idx = entry.getFileName().toString().lastIndexOf(".");
+            if (idx != -1) {
+                String substring = entry.getFileName().toString().substring(idx);
+                if (substring.length() == 4) {
+                    res = false;
+                }
             }
             return res;
         })) {
@@ -305,86 +312,89 @@ public class CollectionsController implements Initializable {
             waitPrgMain.setPrefSize(15, 15);
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
             TreeItem placeholder = new TreeItem(new PathItem(Paths.get("Please wait...")));
-            parent.getChildren().add(node);
-            try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
-                boolean res = true;
-                if (entry.getFileName().toString().startsWith(".")) {
-                    res = false;
-                }
-                if (entry.getFileName().toString().startsWith("@")) {
-                    res = false;
-                }
-                return res;
-            })) {
-                Stream<Path> sortedStream = StreamSupport.stream(newDirectoryStream.spliterator(), false).sorted();
-                sortedStream.parallel().forEachOrdered((t) -> {
 
-                    Platform.runLater(() -> {
-                        if (node.getChildren().isEmpty()) {
-                            ProgressIndicator waitPrg = new ProgressIndicator();
-                            waitPrg.setPrefSize(15, 15);
-                            placeholder.setGraphic(waitPrg);
-                            if (node.getChildren().contains(placeholder) == false) {
-                                node.getChildren().add(placeholder);
-                            }
-                        }
-                    });
-                    /*Thread.ofVirtual().start(() -> {
-                        try {
-                            long count = Files.find(t, 1, (path, attributes) -> attributes.isDirectory()).count();
-                            if (count == 0) {
-                                Platform.runLater(() -> {
-                                    node.getChildren().remove(placeholder);
+            Platform.runLater(() -> {
+                parent.getChildren().add(node);
+                if (node.getChildren().isEmpty()) {
+                    ProgressIndicator waitPrg = new ProgressIndicator();
+                    waitPrg.setPrefSize(15, 15);
+                    placeholder.setGraphic(waitPrg);
+                    if (node.getChildren().contains(placeholder) == false) {
+                        node.getChildren().add(placeholder);
+                    }
+                }
+            });
+
+            EventHandler eventH = new EventHandler() {
+                @Override
+                public void handle(Event event) {
+
+                    Task<Boolean> taskTree = new Task<>() {
+                        @Override
+                        protected Boolean call() throws Exception {
+                            /*long count = Files.find(t, 1, (path, attributes) -> attributes.isDirectory()).count();
+                             */
+
+                            try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
+                                boolean res = true;
+                                if (entry.getFileName().toString().startsWith(".")) {
+                                    res = false;
+                                }
+                                if (entry.getFileName().toString().startsWith("@")) {
+                                    res = false;
+                                }
+                                if (entry.getFileName().toString().startsWith("Ω")) {
+                                    res = false;
+                                }
+                                int idx = entry.getFileName().toString().lastIndexOf(".");
+                                if (idx != -1) {
+                                    String substring = entry.getFileName().toString().substring(idx);
+                                    if (substring.length() == 4) {
+                                        res = false;
+                                    }
+                                }
+                                return res;
+                            })) {
+                                Stream<Path> sortedStream = StreamSupport.stream(newDirectoryStream.spliterator(), false).sorted();
+                                sortedStream.parallel().forEachOrdered((t) -> {
+                                    try {
+                                        createTree(t, node);
+                                    } catch (IOException ex) {
+                                        Platform.runLater(() -> {
+                                            node.setGraphic(null);
+                                        });
+                                    }
                                 });
                             }
-                        } catch (IOException ex) {
-                            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    });*/
 
-                    EventHandler eventH = new EventHandler() {
-                        @Override
-                        public void handle(Event event) {
-
-                            Task<Boolean> taskTree = new Task<>() {
-                                @Override
-                                protected Boolean call() throws Exception {
-                                    long count = Files.find(t, 1, (path, attributes) -> attributes.isDirectory()).count();
-                                    if (count == 0) {
-                                        this.cancel();
-                                        return null;
-                                    } else {
-                                        createTree(t, node); // Continue the recursive as usual
-                                    }
-                                    return null;
-                                }
-                            };
-                            taskTree.setOnScheduled((k) -> {
-                                if (node.getChildren().contains(placeholder)) {
-                                    node.getChildren().remove(placeholder); // Remove placeholder
-                                }
-                            });
-                            taskTree.setOnRunning((t) -> {
-                                node.setGraphic(waitPrgMain);
-                            });
-                            taskTree.setOnSucceeded((WorkerStateEvent t) -> {
-                                node.setGraphic(null);
-                                if (!node.getChildren().isEmpty()) {
-                                    node.removeEventHandler(TreeItem.branchExpandedEvent(), this); // Remove event 
-                                }
-                            });
-                            taskTree.setOnFailed((WorkerStateEvent t) -> {
-                                node.setGraphic(null);
-                                mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
-                                util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
-                            });
-                            executor.submit(taskTree);
-                            mainController.getTaskProgressView().getTasks().add(taskTree);
+                            return null;
                         }
                     };
-                    node.addEventHandler(TreeItem.branchExpandedEvent(), eventH);
-                });
-            }
+                    taskTree.setOnScheduled((k) -> {
+                        if (node.getChildren().contains(placeholder)) {
+                            node.getChildren().remove(placeholder); // Remove placeholder
+                        }
+                    });
+                    taskTree.setOnRunning((t) -> {
+                        node.setGraphic(waitPrgMain);
+                    });
+                    taskTree.setOnSucceeded((WorkerStateEvent t) -> {
+                        node.setGraphic(null);
+                        if (!node.getChildren().isEmpty()) {
+                            node.removeEventHandler(TreeItem.branchExpandedEvent(), this); // Remove event 
+                        }
+                    });
+                    taskTree.setOnFailed((WorkerStateEvent t) -> {
+                        node.setGraphic(null);
+                        mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
+                        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
+                    });
+                    executor.submit(taskTree);
+                    mainController.getTaskProgressView().getTasks().add(taskTree);
+                }
+            };
+            node.addEventHandler(TreeItem.branchExpandedEvent(), eventH);
+
         } else {
             //parent.getChildren().add(new TreeItem(root_file.getFileName()));
         }
@@ -569,18 +579,23 @@ public class CollectionsController implements Initializable {
                 //createTree(parent.getValue().getFilePath(), parent);
                 createRootTree(parent.getValue().getFilePath(), parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                parent.getChildren().setAll(sorted);
+                Platform.runLater(() -> {
+                    parent.getChildren().setAll(sorted);
+                });
                 //Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
                 //treeView.getSelectionModel().select(findFirst.get());
             } else {
                 parent = selectedItems.get(0).getParent();
                 Path filePath = selectedItems.get(0).getValue().getFilePath();
+                int index = parent.getChildren().indexOf(selectedItems.get(0));
                 parent.getChildren().remove(selectedItems.get(0));
                 createTree(filePath, parent);
                 SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                parent.getChildren().setAll(sorted);
-                Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
-                treeView.getSelectionModel().select(findFirst.get());
+                Platform.runLater(() -> {
+                    parent.getChildren().setAll(sorted);
+                    Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
+                    treeView.getSelectionModel().select(findFirst.get());
+                });
             }
         } catch (IOException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);

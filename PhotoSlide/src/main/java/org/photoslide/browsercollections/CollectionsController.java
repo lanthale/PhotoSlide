@@ -16,7 +16,6 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -27,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,13 +42,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -63,7 +59,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -221,9 +216,7 @@ public class CollectionsController implements Initializable {
                     }
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
                 }
-            });
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 5, true);
-            util.hideNodeAfterTime(mainController.getProgressPane(), 5, true);
+            });            
         });
         executorParallel.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
@@ -260,11 +253,7 @@ public class CollectionsController implements Initializable {
         this.lighttablePaneController = mainController;
     }
 
-    private void createRootTree(Path root_file, TreeItem parent) throws IOException {
-        Platform.runLater(() -> {
-            mainController.getProgressPane().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Scanning...");
-        });
+    private void createRootTree(Path root_file, TreeItem parent) throws IOException {        
         try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
             boolean res = true;
             if (entry.getFileName().toString().startsWith(".")) {
@@ -507,11 +496,7 @@ public class CollectionsController implements Initializable {
                 dirTreeView.setDisable(true);
                 Platform.runLater(() -> {
                     actCollectionTitlePane.setContent(dirTreeView);
-                    dirTreeView.setRoot(root);
-                    mainController.getProgressPane().setVisible(true);
-                    mainController.getStatusLabelLeft().setVisible(true);
-                    mainController.getStatusLabelLeft().setText("Scanning...");
-                    mainController.getProgressbar().setProgress(-1);
+                    dirTreeView.setRoot(root);                    
                 });
                 createRootTree(Paths.get(path), root);
                 return dirTreeView;

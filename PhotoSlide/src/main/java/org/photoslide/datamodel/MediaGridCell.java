@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -276,9 +277,9 @@ public class MediaGridCell extends GridCell<MediaFile> {
         VBox vb = new VBox();
         if (stacked == true && stackPos == 1) {
             vb.setAlignment(Pos.BOTTOM_RIGHT);
-            vb.setPadding(new Insets(0, -3, -5, 0));
+            vb.setPadding(new Insets(0, -3, -5, 0));            
             vb.getChildren().add(layerIcon);
-            rootPane.getChildren().add(vb);
+            rootPane.getChildren().add(vb);            
         } else {
             rootPane.getChildren().remove(vb);
         }

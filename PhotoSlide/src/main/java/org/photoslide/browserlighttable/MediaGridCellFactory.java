@@ -46,6 +46,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
@@ -250,7 +251,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 lightController.getFilenameLabel().setText(name);
             });
             return;
-        }
+        }                
         if (t.getTarget().getClass().equals(FontIcon.class)) {
             String code = ((FontIcon) t.getTarget()).getIconLiteral();
             if (code.equalsIgnoreCase("ti-view-grid")) {

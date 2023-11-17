@@ -56,7 +56,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         metadataController = metaControllerParam;
         this.factory = factory;
         this.fullMediaList = fullMediaList;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
         if (Utility.nativeMemorySize > 4194500) {
             loadingLimit = 75;
         } else {
@@ -68,33 +68,39 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected MediaFile call() throws Exception {
         final long qty;
         List<MediaFile> content = new ArrayList<>();
-        try {
-            updateTitle("Reading mediafiles...");
-            qty = Files.list(selectedPath).filter((t) -> {
-                return FileTypes.isValidType(t.getFileName().toString());
-            }).count();
-            if (qty == 0) {
-                Platform.runLater(() -> {
-                    mediaQTYLabel.setText(qty + " media files.");
-                    mainController.getProgressPane().setVisible(false);
-                    mainController.getStatusLabelLeft().setVisible(false);
-                });
-                return null;
-            } else {
-                Platform.runLater(() -> {
-                    mainController.getStatusLabelLeft().setVisible(true);
-                    mainController.getProgressPane().setVisible(true);
-                    mainController.getProgressbarLabel().setText(qty + " files found - Loading...");
-                    mediaQTYLabel.setText(qty + " media files");
-                    mainController.getStatusLabelRight().setVisible(true);
-                });
-            }
-            Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
-            long starttime = System.currentTimeMillis();
-
+        try {            
+            updateTitle("Counting mediafiles...");                        
+            
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
+            
+            Stream<Path> fileListCount = Files.list(selectedPath).filter((t) -> {
+                return FileTypes.isValidType(t.getFileName().toString());
+            });
+            
+            qty = fileListCount.count();
+            updateTitle("Counting mediafiles...finished");
+            if (qty == 0) {
+                updateTitle("0 mediafiles found.");
+                Platform.runLater(() -> {
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setVisible(false);
+                    mediaQTYLabel.setText(qty + " media files.");                    
+                });
+                return null;
+            } else {                
+                Platform.runLater(() -> {  
+                    mainController.getProgressPane().setVisible(true);
+                    mainController.getStatusLabelLeft().setVisible(true);
+                    mediaQTYLabel.setText(qty + " media files");
+                    mainController.getStatusLabelRight().setVisible(true);
+                });
+                updateTitle(qty + " files found - Loading...");
+            }            
+            Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
+            long starttime = System.currentTimeMillis();
+                        
             AtomicInteger iatom = new AtomicInteger(1);
             fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {

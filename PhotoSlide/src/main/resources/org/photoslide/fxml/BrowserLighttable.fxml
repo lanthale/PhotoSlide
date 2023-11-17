@@ -25,14 +25,14 @@
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <?import org.kordamp.ikonli.javafx.StackedFontIcon?>
 
-<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
+<AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
       <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
             <Font size="24.0" />
          </font>
       </Label>
-      <SplitPane dividerPositions="0.65" layoutX="74.0" layoutY="114.0" orientation="VERTICAL" prefHeight="675.0" prefWidth="646.0" style="-fx-box-border: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0">
+      <SplitPane fx:id="splitPane" dividerPositions="0.65" layoutX="74.0" layoutY="114.0" orientation="VERTICAL" prefHeight="675.0" prefWidth="646.0" style="-fx-box-border: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="40.0">
         <items>
             <StackPane fx:id="stackPane" minHeight="100.0" minWidth="100.0" prefHeight="150.0" prefWidth="644.0">
                <children>

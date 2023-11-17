@@ -5,6 +5,7 @@
  */
 package org.photoslide.browserlighttable;
 
+import boofcv.alg.feature.detect.interest.EasyGeneralFeatureDetector;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
@@ -82,8 +83,12 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
 
 import java.util.prefs.Preferences;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.SplitPane;
 import one.microstream.storage.embedded.types.EmbeddedStorage;
 import one.microstream.storage.embedded.types.EmbeddedStorageManager;
 import org.photoslide.ThreadFactoryBuilder;
@@ -191,6 +196,8 @@ public class LighttableController implements Initializable {
     private CheckMenuItem oneStarMenu;
     @FXML
     private CheckMenuItem noStarMenu;
+    @FXML
+    private SplitPane splitPane;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -218,6 +225,34 @@ public class LighttableController implements Initializable {
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").build());
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        showPreviewPaneToggle.selectedProperty().addListener((o) -> {
+            if (showPreviewPaneToggle.isSelected()) {
+                final Timeline timeline = new Timeline();
+                timeline.setCycleCount(1);
+                timeline.setAutoReverse(false);
+                final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.65);
+                final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
+                timeline.getKeyFrames().add(kf);
+                final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 0);
+                final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
+                timeline.getKeyFrames().add(kf2);
+                timeline.play();
+                zoomSlider.setValue(0);
+            } else {
+                final Timeline timeline = new Timeline();
+                timeline.setCycleCount(1);
+                timeline.setAutoReverse(false);
+                final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.1);
+                final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
+                timeline.getKeyFrames().add(kf);
+                if (zoomSlider.getValue() < 12) {
+                    final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 12);
+                    final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
+                    timeline.getKeyFrames().add(kf2);
+                }
+                timeline.play();
+            }
+        });
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -243,7 +278,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
             mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().setText("Retrieving files...");
+            mainController.getProgressbarLabel().setText("Retrieving media files...");
         });
 
         if (directorywatch != null) {
@@ -333,8 +368,13 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
         });
+        taskMLoading.setOnScheduled((t) -> {
+            mainController.getProgressPane().setVisible(true);
+            mainController.getStatusLabelLeft().setVisible(true);
+        });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
+            mainController.getProgressbarLabel().textProperty().bind(taskMLoading.titleProperty());
         });
         executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
         this.mainController.getTaskProgressView().getTasks().add(taskMLoading);
@@ -936,7 +976,7 @@ public class LighttableController implements Initializable {
                 Task<Boolean> taskMeta = new Task<>() {
                     @Override
                     protected Boolean call() throws IOException {
-                        AtomicInteger i=new AtomicInteger(1);
+                        AtomicInteger i = new AtomicInteger(1);
                         fullMediaList.parallelStream().forEach((mediaFile) -> {
                             if (this.isCancelled() == false) {
                                 updateProgress(i.get(), fullMediaList.size());

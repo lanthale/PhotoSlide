@@ -207,11 +207,13 @@ public class MainViewController implements Initializable {
     private EditorMediaViewController editorMediaViewPaneController;
     @FXML
     private EditorToolsController editorToolsPaneController;
+    @FXML
+    private BookmarkBoardController bookmarksController;
+    @FXML
     private SearchToolsController searchtools;
     private SearchToolsDialog searchDialog;
     private PrintDialog printDialog;
-    private Properties bookmarks;
-    private BookmarkBoardController bookmarksController;
+    private Properties bookmarks;    
     private BMBIcon bmbIcon;
     @FXML
     private Button showProcessButton;
@@ -1226,6 +1228,16 @@ public class MainViewController implements Initializable {
         taskPopOver.show(showProcessButton);
         ((Parent) taskPopOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
+    }
+
+    @FXML
+    private void showMediaStackAction(ActionEvent event) {
+        MediaFile item = lighttablePaneController.getFactory().getSelectedMediaItem();
+        if (item != null) {
+            if (item.isStacked()) {
+                lighttablePaneController.getFactory().handleStackButtonAction(item.getStackName(), lighttablePaneController.getFactory().getSelectedCell());
+            }
+        }
     }
 
 }

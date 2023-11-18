@@ -251,13 +251,19 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 lightController.getFilenameLabel().setText(name);
             });
             return;
-        }                
-        if (t.getTarget().getClass().equals(FontIcon.class)) {
-            String code = ((FontIcon) t.getTarget()).getIconLiteral();
-            if (code.equalsIgnoreCase("ti-view-grid")) {
+        }
+        if (t.getTarget().getClass().equals(StackPane.class)) {
+            Node target = Utility.pick((StackPane) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
+            if (target.getClass().equals(FontIcon.class)) {
                 handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
+                if (lightController.getImageView().getImage() != null) {
+                    if (lightController.getImageView().getImage() != null) {
+                        if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImageUrl().toString())) {
+                            return;
+                        }
+                    }
+                }
             }
-            t.consume();
         }
         if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
             lightController.getStackButton().setText("Unstack");

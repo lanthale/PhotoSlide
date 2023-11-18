@@ -231,7 +231,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
-            setStacked(item.isStacked(), item.getStackPos());
+            setStacked(item.isStacked(), item.getStackPos());            
             if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }

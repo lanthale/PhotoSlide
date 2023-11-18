@@ -5,12 +5,18 @@
  */
 package org.photoslide.browserlighttable;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -68,17 +74,39 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected MediaFile call() throws Exception {
         final long qty;
         List<MediaFile> content = new ArrayList<>();
-        try {            
-            updateTitle("Counting mediafiles...");                        
-            
+        ArrayList<MediaFile> cacheList = new ArrayList<>();
+        try {
+
+            updateTitle("Reading cache...");
+            //restore cache            
+            File inPath = new File(Utility.getAppData() + File.separatorChar + selectedPath.toFile().getName() + ".bin");
+            FileInputStream fileInputStream;
+            try {
+                fileInputStream = new FileInputStream(inPath);
+                ObjectInputStream objectInputStream
+                        = new ObjectInputStream(fileInputStream);
+                List<MediaFile> e2 = (ArrayList<MediaFile>) objectInputStream.readObject();
+                objectInputStream.close();                
+                cacheList.addAll(e2);                
+            } catch (IOException | ClassNotFoundException ex) {
+            }
+            updateTitle("Reading cache...finished");
+
+            Platform.runLater(() -> {
+                factory.setListFilesActive(false);
+                fullMediaList.addAll(cacheList);
+            });
+
+            updateTitle("Counting mediafiles...");
+
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
-            
+
             Stream<Path> fileListCount = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             });
-            
+
             qty = fileListCount.count();
             updateTitle("Counting mediafiles...finished");
             if (qty == 0) {
@@ -86,21 +114,21 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 Platform.runLater(() -> {
                     mainController.getProgressPane().setVisible(false);
                     mainController.getStatusLabelLeft().setVisible(false);
-                    mediaQTYLabel.setText(qty + " media files.");                    
+                    mediaQTYLabel.setText(qty + " media files.");
                 });
                 return null;
-            } else {                
-                Platform.runLater(() -> {  
+            } else {
+                Platform.runLater(() -> {
                     mainController.getProgressPane().setVisible(true);
                     mainController.getStatusLabelLeft().setVisible(true);
                     mediaQTYLabel.setText(qty + " media files");
                     mainController.getStatusLabelRight().setVisible(true);
                 });
                 updateTitle(qty + " files found - Loading...");
-            }            
+            }
             Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
-                        
+
             AtomicInteger iatom = new AtomicInteger(1);
             fileList.parallel().forEach((fileItem) -> {
                 if (this.isCancelled()) {
@@ -113,22 +141,45 @@ public class MediaLoadingTask extends Task<MediaFile> {
                             m.setName(fileItem.getFileName().toString());
                             m.setPathStorage(fileItem);
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            if (Utility.nativeMemorySize > 4194500) {
-                                Thread.ofVirtual().start(() -> {
+                            if (fullMediaList.contains(m) == false) {
+                                if (Utility.nativeMemorySize > 4194500) {
+                                    Thread.ofVirtual().start(() -> {
+                                        try {
+                                            loadItem(fileItem, m);
+                                            updateValue(m);
+                                        } catch (IOException ex) {
+                                            m.setMediaType(MediaFile.MediaTypes.NONE);
+                                        }
+                                    });
+                                } else {
                                     try {
                                         loadItem(fileItem, m);
                                         updateValue(m);
                                     } catch (IOException ex) {
                                         m.setMediaType(MediaFile.MediaTypes.NONE);
                                     }
-                                });
-                            } else {
-                                try {
-                                    loadItem(fileItem, m);
-                                    updateValue(m);
-                                } catch (IOException ex) {
-                                    m.setMediaType(MediaFile.MediaTypes.NONE);
                                 }
+                            } else {
+                                if (Utility.nativeMemorySize > 4194500) {
+                                    Thread.ofVirtual().start(() -> {
+                                        try {
+                                            loadItem(fileItem, m);
+                                            //updateValue(m);
+                                        } catch (IOException ex) {
+                                            m.setMediaType(MediaFile.MediaTypes.NONE);
+                                        }
+                                    });
+                                } else {
+                                    try {
+                                        loadItem(fileItem, m);
+                                        //updateValue(m);
+                                    } catch (IOException ex) {
+                                        m.setMediaType(MediaFile.MediaTypes.NONE);
+                                    }
+                                }
+                            }
+                            if (cacheList.contains(m) == false) {
+                                cacheList.add(m);
                             }
                         }
                     }
@@ -145,6 +196,27 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled()) {
                 return null;
             }
+
+            //save cache to disk            
+            File outpath = new File(Utility.getAppData() + File.separatorChar + selectedPath.toFile().getName() + ".bin");
+            
+            FileOutputStream fileOutputStream;
+            try {
+                fileOutputStream = new FileOutputStream(outpath, false);
+                ObjectOutputStream objectOutputStream
+                        = new ObjectOutputStream(fileOutputStream);
+                updateTitle("Save cache..." + cacheList.size());
+                objectOutputStream.writeObject(cacheList);
+                objectOutputStream.flush();
+                objectOutputStream.close();
+                updateTitle("Save cache...finished.");
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //end save to disk
+
             long endtime = System.currentTimeMillis();
             Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
         } catch (IOException ex) {

@@ -12,7 +12,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -56,62 +61,40 @@ import org.photoslide.imageops.ImageFilter;
  *
  * @author selfemp
  */
-public class MediaFile {
+public class MediaFile implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
-    private Path pathStorage;
-    private SimpleBooleanProperty loading;
+    private String pathStorage;
+    private transient SimpleBooleanProperty loading;
 
     private transient Image image;
     private transient Image unModifiyAbleImage;
-    private transient Media media;    
+    private transient Media media;
 
-    private final SimpleStringProperty title;
-    private final SimpleStringProperty keywords;
-    private final SimpleStringProperty camera;
-    private final SimpleStringProperty comments;
-    private final SimpleDoubleProperty rotationAngle;
-    private final SimpleIntegerProperty rating;
-    private final SimpleStringProperty place;
-    private final SimpleStringProperty faces;
-    private Rectangle2D cropView;
-    private Point2D orignalImageSize;
-    private LocalDateTime recordTime;
-    private final SimpleBooleanProperty deleted;
-    private final SimpleBooleanProperty selected;
-    private final SimpleStringProperty stackName;
-    private final SimpleIntegerProperty stackPos;
-    private final SimpleBooleanProperty stacked;
-    private FileTime creationTime;
+    private transient SimpleStringProperty title;
+    private transient SimpleStringProperty keywords;
+    private transient SimpleStringProperty camera;
+    private transient SimpleStringProperty comments;
+    private transient SimpleDoubleProperty rotationAngle;
+    private transient SimpleIntegerProperty rating;
+    private transient SimpleStringProperty place;
+    private transient SimpleStringProperty faces;
+    private transient Rectangle2D cropView;
+    private transient Point2D orignalImageSize;
+    private transient LocalDateTime recordTime;
+    private transient SimpleBooleanProperty deleted;
+    private transient SimpleBooleanProperty selected;
+    private transient SimpleStringProperty stackName;
+    private transient SimpleIntegerProperty stackPos;
+    private transient SimpleBooleanProperty stacked;
+    private transient FileTime creationTime;
     private boolean subViewSelected;
-    private ObservableList<ImageFilter> filterList;
-    private Point gpsPosition;
-    private LocalDateTime gpsDateTime;
-    private double gpsHeight;
-    private final SimpleBooleanProperty bookmarked;
-
-    
-    /*public void writeExternal(ObjectOutput out) throws IOException {    
-        out.writeBoolean(loading.getValue());
-        out.writeChars(title.getValue());
-        out.writeChars(keywords.getValue());
-        out.writeChars(camera.getValue());
-        out.writeChars(comments.getValue());
-        out.writeDouble(rotationAngle.doubleValue());
-        out.writeInt(rating.getValue());
-        out.writeChars(place.getValue());
-        out.writeChars(faces.getValue());
-        out.writeBoolean(deleted.getValue());
-        out.writeChars(stackName.getValue());
-        out.writeInt(stackPos.get());
-        out.writeBoolean(stacked.get());        
-    }
-
-    
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }*/
+    private transient ObservableList<ImageFilter> filterList;
+    private transient Point gpsPosition;
+    private transient LocalDateTime gpsDateTime;
+    private transient double gpsHeight;
+    private transient SimpleBooleanProperty bookmarked;
 
     public enum MediaTypes {
         IMAGE,
@@ -125,6 +108,17 @@ public class MediaFile {
     }
     private VideoTypes videoSupported;
     private MediaTypes mediaType;
+
+    private void writeObject(ObjectOutputStream oos)
+            throws IOException {
+        oos.defaultWriteObject();        
+    }
+
+    private void readObject(ObjectInputStream ois)
+            throws ClassNotFoundException, IOException {
+        ois.defaultReadObject();
+        initData();
+    }
 
     public MediaFile() {
         bookmarked = new SimpleBooleanProperty(false);
@@ -140,6 +134,29 @@ public class MediaFile {
         filterList = FXCollections.observableArrayList();
 
         mediaType = MediaTypes.NONE;
+        title = new SimpleStringProperty();
+        keywords = new SimpleStringProperty();
+        camera = new SimpleStringProperty();
+        comments = new SimpleStringProperty();
+        rotationAngle = new SimpleDoubleProperty(0.0);
+        rating = new SimpleIntegerProperty(0);
+        gpsHeight = -1;
+        orignalImageSize = null;
+        cropView = null;
+    }
+
+    public void initData() {
+        bookmarked = new SimpleBooleanProperty(false);
+        loading = new SimpleBooleanProperty(true);
+        subViewSelected = false;
+        deleted = new SimpleBooleanProperty(false);
+        selected = new SimpleBooleanProperty(false);
+        stackName = new SimpleStringProperty();
+        stackPos = new SimpleIntegerProperty(-1);
+        stacked = new SimpleBooleanProperty(false);
+        place = new SimpleStringProperty();
+        faces = new SimpleStringProperty();
+        filterList = FXCollections.observableArrayList();
         title = new SimpleStringProperty();
         keywords = new SimpleStringProperty();
         camera = new SimpleStringProperty();
@@ -174,7 +191,7 @@ public class MediaFile {
         } else {
             return this.image;
         }
-    }    
+    }
 
     public void setImage(Image image) {
         this.image = image;
@@ -196,7 +213,7 @@ public class MediaFile {
     public Media getMedia() {
         return media;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -211,7 +228,7 @@ public class MediaFile {
 
         String fileNameWithExt = getEditFilePath().toString();
 
-        try ( OutputStream output = new FileOutputStream(fileNameWithExt)) {
+        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
             Properties prop = new Properties();
             // set the properties value
             if (title.getValue() != null) {
@@ -302,7 +319,7 @@ public class MediaFile {
 
         fileNameWithExt = getEditFilePath().toString();
 
-        try ( InputStream input = new FileInputStream(fileNameWithExt)) {
+        try (InputStream input = new FileInputStream(fileNameWithExt)) {
 
             Properties prop = new Properties();
 
@@ -455,11 +472,11 @@ public class MediaFile {
     }
 
     public Path getPathStorage() {
-        return pathStorage;
+        return Path.of(pathStorage);
     }
 
     public void setPathStorage(Path pathStorage) {
-        this.pathStorage = pathStorage;
+        this.pathStorage = pathStorage.toString();
     }
 
     public VideoTypes getVideoSupported() {
@@ -552,7 +569,7 @@ public class MediaFile {
 
     public FileTime getCreationTime() throws IOException {
         if (creationTime == null) {
-            BasicFileAttributes attr = Files.readAttributes(pathStorage, BasicFileAttributes.class);
+            BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
             creationTime = attr.creationTime();
         }
         return creationTime;
@@ -664,7 +681,7 @@ public class MediaFile {
         int width = (int) image.getWidth();
         byte[] buffer = new byte[width * height * 4];
         try {
-            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);            
+            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
             Image filteredImage = new WritableImage(pixelReader, width, height);
             return filteredImage;
         } catch (Exception e) {

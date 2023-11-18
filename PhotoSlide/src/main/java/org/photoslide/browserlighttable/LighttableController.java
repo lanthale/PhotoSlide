@@ -5,18 +5,21 @@
  */
 package org.photoslide.browserlighttable;
 
-import boofcv.alg.feature.detect.interest.EasyGeneralFeatureDetector;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -89,8 +92,6 @@ import javafx.animation.Timeline;
 import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.SplitPane;
-import one.microstream.storage.embedded.types.EmbeddedStorage;
-import one.microstream.storage.embedded.types.EmbeddedStorageManager;
 import org.photoslide.ThreadFactoryBuilder;
 
 /**
@@ -220,38 +221,13 @@ public class LighttableController implements Initializable {
         sortOptions = FXCollections.observableArrayList("Filename", "Capture time", "File creation time");
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("lightTableController").build());
-        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerScheduled").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableController").build());
+        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableControllerScheduled").build());
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").build());
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         showPreviewPaneToggle.selectedProperty().addListener((o) -> {
-            if (showPreviewPaneToggle.isSelected()) {
-                final Timeline timeline = new Timeline();
-                timeline.setCycleCount(1);
-                timeline.setAutoReverse(false);
-                final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.65);
-                final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
-                timeline.getKeyFrames().add(kf);
-                final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 0);
-                final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
-                timeline.getKeyFrames().add(kf2);
-                timeline.play();
-                zoomSlider.setValue(0);
-            } else {
-                final Timeline timeline = new Timeline();
-                timeline.setCycleCount(1);
-                timeline.setAutoReverse(false);
-                final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.1);
-                final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
-                timeline.getKeyFrames().add(kf);
-                if (zoomSlider.getValue() < 12) {
-                    final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 12);
-                    final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
-                    timeline.getKeyFrames().add(kf2);
-                }
-                timeline.play();
-            }
+            previewPaneAnimation();
         });
     }
 
@@ -359,7 +335,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
             util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");
+            mainController.getStatusLabelLeft().setText("");            
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
@@ -370,7 +346,7 @@ public class LighttableController implements Initializable {
         });
         taskMLoading.setOnScheduled((t) -> {
             mainController.getProgressPane().setVisible(true);
-            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getStatusLabelLeft().setVisible(true);            
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
@@ -1328,6 +1304,35 @@ public class LighttableController implements Initializable {
 
     public ToggleSwitch getShowPreviewPaneToggle() {
         return showPreviewPaneToggle;
+    }
+
+    private void previewPaneAnimation() {
+        if (showPreviewPaneToggle.isSelected()) {
+            final Timeline timeline = new Timeline();
+            timeline.setCycleCount(1);
+            timeline.setAutoReverse(false);
+            final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.65);
+            final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
+            timeline.getKeyFrames().add(kf);
+            final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 0);
+            final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
+            timeline.getKeyFrames().add(kf2);
+            timeline.play();
+            zoomSlider.setValue(0);
+        } else {
+            final Timeline timeline = new Timeline();
+            timeline.setCycleCount(1);
+            timeline.setAutoReverse(false);
+            final KeyValue kv = new KeyValue(splitPane.getDividers().get(0).positionProperty(), 0.1);
+            final KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
+            timeline.getKeyFrames().add(kf);
+            if (zoomSlider.getValue() < 12) {
+                final KeyValue kv2 = new KeyValue(zoomSlider.valueProperty(), 12);
+                final KeyFrame kf2 = new KeyFrame(Duration.millis(500), kv2);
+                timeline.getKeyFrames().add(kf2);
+            }
+            timeline.play();
+        }
     }
 
     @FXML

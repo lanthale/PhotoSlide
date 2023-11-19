@@ -92,8 +92,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 objectInputStream.close();
                 cacheList.addAll(e2);
                 Platform.runLater(() -> {
-                    factory.setListFilesActive(false);
+                    factory.setListFilesActive(false);                    
                     fullMediaList.addAll(cacheList);
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setVisible(false);
+                    mainController.getStatusLabelRight().setVisible(false);
                 });
             } catch (IOException | ClassNotFoundException ex) {
             }

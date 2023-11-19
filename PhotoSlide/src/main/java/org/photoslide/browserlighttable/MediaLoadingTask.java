@@ -168,6 +168,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
                                             m.setMediaType(MediaFile.MediaTypes.NONE);
                                         }
                                     }
+                                } else {
+                                    //calc hash and compare, if different load data from disk
+                                    // loaditem with check
+                                    fullMediaList.get(fullMediaList.indexOf(m)).readEdits();
                                 }
                                 if (cacheList.contains(m) == false) {
                                     cacheList.add(m);

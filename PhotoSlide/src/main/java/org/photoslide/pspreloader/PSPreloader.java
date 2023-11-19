@@ -96,7 +96,7 @@ public class PSPreloader extends Preloader {
     @Override
     public void handleStateChangeNotification(StateChangeNotification scn) {
         if (scn.getType() == StateChangeNotification.Type.BEFORE_START) {
-            FadeTransition fadeOut = new FadeTransition(Duration.seconds(2), createPreloaderScene.getRoot());
+            FadeTransition fadeOut = new FadeTransition(Duration.seconds(1), createPreloaderScene.getRoot());
             fadeOut.setFromValue(1);
             fadeOut.setToValue(0);
             fadeOut.setCycleCount(1);

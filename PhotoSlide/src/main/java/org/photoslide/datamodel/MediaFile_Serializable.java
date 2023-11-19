@@ -7,54 +7,20 @@ package org.photoslide.datamodel;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
-import javafx.beans.Observable;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.WritableImage;
-import javafx.scene.media.Media;
-import javafx.util.Callback;
-import org.photoslide.browsermetadata.Coordinate;
-import org.photoslide.browsermetadata.DMSCoordinate;
-import org.photoslide.browsermetadata.DegreeCoordinate;
 import org.photoslide.browsermetadata.Point;
 import org.photoslide.imageops.ImageFilter;
 
@@ -69,16 +35,12 @@ public class MediaFile_Serializable implements Serializable {
     private String pathStorage;
     private boolean loading;
 
-    private transient Image image;
-    private transient Image unModifiyAbleImage;
-    private transient Media media;
-
     private String title;
     private String keywords;
     private String camera;
     private String comments;
-    private SimpleDoubleProperty rotationAngle;
-    private SimpleIntegerProperty rating;
+    private double rotationAngle;
+    private int rating;
     private String place;
     private String faces;
     private Rectangle2D cropView;
@@ -87,28 +49,21 @@ public class MediaFile_Serializable implements Serializable {
     private boolean deleted;
     private boolean selected;
     private String stackName;
-    private SimpleIntegerProperty stackPos;
+    private int stackPos;
     private boolean stacked;
     private FileTime creationTime;
     private boolean subViewSelected;
-    private List<ImageFilter> filterList;
     private Point gpsPosition;
     private LocalDateTime gpsDateTime;
     private double gpsHeight;
     private boolean bookmarked;
+    private MediaFile.VideoTypes videoSupported;
+    private MediaFile.MediaTypes mediaType;
+    private List<String> filterList;
 
-    public enum MediaTypes {
-        IMAGE,
-        VIDEO,
-        NONE
+    public MediaFile_Serializable() {
+        filterList = new ArrayList<>();
     }
-
-    public enum VideoTypes {
-        SUPPORTED,
-        UNSUPPORTED
-    }
-    private VideoTypes videoSupported;
-    private MediaTypes mediaType;
 
     @Override
     public int hashCode() {
@@ -142,15 +97,320 @@ public class MediaFile_Serializable implements Serializable {
         }
         return true;
     }
-    
-    public static MediaFile_Serializable convertToSerializable(MediaFile m){
-        MediaFile_Serializable mserial=new MediaFile_Serializable();
+
+    public static MediaFile_Serializable convertToSerializable(MediaFile m) {
+        MediaFile_Serializable mserial = new MediaFile_Serializable();
+        mserial.setName(m.getName());
+        mserial.setPathStorage(m.getPathStorage().toString());
+        mserial.setBookmarked(m.isBookmarked());
+        mserial.setLoading(true);
+        mserial.setSubViewSelected(false);
+        mserial.setDeleted(m.isDeleted());
+        mserial.setSelected(m.isSelected());
+        mserial.setStackName(m.getStackName());
+        mserial.setStackPos(m.getStackPos());
+        mserial.setStacked(m.isStacked());
+        mserial.setPlace(m.getPlace().get());
+        mserial.setFaces(m.getFaces().get());
+        mserial.setFilterList(mserial.convertImageFilterToStringList(m.getFilterListWithoutImageData()));
+        mserial.setMediaType(m.getMediaType());
+        mserial.setTitle(m.getTitle().get());
+        mserial.setKeywords(m.getKeywords());
+        mserial.setCamera(m.getCamera().get());
+        mserial.setComments(m.getCamera().get());
+        mserial.setRotationAngle(m.getRotationAngleProperty().get());
+        mserial.setRating(m.getRatingProperty().get());
+        mserial.setGpsHeight(-1);
+        mserial.setOrignalImageSize(m.getOrignalImageSize());
+        mserial.setCropView(m.getCropView());
         return mserial;
     }
-    
-    public static MediaFile convertToSerializable(MediaFile_Serializable mserial){
-        MediaFile m=new MediaFile();
-        return m;
+
+    public static void convertToMediaFile(MediaFile_Serializable mserial, MediaFile m) {
+        m.setName(mserial.getName());
+        m.setPathStorage(Path.of(mserial.getPathStorage()));
+        m.setBookmarked(mserial.isBookmarked());
+        m.setLoading(true);
+        m.setSubViewSelected(false);
+        m.setDeleted(mserial.isDeleted());
+        m.setSelected(mserial.isSelected());
+        m.setStackName(mserial.getStackName());
+        m.setStackPos(mserial.getStackPos());
+        m.setStacked(mserial.isStacked());
+        m.setPlace(mserial.getPlace());
+        m.setFaces(mserial.getFaces());        
+        m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
+        m.setMediaType(mserial.getMediaType());
+        m.setTitle(mserial.getTitle());
+        m.setKeywords(mserial.getKeywords());
+        m.setCamera(mserial.getCamera());
+        m.setComments(mserial.getCamera());
+        m.setRotationAngle(mserial.getRotationAngle());
+        m.setRating(mserial.getRating());
+        m.setGpsHeight(-1);
+        m.setOrignalImageSize(mserial.getOrignalImageSize());
+        m.setCropView(mserial.getCropView());
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPathStorage() {
+        return pathStorage;
+    }
+
+    public void setPathStorage(String pathStorage) {
+        this.pathStorage = pathStorage;
+    }
+
+    public boolean isLoading() {
+        return loading;
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading = loading;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
+    }
+
+    public String getCamera() {
+        return camera;
+    }
+
+    public void setCamera(String camera) {
+        this.camera = camera;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
+    public double getRotationAngle() {
+        return rotationAngle;
+    }
+
+    public void setRotationAngle(double rotationAngle) {
+        this.rotationAngle = rotationAngle;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public String getFaces() {
+        return faces;
+    }
+
+    public void setFaces(String faces) {
+        this.faces = faces;
+    }
+
+    public Rectangle2D getCropView() {
+        return cropView;
+    }
+
+    public void setCropView(Rectangle2D cropView) {
+        this.cropView = cropView;
+    }
+
+    public Point2D getOrignalImageSize() {
+        return orignalImageSize;
+    }
+
+    public void setOrignalImageSize(Point2D orignalImageSize) {
+        this.orignalImageSize = orignalImageSize;
+    }
+
+    public LocalDateTime getRecordTime() {
+        return recordTime;
+    }
+
+    public void setRecordTime(LocalDateTime recordTime) {
+        this.recordTime = recordTime;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    public String getStackName() {
+        return stackName;
+    }
+
+    public void setStackName(String stackName) {
+        this.stackName = stackName;
+    }
+
+    public int getStackPos() {
+        return stackPos;
+    }
+
+    public void setStackPos(int stackPos) {
+        this.stackPos = stackPos;
+    }
+
+    public boolean isStacked() {
+        return stacked;
+    }
+
+    public void setStacked(boolean stacked) {
+        this.stacked = stacked;
+    }
+
+    public FileTime getCreationTime() {
+        return creationTime;
+    }
+
+    public void setCreationTime(FileTime creationTime) {
+        this.creationTime = creationTime;
+    }
+
+    public boolean isSubViewSelected() {
+        return subViewSelected;
+    }
+
+    public void setSubViewSelected(boolean subViewSelected) {
+        this.subViewSelected = subViewSelected;
+    }
+
+    public List<String> getFilterList() {
+        return filterList;
+    }
+
+    public void setFilterList(List<String> filterList) {
+        this.filterList = filterList;
+    }
+
+    public Point getGpsPosition() {
+        return gpsPosition;
+    }
+
+    public void setGpsPosition(Point gpsPosition) {
+        this.gpsPosition = gpsPosition;
+    }
+
+    public LocalDateTime getGpsDateTime() {
+        return gpsDateTime;
+    }
+
+    public void setGpsDateTime(LocalDateTime gpsDateTime) {
+        this.gpsDateTime = gpsDateTime;
+    }
+
+    public double getGpsHeight() {
+        return gpsHeight;
+    }
+
+    public void setGpsHeight(double gpsHeight) {
+        this.gpsHeight = gpsHeight;
+    }
+
+    public boolean isBookmarked() {
+        return bookmarked;
+    }
+
+    public void setBookmarked(boolean bookmarked) {
+        this.bookmarked = bookmarked;
+    }
+
+    public MediaFile.VideoTypes getVideoSupported() {
+        return videoSupported;
+    }
+
+    public void setVideoSupported(MediaFile.VideoTypes videoSupported) {
+        this.videoSupported = videoSupported;
+    }
+
+    public MediaFile.MediaTypes getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(MediaFile.MediaTypes mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public ObservableList<ImageFilter> convertToImageFilterList(List<String> sourceList) {
+        ObservableList<ImageFilter> destinationList = FXCollections.observableArrayList();
+        ObjectMapper mapper = new ObjectMapper();
+        sourceList.forEach((filter) -> {
+            StringTokenizer st = new StringTokenizer(filter, ";");
+            String fname = (String) st.nextElement();
+            String value = (String) st.nextElement();
+            ImageFilter ifm = null;
+            try {
+                String cname = fname.substring(12);
+                ifm = (ImageFilter) mapper.readValue(value, Class.forName("org.photoslide.imageops." + cname));
+            } catch (JsonProcessingException | ClassNotFoundException ex) {
+                Logger.getLogger(MediaFile_Serializable.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
+            }
+            if (ifm != null) {
+                destinationList.add(ifm);
+            }
+        });
+        return destinationList;
+    }
+
+    public List<String> convertImageFilterToStringList(List<ImageFilter> sourceList) {
+        ArrayList<String> destinationList = new ArrayList<>();
+        if (sourceList.isEmpty() == false) {
+            ObjectMapper mapper = new ObjectMapper();
+            sourceList.forEach((imgFilter) -> {
+                try {
+                    String value = mapper.writeValueAsString(imgFilter);
+                    destinationList.add("ImageFilter:" + imgFilter.getName() + ";" + value);
+                } catch (JsonProcessingException ex) {
+                    Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+        }
+        return destinationList;
     }
 
 }

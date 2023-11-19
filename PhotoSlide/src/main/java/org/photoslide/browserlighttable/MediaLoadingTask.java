@@ -17,8 +17,11 @@ import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -79,23 +82,22 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
             updateTitle("Reading cache...");
             //restore cache            
-            File inPath = new File(Utility.getAppData() + File.separatorChar + selectedPath.toFile().getName() + ".bin");
+            File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()+"-") + selectedPath.toFile().getName() + ".bin");
             FileInputStream fileInputStream;
             try {
                 fileInputStream = new FileInputStream(inPath);
                 ObjectInputStream objectInputStream
                         = new ObjectInputStream(fileInputStream);
                 List<MediaFile> e2 = (ArrayList<MediaFile>) objectInputStream.readObject();
-                objectInputStream.close();                
-                cacheList.addAll(e2);                
+                objectInputStream.close();
+                cacheList.addAll(e2);
+                Platform.runLater(() -> {
+                    factory.setListFilesActive(false);
+                    fullMediaList.addAll(cacheList);
+                });
             } catch (IOException | ClassNotFoundException ex) {
             }
             updateTitle("Reading cache...finished");
-
-            Platform.runLater(() -> {
-                factory.setListFilesActive(false);
-                fullMediaList.addAll(cacheList);
-            });
 
             updateTitle("Counting mediafiles...");
 
@@ -130,76 +132,65 @@ public class MediaLoadingTask extends Task<MediaFile> {
             long starttime = System.currentTimeMillis();
 
             AtomicInteger iatom = new AtomicInteger(1);
-            fileList.parallel().forEach((fileItem) -> {
-                if (this.isCancelled()) {
-                    return;
+            if (qty != cacheList.size()) {
+                if (!cacheList.isEmpty()) {
+                    Platform.runLater(() -> {
+                        mainController.getProgressPane().setVisible(false);
+                        mainController.getStatusLabelLeft().setVisible(false);
+                    });
                 }
-                if (this.isCancelled() == false) {
-                    if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {
-                            MediaFile m = new MediaFile();
-                            m.setName(fileItem.getFileName().toString());
-                            m.setPathStorage(fileItem);
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            if (fullMediaList.contains(m) == false) {
-                                if (Utility.nativeMemorySize > 4194500) {
-                                    Thread.ofVirtual().start(() -> {
+                fileList.parallel().forEach((fileItem) -> {
+                    if (this.isCancelled()) {
+                        return;
+                    }
+                    if (this.isCancelled() == false) {
+                        if (Files.isDirectory(fileItem) == false) {
+                            if (FileTypes.isValidType(fileItem.toString())) {
+                                MediaFile m = new MediaFile();
+                                m.setName(fileItem.getFileName().toString());
+                                m.setPathStorage(fileItem);
+                                m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                                if (fullMediaList.contains(m) == false) {
+                                    if (Utility.nativeMemorySize > 4194500) {
+                                        Thread.ofVirtual().start(() -> {
+                                            try {
+                                                loadItem(fileItem, m);
+                                                updateValue(m);
+                                            } catch (IOException ex) {
+                                                m.setMediaType(MediaFile.MediaTypes.NONE);
+                                            }
+                                        });
+                                    } else {
                                         try {
                                             loadItem(fileItem, m);
                                             updateValue(m);
                                         } catch (IOException ex) {
                                             m.setMediaType(MediaFile.MediaTypes.NONE);
                                         }
-                                    });
-                                } else {
-                                    try {
-                                        loadItem(fileItem, m);
-                                        updateValue(m);
-                                    } catch (IOException ex) {
-                                        m.setMediaType(MediaFile.MediaTypes.NONE);
                                     }
                                 }
-                            } else {
-                                if (Utility.nativeMemorySize > 4194500) {
-                                    Thread.ofVirtual().start(() -> {
-                                        try {
-                                            loadItem(fileItem, m);
-                                            //updateValue(m);
-                                        } catch (IOException ex) {
-                                            m.setMediaType(MediaFile.MediaTypes.NONE);
-                                        }
-                                    });
-                                } else {
-                                    try {
-                                        loadItem(fileItem, m);
-                                        //updateValue(m);
-                                    } catch (IOException ex) {
-                                        m.setMediaType(MediaFile.MediaTypes.NONE);
-                                    }
+                                if (cacheList.contains(m) == false) {
+                                    cacheList.add(m);
                                 }
                             }
-                            if (cacheList.contains(m) == false) {
-                                cacheList.add(m);
+                        }
+                        updateMessage(iatom.get() + " / " + qty);
+                        iatom.addAndGet(1);
+                        if (qty > 1000) {
+                            double percentage = (double) iatom.get() / qty * 100;
+                            if (percentage >= loadingLimit) {
+                                factory.setListFilesActive(false);
                             }
                         }
                     }
-                    updateMessage(iatom.get() + " / " + qty);
-                    iatom.addAndGet(1);
-                    if (qty > 1000) {
-                        double percentage = (double) iatom.get() / qty * 100;
-                        if (percentage >= loadingLimit) {
-                            factory.setListFilesActive(false);
-                        }
-                    }
+                });
+                if (this.isCancelled()) {
+                    return null;
                 }
-            });
-            if (this.isCancelled()) {
-                return null;
             }
-
             //save cache to disk            
-            File outpath = new File(Utility.getAppData() + File.separatorChar + selectedPath.toFile().getName() + ".bin");
-            
+            File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()+"-") + selectedPath.toFile().getName() + ".bin");
+
             FileOutputStream fileOutputStream;
             try {
                 fileOutputStream = new FileOutputStream(outpath, false);
@@ -306,6 +297,28 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected void succeeded() {
         super.succeeded();
         executorParallel.shutdown();
+    }
+
+    public String createMD5Hash(final String input)
+            throws NoSuchAlgorithmException {
+
+        String hashtext = null;
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        // Compute message digest of the input
+        byte[] messageDigest = md.digest(input.getBytes());
+
+        hashtext = convertToHex(messageDigest);
+
+        return hashtext;
+    }
+
+    private String convertToHex(final byte[] messageDigest) {
+        BigInteger bigint = new BigInteger(1, messageDigest);
+        String hexText = bigint.toString(16);
+        while (hexText.length() < 32) {
+            hexText = "0".concat(hexText);
+        }
+        return hexText;
     }
 
 }

@@ -8,6 +8,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -85,7 +87,7 @@ public class App extends Application {
                 checkSearchDBStructure();
             } catch (ClassNotFoundException | SQLException e) {
                 if (e.getMessage().startsWith("Unsupported database")) {
-                    new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB").delete();                    
+                    new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB").delete();
                 } else {
                     Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
                 }
@@ -104,6 +106,11 @@ public class App extends Application {
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
         }
+        //create cache dir
+        if (Files.exists(Path.of(Utility.getAppData() + File.separatorChar + "cache")) == false) {
+            Files.createDirectory(Path.of(Utility.getAppData() + File.separatorChar + "cache"));
+        }
+
         notifyPreloader(new ProgressNotification(0.8));
     }
 

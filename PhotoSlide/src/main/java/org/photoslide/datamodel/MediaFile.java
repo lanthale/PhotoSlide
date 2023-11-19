@@ -96,13 +96,13 @@ public class MediaFile implements Serializable {
     private transient double gpsHeight;
     private transient SimpleBooleanProperty bookmarked;
 
-    public enum MediaTypes {
+    public static enum MediaTypes {
         IMAGE,
         VIDEO,
         NONE
     }
 
-    public enum VideoTypes {
+    public static enum VideoTypes {
         SUPPORTED,
         UNSUPPORTED
     }
@@ -111,13 +111,17 @@ public class MediaFile implements Serializable {
 
     private void writeObject(ObjectOutputStream oos)
             throws IOException {
-        oos.defaultWriteObject();        
+        //oos.defaultWriteObject();
+        MediaFile_Serializable convertToSerializable = MediaFile_Serializable.convertToSerializable(this);
+        oos.writeObject(convertToSerializable);
     }
 
     private void readObject(ObjectInputStream ois)
             throws ClassNotFoundException, IOException {
-        ois.defaultReadObject();
+        //ois.defaultReadObject();
         initData();
+        MediaFile_Serializable mserial=(MediaFile_Serializable)ois.readObject(); 
+        MediaFile_Serializable.convertToMediaFile(mserial, this);
     }
 
     public MediaFile() {
@@ -899,6 +903,39 @@ public class MediaFile implements Serializable {
     public SimpleBooleanProperty bookmarkedProperty() {
         return bookmarked;
     }
+
+    public SimpleStringProperty getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place.set(place);
+    }
+
+    public SimpleStringProperty getFaces() {
+        return faces;
+    }
+
+    public void setFaces(String faces) {
+        this.faces.set(faces);
+    }
+
+    public SimpleStringProperty getTitle() {
+        return title;
+    }    
+
+    public SimpleStringProperty getCamera() {
+        return camera;
+    }
+
+    public SimpleStringProperty getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments.set(comments);
+    }
+    
 
     public void removeAllEdits() {
         String fileNameWithExt = getEditFilePath().toString();

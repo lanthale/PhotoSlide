@@ -138,7 +138,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setStackPos(mserial.getStackPos());
         m.setStacked(mserial.isStacked());
         m.setPlace(mserial.getPlace());
-        m.setFaces(mserial.getFaces());        
+        m.setFaces(mserial.getFaces());
         m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
         m.setMediaType(mserial.getMediaType());
         m.setTitle(mserial.getTitle());
@@ -379,7 +379,7 @@ public class MediaFile_Serializable implements Serializable {
     public ObservableList<ImageFilter> convertToImageFilterList(List<String> sourceList) {
         ObservableList<ImageFilter> destinationList = FXCollections.observableArrayList();
         ObjectMapper mapper = new ObjectMapper();
-        sourceList.forEach((filter) -> {
+        for (String filter : sourceList) {
             StringTokenizer st = new StringTokenizer(filter, ";");
             String fname = (String) st.nextElement();
             String value = (String) st.nextElement();
@@ -393,7 +393,7 @@ public class MediaFile_Serializable implements Serializable {
             if (ifm != null) {
                 destinationList.add(ifm);
             }
-        });
+        }
         return destinationList;
     }
 

@@ -82,7 +82,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
             updateTitle("Reading cache...");
             //restore cache            
-            File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()+"-") + selectedPath.toFile().getName() + ".bin");
+            File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
             FileInputStream fileInputStream;
             try {
                 fileInputStream = new FileInputStream(inPath);
@@ -189,7 +189,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 }
             }
             //save cache to disk            
-            File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()+"-") + selectedPath.toFile().getName() + ".bin");
+            File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
 
             FileOutputStream fileOutputStream;
             try {

@@ -66,35 +66,35 @@ public class MediaFile implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
     private String pathStorage;
-    private transient SimpleBooleanProperty loading;
+    private SimpleBooleanProperty loading;
 
-    private transient Image image;
-    private transient Image unModifiyAbleImage;
-    private transient Media media;
+    private Image image;
+    private Image unModifiyAbleImage;
+    private Media media;
 
-    private transient SimpleStringProperty title;
-    private transient SimpleStringProperty keywords;
-    private transient SimpleStringProperty camera;
-    private transient SimpleStringProperty comments;
-    private transient SimpleDoubleProperty rotationAngle;
-    private transient SimpleIntegerProperty rating;
-    private transient SimpleStringProperty place;
-    private transient SimpleStringProperty faces;
-    private transient Rectangle2D cropView;
-    private transient Point2D orignalImageSize;
-    private transient LocalDateTime recordTime;
-    private transient SimpleBooleanProperty deleted;
-    private transient SimpleBooleanProperty selected;
-    private transient SimpleStringProperty stackName;
-    private transient SimpleIntegerProperty stackPos;
-    private transient SimpleBooleanProperty stacked;
-    private transient FileTime creationTime;
+    private SimpleStringProperty title;
+    private SimpleStringProperty keywords;
+    private SimpleStringProperty camera;
+    private SimpleStringProperty comments;
+    private SimpleDoubleProperty rotationAngle;
+    private SimpleIntegerProperty rating;
+    private SimpleStringProperty place;
+    private SimpleStringProperty faces;
+    private Rectangle2D cropView;
+    private Point2D orignalImageSize;
+    private LocalDateTime recordTime;
+    private SimpleBooleanProperty deleted;
+    private SimpleBooleanProperty selected;
+    private SimpleStringProperty stackName;
+    private SimpleIntegerProperty stackPos;
+    private SimpleBooleanProperty stacked;
+    private FileTime creationTime;
     private boolean subViewSelected;
-    private transient ObservableList<ImageFilter> filterList;
-    private transient Point gpsPosition;
-    private transient LocalDateTime gpsDateTime;
-    private transient double gpsHeight;
-    private transient SimpleBooleanProperty bookmarked;
+    private ObservableList<ImageFilter> filterList;
+    private Point gpsPosition;
+    private LocalDateTime gpsDateTime;
+    private double gpsHeight;
+    private SimpleBooleanProperty bookmarked;
 
     public static enum MediaTypes {
         IMAGE,

@@ -92,7 +92,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 objectInputStream.close();
                 cacheList.addAll(e2);
                 Platform.runLater(() -> {
-                    factory.setListFilesActive(false);                    
+                    factory.setListFilesActive(false);
                     fullMediaList.addAll(cacheList);
                     mainController.getProgressPane().setVisible(false);
                     mainController.getStatusLabelLeft().setVisible(false);
@@ -123,25 +123,28 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 });
                 return null;
             } else {
-                Platform.runLater(() -> {
-                    mainController.getProgressPane().setVisible(true);
-                    mainController.getStatusLabelLeft().setVisible(true);
-                    mediaQTYLabel.setText(qty + " media files");
-                    mainController.getStatusLabelRight().setVisible(true);
-                });
+                if (!cacheList.isEmpty()) {
+                    Platform.runLater(() -> {
+                        mainController.getProgressPane().setVisible(false);
+                        mainController.getStatusLabelLeft().setVisible(false);
+                        mediaQTYLabel.setText(qty + " media files");
+                        mainController.getStatusLabelRight().setVisible(false);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        mainController.getProgressPane().setVisible(true);
+                        mainController.getStatusLabelLeft().setVisible(true);
+                        mediaQTYLabel.setText(qty + " media files");
+                        mainController.getStatusLabelRight().setVisible(true);
+                    });
+                }
                 updateTitle(qty + " files found - Loading...");
             }
             Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
 
             AtomicInteger iatom = new AtomicInteger(1);
-            if (qty != cacheList.size()) {
-                if (!cacheList.isEmpty()) {
-                    Platform.runLater(() -> {
-                        mainController.getProgressPane().setVisible(false);
-                        mainController.getStatusLabelLeft().setVisible(false);
-                    });
-                }
+            if (qty != cacheList.size()+1) {
                 fileList.parallel().forEach((fileItem) -> {
                     if (this.isCancelled()) {
                         return;
@@ -181,6 +184,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                                 }
                             }
                         }
+                        if (cacheList.isEmpty()) {
+                            updateTitle("Loading..."+iatom.get() + " / " + qty);
+                        } else{
+                            updateTitle("Checking cache..."+iatom.get() + " / " + qty);
+                        }
                         updateMessage(iatom.get() + " / " + qty);
                         iatom.addAndGet(1);
                         if (qty > 1000) {
@@ -194,6 +202,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 if (this.isCancelled()) {
                     return null;
                 }
+            } else {
+                //filter changed files and execute readEdits()
             }
             //save cache to disk            
             File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");

@@ -57,7 +57,6 @@ import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
@@ -195,6 +194,17 @@ public class MainViewController implements Initializable {
     private Button searchButton;
     @FXML
     private Button bookmarksBoardButton;
+    private SearchToolsDialog searchDialog;
+    private PrintDialog printDialog;
+    private Properties bookmarks;
+    private BMBIcon bmbIcon;
+    @FXML
+    private Button showProcessButton;
+    @FXML
+    private FontIcon processListIcon;
+    private TaskProgressView taskProgressView;
+    private PopOver taskPopOver;
+
     @FXML
     private CollectionsController collectionsPaneController;
     @FXML
@@ -211,16 +221,6 @@ public class MainViewController implements Initializable {
     private BookmarkBoardController bookmarksController;
     @FXML
     private SearchToolsController searchtools;
-    private SearchToolsDialog searchDialog;
-    private PrintDialog printDialog;
-    private Properties bookmarks;    
-    private BMBIcon bmbIcon;
-    @FXML
-    private Button showProcessButton;
-    @FXML
-    private FontIcon processListIcon;
-    private TaskProgressView taskProgressView;
-    private PopOver taskPopOver;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -1238,6 +1238,30 @@ public class MainViewController implements Initializable {
                 lighttablePaneController.getFactory().handleStackButtonAction(item.getStackName(), lighttablePaneController.getFactory().getSelectedCell());
             }
         }
+    }
+
+    @FXML
+    private void resetMediaCache(ActionEvent event) {
+        try {
+            Files.newDirectoryStream(Path.of(Utility.getAppData() + File.separatorChar + "cache")).forEach(file -> {
+                try {
+                    Files.delete(file);
+                } catch (IOException e) {
+                    file.toFile().deleteOnExit();
+                }
+            });
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
+        msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the cache.");
+        msg.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+        msg.setResizable(false);
+        Utility.centerChildWindowOnStage((Stage) msg.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
+        Stage stage = (Stage) msg.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
+        msg.show();
     }
 
 }

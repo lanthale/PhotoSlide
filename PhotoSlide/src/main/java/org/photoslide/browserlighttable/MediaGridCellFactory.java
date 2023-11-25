@@ -89,7 +89,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private boolean listFilesActive;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("factoryController").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("factoryController").build());
         listFilesActive = true;
         this.util = util;
         this.metadataController = metadataController;

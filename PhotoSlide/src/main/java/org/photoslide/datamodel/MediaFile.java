@@ -12,9 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -89,6 +87,7 @@ public class MediaFile implements Serializable {
     private SimpleIntegerProperty stackPos;
     private SimpleBooleanProperty stacked;
     private FileTime creationTime;
+    private FileTime lastModifyTime;
     private boolean subViewSelected;
     private ObservableList<ImageFilter> filterList;
     private Point gpsPosition;
@@ -120,7 +119,7 @@ public class MediaFile implements Serializable {
             throws ClassNotFoundException, IOException {
         //ois.defaultReadObject();
         initData();
-        MediaFile_Serializable mserial=(MediaFile_Serializable)ois.readObject(); 
+        MediaFile_Serializable mserial = (MediaFile_Serializable) ois.readObject();
         MediaFile_Serializable.convertToMediaFile(mserial, this);
     }
 
@@ -397,13 +396,19 @@ public class MediaFile implements Serializable {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
                     }
                     if (ifm != null) {
-                        rawList.add(ifm);
+                        if (rawList.contains(ifm) == false) {
+                            rawList.add(ifm);
+                        }
                     }
                 }
             }
             if (rawList.isEmpty() == false) {
                 rawList.sort(Comparator.comparing(imageFilter -> imageFilter.getPosition()));
-                filterList.addAll(rawList);
+                for (ImageFilter imageFilter : rawList) {
+                    if (filterList.contains(imageFilter) == false) {
+                        filterList.add(imageFilter);
+                    }
+                }
             }
             if (prop.getProperty("gpsDateTime") != null) {
                 String propStr = prop.getProperty("gpsDateTime", null);
@@ -583,6 +588,18 @@ public class MediaFile implements Serializable {
         this.creationTime = creationTime;
     }
 
+    public FileTime getLastModifyTime() throws IOException {
+        if (lastModifyTime == null) {
+            BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
+            lastModifyTime = attr.lastModifiedTime();
+        }
+        return lastModifyTime;
+    }
+
+    public void setLastModifyTime(FileTime lastModifyTime) {
+        this.lastModifyTime = lastModifyTime;
+    }
+
     public Path getEditFilePath() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         String fileNameWithExt = fileNameWithOutExt + ".edit";
@@ -640,6 +657,7 @@ public class MediaFile implements Serializable {
 
     public void addImageFilter(ImageFilter ifm) {
         filterList.add(ifm);
+        System.out.println("size filter:" + filterList.size());
         ifm.setPosition(filterList.indexOf(ifm));
     }
 
@@ -922,7 +940,7 @@ public class MediaFile implements Serializable {
 
     public SimpleStringProperty getTitle() {
         return title;
-    }    
+    }
 
     public SimpleStringProperty getCamera() {
         return camera;
@@ -935,7 +953,6 @@ public class MediaFile implements Serializable {
     public void setComments(String comments) {
         this.comments.set(comments);
     }
-    
 
     public void removeAllEdits() {
         String fileNameWithExt = getEditFilePath().toString();

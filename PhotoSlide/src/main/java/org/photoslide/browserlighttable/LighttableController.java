@@ -21,6 +21,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -329,11 +330,9 @@ public class LighttableController implements Initializable {
             sortedMediaList.setComparator(new MediaFilenameComparator());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getStatusLabelRight().textProperty().unbind();
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+            mainController.getStatusLabelRight().textProperty().unbind();            
             sortOrderComboBox.setDisable(false);
-            mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");
-            util.hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+            mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");            
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText("");            
         });
@@ -346,7 +345,7 @@ public class LighttableController implements Initializable {
         });
         taskMLoading.setOnScheduled((t) -> {
             mainController.getProgressPane().setVisible(true);
-            mainController.getStatusLabelLeft().setVisible(true);            
+            mainController.getStatusLabelLeft().setVisible(true);
         });
         Platform.runLater(() -> {
             mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());

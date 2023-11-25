@@ -7,10 +7,13 @@ package org.photoslide.datamodel;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,7 +54,6 @@ public class MediaFile_Serializable implements Serializable {
     private String stackName;
     private int stackPos;
     private boolean stacked;
-    private FileTime creationTime;
     private boolean subViewSelected;
     private Point gpsPosition;
     private LocalDateTime gpsDateTime;
@@ -59,7 +61,9 @@ public class MediaFile_Serializable implements Serializable {
     private boolean bookmarked;
     private MediaFile.VideoTypes videoSupported;
     private MediaFile.MediaTypes mediaType;
-    private List<String> filterList;
+    private List<String> filterList;    
+    private String creationTime;
+    private String lastModifyTime;
 
     public MediaFile_Serializable() {
         filterList = new ArrayList<>();
@@ -111,8 +115,8 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setStackPos(m.getStackPos());
         mserial.setStacked(m.isStacked());
         mserial.setPlace(m.getPlace().get());
-        mserial.setFaces(m.getFaces().get());
-        mserial.setFilterList(mserial.convertImageFilterToStringList(m.getFilterListWithoutImageData()));
+        mserial.setFaces(m.getFaces().get());        
+        mserial.setFilterList(mserial.convertImageFilterToStringList(m.getFilterList()));
         mserial.setMediaType(m.getMediaType());
         mserial.setTitle(m.getTitle().get());
         mserial.setKeywords(m.getKeywords());
@@ -123,6 +127,11 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setGpsHeight(-1);
         mserial.setOrignalImageSize(m.getOrignalImageSize());
         mserial.setCropView(m.getCropView());
+        try {
+            mserial.setCreationTime(formatDateTime(m.getCreationTime()));
+            mserial.setLastModifyTime(formatDateTime(m.getLastModifyTime()));
+        } catch (IOException ex) {
+        }
         return mserial;
     }
 
@@ -138,7 +147,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setStackPos(mserial.getStackPos());
         m.setStacked(mserial.isStacked());
         m.setPlace(mserial.getPlace());
-        m.setFaces(mserial.getFaces());
+        m.setFaces(mserial.getFaces());        
         m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
         m.setMediaType(mserial.getMediaType());
         m.setTitle(mserial.getTitle());
@@ -150,6 +159,8 @@ public class MediaFile_Serializable implements Serializable {
         m.setGpsHeight(-1);
         m.setOrignalImageSize(mserial.getOrignalImageSize());
         m.setCropView(mserial.getCropView());
+        m.setCreationTime(formatDateTime(mserial.getCreationTime()));
+        m.setLastModifyTime(formatDateTime(mserial.getLastModifyTime()));
     }
 
     public String getName() {
@@ -304,12 +315,20 @@ public class MediaFile_Serializable implements Serializable {
         this.stacked = stacked;
     }
 
-    public FileTime getCreationTime() {
+    public String getCreationTime() {
         return creationTime;
     }
 
-    public void setCreationTime(FileTime creationTime) {
+    public void setCreationTime(String creationTime) {
         this.creationTime = creationTime;
+    }
+
+    public String getLastModifyTime() {
+        return lastModifyTime;
+    }
+
+    public void setLastModifyTime(String lastModifyTime) {
+        this.lastModifyTime = lastModifyTime;
     }
 
     public boolean isSubViewSelected() {
@@ -391,7 +410,9 @@ public class MediaFile_Serializable implements Serializable {
                 Logger.getLogger(MediaFile_Serializable.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
             }
             if (ifm != null) {
-                destinationList.add(ifm);
+                if (destinationList.contains(ifm) == false) {
+                    destinationList.add(ifm);
+                }
             }
         }
         return destinationList;
@@ -401,16 +422,31 @@ public class MediaFile_Serializable implements Serializable {
         ArrayList<String> destinationList = new ArrayList<>();
         if (sourceList.isEmpty() == false) {
             ObjectMapper mapper = new ObjectMapper();
-            sourceList.forEach((imgFilter) -> {
+            for (ImageFilter imgFilter : sourceList) {
                 try {
                     String value = mapper.writeValueAsString(imgFilter);
                     destinationList.add("ImageFilter:" + imgFilter.getName() + ";" + value);
                 } catch (JsonProcessingException ex) {
                     Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            });
+            }
         }
         return destinationList;
+    }
+
+    private static String formatDateTime(FileTime fileTime) {
+
+        LocalDateTime localDateTime = fileTime
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        return localDateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+    }
+
+    private static FileTime formatDateTime(String fileTime) {
+        LocalDateTime parse = LocalDateTime.parse(fileTime, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        return FileTime.from(parse.atZone(ZoneId.systemDefault()).toInstant());
     }
 
 }

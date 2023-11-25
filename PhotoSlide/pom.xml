@@ -240,12 +240,7 @@
             <groupId>io.github.typhon0</groupId>
             <artifactId>AnimateFX</artifactId>
             <version>1.2.4</version>            
-        </dependency>  
-        <dependency>
-            <groupId>one.microstream</groupId>
-            <artifactId>microstream-storage-embedded</artifactId>
-            <version>08.01.01-MS-GA</version>
-        </dependency>      
+        </dependency>               
 
         <!-- This downloads the platform specific JavaFX libraries used by the project. -->
         <!-- For the final installable, the JavaFX dependencies are provided via modules, but by including these here

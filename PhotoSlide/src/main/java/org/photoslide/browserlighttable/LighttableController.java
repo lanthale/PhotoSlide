@@ -329,10 +329,8 @@ public class LighttableController implements Initializable {
             filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             sortedMediaList.setComparator(new MediaFilenameComparator());
             mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getStatusLabelRight().textProperty().unbind();            
-            sortOrderComboBox.setDisable(false);
-            mainController.getStatusLabelRight().setText("Finished MediaLoading Task.");            
+            mainController.getProgressbarLabel().textProperty().unbind();            
+            sortOrderComboBox.setDisable(false);            
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setText("");            
         });

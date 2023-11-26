@@ -209,10 +209,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                                     }
                                 }
                             } else {
-                                m.readEdits();                                
-                                Platform.runLater(() -> {
-                                    fullMediaList.set(fullMediaList.indexOf(m), m);
-                                });
+                                m.readEdits();
+                                updateValue(m);
                                 if (cacheList.contains(m) == false) {
                                     cacheList.add(m);
                                 } else {
@@ -234,10 +232,6 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled()) {
                 return null;
             }
-
-            Platform.runLater(() -> {
-                lightcontroller.getSortedMediaList().setComparator(new MediaFilenameComparator());
-            });
 
             //Save cache...
             Thread.ofVirtual().start(() -> {
@@ -359,9 +353,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected void updateValue(MediaFile v) {
         if (v != null) {
             super.updateValue(v);
-            Platform.runLater(() -> {
-                fullMediaList.add(v);
-            });
+            if (fullMediaList.contains(v) == false) {
+                Platform.runLater(() -> {
+                    fullMediaList.add(v);
+                });
+            }
         }
     }
 

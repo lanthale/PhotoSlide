@@ -57,8 +57,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private List<MediaFile> cacheList;
     private List<Thread> loadingThreads;
     private boolean loadedFromCache;
+    private final LighttableController lightcontroller;
 
-    public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam) {
+    public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam, LighttableController lightcontroller) {
         selectedPath = sPath;
         fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
@@ -70,6 +71,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         cacheList = new ArrayList<>();
         loadingThreads = new ArrayList<>();
         loadedFromCache = false;
+        this.lightcontroller = lightcontroller;
         executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         //executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
         if (Utility.nativeMemorySize > 4194500) {
@@ -108,13 +110,22 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         .filter(element -> !cacheListStream.contains(element));
                 //list of edit files                
                 long start = System.currentTimeMillis();
+
+                //edit file list
+                List<Path> dummyfileList = Files.list(selectedPath).filter((t) -> {
+                    return t.getFileName().toString().startsWith("Ω");
+                }).sorted(new FilenameComparator()).collect(Collectors.toList());
                 Stream<Path> editFileList = cacheList.stream().filter((t) -> {
+                    boolean retVal = false;
                     if (t != null) {
                         if (!t.getFilterList().isEmpty()) {
-                            return true;
+                            retVal = true;
+                        }
+                        if (dummyfileList.contains(Path.of(FileTypes.convertEditNameToFilename(t.getPathStorage().toString())))) {
+                            retVal = true;
                         }
                     }
-                    return false;
+                    return retVal;
                 }).map(MediaFile::getPathStorage);
                 finalFileList = Stream.concat(diffFileList, editFileList);
                 long end = System.currentTimeMillis();
@@ -198,9 +209,14 @@ public class MediaLoadingTask extends Task<MediaFile> {
                                     }
                                 }
                             } else {
-                                m.readEdits();
+                                m.readEdits();                                
+                                Platform.runLater(() -> {
+                                    fullMediaList.set(fullMediaList.indexOf(m), m);
+                                });
                                 if (cacheList.contains(m) == false) {
                                     cacheList.add(m);
+                                } else {
+                                    cacheList.set(cacheList.indexOf(m), m);
                                 }
                             }
                         }
@@ -210,7 +226,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         updateMessage(iatom.get() + " / " + qty);
                     } else {
                         updateTitle("Checking cache..." + iatom.get());
-                        updateMessage(iatom.get() + "");
+                        updateMessage("Checking cache..." + iatom.get());
                     }
                     iatom.addAndGet(1);
                 }
@@ -218,6 +234,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
             if (this.isCancelled()) {
                 return null;
             }
+
+            Platform.runLater(() -> {
+                lightcontroller.getSortedMediaList().setComparator(new MediaFilenameComparator());
+            });
 
             //Save cache...
             Thread.ofVirtual().start(() -> {

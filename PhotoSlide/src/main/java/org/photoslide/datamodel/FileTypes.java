@@ -5,6 +5,8 @@
  */
 package org.photoslide.datamodel;
 
+import java.io.File;
+
 /**
  *
  * @author selfemp
@@ -36,6 +38,19 @@ public class FileTypes {
             }
         }
         return isValid;
+    }
+    
+    public static String convertEditNameToFilename(String fileNameWithPath){
+        int lastIndexOfExt = fileNameWithPath.lastIndexOf('.');
+        int lastIndexOfSlash = fileNameWithPath.lastIndexOf(File.separatorChar);
+        if (lastIndexOfExt != -1) {
+            String fileEndingStr = ".edit";
+            String fileStartStr = fileNameWithPath.substring(lastIndexOfSlash+1,lastIndexOfExt);
+            String res= fileNameWithPath.substring(0, lastIndexOfSlash)+File.separatorChar+"Ω_"+fileStartStr+fileEndingStr;
+            return res;
+        } else {
+            return "";
+        }
     }
 
     public static boolean isValidVideo(String fileName) {

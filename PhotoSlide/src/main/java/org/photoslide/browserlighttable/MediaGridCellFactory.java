@@ -12,7 +12,9 @@ import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -778,6 +780,17 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             }
         }
         return ret;
+    }
+    
+    public List<MediaGridCell> getVisibleCells() {
+        List<MediaGridCell> visibleCells=new ArrayList<>();
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
+        int start = vf.getFirstVisibleCell().getIndex();
+        int end = vf.getLastVisibleCell().getIndex();
+        for (int i = start; i <= end; i++) {
+            visibleCells.add((MediaGridCell)vf.getCell(i).getChildrenUnmodifiable());
+        }
+        return visibleCells;
     }
 
     public void handleStackButtonAction(String stackName, Node anchore) {

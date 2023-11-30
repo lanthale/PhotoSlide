@@ -58,6 +58,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private List<Thread> loadingThreads;
     private boolean loadedFromCache;
     private final LighttableController lightcontroller;
+    private List<Path> dummyfileList;
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam, LighttableController lightcontroller) {
         selectedPath = sPath;
@@ -69,6 +70,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         this.factory = factory;
         this.fullMediaList = fullMediaList;
         cacheList = new ArrayList<>();
+        dummyfileList = new ArrayList<>();
         loadingThreads = new ArrayList<>();
         loadedFromCache = false;
         this.lightcontroller = lightcontroller;
@@ -112,7 +114,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 long start = System.currentTimeMillis();
 
                 //edit file list
-                List<Path> dummyfileList = Files.list(selectedPath).filter((t) -> {
+                dummyfileList = Files.list(selectedPath).filter((t) -> {
                     return t.getFileName().toString().startsWith("Ω");
                 }).sorted(new FilenameComparator()).collect(Collectors.toList());
                 Stream<Path> editFileList = cacheList.stream().filter((t) -> {
@@ -223,8 +225,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         updateTitle("Loading..." + iatom.get() + " / " + qty);
                         updateMessage(iatom.get() + " / " + qty);
                     } else {
-                        updateTitle("Checking cache..." + iatom.get());
-                        updateMessage("Checking cache..." + iatom.get());
+                        updateTitle("Checking cache..." + iatom.get() + "/" + dummyfileList.size());
+                        updateMessage("Checking cache..." + iatom.get() + "/" + dummyfileList.size());
                     }
                     iatom.addAndGet(1);
                 }

@@ -235,12 +235,12 @@ public class SoftwareUpdater {
                 myUrl = new URL(httpsURL);
                 conn = (HttpsURLConnection) myUrl.openConnection();
                 inputStream = conn.getInputStream();
+                appendNull = true;
             } catch (MalformedURLException ex) {
                 newVersion = "";
             } catch (IOException ex) {
                 newVersion = "";
-            }
-            appendNull = true;
+            }            
         } catch (MalformedURLException ex) {
             newVersion = "";
             Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);

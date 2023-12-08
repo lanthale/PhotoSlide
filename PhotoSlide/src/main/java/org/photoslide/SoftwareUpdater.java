@@ -44,12 +44,12 @@ public class SoftwareUpdater {
     private Task<String> downloadTask;
     private final MainViewController controller;
     private final Image dialogIcon;
-    private final static String architecture=System.getProperty("os.arch");
+    private final static String architecture = System.getProperty("os.arch");
 
     public SoftwareUpdater(ExecutorService executorParallel, MainViewController mc) {
         this.executorParallel = executorParallel;
         this.controller = mc;
-        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));        
+        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
     }
 
     public void Shutdown() {
@@ -69,7 +69,7 @@ public class SoftwareUpdater {
             @Override
             protected String call() throws Exception {
                 Utility util = new Utility();
-                String actVersion = util.getAppVersion();                                
+                String actVersion = util.getAppVersion();                
                 if (actVersion.contains("SNAPSHOT")) {
                     return "";
                 }
@@ -213,8 +213,9 @@ public class SoftwareUpdater {
                 errorcount++;
             }
         }
-        maxMinorVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + (parseInt-1);
+        maxMinorVersion = actVersion.substring(0, actVersion.lastIndexOf(".") + 1) + (parseInt - 1);
         //Check major version afterwards
+        boolean appendNull = false;
         try {
             version = actVersion.substring(actVersion.lastIndexOf(".") + 1);
             String version2 = actVersion.substring(actVersion.indexOf(".") + 1, actVersion.lastIndexOf("."));
@@ -226,7 +227,20 @@ public class SoftwareUpdater {
             conn = (HttpsURLConnection) myUrl.openConnection();
             inputStream = conn.getInputStream();
         } catch (FileNotFoundException ex3) {
-            newVersion = "";
+            if ((int) newVersion.chars().filter(ch -> ch == '.').count() == 1) {
+                newVersion = newVersion + ".0";
+            }
+            httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + newVersion + "/PhotoSlide-" + newVersion + ".msi";
+            try {
+                myUrl = new URL(httpsURL);
+                conn = (HttpsURLConnection) myUrl.openConnection();
+                inputStream = conn.getInputStream();
+            } catch (MalformedURLException ex) {
+                newVersion = "";
+            } catch (IOException ex) {
+                newVersion = "";
+            }
+            appendNull = true;
         } catch (MalformedURLException ex) {
             newVersion = "";
             Logger.getLogger(SoftwareUpdater.class.getName()).log(Level.SEVERE, null, ex);
@@ -249,6 +263,9 @@ public class SoftwareUpdater {
         //Check if newVersion is better or nor
         if (actVersion.equalsIgnoreCase(newVersion)) {
             newVersion = "";
+        }
+        if (appendNull == true) {
+            newVersion = newVersion + ".0";
         }
         return newVersion;
     }
@@ -279,7 +296,7 @@ public class SoftwareUpdater {
 
     private void downloadUpdate(String nextAppVersion) {
         Alert downloadDialog = new Alert(Alert.AlertType.INFORMATION, "Download software", ButtonType.CANCEL);
-        downloadDialog.setHeaderText("Downloading new Photoslide "+nextAppVersion+" software");
+        downloadDialog.setHeaderText("Downloading new Photoslide " + nextAppVersion + " software");
         downloadDialog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
         downloadDialog.setTitle("Downloadmanager");
         ProgressBar pgr = new ProgressBar();
@@ -319,10 +336,10 @@ public class SoftwareUpdater {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide-" + nextAppVersion + ".dmg";
                         filename = "PhotoSlide-" + nextAppVersion + ".dmg";
                     } else if (OS.contains("MAC") && architecture.equalsIgnoreCase("aarch64")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+architecture+"-" + nextAppVersion + ".dmg";
-                        filename = "PhotoSlide_" +architecture+"-" + nextAppVersion + ".dmg";                        
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_" + architecture + "-" + nextAppVersion + ".dmg";
+                        filename = "PhotoSlide_" + architecture + "-" + nextAppVersion + ".dmg";
                     } else if (OS.contains("NUX")) {
-                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_"+ nextAppVersion + "_amd64.deb";
+                        httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_" + nextAppVersion + "_amd64.deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";
                     } else {
                         httpsURL = "";

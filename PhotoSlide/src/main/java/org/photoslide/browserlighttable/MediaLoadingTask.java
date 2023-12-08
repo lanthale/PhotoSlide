@@ -95,11 +95,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
             updateTitle("Counting mediafiles...");
 
-            Stream<Path> fileList = Files.list(selectedPath).parallel().filter((t) -> {
+            Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
 
-            Stream<Path> fileListCount = Files.list(selectedPath).parallel().filter((t) -> {
+            Stream<Path> fileListCount = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
             }).sorted(new FilenameComparator());
 
@@ -114,7 +114,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 long start = System.currentTimeMillis();
 
                 //edit file list
-                dummyfileList = Files.list(selectedPath).parallel().filter((t) -> {
+                dummyfileList = Files.list(selectedPath).filter((t) -> {
                     return t.getFileName().toString().startsWith("Ω");
                 }).sorted(new FilenameComparator()).collect(Collectors.toList());
                 Stream<Path> editFileList = cacheList.stream().filter((t) -> {
@@ -138,7 +138,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
             qty = fileListCount.count();
 
-            /*if (qty < cacheList.size()) {
+            if (qty < cacheList.size()) {
                 Stream<Path> fileListNew = Files.list(selectedPath).filter((t) -> {
                     return FileTypes.isValidType(t.getFileName().toString());
                 }).sorted(new FilenameComparator());
@@ -150,7 +150,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 });
                 File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
                 outpath.delete();
-            }*/
+            }
             updateTitle("Counting mediafiles...finished");
             if (qty == 0) {
                 updateTitle("0 mediafiles found.");
@@ -235,9 +235,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
 
             //Save cache...
-            Thread.ofVirtual().start(() -> {
+            /*Thread.ofVirtual().start(() -> {
                 saveCacheToDisk();
-            });
+            });*/
             long endtime = System.currentTimeMillis();
             updateMessage("Finished MediaLoading Task.");
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
@@ -256,7 +256,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     = new ObjectInputStream(fileInputStream);
             List<MediaFile> e2 = (ArrayList<MediaFile>) objectInputStream.readObject();
             objectInputStream.close();
-            List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());
+            //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());
             cacheList.addAll(e2);            
             Platform.runLater(() -> {
                 fullMediaList.addAll(cacheList);

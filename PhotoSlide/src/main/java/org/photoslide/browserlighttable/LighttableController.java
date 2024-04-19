@@ -319,6 +319,7 @@ public class LighttableController implements Initializable {
             }
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
+            zoomSlider.setValue(0);
         });
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);

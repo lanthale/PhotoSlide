@@ -398,7 +398,9 @@ public class MetadataController implements Initializable {
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
-            rawMetaData = new LibrawImage(file.getPathStorage().toString(), new RawDecoderSettings()).getMetaData();
+            HashMap<String, RawDecoderSettings> settings = new HashMap<>();
+            settings.put("Default", new RawDecoderSettings());
+            rawMetaData = new LibrawImage(file.getPathStorage().toString(), settings).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
             LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
             double alti = -1;

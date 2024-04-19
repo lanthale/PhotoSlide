@@ -46,7 +46,10 @@ public class MediaFile_Serializable implements Serializable {
     private int rating;
     private String place;
     private String faces;
-    private Rectangle2D cropView;
+    private double cropViewX;
+    private double cropViewY;
+    private double cropViewWidth;
+    private double cropViewHeigth;
     private Point2D orignalImageSize;
     private LocalDateTime recordTime;
     private boolean deleted;
@@ -61,7 +64,7 @@ public class MediaFile_Serializable implements Serializable {
     private boolean bookmarked;
     private MediaFile.VideoTypes videoSupported;
     private MediaFile.MediaTypes mediaType;
-    private List<String> filterList;    
+    private List<String> filterList;
     private String creationTime;
     private String lastModifyTime;
 
@@ -115,7 +118,7 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setStackPos(m.getStackPos());
         mserial.setStacked(m.isStacked());
         mserial.setPlace(m.getPlace().get());
-        mserial.setFaces(m.getFaces().get());        
+        mserial.setFaces(m.getFaces().get());
         mserial.setFilterList(mserial.convertImageFilterToStringList(m.getFilterList()));
         mserial.setMediaType(m.getMediaType());
         mserial.setTitle(m.getTitle().get());
@@ -126,7 +129,12 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setRating(m.getRatingProperty().get());
         mserial.setGpsHeight(-1);
         mserial.setOrignalImageSize(m.getOrignalImageSize());
-        mserial.setCropView(m.getCropView());
+        if (m.getCropView() != null) {
+            mserial.setCropViewX(m.getCropView().getMinX());
+            mserial.setCropViewY(m.getCropView().getMinY());
+            mserial.setCropViewWidth(m.getCropView().getWidth());
+            mserial.setCropViewHeigth(m.getCropView().getHeight());
+        }
         try {
             mserial.setCreationTime(formatDateTime(m.getCreationTime()));
             mserial.setLastModifyTime(formatDateTime(m.getLastModifyTime()));
@@ -147,7 +155,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setStackPos(mserial.getStackPos());
         m.setStacked(mserial.isStacked());
         m.setPlace(mserial.getPlace());
-        m.setFaces(mserial.getFaces());        
+        m.setFaces(mserial.getFaces());
         m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
         m.setMediaType(mserial.getMediaType());
         m.setTitle(mserial.getTitle());
@@ -158,7 +166,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setRating(mserial.getRating());
         m.setGpsHeight(-1);
         m.setOrignalImageSize(mserial.getOrignalImageSize());
-        m.setCropView(mserial.getCropView());
+        m.setCropView(new Rectangle2D(mserial.getCropViewX(), mserial.cropViewY, mserial.getCropViewWidth(), mserial.getCropViewHeigth()));
         m.setCreationTime(formatDateTime(mserial.getCreationTime()));
         m.setLastModifyTime(formatDateTime(mserial.getLastModifyTime()));
     }
@@ -251,12 +259,36 @@ public class MediaFile_Serializable implements Serializable {
         this.faces = faces;
     }
 
-    public Rectangle2D getCropView() {
-        return cropView;
+    public double getCropViewX() {
+        return cropViewX;
     }
 
-    public void setCropView(Rectangle2D cropView) {
-        this.cropView = cropView;
+    public void setCropViewX(double cropViewX) {
+        this.cropViewX = cropViewX;
+    }
+
+    public double getCropViewY() {
+        return cropViewY;
+    }
+
+    public void setCropViewY(double cropViewY) {
+        this.cropViewY = cropViewY;
+    }
+
+    public double getCropViewWidth() {
+        return cropViewWidth;
+    }
+
+    public void setCropViewWidth(double cropViewWidth) {
+        this.cropViewWidth = cropViewWidth;
+    }
+
+    public double getCropViewHeigth() {
+        return cropViewHeigth;
+    }
+
+    public void setCropViewHeigth(double cropViewHeigth) {
+        this.cropViewHeigth = cropViewHeigth;
     }
 
     public Point2D getOrignalImageSize() {

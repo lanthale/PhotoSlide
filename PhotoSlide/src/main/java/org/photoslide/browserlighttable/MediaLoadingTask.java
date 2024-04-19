@@ -235,9 +235,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
 
             //Save cache...
-            /*Thread.ofVirtual().start(() -> {
+            Thread.ofVirtual().start(() -> {
                 saveCacheToDisk();
-            });*/
+            });
             long endtime = System.currentTimeMillis();
             updateMessage("Finished MediaLoading Task.");
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);

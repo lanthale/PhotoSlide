@@ -33,6 +33,7 @@ import javax.imageio.spi.ServiceRegistry;
 import org.h2.fulltext.FullText;
 import org.libheiffx.HEIFImageLoaderFactory;
 import org.librawfx.RAWImageLoaderFactory;
+import org.librawfx.RawDecoderSettings;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.datamodel.customformats.webpsupport.WEBPImageLoaderFactory;
@@ -100,8 +101,15 @@ public class App extends Application {
         PSDImageLoaderFactory.install();
         WEBPImageLoaderFactory.install();
 
-        try {
+        try {            
             RAWImageLoaderFactory.install();
+            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setWhiteBalance("CAMERA");
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setAutoBrightness(true);
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(1);
+            
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);

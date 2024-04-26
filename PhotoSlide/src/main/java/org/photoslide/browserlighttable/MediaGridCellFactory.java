@@ -257,11 +257,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         if (t.getTarget().getClass().equals(StackPane.class)) {
             Node target = Utility.pick((StackPane) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target.getClass().equals(FontIcon.class)) {
-                handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
-                if (lightController.getImageView().getImage() != null) {
+                if (!target.toString().startsWith("fa-file-movie-o")) {
+                    handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
                     if (lightController.getImageView().getImage() != null) {
-                        if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImageUrl().toString())) {
-                            return;
+                        if (lightController.getImageView().getImage() != null) {
+                            if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImageUrl().toString())) {
+                                return;
+                            }
                         }
                     }
                 }
@@ -781,14 +783,14 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         return ret;
     }
-    
+
     public List<MediaGridCell> getVisibleCells() {
-        List<MediaGridCell> visibleCells=new ArrayList<>();
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);        
+        List<MediaGridCell> visibleCells = new ArrayList<>();
+        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
         int start = vf.getFirstVisibleCell().getIndex();
         int end = vf.getLastVisibleCell().getIndex();
         for (int i = start; i <= end; i++) {
-            visibleCells.add((MediaGridCell)vf.getCell(i).getChildrenUnmodifiable());
+            visibleCells.add((MediaGridCell) vf.getCell(i).getChildrenUnmodifiable());
         }
         return visibleCells;
     }

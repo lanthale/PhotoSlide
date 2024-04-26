@@ -328,6 +328,9 @@ public class MetadataController implements Initializable {
             progressPane.setVisible(true);
             progressLabel.setText("Loading metadata...");
         });
+        if (task != null) {
+            task.cancel();
+        }
         task = new Task<>() {
             @Override
             protected Boolean call() throws IOException {
@@ -601,7 +604,7 @@ public class MetadataController implements Initializable {
                                 }
                                 iterator = meta.iterator();
                                 while (iterator.hasNext()) {
-                                    MetadataEntry item = iterator.next();                                    
+                                    MetadataEntry item = iterator.next();
                                     Collection<MetadataEntry> entries = item.getMetadataEntries();
                                     if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
                                         entries.parallelStream().forEach((e) -> {

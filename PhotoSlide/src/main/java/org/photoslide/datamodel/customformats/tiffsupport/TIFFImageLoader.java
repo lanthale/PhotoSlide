@@ -9,6 +9,7 @@ import com.sun.javafx.iio.ImageFrame;
 import com.sun.javafx.iio.ImageMetadata;
 import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.common.ImageLoaderImpl;
+import com.sun.javafx.iio.common.ImageTools;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -89,7 +91,7 @@ public class TIFFImageLoader extends ImageLoaderImpl {
                 width, height, null, null, null);
 
         updateImageMetadata(md);
-        
+                
         try {
             return createImageFrame(imageWidth, imageHeight, getPixelScale());
         } catch (IOException ex) {
@@ -116,8 +118,8 @@ public class TIFFImageLoader extends ImageLoaderImpl {
     private ImageFrame createImageFrame(float width, float height, float pixelScale)
             throws IOException {        
         BufferedImage bufferedImage = getTranscodedImage(width * pixelScale, height * pixelScale);
-        ByteBuffer imageData = getImageData(bufferedImage);
-
+        ByteBuffer imageData = getImageData(bufferedImage);        
+        
         return new FixedPixelDensityImageFrame(ImageStorage.ImageType.RGBA, imageData, bufferedImage.getWidth(),
                 bufferedImage.getHeight(), getStride(bufferedImage), null, pixelScale, null);
     }
@@ -125,13 +127,12 @@ public class TIFFImageLoader extends ImageLoaderImpl {
     private BufferedImage getTranscodedImage(float width, float height)
             throws IOException {
         BufferedImage read;
-        try {
-            FileCacheImageInputStream fileCache = new FileCacheImageInputStream​(input, new File(Utility.getAppData()));
+        try {            
             if (width <= 300) {
-                BufferedImage rBufImg = readFile(fileCache);
+                BufferedImage rBufImg = readFile();
                 read = resize(rBufImg, (int) width, (int) height);
             } else {
-                BufferedImage rBufImg = readFile(fileCache);
+                BufferedImage rBufImg = readFile();
                 read = resize(rBufImg, (int) width * 4, (int) height * 4);
             }
         } catch (IOException e) {
@@ -141,88 +142,9 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         return read;
     }
 
-    private BufferedImage readFile(FileCacheImageInputStream fileCache) throws IOException {
-        BufferedImage image = null;
-        int w;
-        int h;
-
-        // Get the reader
-        Iterator<ImageReader> readers = ImageIO.getImageReaders(fileCache);
-
-        if (!readers.hasNext()) {
-            throw new IllegalArgumentException("No reader found!");
-        }
-
-        ImageReader reader = readers.next();
-
-        try {
-            reader.setInput(fileCache);
-            Iterator<ImageTypeSpecifier> types = reader.getImageTypes(0);
-            ImageTypeSpecifier type = types.next();
-
-            int sub = 4;
-            int srcWidth = reader.getWidth(0);
-            int srcHeight = reader.getHeight(0);
-            if (srcWidth > 8000) {
-                sub = 4;
-            } else {
-                sub = 1;
-            }
-            w = srcWidth / sub;
-            h = srcHeight / sub;
-
-            //image = MappedImageFactory.createCompatibleMappedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            ImageReadParam param = reader.getDefaultReadParam();
-
-            //param.setDestination(image);
-            param.setSourceSubsampling(sub, sub, 0, 0);
-
-            reader.addIIOReadProgressListener(new IIOReadProgressListener() {
-                @Override
-                public void imageComplete(ImageReader source) {
-                    //updateImageProgress(1.0f);
-                }
-
-                @Override
-                public void imageProgress(ImageReader source, float percentageDone) {                    
-                    updateImageProgress(percentageDone/100);
-                }
-
-                @Override
-                public void imageStarted(ImageReader source, int imageIndex) {
-                    //updateImageProgress(0f);
-                }
-
-                @Override
-                public void readAborted(ImageReader source) {                    
-                }
-
-                @Override
-                public void sequenceComplete(ImageReader source) {                    
-                }
-
-                @Override
-                public void sequenceStarted(ImageReader source, int minIndex) {                
-                }
-
-                @Override
-                public void thumbnailComplete(ImageReader source) {                    
-                }
-
-                @Override
-                public void thumbnailProgress(ImageReader source, float percentageDone) {                    
-                }
-
-                @Override
-                public void thumbnailStarted(ImageReader source, int imageIndex, int thumbnailIndex) {                    
-                }
-            });
-
-            image = reader.read(0, param);
-        } finally {
-            // Dispose reader in finally block to avoid memory leaks
-            reader.dispose();
-        }
+    private BufferedImage readFile() throws IOException {
+        BufferedImage image = null;        
+        image = ImageIO.read(input);
         return image;
     }
 

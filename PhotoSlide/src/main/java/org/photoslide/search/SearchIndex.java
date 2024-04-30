@@ -52,7 +52,7 @@ public class SearchIndex {
         mainViewController = c;
         fileWalkRunning = false;
         terminateFileWalk = false;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(3).setNamePrefix("searchIndexExecutor").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
     }
 
     public void createSearchIndex(String searchPath) {

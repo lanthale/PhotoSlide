@@ -70,6 +70,12 @@ public class SearchIndex {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                            int pathlength = fileItem.toString().length();
+                            if (pathlength > 35) {                                
+                                updateMessage("..." + fileItem.toString().substring(pathlength-35, pathlength));                                
+                            } else {
+                                updateMessage("" + fileItem.toString());
+                            }
                             if (terminateFileWalk == true) {
                                 return FileVisitResult.TERMINATE;
                             }

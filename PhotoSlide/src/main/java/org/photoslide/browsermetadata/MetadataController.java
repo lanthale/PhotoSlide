@@ -428,7 +428,7 @@ public class MetadataController implements Initializable {
                 file.setCamera(rawMetaData.get("CameraModel"));
             });
             long endraw = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, "reading time raw: " + (endraw - startraw) + " ms");
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time raw: " + (endraw - startraw) + " ms");
         } else if (file.isHEIFImage()) {
             long startheif = System.currentTimeMillis();
             rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
@@ -471,7 +471,7 @@ public class MetadataController implements Initializable {
                 file.setCamera(rawMetaData.get("Model"));
             });
             long endheif = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, "reading time video: " + "reading time heif: " + (endheif - startheif) + " ms");
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + "reading time heif: " + (endheif - startheif) + " ms");
         } else if (file.isVideoFile()) {
             long startvideo = System.currentTimeMillis();
             try {
@@ -536,7 +536,7 @@ public class MetadataController implements Initializable {
                 Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
             }
             long endvideo = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, "reading time video: " + (endvideo - startvideo) + " ms");
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + (endvideo - startvideo) + " ms");
         } else {
             long startimage = System.currentTimeMillis();
             Map<MetadataType, Metadata> metadataMap;
@@ -719,7 +719,7 @@ public class MetadataController implements Initializable {
 
                 long endimage = System.currentTimeMillis();
                 String loadTime = "Reading time for metadata complete: " + (endimage - startimage) + " ms";
-                Logger.getLogger(MetadataController.class.getName()).log(Level.INFO, loadTime);
+                Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, loadTime);
             } catch (java.lang.IllegalArgumentException e) {
                 Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, e.getMessage());
             }

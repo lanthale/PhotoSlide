@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -56,7 +57,7 @@ public class App extends Application {
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
     private static final double DEFAULT_HEIGHT = 800;
-    private static boolean SEARCHINDEXFINISHED = false;
+    private static LocalDate SEARCHINDEXFINISHED = LocalDate.now();
     private static boolean MAXIMIZED = true;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
@@ -148,7 +149,7 @@ public class App extends Application {
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());
         preferences.putDouble(WINDOW_WIDTH, stage.getWidth());
         preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());
-        preferences.putBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
+        preferences.putLong("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED.toEpochDay());
         preferences.putBoolean("MAXIMIZED", stage.isMaximized());
         try {
             preferences.flush();
@@ -165,7 +166,7 @@ public class App extends Application {
         double y = pref.getDouble(WINDOW_POSITION_Y, DEFAULT_Y);
         double width = pref.getDouble(WINDOW_WIDTH, DEFAULT_WIDTH);
         double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);
-        SEARCHINDEXFINISHED = pref.getBoolean("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED);
+        SEARCHINDEXFINISHED = LocalDate.ofEpochDay(pref.getLong("SEARCHINDEXFINISHED", LocalDate.now().toEpochDay()));
         MAXIMIZED = pref.getBoolean("MAXIMIZED", MAXIMIZED);
         stage.setMaximized(MAXIMIZED);
         stage.setX(x);
@@ -269,8 +270,14 @@ public class App extends Application {
         return searchDBConnection;
     }
 
-    public static void setSearchIndexFinished(boolean finished) {
-        SEARCHINDEXFINISHED = finished;
+    public static LocalDate getSEARCHINDEXFINISHED() {
+        return SEARCHINDEXFINISHED;
     }
+
+    public static void setSEARCHINDEXFINISHED(LocalDate SEARCHINDEXFINISHED) {
+        App.SEARCHINDEXFINISHED = SEARCHINDEXFINISHED;
+    }
+
+            
 
 }

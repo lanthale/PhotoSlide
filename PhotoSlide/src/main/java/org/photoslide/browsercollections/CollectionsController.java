@@ -170,18 +170,9 @@ public class CollectionsController implements Initializable {
     }
 
     private void loadURLs() {
-        Task<Boolean> indexTask = new Task<>() {
-            @Override
-            protected Boolean call() throws Exception {
-                collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
-                    if (this.isCancelled() == false) {
-                        searchIndexProcess.createSearchIndex(t.getValue());
-                        searchIndexProcess.checkSearchIndex(t.getValue());
-                    }
-                });
-                return true;
-            }
-        };
+        collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+            searchIndexProcess.createCheckSearchIndex(t.getValue());
+        });
         Task<Boolean> task = new Task<>() {
 
             @Override
@@ -216,12 +207,12 @@ public class CollectionsController implements Initializable {
                     }
                     accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
                 }
-            });            
+            });
         });
         executorParallel.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
-        executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
-        mainController.getTaskProgressView().getTasks().add(indexTask);
+        //executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        //mainController.getTaskProgressView().getTasks().add(indexTask);
     }
 
     public void saveSettings() {
@@ -253,7 +244,7 @@ public class CollectionsController implements Initializable {
         this.lighttablePaneController = mainController;
     }
 
-    private void createRootTree(Path root_file, TreeItem parent) throws IOException {        
+    private void createRootTree(Path root_file, TreeItem parent) throws IOException {
         try (DirectoryStream<Path> newDirectoryStream = Files.newDirectoryStream(root_file, (entry) -> {
             boolean res = true;
             if (entry.getFileName().toString().startsWith(".")) {
@@ -414,7 +405,7 @@ public class CollectionsController implements Initializable {
             pref.put("URL" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
             if (createSearchIndex(selectedDirectory.getAbsolutePath()) == true) {
                 pref.put("INDEX" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
-                searchIndexProcess.createSearchIndex(selectedDirectory.getAbsolutePath());
+                searchIndexProcess.createCheckSearchIndex(selectedDirectory.getAbsolutePath());
             }
         }
     }
@@ -496,7 +487,7 @@ public class CollectionsController implements Initializable {
                 dirTreeView.setDisable(true);
                 Platform.runLater(() -> {
                     actCollectionTitlePane.setContent(dirTreeView);
-                    dirTreeView.setRoot(root);                    
+                    dirTreeView.setRoot(root);
                 });
                 createRootTree(Paths.get(path), root);
                 return dirTreeView;

@@ -16,10 +16,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -55,9 +59,9 @@ public class SearchIndex {
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
     }
 
-    public void createSearchIndex(String searchPath) {
+    public void createCheckSearchIndex(String searchPath) {
         String collectionName = searchPath;
-        Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Start time create searchDB: " + LocalDateTime.now());
+        Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         task = new Task<>() {
             @Override
@@ -65,14 +69,21 @@ public class SearchIndex {
                 if (task.isCancelled()) {
                     return null;
                 }
+                if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
+                    Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
+                    if (period.isNegative()) {
+                        System.out.println("return from");
+                        return null;
+                    }
+                }
                 updateTitle("Creating/Updating search index...");
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
                             int pathlength = fileItem.toString().length();
-                            if (pathlength > 35) {                                
-                                updateMessage("..." + fileItem.toString().substring(pathlength-35, pathlength));                                
+                            if (pathlength > 35) {
+                                updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
                             } else {
                                 updateMessage("" + fileItem.toString());
                             }
@@ -108,17 +119,18 @@ public class SearchIndex {
                                     }
                                     if (FileTypes.isValidVideo(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                                        insertMediaFileIntoSearchDB(collectionName, m);
                                     } else if (FileTypes.isValidImage(fileItem.toString())) {
                                         m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                                        try {
-                                            metadataController.readBasicMetadata(task, m);
-                                        } catch (IOException ex) {
-                                            //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
-                                        }
-                                        insertMediaFileIntoSearchDB(collectionName, m);
                                     } else {
                                         m.setMediaType(MediaFile.MediaTypes.NONE);
+                                    }
+                                    try {
+                                        metadataController.readBasicMetadata(task, m);
+                                    } catch (IOException ex) {
+                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Cannot read " + m.getName()+" - "+m.getPathStorage(), ex);
+                                    }
+                                    if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
+                                        insertMediaFileIntoSearchDB(collectionName, m);
                                     }
                                 }
                             }
@@ -128,13 +140,14 @@ public class SearchIndex {
                         @Override
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
                                 throws IOException {
-                            if (e == null) {
-                                //System.out.println("postVisistDir "+dir.toString());
-                                return FileVisitResult.CONTINUE;
-                            } else {
-                                // directory iteration failed
-                                throw e;
+                            boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
+                            if (finishedSearch) {
+                                System.out.println("Finished indexing files");
+                                App.setSEARCHINDEXFINISHED(LocalDate.now());
+                                checkSearchIndex(pathItem.getFilePath().toString());
+                                return FileVisitResult.TERMINATE;
                             }
+                            return FileVisitResult.CONTINUE;
                         }
 
                         @Override
@@ -149,16 +162,13 @@ public class SearchIndex {
             }
         };
         task.setOnSucceeded((t) -> {
-            //App.setSearchIndexFinished(true);
-            Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "End time create searchDB: " + LocalDateTime.now());
+            Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
         executorParallel.submit(task);
-        Platform.runLater(() -> {
-            mainViewController.getTaskProgressView().getTasks().add(task);
-        });
+        mainViewController.getTaskProgressView().getTasks().add(task);
     }
 
     public void checkSearchIndex(String searchPath) {
@@ -170,9 +180,16 @@ public class SearchIndex {
                     return null;
                 }
                 try {
+                    updateTitle("Checking search index...");
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                            int pathlength = fileItem.toString().length();
+                            if (pathlength > 35) {
+                                updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
+                            } else {
+                                updateMessage("" + fileItem.toString());
+                            }
                             if (terminateFileWalk == true) {
                                 return FileVisitResult.TERMINATE;
                             }
@@ -187,6 +204,24 @@ public class SearchIndex {
                             }
                             return super.visitFile(fileItem, attrs);
                         }
+
+                        @Override
+                        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                                throws IOException {
+                            boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
+                            if (finishedSearch) {
+                                System.out.println("Checking indexing files finished");
+                                //App.setSearchIndexFinished(true);
+                                checkSearchIndex(pathItem.getFilePath().toString());
+                                return FileVisitResult.TERMINATE;
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
                     });
                 } catch (IOException ex) {
                     //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
@@ -195,6 +230,7 @@ public class SearchIndex {
             }
         };
         executorParallel.submit(taskCheck);
+        mainViewController.getTaskProgressView().getTasks().add(taskCheck);
     }
 
     public void shutdown() {

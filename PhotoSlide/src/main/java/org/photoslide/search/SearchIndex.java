@@ -72,7 +72,7 @@ public class SearchIndex {
                 if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
                     if (period.isNegative()) {
-                        System.out.println("return from");
+                        Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
                         return null;
                     }
                 }

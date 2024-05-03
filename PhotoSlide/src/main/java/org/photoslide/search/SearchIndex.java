@@ -65,13 +65,13 @@ public class SearchIndex {
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         task = new Task<>() {
             @Override
-            protected Void call() throws Exception {
+            protected Void call() throws Exception {                
                 if (task.isCancelled()) {
                     return null;
                 }
                 if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
-                    if (period.isNegative()) {
+                    if (period.getDays() > 14) {
                         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
                         return null;
                     }
@@ -126,8 +126,8 @@ public class SearchIndex {
                                     }
                                     try {
                                         metadataController.readBasicMetadata(task, m);
-                                    } catch (IOException ex) {
-                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Cannot read " + m.getName()+" - "+m.getPathStorage(), ex);
+                                    } catch (Exception ex) {
+                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
                                     }
                                     if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
                                         insertMediaFileIntoSearchDB(collectionName, m);

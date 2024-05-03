@@ -260,12 +260,15 @@ public class MainViewController implements Initializable {
                 MenuToolkit tk = MenuToolkit.toolkit(Locale.getDefault());
                 tk.setForceQuitOnCmdQ(true);
                 Menu createDefaultApplicationMenu = tk.createDefaultApplicationMenu("PhotoSlide");
-                tk.setApplicationMenu(createDefaultApplicationMenu);
+                tk.setApplicationMenu(createDefaultApplicationMenu);  
+                menuBar.getMenus().get(4).getItems().remove(aboutMenu);
                 createDefaultApplicationMenu.getItems().set(0, aboutMenu);
                 createDefaultApplicationMenu.getItems().add(1, new SeparatorMenuItem());
+                menuBar.getMenus().get(1).getItems().remove(preferencesMenu);
                 createDefaultApplicationMenu.getItems().add(2, preferencesMenu);
                 createDefaultApplicationMenu.getItems().add(3, new SeparatorMenuItem());
-                createDefaultApplicationMenu.getItems().set(createDefaultApplicationMenu.getItems().size() - 1, quitMenu);
+                menuBar.getMenus().get(0).getItems().remove(quitMenu);
+                createDefaultApplicationMenu.getItems().set(createDefaultApplicationMenu.getItems().size() - 1, quitMenu);                
                 windowMenu.getItems().add(new SeparatorMenuItem());
                 windowMenu.getItems().add(tk.createMinimizeMenuItem());
                 windowMenu.getItems().add(tk.createZoomMenuItem());
@@ -275,8 +278,7 @@ public class MainViewController implements Initializable {
                 windowMenu.getItems().add(new SeparatorMenuItem());
                 menuBar.useSystemMenuBarProperty().set(true);
             });
-        }
-        //menuBar.useSystemMenuBarProperty().set(true);
+        }        
         group = new ToggleGroup();
         browseButton.setToggleGroup(group);
         editButton.setToggleGroup(group);

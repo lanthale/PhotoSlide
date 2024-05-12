@@ -81,6 +81,9 @@ public class SearchIndex {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                            if (task.isCancelled()) {
+                                return FileVisitResult.TERMINATE;
+                            }
                             int pathlength = fileItem.toString().length();
                             if (pathlength > 35) {
                                 updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
@@ -130,7 +133,7 @@ public class SearchIndex {
                                             insertMediaFileIntoSearchDB(collectionName, m);
                                         }
                                     } catch (Throwable ex) {
-                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);                                        
+                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
                                     }
                                 }
                             }
@@ -140,8 +143,11 @@ public class SearchIndex {
                         @Override
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
                                 throws IOException {
+                            if (task.isCancelled()) {
+                                return FileVisitResult.TERMINATE;
+                            }
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
-                            if (finishedSearch) {                                
+                            if (finishedSearch) {
                                 App.setSEARCHINDEXFINISHED(LocalDate.now());
                                 checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;

@@ -973,8 +973,8 @@ public class LighttableController implements Initializable {
                     }
                 };
                 taskMeta.setOnSucceeded((t) -> {
-                    try {
-                        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));
+                    try {                        
+                        sortedMediaList.sort(Comparator.nullsLast(Comparator.comparing(MediaFile::getRecordTime, Comparator.nullsLast(Comparator.naturalOrder()))));
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }

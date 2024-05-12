@@ -399,7 +399,7 @@ public class MetadataController implements Initializable {
         mainController.getTaskProgressView().getTasks().add(task);
     }
 
-    public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws IOException {
+    public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws java.io.EOFException, IOException {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
             HashMap<String, RawDecoderSettings> settings = new HashMap<>();
@@ -720,8 +720,8 @@ public class MetadataController implements Initializable {
                 long endimage = System.currentTimeMillis();
                 String loadTime = "Reading time for metadata complete: " + (endimage - startimage) + " ms";
                 Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, loadTime);
-            } catch (java.lang.IllegalArgumentException e) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, e.getMessage());
+            } catch (java.lang.IllegalArgumentException | java.io.EOFException e) {
+                Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, e.getMessage(), e);
             }
         }
     }

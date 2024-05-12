@@ -65,7 +65,7 @@ public class SearchIndex {
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         task = new Task<>() {
             @Override
-            protected Void call() throws Exception {                
+            protected Void call() throws Exception {
                 if (task.isCancelled()) {
                     return null;
                 }
@@ -126,11 +126,11 @@ public class SearchIndex {
                                     }
                                     try {
                                         metadataController.readBasicMetadata(task, m);
-                                    } catch (Exception ex) {
-                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
-                                    }
-                                    if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
-                                        insertMediaFileIntoSearchDB(collectionName, m);
+                                        if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
+                                            insertMediaFileIntoSearchDB(collectionName, m);
+                                        }
+                                    } catch (Throwable ex) {
+                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);                                        
                                     }
                                 }
                             }
@@ -141,8 +141,7 @@ public class SearchIndex {
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
                                 throws IOException {
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
-                            if (finishedSearch) {
-                                System.out.println("Finished indexing files");
+                            if (finishedSearch) {                                
                                 App.setSEARCHINDEXFINISHED(LocalDate.now());
                                 checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
@@ -156,7 +155,7 @@ public class SearchIndex {
                         }
                     });
                 } catch (IOException ex) {
-                    //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, null, ex);
                 }
                 return null;
             }
@@ -230,7 +229,13 @@ public class SearchIndex {
             }
         };
         executorParallel.submit(taskCheck);
-        mainViewController.getTaskProgressView().getTasks().add(taskCheck);
+        if (Platform.isFxApplicationThread()) {
+            mainViewController.getTaskProgressView().getTasks().add(taskCheck);
+        } else {
+            Platform.runLater(() -> {
+                mainViewController.getTaskProgressView().getTasks().add(taskCheck);
+            });
+        }
     }
 
     public void shutdown() {

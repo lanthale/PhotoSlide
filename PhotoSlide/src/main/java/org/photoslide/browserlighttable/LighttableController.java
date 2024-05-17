@@ -951,7 +951,7 @@ public class LighttableController implements Initializable {
                     @Override
                     protected Boolean call() throws IOException {
                         AtomicInteger i = new AtomicInteger(1);
-                        fullMediaList.forEach((mediaFile) -> {
+                        fullMediaList.parallelStream().forEach((mediaFile) -> {
                             if (this.isCancelled() == false) {
                                 updateProgress(i.get(), fullMediaList.size());
                                 updateMessage("Read record time " + i.get() + "/" + fullMediaList.size());
@@ -966,7 +966,7 @@ public class LighttableController implements Initializable {
                                             = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
                                     mediaFile.setRecordTime(triggerTime);
                                 }
-                                if (mediaFile.getRecordTime() == null) {
+                                if (mediaFile.getRecordTime() == null) {                                    
                                     long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
                                     LocalDateTime triggerTime
                                             = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
@@ -980,7 +980,7 @@ public class LighttableController implements Initializable {
                 };
                 taskMeta.setOnSucceeded((t) -> {
                     try {
-                        sortedMediaList.sort(Comparator.comparing(MediaFile::getRecordTime));                        
+                        sortedMediaList.setComparator(Comparator.comparing(MediaFile::getRecordTime));
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }

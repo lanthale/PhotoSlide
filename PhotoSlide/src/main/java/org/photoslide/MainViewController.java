@@ -432,7 +432,7 @@ public class MainViewController implements Initializable {
                     //sort
                     if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase("Record time based")) {
                         AtomicInteger iatom = new AtomicInteger(1);
-                        for (MediaFile mediaFile : exportList) {
+                        exportList.parallelStream().forEach((mediaFile) -> {
                             updateMessage("Export: Read record time " + iatom.get() + "/" + exportList.size());
                             try {
                                 if (mediaFile.getRecordTime() == null) {
@@ -452,7 +452,7 @@ public class MainViewController implements Initializable {
                                 mediaFile.setRecordTime(triggerTime);
                             }
                             iatom.addAndGet(1);
-                        }
+                        });
                         exportList.sort(Comparator.comparing(MediaFile::getRecordTime));
                     }
                     //end sort
@@ -460,7 +460,7 @@ public class MainViewController implements Initializable {
                     for (MediaFile mediaItem : exportList) {
                         if (this.isCancelled() == false) {
                             updateProgress(i + 1, exportList.size());
-                            updateMessage("" + (i + 1) + "/" + exportList.size());
+                            updateMessage("Exporting " + (i + 1) + "/" + exportList.size());
                             try {
                                 String fileFormat = diag.getController().getFileFormat();
                                 ImageType imageType = ImageType.JPG;
@@ -490,7 +490,7 @@ public class MainViewController implements Initializable {
                                     }
                                 }
                                 String url = mediaItem.getImageUrl().toString();
-                                Image img = new Image(url, false);                                
+                                Image img = new Image(url, false);
                                 ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
                                 Image imageWithFilters = img;
                                 for (ImageFilter imageFilter : filterList) {
@@ -500,7 +500,7 @@ public class MainViewController implements Initializable {
                                 img = imageWithFilters;
                                 PixelReader reader = img.getPixelReader();
                                 BufferedImage fromFXImage;
-                                WritableImage newImage;                                
+                                WritableImage newImage;
                                 if (mediaItem.getCropView() != null && mediaItem.getCropView().getHeight() > 0.0) {
                                     newImage = new WritableImage(reader, (int) (mediaItem.getCropView().getMinX()), (int) (mediaItem.getCropView().getMinY()), (int) (mediaItem.getCropView().getWidth()), (int) (mediaItem.getCropView().getHeight()));
                                 } else {
@@ -565,17 +565,23 @@ public class MainViewController implements Initializable {
                                 if (diag.getController().getExportBasicMetadataBox().isSelected()) {
                                     metadataPaneController.readBasicMetadata(this, mediaItem);
                                     if (diag.getController().getReplaceTitleBox().isSelected()) {
-                                        mediaItem.setTitle(diag.getController().getTitle());
+                                        Platform.runLater(() -> {
+                                            mediaItem.setTitle(diag.getController().getTitle());
+                                        });
                                     }
                                     if (diag.getController().getReplaceKeywordChoiceBox().isSelected()) {
-                                        mediaItem.setKeywords(diag.getController().getKeywordsAsString());
+                                        Platform.runLater(() -> {
+                                            mediaItem.setKeywords(diag.getController().getKeywordsAsString());
+                                        });
                                     }
                                     if (!diag.getController().getHeightTextField().getText().equalsIgnoreCase("")) {
                                         mediaItem.setGpsHeight(Double.parseDouble(diag.getController().getHeightTextField().getText()));
                                     }
                                     if (diag.getController().getReplaceGPSCheckBox().isSelected()) {
                                         mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
-                                        mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
+                                        Platform.runLater(() -> {
+                                            mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
+                                        });
                                     }
                                     metadataPaneController.exportBasicMetadata(mediaItem, outFileStr, diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }

@@ -7,7 +7,7 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.4.6-RELEASE</version>   
+    <version>1.4.7-RELEASE</version>   
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
@@ -17,7 +17,7 @@
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>        
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>1.4.6</app.version>        
+        <app.version>1.4.7</app.version>        
         <jvm.modules>java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,javafx.web,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>22</maven.compiler.source>

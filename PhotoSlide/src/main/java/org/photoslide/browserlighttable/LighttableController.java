@@ -330,10 +330,10 @@ public class LighttableController implements Initializable {
             filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             sortedMediaList.setComparator(new MediaFilenameComparator());
             mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().unbind();            
-            sortOrderComboBox.setDisable(false);            
+            mainController.getProgressbarLabel().textProperty().unbind();
+            sortOrderComboBox.setDisable(false);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");            
+            mainController.getStatusLabelLeft().setText("");
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
@@ -951,7 +951,7 @@ public class LighttableController implements Initializable {
                     @Override
                     protected Boolean call() throws IOException {
                         AtomicInteger i = new AtomicInteger(1);
-                        fullMediaList.parallelStream().forEach((mediaFile) -> {
+                        fullMediaList.forEach((mediaFile) -> {
                             if (this.isCancelled() == false) {
                                 updateProgress(i.get(), fullMediaList.size());
                                 updateMessage("Read record time " + i.get() + "/" + fullMediaList.size());
@@ -966,6 +966,12 @@ public class LighttableController implements Initializable {
                                             = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
                                     mediaFile.setRecordTime(triggerTime);
                                 }
+                                if (mediaFile.getRecordTime() == null) {
+                                    long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
+                                    LocalDateTime triggerTime
+                                            = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
+                                    mediaFile.setRecordTime(triggerTime);
+                                }
                             }
                             i.addAndGet(1);
                         });
@@ -973,8 +979,8 @@ public class LighttableController implements Initializable {
                     }
                 };
                 taskMeta.setOnSucceeded((t) -> {
-                    try {                        
-                        sortedMediaList.sort(Comparator.nullsLast(Comparator.comparing(MediaFile::getRecordTime, Comparator.nullsLast(Comparator.naturalOrder()))));
+                    try {
+                        sortedMediaList.sort(Comparator.comparing(MediaFile::getRecordTime));                        
                     } catch (NullPointerException e) {
                         sortOrderComboBox.getSelectionModel().clearSelection(0);
                     }

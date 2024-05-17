@@ -432,9 +432,8 @@ public class MainViewController implements Initializable {
                     //sort
                     if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase("Record time based")) {
                         AtomicInteger iatom = new AtomicInteger(1);
-                        exportList.forEach((mediaFile) -> {
-                            //updateProgress(iatom.get(), exportList.size());
-                            updateMessage("Read record time " + iatom.get() + "/" + exportList.size());
+                        for (MediaFile mediaFile : exportList) {
+                            updateMessage("Export: Read record time " + iatom.get() + "/" + exportList.size());
                             try {
                                 if (mediaFile.getRecordTime() == null) {
                                     metadataPaneController.setActualMediaFile(mediaFile);
@@ -446,8 +445,15 @@ public class MainViewController implements Initializable {
                                         = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
                                 mediaFile.setRecordTime(triggerTime);
                             }
-                        });                        
-                        exportList.sort(Comparator.nullsLast(Comparator.comparing(MediaFile::getRecordTime, Comparator.nullsLast(Comparator.naturalOrder()))));
+                            if (mediaFile.getRecordTime() == null) {
+                                long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
+                                LocalDateTime triggerTime
+                                        = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
+                                mediaFile.setRecordTime(triggerTime);
+                            }
+                            iatom.addAndGet(1);
+                        }
+                        exportList.sort(Comparator.comparing(MediaFile::getRecordTime));
                     }
                     //end sort
                     int i = 0;
@@ -484,7 +490,7 @@ public class MainViewController implements Initializable {
                                     }
                                 }
                                 String url = mediaItem.getImageUrl().toString();
-                                Image img = new Image(url, false);
+                                Image img = new Image(url, false);                                
                                 ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
                                 Image imageWithFilters = img;
                                 for (ImageFilter imageFilter : filterList) {
@@ -494,8 +500,8 @@ public class MainViewController implements Initializable {
                                 img = imageWithFilters;
                                 PixelReader reader = img.getPixelReader();
                                 BufferedImage fromFXImage;
-                                WritableImage newImage;
-                                if (mediaItem.getCropView() != null) {
+                                WritableImage newImage;                                
+                                if (mediaItem.getCropView() != null && mediaItem.getCropView().getHeight() > 0.0) {
                                     newImage = new WritableImage(reader, (int) (mediaItem.getCropView().getMinX()), (int) (mediaItem.getCropView().getMinY()), (int) (mediaItem.getCropView().getWidth()), (int) (mediaItem.getCropView().getHeight()));
                                 } else {
                                     newImage = new WritableImage(reader, (int) img.getWidth(), (int) img.getHeight());

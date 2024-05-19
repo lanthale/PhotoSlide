@@ -279,7 +279,12 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
             <version>${javafx.version}</version>            
-        </dependency>          
+        </dependency> 
+        <dependency>
+            <groupId>com.dlsc.preferencesfx</groupId>
+            <artifactId>preferencesfx-core</artifactId>
+            <version>11.17.0</version>
+        </dependency>         
     </dependencies>
 
     <build>        

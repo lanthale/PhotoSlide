@@ -1,6 +1,8 @@
 package org.photoslide;
 
 import animatefx.animation.Bounce;
+import com.dlsc.preferencesfx.PreferencesFx;
+import com.dlsc.preferencesfx.model.Category;
 import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browserlighttable.LighttableController;
@@ -56,6 +58,14 @@ import javafx.animation.FadeTransition;
 import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
@@ -66,6 +76,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -99,6 +110,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.TaskProgressView;
+import org.h2.engine.Setting;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
@@ -652,6 +664,13 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void preferencesMenuAction(ActionEvent event) {
+        StringProperty stringProperty = new SimpleStringProperty("String");
+        BooleanProperty booleanProperty = new SimpleBooleanProperty(true);
+        IntegerProperty integerProperty = new SimpleIntegerProperty(12);
+        DoubleProperty doubleProperty = new SimpleDoubleProperty(6.5);
+
+        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
+        preferencesFx.show();
     }
 
     @FXML

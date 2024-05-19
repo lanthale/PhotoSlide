@@ -97,7 +97,7 @@
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="Reset full text search index" />
                   <MenuItem mnemonicParsing="false" onAction="#resetMediaCache" text="Reset media cache" />
-                        <MenuItem fx:id="preferencesMenu" disable="true" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
+                        <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>

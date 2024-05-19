@@ -71,7 +71,7 @@ public class SearchIndex {
                 }
                 if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
-                    if (period.getDays() > 14) {
+                    if (period.getDays() < 14) {
                         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
                         return null;
                     }
@@ -183,6 +183,13 @@ public class SearchIndex {
             protected Void call() throws Exception {
                 if (taskCheck.isCancelled()) {
                     return null;
+                }
+                if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
+                    Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
+                    if (period.getDays() < 14) {
+                        Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
+                        return null;
+                    }
                 }
                 try {
                     updateTitle("Checking search index...");

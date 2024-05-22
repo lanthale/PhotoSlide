@@ -240,8 +240,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
             });
             long endtime = System.currentTimeMillis();
             updateMessage("Finished MediaLoading Task.");
-            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
+            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
         } catch (IOException ex) {
+            Platform.runLater(() -> {
+                new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+            });
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
@@ -259,8 +262,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
             //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());
             cacheList.addAll(e2);            
             Platform.runLater(() -> {
-                fullMediaList.addAll(cacheList);
-            });
+                fullMediaList.setAll(cacheList);
+            });            
         } catch (IOException | ClassNotFoundException ex) {
             inPath.delete();
         }
@@ -297,6 +300,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Save to disk took " + (end - start) / 1000 + "s");
             //end save to disk
         } catch (NoSuchAlgorithmException ex) {
+            Platform.runLater(() -> {
+                new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+            });
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
         }
         //end save to disk

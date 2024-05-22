@@ -333,7 +333,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             sortOrderComboBox.setDisable(false);
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");
+            mainController.getStatusLabelLeft().setText("");            
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
@@ -341,6 +341,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
             mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getStatusLabelRight().setVisible(false);
         });
         taskMLoading.setOnScheduled((t) -> {
             mainController.getProgressPane().setVisible(true);

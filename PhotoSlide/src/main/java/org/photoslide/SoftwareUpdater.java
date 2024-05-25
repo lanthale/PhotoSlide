@@ -337,7 +337,7 @@ public class SoftwareUpdater {
                         filename = "PhotoSlide-" + nextAppVersion + ".dmg";
                     } else if (OS.contains("MAC") && architecture.equalsIgnoreCase("aarch64")) {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_" + "aarch_64" + "-" + nextAppVersion + ".dmg";
-                        filename = "PhotoSlide_" + architecture + "-" + nextAppVersion + ".dmg";
+                        filename = "PhotoSlide_" + "aarch_64" + "-" + nextAppVersion + ".dmg";
                     } else if (OS.contains("NUX")) {
                         httpsURL = "https://github.com/lanthale/PhotoSlide/releases/download/v" + nextAppVersion + "/PhotoSlide_" + nextAppVersion + "_amd64.deb";
                         filename = "PhotoSlide-" + nextAppVersion + ".deb";

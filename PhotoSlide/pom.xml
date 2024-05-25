@@ -376,7 +376,7 @@
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
                             <options>                                                                     
-                                <option>-XX:+UseZGC</option>
+                                <option>-XX:+UseZGC -XX:+ZGenerational</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
@@ -402,7 +402,7 @@
                             <mainClass>${mainClass}</mainClass>
                             <options>                                     
                                 <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000</option>                                    
-                                <option>-XX:+UseZGC</option>
+                                <option>-XX:+UseZGC -XX:+ZGenerational</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
@@ -428,7 +428,7 @@
                             <mainClass>${mainClass}</mainClass>
                             <options>                                     
                                 <option>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</option>                                    
-                                <option>-XX:+UseZGC</option>
+                                <option>-XX:+UseZGC -XX:+ZGenerational</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
@@ -453,7 +453,7 @@
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
                             <options>
-                                <option>-XX:+UseZGC</option>
+                                <option>-XX:+UseZGC -XX:+ZGenerational</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        

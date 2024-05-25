@@ -81,7 +81,7 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
 
     - name: Build with Maven
-      run: for f in *.dmg; do mv "$f" "$(echo "$f" | sed s/Photoslide-/Photoslide_aarch64-/)"; done
+      run: for f in PhotoSlide/target/*.dmg; do mv "$f" "$(echo "$f" | sed s/Photoslide-/Photoslide_aarch64-/)"; done
       
     - name: Upload Release Asset OSX
       id: upload-release-asset 

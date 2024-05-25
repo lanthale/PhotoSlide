@@ -284,7 +284,7 @@
             <groupId>com.dlsc.preferencesfx</groupId>
             <artifactId>preferencesfx-core</artifactId>
             <version>11.17.0</version>
-        </dependency>         
+        </dependency>                
     </dependencies>
 
     <build>        

@@ -62,8 +62,8 @@ public class MediaFile_Serializable implements Serializable {
     private LocalDateTime gpsDateTime;
     private double gpsHeight;
     private boolean bookmarked;
-    private MediaFile.VideoTypes videoSupported;
-    private MediaFile.MediaTypes mediaType;
+    private String videoSupported;
+    private String mediaType;
     private List<String> filterList;
     private String creationTime;
     private String lastModifyTime;
@@ -99,7 +99,7 @@ public class MediaFile_Serializable implements Serializable {
         if (!Objects.equals(this.pathStorage, other.pathStorage)) {
             return false;
         }
-        if (this.videoSupported != other.videoSupported) {
+        if (!Objects.equals(this.videoSupported, other.videoSupported)) {
             return false;
         }
         return true;
@@ -120,7 +120,8 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setPlace(m.getPlace().get());
         mserial.setFaces(m.getFaces().get());
         mserial.setFilterList(mserial.convertImageFilterToStringList(m.getFilterList()));
-        mserial.setMediaType(m.getMediaType());
+        mserial.setMediaType(convertFromMediaType(m.getMediaType()));
+        mserial.setVideoSupported(convertFromVideoSupportedType(m.getVideoSupported()));
         mserial.setTitle(m.getTitle().get());
         mserial.setKeywords(m.getKeywords());
         mserial.setCamera(m.getCamera().get());
@@ -157,7 +158,8 @@ public class MediaFile_Serializable implements Serializable {
         m.setPlace(mserial.getPlace());
         m.setFaces(mserial.getFaces());
         m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
-        m.setMediaType(mserial.getMediaType());
+        m.setMediaType(convertToMediaType(mserial.getMediaType()));
+        m.setVideoSupported(convertToVideoSupportedType(mserial.getVideoSupported()));
         m.setTitle(mserial.getTitle());
         m.setKeywords(mserial.getKeywords());
         m.setCamera(mserial.getCamera());
@@ -166,7 +168,11 @@ public class MediaFile_Serializable implements Serializable {
         m.setRating(mserial.getRating());
         m.setGpsHeight(-1);
         m.setOrignalImageSize(mserial.getOrignalImageSize());
-        m.setCropView(new Rectangle2D(mserial.getCropViewX(), mserial.cropViewY, mserial.getCropViewWidth(), mserial.getCropViewHeigth()));
+        if (mserial.getCropViewWidth() > 0) {
+            m.setCropView(new Rectangle2D(mserial.getCropViewX(), mserial.getCropViewY(), mserial.getCropViewWidth(), mserial.getCropViewHeigth()));
+        } else {
+            m.setCropView(null);
+        }
         m.setCreationTime(formatDateTime(mserial.getCreationTime()));
         m.setLastModifyTime(formatDateTime(mserial.getLastModifyTime()));
     }
@@ -411,19 +417,19 @@ public class MediaFile_Serializable implements Serializable {
         this.bookmarked = bookmarked;
     }
 
-    public MediaFile.VideoTypes getVideoSupported() {
+    public String getVideoSupported() {
         return videoSupported;
     }
 
-    public void setVideoSupported(MediaFile.VideoTypes videoSupported) {
+    public void setVideoSupported(String videoSupported) {
         this.videoSupported = videoSupported;
     }
 
-    public MediaFile.MediaTypes getMediaType() {
+    public String getMediaType() {
         return mediaType;
     }
 
-    public void setMediaType(MediaFile.MediaTypes mediaType) {
+    public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
     }
 
@@ -448,6 +454,60 @@ public class MediaFile_Serializable implements Serializable {
             }
         }
         return destinationList;
+    }
+
+    public static MediaFile.MediaTypes convertToMediaType(String source) {
+        switch (source) {
+            case "IMAGE" -> {
+                return MediaFile.MediaTypes.IMAGE;
+            }
+            case "VIDEO" -> {
+                return MediaFile.MediaTypes.VIDEO;
+            }
+        }
+        return MediaFile.MediaTypes.NONE;
+    }
+
+    public static String convertFromMediaType(MediaFile.MediaTypes source) {
+        switch (source) {
+            case MediaFile.MediaTypes.IMAGE -> {
+                return "IMAGE";
+            }
+            case MediaFile.MediaTypes.VIDEO -> {
+                return "VIDEO";
+            }
+        }
+        return "NONE";
+    }
+
+    public static MediaFile.VideoTypes convertToVideoSupportedType(String source) {
+        if (source == null) {
+            return MediaFile.VideoTypes.UNSUPPORTED;
+        }
+        switch (source) {
+            case "SUPPORTED" -> {
+                return MediaFile.VideoTypes.SUPPORTED;
+            }
+            case "UNSUPPORTED" -> {
+                return MediaFile.VideoTypes.UNSUPPORTED;
+            }
+        }
+        return MediaFile.VideoTypes.UNSUPPORTED;
+    }
+
+    public static String convertFromVideoSupportedType(MediaFile.VideoTypes source) {
+        if (source == null) {
+            return null;
+        }
+        switch (source) {
+            case MediaFile.VideoTypes.SUPPORTED -> {
+                return "SUPPORTED";
+            }
+            case MediaFile.VideoTypes.UNSUPPORTED -> {
+                return "UNSUPPORTED";
+            }
+        }
+        return "UNSUPPORTED";
     }
 
     public List<String> convertImageFilterToStringList(List<ImageFilter> sourceList) {

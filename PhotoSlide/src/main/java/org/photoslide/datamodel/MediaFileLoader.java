@@ -82,19 +82,17 @@ public class MediaFileLoader {
         }
     }
 
-    public void loadVideo(MediaFile fileItem) {
+    public void loadVideo(MediaFile fileItem) {           
         Task<Media> task = new Task<Media>() {
             @Override
             public Media call() throws Exception {
                 Media video = null;
                 try {
                     video = new Media(fileItem.getPathStorage().toUri().toURL().toExternalForm());
-                    fileItem.setVideoSupported(MediaFile.VideoTypes.SUPPORTED);
-                    //fileItem.setMedia(video, MediaFile.VideoTypes.SUPPORTED);                    
+                    fileItem.setVideoSupported(MediaFile.VideoTypes.SUPPORTED);                    
                 } catch (MediaException e) {
                     if (e.getType() == MediaException.Type.MEDIA_UNSUPPORTED) {
-                        fileItem.setVideoSupported(MediaFile.VideoTypes.UNSUPPORTED);
-                        //fileItem.setMedia(video, MediaFile.VideoTypes.UNSUPPORTED);
+                        fileItem.setVideoSupported(MediaFile.VideoTypes.UNSUPPORTED);                        
                     }
                 } catch (MalformedURLException ex) {
                     Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
@@ -103,14 +101,14 @@ public class MediaFileLoader {
                 return video;
             }
         };
-        if (fileItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {
-            if (fileItem.getMedia() == null) {
+        if (fileItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {            
+            if (fileItem.getMedia() == null) {                
                 fileItem.setMedia(task.getValue(), fileItem.getVideoSupported());
-                task.setOnSucceeded((t) -> {
+                task.setOnSucceeded((t) -> {                    
                     fileItem.setLoading(false);
                     taskList.remove(fileItem.getName());
                 });
-                task.setOnFailed((t) -> {
+                task.setOnFailed((t) -> {                    
                     fileItem.setLoading(false);
                     fileItem.setMediaType(MediaFile.MediaTypes.NONE);
                     taskList.remove(fileItem.getName());

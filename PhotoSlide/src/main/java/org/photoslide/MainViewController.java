@@ -669,7 +669,9 @@ public class MainViewController implements Initializable {
         IntegerProperty integerProperty = new SimpleIntegerProperty(12);
         DoubleProperty doubleProperty = new SimpleDoubleProperty(6.5);
 
-        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
+        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));        
+        preferencesFx.getStylesheets().add(
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         preferencesFx.show();
     }
 

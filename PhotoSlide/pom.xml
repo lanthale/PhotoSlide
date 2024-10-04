@@ -7,21 +7,21 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.4.9-RELEASE</version>   
+    <version>1.5.0-RELEASE</version>   
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
 
     <properties>
-        <javafx.version>22.0.1</javafx.version>
+        <javafx.version>23</javafx.version>
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>        
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>1.4.9</app.version>        
+        <app.version>1.5.0</app.version>        
         <jvm.modules>java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,javafx.web,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target> 
+        <maven.compiler.source>23</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target> 
         <!-- UUID via https://www.uuidgenerator.net -->
         <windows.upgrade.uuid>5be0a831-ee20-4692-8c71-6616381d9ccf</windows.upgrade.uuid>        
         <windows.vendor>ITArchitects</windows.vendor>        
@@ -139,27 +139,27 @@
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-image</artifactId>
-            <version>3.10.1</version>
+            <version>3.11.0</version>
         </dependency>        
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
-            <version>3.9.4</version>
+            <version>3.11.0</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-psd</artifactId>
-            <version>3.10.1</version>
+            <version>3.11.0</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-webp</artifactId>
-            <version>3.10.1</version>
+            <version>3.11.0</version>
         </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-metadata</artifactId>
-            <version>3.10.1</version>
+            <version>3.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -174,7 +174,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.2.224</version>            
+            <version>2.3.232</version>            
         </dependency>                
         <dependency>
             <groupId>javax.media.jai</groupId>
@@ -184,17 +184,17 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.17.0</version>
+            <version>2.18.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.17.0</version>
+            <version>2.18.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.17.0</version>
+            <version>2.18.0</version>
         </dependency> 
         <dependency>
             <groupId>earth.worldwind</groupId>
@@ -219,7 +219,7 @@
         <dependency>
             <groupId>org.boofcv</groupId>
             <artifactId>boofcv-core</artifactId>
-            <version>1.1.3</version>
+            <version>1.1.6</version>
         </dependency>        
         <dependency>
             <groupId>fr.dudie</groupId>
@@ -239,7 +239,7 @@
         <dependency>
             <groupId>io.github.typhon0</groupId>
             <artifactId>AnimateFX</artifactId>
-            <version>1.2.4</version>            
+            <version>1.3.0</version>            
         </dependency>               
 
         <!-- This downloads the platform specific JavaFX libraries used by the project. -->
@@ -316,7 +316,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId> 
                 <artifactId>properties-maven-plugin</artifactId> 
-                <version>1.2.0</version> 
+                <version>1.2.1</version> 
                 <executions> 
                     <execution> 
                         <phase>generate-resources</phase> 
@@ -487,7 +487,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.3.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -505,12 +505,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.8.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.3</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -520,7 +520,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.4.5</version>
+                    <version>3.7.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -536,7 +536,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.5.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>

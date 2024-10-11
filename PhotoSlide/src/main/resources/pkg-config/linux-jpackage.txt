@@ -9,7 +9,6 @@
 --runtime-image ${project.build.directory}/jvm-image
 --linux-shortcut
 --java-options -XX:+UseZGC
---java-options -XX:+ZGenerational
 --java-options -Xms2g
 --java-options --enable-preview
 --java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED

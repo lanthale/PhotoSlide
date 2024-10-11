@@ -76,7 +76,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -110,7 +109,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.TaskProgressView;
-import org.h2.engine.Setting;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
@@ -216,6 +214,7 @@ public class MainViewController implements Initializable {
     private FontIcon processListIcon;
     private TaskProgressView taskProgressView;
     private PopOver taskPopOver;
+    private final Paint activityColor = Paint.valueOf("#c5c5c5");
 
     @FXML
     private CollectionsController collectionsPaneController;
@@ -250,19 +249,19 @@ public class MainViewController implements Initializable {
         taskPopOver.setTitle("Taskmanager");
         taskPopOver.setHeaderAlwaysVisible(true);
         taskPopOver.setFadeInDuration(new Duration(100));
-        taskPopOver.setContentNode(taskProgressView);
+        taskPopOver.setContentNode(taskProgressView);        
         taskProgressView.getTasks().addListener((Observable taskChange) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
-            } else {
-                processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+            } else {              
+                processListIcon.setIconColor(activityColor);
             }
         });
         processListIcon.iconColorProperty().addListener((o) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
-            } else {
-                processListIcon.setIconColor(Paint.valueOf("#c5c5c5"));
+            } else {                                                
+                processListIcon.setIconColor(activityColor);                
             }
         });
         taskProgressView.setPrefSize(300, 200);

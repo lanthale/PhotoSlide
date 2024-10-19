@@ -253,12 +253,13 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 updateMessage("Sorting media list...finished.");
                 if (loadedFromCache == false) {
                     updateMessage("Prepare saving cache...");
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
+                    if (qty > 500) {
+                        saveCacheToDisk();
                     }
-                    saveCacheToDisk();
                     updateMessage("Prepare saving cache...finished.");
+                    Platform.runLater(() -> {
+                        new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
+                    });
                 } else {
                     Platform.runLater(() -> {
                         new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);

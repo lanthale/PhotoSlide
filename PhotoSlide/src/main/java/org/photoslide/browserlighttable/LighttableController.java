@@ -324,12 +324,16 @@ public class LighttableController implements Initializable {
         });
 
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);
+        taskMLoading.setOnRunning((t) -> {
+            mainController.getStatusLabelLeft().setVisible(true);
+            mainController.getProgressPane().setVisible(true);            
+        });
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
-            factory.setListFilesActive(false);
-            mainController.getStatusLabelLeft().setVisible(false);
-            mainController.getProgressPane().setVisible(false);            
+            factory.setListFilesActive(false);            
             filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
             sortedMediaList.setComparator(new MediaFilenameComparator());            
+            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getProgressPane().setVisible(false);            
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             sortOrderComboBox.setDisable(false);

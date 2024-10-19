@@ -183,7 +183,7 @@ public class SearchIndex {
             protected Void call() throws Exception {
                 if (taskCheck.isCancelled()) {
                     return null;
-                }
+                }                
                 if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
                     if (period.getDays() < 14) {
@@ -227,8 +227,8 @@ public class SearchIndex {
                                 throws IOException {
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
                             if (finishedSearch) {
-                                System.out.println("Checking indexing files finished");
-                                //App.setSearchIndexFinished(true);
+                                //System.out.println("Checking indexing files finished");
+                                App.setSEARCHINDEXFINISHED(LocalDate.now());
                                 checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
                             }

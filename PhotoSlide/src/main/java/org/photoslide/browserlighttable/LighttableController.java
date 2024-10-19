@@ -255,7 +255,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
             mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().setText("Retrieving media files...");
+            mainController.getProgressbarLabel().setText("Retrieving media files...");            
         });
 
         if (directorywatch != null) {
@@ -293,6 +293,7 @@ public class LighttableController implements Initializable {
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;
         Platform.runLater(() -> {
+            sortOrderComboBox.getSelectionModel().selectFirst();
             detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
             mainController.handleMenuDisable(true);
             pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
@@ -752,7 +753,7 @@ public class LighttableController implements Initializable {
                 ((MediaFile) mediaF).setStackName(stackName);
                 ((MediaFile) mediaF).setStackPos(i.addAndGet(1));
                 savingMediaFileEdits(((MediaFile) mediaF));
-            }
+            }            
             filteredMediaList.setPredicate(standardFilter());
         } else {
             String stackname = factory.getSelectedMediaItem().getStackName();
@@ -1140,13 +1141,14 @@ public class LighttableController implements Initializable {
         }
     }
 
-    private Predicate<MediaFile> baseFilter() {
+    private Predicate<MediaFile> baseFilter() {         
         return mFile -> mFile.isStacked() == false;// || mFile.getStackPos() == 1;
     }
 
-    public Predicate<MediaFile> standardFilter() {
-        return baseFilter().or(mFile -> mFile.getStackPos() == 1);
-    }
+    public Predicate<MediaFile> standardFilter() {  
+        Predicate<MediaFile> filterDeleted = filterDeleted(showDeletedButton.isSelected());
+        return baseFilter().and(filterDeleted).or(mFile -> mFile.getStackPos() == 1);
+    }    
 
     public Button getRotateLeftButton() {
         return rotateLeftButton;

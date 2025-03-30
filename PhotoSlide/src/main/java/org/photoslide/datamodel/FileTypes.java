@@ -13,7 +13,7 @@ import java.io.File;
  */
 public class FileTypes {
 
-    private static final String imageTypes = "jpg,tif,tiff,jpeg,png,psd,cr2,nef,raf,dng,x3f,heic,webp";
+    private static final String imageTypes = "jpg,jfif,tif,tiff,jpeg,png,psd,cr2,nef,raf,dng,x3f,heic,webp";
     private static final String videoTypes = "mp4,mov";
 
     /**

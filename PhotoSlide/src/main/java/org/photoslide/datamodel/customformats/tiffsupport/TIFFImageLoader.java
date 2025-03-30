@@ -76,35 +76,29 @@ public class TIFFImageLoader extends ImageLoaderImpl {
     }
 
     @Override
-    public ImageFrame load(int imageIndex, int width, int height, boolean preserveAspectRatio, boolean smooth) throws IOException {
+    public ImageFrame load(int imageIndex, double width, double height, boolean preserveAspectRatio, boolean smooth, float screenPixelScale, float imagePixelScale) throws IOException {
         if (0 != imageIndex) {
             return null;
         }
 
         Dimension fallbackDimension = (width <= 0 || height <= 0) ? dimensionProvider.getDimension() : null;
 
-        float imageWidth = width > 0 ? width : (float) fallbackDimension.getWidth();
-        float imageHeight = height > 0 ? height : (float) fallbackDimension.getHeight();
+        float imageWidth = (int)width > 0 ? (int)width : (float) fallbackDimension.getWidth();
+        float imageHeight = (int)height > 0 ? (int)height : (float) fallbackDimension.getHeight();
 
         ImageMetadata md = new ImageMetadata(null, true,
                 null, null, null, null, null,
-                width, height, null, null, null);
+                (int)width, (int)height, null, null, null);
 
         updateImageMetadata(md);
                 
         try {
-            return createImageFrame(imageWidth, imageHeight, getPixelScale());
+            return createImageFrame(imageWidth, imageHeight, imagePixelScale);
         } catch (IOException ex) {
             throw new IOException(ex);
         }
     }
-    
-    public float getPixelScale() {
-        if (maxPixelScale == 0) {
-            maxPixelScale = calculateMaxRenderScale();
-        }
-        return maxPixelScale;
-    }
+        
 
     public float calculateMaxRenderScale() {
         float maxRenderScale = 0;
@@ -120,8 +114,8 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         BufferedImage bufferedImage = getTranscodedImage(width * pixelScale, height * pixelScale);
         ByteBuffer imageData = getImageData(bufferedImage);        
         
-        return new FixedPixelDensityImageFrame(ImageStorage.ImageType.RGBA, imageData, bufferedImage.getWidth(),
-                bufferedImage.getHeight(), getStride(bufferedImage), null, pixelScale, null);
+        return new ImageFrame(ImageStorage.ImageType.RGBA, imageData, bufferedImage.getWidth(),
+                bufferedImage.getHeight(), getStride(bufferedImage), pixelScale, null);
     }
 
     private BufferedImage getTranscodedImage(float width, float height)

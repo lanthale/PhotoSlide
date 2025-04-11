@@ -26,6 +26,10 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Paint;
 import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
@@ -102,7 +106,7 @@ public class App extends Application {
         PSDImageLoaderFactory.install();
         WEBPImageLoaderFactory.install();
 
-        try {            
+        try {
             RAWImageLoaderFactory.install();
             RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setWhiteBalance("CAMERA");
@@ -110,7 +114,7 @@ public class App extends Application {
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(1);
-            
+
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
@@ -136,6 +140,14 @@ public class App extends Application {
 
         scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.setFill(Paint.valueOf("rgb(80, 80, 80)"));
+        final KeyCombination keyComb = new KeyCodeCombination(KeyCode.Q, KeyCombination.META_DOWN);
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, (event) -> {
+            if (keyComb.match(event)) {
+                event.consume();
+                App.saveSettings((Stage) scene.getWindow(), fxmlLoader.getController());
+                System.exit(0);
+            }
+        });
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
         stage.show();
@@ -277,7 +289,5 @@ public class App extends Application {
     public static void setSEARCHINDEXFINISHED(LocalDate SEARCHINDEXFINISHED) {
         App.SEARCHINDEXFINISHED = SEARCHINDEXFINISHED;
     }
-
-            
 
 }

@@ -19,7 +19,7 @@
 --java-options -Xms2g
 --java-options --enable-preview
 --java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED
---java-options --enable-native-access=ALL-UNNAMED
+--java-options --enable-native-access=ALL-UNNAMED,javafx.media,javafx.web,javafx.graphics
 --java-options --add-exports=java.desktop/sun.awt.image=ALL-UNNAMED
 --java-options --add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED
 --java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED

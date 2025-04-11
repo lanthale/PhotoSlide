@@ -170,9 +170,6 @@ public class CollectionsController implements Initializable {
     }
 
     private void loadURLs() {
-        collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
-            searchIndexProcess.createCheckSearchIndex(t.getValue());
-        });
         Task<Boolean> task = new Task<>() {
 
             @Override
@@ -200,19 +197,26 @@ public class CollectionsController implements Initializable {
             }
         };
         task.setOnSucceeded((WorkerStateEvent t) -> {
-            Platform.runLater(() -> {
-                if (accordionPane.getPanes().size() > 0) {
-                    if (activeAccordionPane == -1) {
-                        activeAccordionPane = 0;
-                    }
-                    accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
+            if (accordionPane.getPanes().size() > 0) {
+                if (activeAccordionPane == -1) {
+                    activeAccordionPane = 0;
                 }
-            });
+                accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
+            }
+            /*Platform.runLater(() -> {
+                
+            });*/
         });
         executorParallel.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
-        //executorParallelTimers.schedule(indexTask, 5, TimeUnit.SECONDS);
+        /*executorParallelTimers.schedule(() -> {            
+        }, 5, TimeUnit.SECONDS);*/
         //mainController.getTaskProgressView().getTasks().add(indexTask);
+        collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+            Thread.ofVirtual().start(() -> {
+                searchIndexProcess.createCheckSearchIndex(t.getValue());
+            });
+        });
     }
 
     public void saveSettings() {

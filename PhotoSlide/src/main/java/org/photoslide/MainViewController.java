@@ -675,7 +675,7 @@ public class MainViewController implements Initializable {
     }
 
     @FXML
-    private void quitMenuAction(ActionEvent event) {
+    public void quitMenuAction(ActionEvent event) {
         App.saveSettings((Stage) browseButton.getScene().getWindow(), MainViewController.this);
         System.exit(0);
     }

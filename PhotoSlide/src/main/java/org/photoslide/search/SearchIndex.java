@@ -22,11 +22,8 @@ import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
@@ -166,14 +163,16 @@ public class SearchIndex {
                 return null;
             }
         };
+        task.setOnScheduled((t) -> {
+            mainViewController.getTaskProgressView().getTasks().add(task);
+        });
         task.setOnSucceeded((t) -> {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
-        executorParallel.submit(task);
-        mainViewController.getTaskProgressView().getTasks().add(task);
+        executorParallel.submit(task);        
     }
 
     public void checkSearchIndex(String searchPath) {
@@ -183,7 +182,7 @@ public class SearchIndex {
             protected Void call() throws Exception {
                 if (taskCheck.isCancelled()) {
                     return null;
-                }                
+                }
                 if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
                     if (period.getDays() < 14) {
@@ -241,14 +240,10 @@ public class SearchIndex {
                 return null;
             }
         };
-        executorParallel.submit(taskCheck);
-        if (Platform.isFxApplicationThread()) {
+        taskCheck.setOnScheduled((t) -> {
             mainViewController.getTaskProgressView().getTasks().add(taskCheck);
-        } else {
-            Platform.runLater(() -> {
-                mainViewController.getTaskProgressView().getTasks().add(taskCheck);
-            });
-        }
+        });
+        executorParallel.submit(taskCheck);        
     }
 
     public void shutdown() {

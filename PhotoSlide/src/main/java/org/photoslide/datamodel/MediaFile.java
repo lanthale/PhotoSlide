@@ -65,6 +65,7 @@ public class MediaFile implements Serializable {
     private String name;
     private String pathStorage;
     private SimpleBooleanProperty loading;
+    private SimpleBooleanProperty loadingError;
 
     private Image image;
     private Image unModifiyAbleImage;
@@ -126,6 +127,7 @@ public class MediaFile implements Serializable {
     public MediaFile() {
         bookmarked = new SimpleBooleanProperty(false);
         loading = new SimpleBooleanProperty(true);
+        loadingError = new SimpleBooleanProperty(false);
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
@@ -151,6 +153,7 @@ public class MediaFile implements Serializable {
     public void initData() {
         bookmarked = new SimpleBooleanProperty(false);
         loading = new SimpleBooleanProperty(true);
+        loadingError = new SimpleBooleanProperty(false);
         subViewSelected = false;
         deleted = new SimpleBooleanProperty(false);
         selected = new SimpleBooleanProperty(false);
@@ -905,6 +908,16 @@ public class MediaFile implements Serializable {
     public void setLoading(boolean value) {
         this.loading.set(value);
     }
+
+    public boolean getLoadingError() {
+        return loadingError.get();
+    }
+
+    public void setLoadingError(boolean loadingError) {
+        this.loadingError.set(loadingError);
+    }
+    
+    
 
     public boolean isBookmarked() {
         return bookmarked.get();

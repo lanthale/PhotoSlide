@@ -37,6 +37,7 @@ public class MediaFile_Serializable implements Serializable {
     private String name;
     private String pathStorage;
     private boolean loading;
+    private boolean loadingError;
 
     private String title;
     private String keywords;
@@ -111,6 +112,7 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setPathStorage(m.getPathStorage().toString());
         mserial.setBookmarked(m.isBookmarked());
         mserial.setLoading(true);
+        mserial.setLoading(false);
         mserial.setSubViewSelected(false);
         mserial.setDeleted(m.isDeleted());
         mserial.setSelected(m.isSelected());
@@ -149,6 +151,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setPathStorage(Path.of(mserial.getPathStorage()));
         m.setBookmarked(mserial.isBookmarked());
         m.setLoading(true);
+        m.setLoading(false);
         m.setSubViewSelected(false);
         m.setDeleted(mserial.isDeleted());
         m.setSelected(mserial.isSelected());
@@ -200,6 +203,14 @@ public class MediaFile_Serializable implements Serializable {
     public void setLoading(boolean loading) {
         this.loading = loading;
     }
+
+    public boolean isLoadingError() {
+        return loadingError;
+    }
+
+    public void setLoadingError(boolean loadingError) {
+        this.loadingError = loadingError;
+    }        
 
     public String getTitle() {
         return title;

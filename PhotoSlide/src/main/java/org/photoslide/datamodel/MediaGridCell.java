@@ -178,39 +178,43 @@ public class MediaGridCell extends GridCell<MediaFile> {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
         } else {
-            if (item.getUnModifiyAbleImage() == null) {
-                item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
-            }
-            item.setImage(item.setFilters());
-            rootPane.getChildren().clear();
-            rootPane.getChildren().add(imageView);
-            if (item.getCropView() != null) {
-                if (item.getOrignalImageSize() != null) {
-                    //calc cropview based on small imageview                
-                    double wPreview = item.getImage().getWidth();
-                    double hPreview = item.getImage().getHeight();
-                    double ratioW = item.getOrignalImageSize().getX() / item.getImage().getWidth();
-                    double ratioH = item.getOrignalImageSize().getY() / item.getImage().getHeight();
+            if (item.getLoadingError() == true) {
+                setError(item);
+            } else {
+                if (item.getUnModifiyAbleImage() == null) {
+                    item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
+                }
+                item.setImage(item.setFilters());
+                rootPane.getChildren().clear();
+                rootPane.getChildren().add(imageView);
+                if (item.getCropView() != null) {
+                    if (item.getOrignalImageSize() != null) {
+                        //calc cropview based on small imageview                
+                        double wPreview = item.getImage().getWidth();
+                        double hPreview = item.getImage().getHeight();
+                        double ratioW = item.getOrignalImageSize().getX() / item.getImage().getWidth();
+                        double ratioH = item.getOrignalImageSize().getY() / item.getImage().getHeight();
 
-                    double fW = item.getCropView().getWidth() / ratioW;
-                    double fH = item.getCropView().getHeight() / ratioH;
-                    double fWX = item.getCropView().getMinX() / ratioW;
-                    double fHY = item.getCropView().getMinY() / ratioH;
-                    Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
-                    imageView.setViewport(viewP);
+                        double fW = item.getCropView().getWidth() / ratioW;
+                        double fH = item.getCropView().getHeight() / ratioH;
+                        double fWX = item.getCropView().getMinX() / ratioW;
+                        double fHY = item.getCropView().getMinY() / ratioH;
+                        Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
+                        imageView.setViewport(viewP);
+                    } else {
+                        imageView.setViewport(null);
+                    }
                 } else {
                     imageView.setViewport(null);
                 }
-            } else {
-                imageView.setViewport(null);
-            }
-            imageView.setImage(item.getImage());
-            rotationAngle.set(item.getRotationAngleProperty().get());
-            setRatingNode(item.getRatingProperty().get());
-            setBookmarked(item.isBookmarked());
-            setStacked(item.isStacked(), item.getStackPos());
-            if (item.deletedProperty().getValue() == true) {
-                setDeletedNode();
+                imageView.setImage(item.getImage());
+                rotationAngle.set(item.getRotationAngleProperty().get());
+                setRatingNode(item.getRatingProperty().get());
+                setBookmarked(item.isBookmarked());
+                setStacked(item.isStacked(), item.getStackPos());
+                if (item.deletedProperty().getValue() == true) {
+                    setDeletedNode();
+                }
             }
         }
     }
@@ -231,7 +235,7 @@ public class MediaGridCell extends GridCell<MediaFile> {
             }
             setRatingNode(item.getRatingProperty().get());
             setBookmarked(item.isBookmarked());
-            setStacked(item.isStacked(), item.getStackPos());            
+            setStacked(item.isStacked(), item.getStackPos());
             if (item.deletedProperty().getValue() == true) {
                 setDeletedNode();
             }
@@ -277,9 +281,9 @@ public class MediaGridCell extends GridCell<MediaFile> {
         VBox vb = new VBox();
         if (stacked == true && stackPos == 1) {
             vb.setAlignment(Pos.BOTTOM_RIGHT);
-            vb.setPadding(new Insets(0, -3, -5, 0));            
+            vb.setPadding(new Insets(0, -3, -5, 0));
             vb.getChildren().add(layerIcon);
-            rootPane.getChildren().add(vb);            
+            rootPane.getChildren().add(vb);
         } else {
             rootPane.getChildren().remove(vb);
         }

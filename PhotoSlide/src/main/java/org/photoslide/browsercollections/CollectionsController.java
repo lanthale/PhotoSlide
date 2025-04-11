@@ -212,11 +212,11 @@ public class CollectionsController implements Initializable {
         /*executorParallelTimers.schedule(() -> {            
         }, 5, TimeUnit.SECONDS);*/
         //mainController.getTaskProgressView().getTasks().add(indexTask);
-        collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
+        /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
             Thread.ofVirtual().start(() -> {
                 searchIndexProcess.createCheckSearchIndex(t.getValue());
             });
-        });
+        });*/
     }
 
     public void saveSettings() {

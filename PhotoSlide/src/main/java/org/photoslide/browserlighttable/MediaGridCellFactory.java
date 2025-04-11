@@ -255,8 +255,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             return;
         }
         if (t.getTarget().getClass().equals(FontIcon.class)) {
-            Node target = Utility.pick((FontIcon) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
-            if (target.getClass().equals(FontIcon.class)) {
+            Node target = Utility.pick((FontIcon) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());            
+            if (target!=null && target.getClass().equals(FontIcon.class)) {
                 if (!target.toString().startsWith("fa-file-movie-o")) {
                     handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
                     if (lightController.getImageView().getImage() != null) {

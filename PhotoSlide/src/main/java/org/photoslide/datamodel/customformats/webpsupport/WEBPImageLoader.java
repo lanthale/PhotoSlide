@@ -178,11 +178,6 @@ public class WEBPImageLoader extends ImageLoaderImpl {
         g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
         g.dispose();
 
-        /*Image tmp = image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_FAST);
-        BufferedImage resized = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = resized.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();*/
         return resized;
     }
 

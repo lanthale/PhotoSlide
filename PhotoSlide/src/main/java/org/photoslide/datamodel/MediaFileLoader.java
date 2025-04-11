@@ -54,7 +54,7 @@ public class MediaFileLoader {
                     } else {
                         if ((Double) g1 == 1.0 && image.isError()) {
                             if (image.isError() == true) {
-                                image.getException().printStackTrace();
+                                //image.getException().printStackTrace();
                             }
                             newMediaItem.setLoading(false);
                             newMediaItem.setLoadingError(image.isError());

@@ -92,7 +92,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
             updateTitle("Reading cache...");
             File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
-            restoreCacheFromDisk(cacheList, inPath);
+            //restoreCacheFromDisk(cacheList, inPath);
             updateTitle("Reading cache...finished");
 
             updateTitle("Counting mediafiles...");
@@ -254,7 +254,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 if (loadedFromCache == false) {
                     updateMessage("Prepare saving cache...");
                     if (qty > 500) {
-                        saveCacheToDisk();
+                        //saveCacheToDisk();
                     }
                     updateMessage("Prepare saving cache...finished.");
                     Platform.runLater(() -> {

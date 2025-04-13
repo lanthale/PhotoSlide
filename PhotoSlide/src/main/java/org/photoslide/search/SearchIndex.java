@@ -57,7 +57,7 @@ public class SearchIndex {
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
     }
 
-    public void createCheckSearchIndex(String searchPath) {
+    public void createCheckSearchIndex(String searchPath) {        
         String collectionName = searchPath;
         Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
@@ -75,11 +75,11 @@ public class SearchIndex {
                     }
                 }
                 updateTitle("Creating/Updating search index...");                
-                updateMessage("Creating/Updating search index...");                
+                updateMessage("Creating/Updating search index...");                                
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
-                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {                                                        
+                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {                               
                             if (task.isCancelled()) {
                                 return FileVisitResult.TERMINATE;
                             }                            
@@ -95,7 +95,7 @@ public class SearchIndex {
                             if (task.isCancelled() == true) {
                                 return FileVisitResult.TERMINATE;
                             }
-                            //filter invalid directories
+                            
                             if (fileItem.getFileName().toString().startsWith(".")) {
                                 return FileVisitResult.CONTINUE;
                             }
@@ -170,7 +170,7 @@ public class SearchIndex {
         });
         task.setOnSucceeded((t) -> { 
             mainViewController.getTaskProgressView().getTasks().remove(task);
-            checkSearchIndex(pathItem.getFilePath().toString());
+            //checkSearchIndex(pathItem.getFilePath().toString());
             Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "End time create searchDB: " + LocalDateTime.now());
         });
         task.setOnFailed((t) -> {            

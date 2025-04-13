@@ -200,17 +200,20 @@ public class CollectionsController implements Initializable {
             mainController.getTaskProgressView().getTasks().add(task);
         });
         task.setOnSucceeded((WorkerStateEvent t) -> {
-            if (accordionPane.getPanes().size() > 0) {
+            if (!accordionPane.getPanes().isEmpty()) {
                 if (activeAccordionPane == -1) {
                     activeAccordionPane = 0;
                 }
                 accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
             }
+            collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
+                searchIndexProcess.createCheckSearchIndex(entry.getValue());                
+            });
             /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
-                searchIndexProcess.createCheckSearchIndex(entry.getValue());
+                searchIndexProcess.checkSearchIndex(entry.getValue());
             });*/
         });
-        executorParallel.submit(task);        
+        executorParallel.submit(task);
         /*executorParallelTimers.schedule(() -> {            
         }, 5, TimeUnit.SECONDS);*/
         //mainController.getTaskProgressView().getTasks().add(indexTask);        

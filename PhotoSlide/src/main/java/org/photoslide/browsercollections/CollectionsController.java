@@ -206,9 +206,9 @@ public class CollectionsController implements Initializable {
                 }
                 accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
             }
-            collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
+            /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
                 searchIndexProcess.createCheckSearchIndex(entry.getValue());                
-            });
+            });*/
             /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
                 searchIndexProcess.checkSearchIndex(entry.getValue());
             });*/

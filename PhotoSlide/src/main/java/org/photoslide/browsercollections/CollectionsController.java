@@ -196,6 +196,9 @@ public class CollectionsController implements Initializable {
                 return true;
             }
         };
+        task.setOnScheduled((t) -> {
+            mainController.getTaskProgressView().getTasks().add(task);
+        });
         task.setOnSucceeded((WorkerStateEvent t) -> {
             if (accordionPane.getPanes().size() > 0) {
                 if (activeAccordionPane == -1) {
@@ -203,20 +206,14 @@ public class CollectionsController implements Initializable {
                 }
                 accordionPane.setExpandedPane(accordionPane.getPanes().get(activeAccordionPane));
             }
-            /*Platform.runLater(() -> {
-                
+            /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
+                searchIndexProcess.createCheckSearchIndex(entry.getValue());
             });*/
         });
-        executorParallel.submit(task);
-        mainController.getTaskProgressView().getTasks().add(task);
+        executorParallel.submit(task);        
         /*executorParallelTimers.schedule(() -> {            
         }, 5, TimeUnit.SECONDS);*/
-        //mainController.getTaskProgressView().getTasks().add(indexTask);
-        /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((t) -> {
-            Thread.ofVirtual().start(() -> {
-                searchIndexProcess.createCheckSearchIndex(t.getValue());
-            });
-        });*/
+        //mainController.getTaskProgressView().getTasks().add(indexTask);        
     }
 
     public void saveSettings() {

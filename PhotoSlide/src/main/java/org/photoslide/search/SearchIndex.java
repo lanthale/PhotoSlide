@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
@@ -73,14 +74,15 @@ public class SearchIndex {
                         return null;
                     }
                 }
-                updateTitle("Creating/Updating search index...");
+                updateTitle("Creating/Updating search index...");                
+                updateMessage("Creating/Updating search index...");                
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
-                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {                                                        
                             if (task.isCancelled()) {
                                 return FileVisitResult.TERMINATE;
-                            }
+                            }                            
                             int pathlength = fileItem.toString().length();
                             if (pathlength > 35) {
                                 updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
@@ -139,14 +141,14 @@ public class SearchIndex {
 
                         @Override
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
-                                throws IOException {
+                                throws IOException {                            
                             if (task.isCancelled()) {
                                 return FileVisitResult.TERMINATE;
                             }
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
                             if (finishedSearch) {
                                 App.setSEARCHINDEXFINISHED(LocalDate.now());
-                                checkSearchIndex(pathItem.getFilePath().toString());
+                                //checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
                             }
                             return FileVisitResult.CONTINUE;
@@ -157,7 +159,7 @@ public class SearchIndex {
                             return FileVisitResult.CONTINUE;
                         }
                     });
-                } catch (IOException ex) {
+                } catch (IOException ex) {                    
                     Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, null, ex);
                 }
                 return null;
@@ -166,13 +168,16 @@ public class SearchIndex {
         task.setOnScheduled((t) -> {
             mainViewController.getTaskProgressView().getTasks().add(task);
         });
-        task.setOnSucceeded((t) -> {
+        task.setOnSucceeded((t) -> { 
+            mainViewController.getTaskProgressView().getTasks().remove(task);
+            checkSearchIndex(pathItem.getFilePath().toString());
             Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "End time create searchDB: " + LocalDateTime.now());
         });
-        task.setOnFailed((t) -> {
+        task.setOnFailed((t) -> {            
+            mainViewController.getTaskProgressView().getTasks().remove(task);
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
-        executorParallel.submit(task);        
+        executorParallel.submit(task);
     }
 
     public void checkSearchIndex(String searchPath) {
@@ -235,7 +240,6 @@ public class SearchIndex {
                         }
                     });
                 } catch (IOException ex) {
-                    //Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 return null;
             }
@@ -243,7 +247,13 @@ public class SearchIndex {
         taskCheck.setOnScheduled((t) -> {
             mainViewController.getTaskProgressView().getTasks().add(taskCheck);
         });
-        executorParallel.submit(taskCheck);        
+        taskCheck.setOnSucceeded((t) -> {
+            mainViewController.getTaskProgressView().getTasks().remove(taskCheck);
+        });
+        taskCheck.setOnFailed((t) -> {
+            mainViewController.getTaskProgressView().getTasks().remove(taskCheck);
+        });
+        executorParallel.submit(taskCheck);
     }
 
     public void shutdown() {

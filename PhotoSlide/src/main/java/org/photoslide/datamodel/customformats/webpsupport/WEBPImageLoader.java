@@ -39,7 +39,7 @@ public class WEBPImageLoader extends ImageLoaderImpl {
 
         if (input == null) {
             throw new IllegalArgumentException("input == null!");
-        }                
+        }
         this.input = input;
         this.dimensionProvider = dimensionProvider;
     }
@@ -54,7 +54,7 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     }
 
     @Override
-    protected void updateImageProgress(float f) {        
+    protected void updateImageProgress(float f) {
         super.updateImageProgress(f);
     }
 
@@ -67,25 +67,25 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     public ImageFrame load(int imageIndex, double width, double height, boolean preserveAspectRatio, boolean smooth, float screenPixelScale, float imagePixelScale) throws IOException {
         if (0 != imageIndex) {
             return null;
-        }
+        }        
 
         Dimension fallbackDimension = (width <= 0 || height <= 0) ? dimensionProvider.getDimension() : null;
 
-        float imageWidth = (int)width > 0 ? (int)width : (float) fallbackDimension.getWidth();
-        float imageHeight = (int)height > 0 ? (int)height : (float) fallbackDimension.getHeight();
+        float imageWidth = (int) width > 0 ? (int) width : (float) fallbackDimension.getWidth();
+        float imageHeight = (int) height > 0 ? (int) height : (float) fallbackDimension.getHeight();
 
         ImageMetadata md = new ImageMetadata(null, true,
                 null, null, null, null, null,
-                (int)width, (int)height, null, null, null);
+                (int) width, (int) height, null, null, null);
 
         updateImageMetadata(md);
-        
+
         try {
             return createImageFrame(imageWidth, imageHeight, screenPixelScale);
         } catch (IOException ex) {
             throw new IOException(ex);
         }
-    }    
+    }
 
     public float calculateMaxRenderScale() {
         float maxRenderScale = 0;
@@ -97,7 +97,7 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     }
 
     private ImageFrame createImageFrame(float width, float height, float pixelScale)
-            throws IOException {        
+            throws IOException {
         BufferedImage bufferedImage = getTranscodedImage(width * pixelScale, height * pixelScale);
         ByteBuffer imageData = getImageData(bufferedImage);
 
@@ -115,7 +115,7 @@ public class WEBPImageLoader extends ImageLoaderImpl {
             } else {
                 BufferedImage rBufImg = readFile();
                 read = resize(rBufImg, (int) width * 4, (int) height * 4);
-            }
+            }            
         } catch (IOException e) {
             Logger.getLogger(WEBPImageLoader.class.getName()).log(Level.FINE, "Error reading WEBP file format!");
             throw new IOException(e);
@@ -124,8 +124,8 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     }
 
     private BufferedImage readFile() throws IOException {
-        BufferedImage image = null;        
-        image=ImageIO.read(input);
+        BufferedImage image = null;
+        image = ImageIO.read(input);
         return image;
     }
 

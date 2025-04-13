@@ -48,6 +48,7 @@ public class MediaFileLoader {
                 image.progressProperty().addListener((ov, g, g1) -> {
                     if (this.isCancelled()) {
                         image.cancel();
+                        taskList.remove(newMediaItem.getName());
                     }
                     if ((Double) g1 == 1.0 && !image.isError()) {
                         newMediaItem.setLoading(false);
@@ -66,6 +67,7 @@ public class MediaFileLoader {
                 });
                 if (this.isCancelled()) {
                     image.cancel();
+                    taskList.remove(newMediaItem.getName());
                 }
                 if (image.isError()) {
                     if (image.getException() instanceof InterruptedIOException == false) {

@@ -18,7 +18,8 @@ public class WEBPDescriptor extends ImageDescriptor {
     private static final String[] extensions = {"webp"};
 
     private static final Signature[] signatures = {
-        new Signature(hexStringToByteArray("52494646620C0A005745425056503820"))};
+        new Signature(hexStringToByteArray("524946"))};
+    //new Signature(hexStringToByteArray("52494646620C0A005745425056503820"))};
 
     private static final String[] mimesubtype = {"webp"};
     

@@ -37,6 +37,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.FilenameComparator;
 
@@ -75,9 +76,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
         dummyfileList = new ArrayList<>();
         loadingThreads = new ArrayList<>();
         loadedFromCache = false;
-        this.lightcontroller = lightcontroller;
-        executorParallel = Executors.newVirtualThreadPerTaskExecutor();
-        //executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
+        this.lightcontroller = lightcontroller;        
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
         if (Utility.nativeMemorySize > 4194500) {
             loadingLimit = 75;
         } else {

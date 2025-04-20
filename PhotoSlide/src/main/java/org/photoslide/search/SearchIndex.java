@@ -71,7 +71,7 @@ public class SearchIndex {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
                     if (period.getDays() < 14) {
                         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
-                        return null;
+                        //return null;
                     }
                 }
                 updateTitle("Creating/Updating search index...");                

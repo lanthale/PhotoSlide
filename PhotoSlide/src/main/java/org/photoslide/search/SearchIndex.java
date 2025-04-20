@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.MainViewController;

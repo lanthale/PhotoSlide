@@ -71,7 +71,7 @@ public class SearchIndex {
                     Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
                     if (period.getDays() < 14) {
                         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
-                        //return null;
+                        return null;
                     }
                 }
                 updateTitle("Creating/Updating search index...");                
@@ -148,7 +148,7 @@ public class SearchIndex {
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
                             if (finishedSearch) {
                                 App.setSEARCHINDEXFINISHED(LocalDate.now());
-                                //checkSearchIndex(pathItem.getFilePath().toString());
+                                checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
                             }
                             return FileVisitResult.CONTINUE;
@@ -233,7 +233,7 @@ public class SearchIndex {
                             if (finishedSearch) {
                                 //System.out.println("Checking indexing files finished");
                                 App.setSEARCHINDEXFINISHED(LocalDate.now());
-                                checkSearchIndex(pathItem.getFilePath().toString());
+                                //checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
                             }
                             return FileVisitResult.CONTINUE;

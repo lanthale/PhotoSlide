@@ -209,9 +209,6 @@ public class CollectionsController implements Initializable {
             collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
                 searchIndexProcess.createCheckSearchIndex(entry.getValue());                
             });
-            /*collectionStorageSearchIndex.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach((entry) -> {
-                searchIndexProcess.checkSearchIndex(entry.getValue());
-            });*/
         });
         executorParallel.submit(task);
         /*executorParallelTimers.schedule(() -> {            

@@ -21,7 +21,7 @@ public class FileTypes {
      * @param fileName Name of the file to check as String
      * @return true if the name ends with a valid type else false
      */
-    public static boolean isValidType(String fileName) {
+    public synchronized static boolean isValidType(String fileName) {
         int lastIndexOf = fileName.lastIndexOf('.');
         String fileEndingStr = "";
         if (lastIndexOf != -1) {

@@ -90,6 +90,10 @@ import java.util.prefs.Preferences;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.ListChangeListener;
 import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.SplitPane;
@@ -255,7 +259,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
             mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().setText("Retrieving media files...");            
+            mainController.getProgressbarLabel().setText("Retrieving media files...");
         });
 
         if (directorywatch != null) {
@@ -323,22 +327,26 @@ public class LighttableController implements Initializable {
             zoomSlider.setValue(0);
         });
 
-        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);
+        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);        
         taskMLoading.setOnRunning((t) -> {
+            factory.setListFilesActive(true);
             mainController.getStatusLabelLeft().setVisible(true);
             mainController.getProgressPane().setVisible(true);            
-        });
-        taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
-            factory.setListFilesActive(false);            
-            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
-            sortedMediaList.setComparator(new MediaFilenameComparator());            
-            mainController.getStatusLabelLeft().setVisible(false);
-            mainController.getProgressPane().setVisible(false);            
+        });        
+        taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {            
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
-            sortOrderComboBox.setDisable(false);
+            mainController.getStatusLabelRight().textProperty().unbind();
+            mainController.getStatusLabelLeft().setVisible(false);
+            mainController.getProgressbarLabel().setText("");
             mainController.getProgressPane().setVisible(false);
-            mainController.getStatusLabelLeft().setText("");            
+            mainController.getStatusLabelLeft().setText("");
+            //sort media List
+            mainController.getStatusLabelRight().setText("Sorting media list...");
+            setDefaultSorting();            
+            mainController.getStatusLabelRight().setText("Sorting media list...finished.");            
+            factory.setListFilesActive(false);            
+            taskMLoading.saveCacheToDisk();
         });
         taskMLoading.setOnFailed((t2) -> {
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
@@ -479,6 +487,12 @@ public class LighttableController implements Initializable {
                 transition.play();
             }
         });*/
+    }
+
+    public void setDefaultSorting() {
+        sortOrderComboBox.setDisable(false);
+        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
+        sortedMediaList.setComparator(new MediaFilenameComparator());
     }
 
     /**
@@ -757,7 +771,7 @@ public class LighttableController implements Initializable {
                 ((MediaFile) mediaF).setStackName(stackName);
                 ((MediaFile) mediaF).setStackPos(i.addAndGet(1));
                 savingMediaFileEdits(((MediaFile) mediaF));
-            }            
+            }
             filteredMediaList.setPredicate(standardFilter());
         } else {
             String stackname = factory.getSelectedMediaItem().getStackName();
@@ -972,7 +986,7 @@ public class LighttableController implements Initializable {
                                             = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
                                     mediaFile.setRecordTime(triggerTime);
                                 }
-                                if (mediaFile.getRecordTime() == null) {                                    
+                                if (mediaFile.getRecordTime() == null) {
                                     long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
                                     LocalDateTime triggerTime
                                             = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
@@ -1145,14 +1159,14 @@ public class LighttableController implements Initializable {
         }
     }
 
-    private Predicate<MediaFile> baseFilter() {         
+    private Predicate<MediaFile> baseFilter() {
         return mFile -> mFile.isStacked() == false;// || mFile.getStackPos() == 1;
     }
 
-    public Predicate<MediaFile> standardFilter() {  
+    public Predicate<MediaFile> standardFilter() {
         Predicate<MediaFile> filterDeleted = filterDeleted(showDeletedButton.isSelected());
         return baseFilter().and(filterDeleted).or(mFile -> mFile.getStackPos() == 1);
-    }    
+    }
 
     public Button getRotateLeftButton() {
         return rotateLeftButton;

@@ -51,7 +51,8 @@ public class MediaFile_Serializable implements Serializable {
     private double cropViewY;
     private double cropViewWidth;
     private double cropViewHeigth;
-    private Point2D orignalImageSize;
+    private double orignalImageSizeX;
+    private double orignalImageSizeY;
     private LocalDateTime recordTime;
     private boolean deleted;
     private boolean selected;
@@ -112,7 +113,7 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setPathStorage(m.getPathStorage().toString());
         mserial.setBookmarked(m.isBookmarked());
         mserial.setLoading(true);
-        mserial.setLoading(false);
+        mserial.setLoadingError(false);
         mserial.setSubViewSelected(false);
         mserial.setDeleted(m.isDeleted());
         mserial.setSelected(m.isSelected());
@@ -131,7 +132,10 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setRotationAngle(m.getRotationAngleProperty().get());
         mserial.setRating(m.getRatingProperty().get());
         mserial.setGpsHeight(-1);
-        mserial.setOrignalImageSize(m.getOrignalImageSize());
+        if (m.getOrignalImageSize() != null) {
+            mserial.setOrignalImageSizeX(m.getOrignalImageSize().getX());
+            mserial.setOrignalImageSizeY(m.getOrignalImageSize().getY());
+        }
         if (m.getCropView() != null) {
             mserial.setCropViewX(m.getCropView().getMinX());
             mserial.setCropViewY(m.getCropView().getMinY());
@@ -151,7 +155,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setPathStorage(Path.of(mserial.getPathStorage()));
         m.setBookmarked(mserial.isBookmarked());
         m.setLoading(true);
-        m.setLoading(false);
+        m.setLoadingError(false);
         m.setSubViewSelected(false);
         m.setDeleted(mserial.isDeleted());
         m.setSelected(mserial.isSelected());
@@ -170,7 +174,7 @@ public class MediaFile_Serializable implements Serializable {
         m.setRotationAngle(mserial.getRotationAngle());
         m.setRating(mserial.getRating());
         m.setGpsHeight(-1);
-        m.setOrignalImageSize(mserial.getOrignalImageSize());
+        m.setOrignalImageSize(new Point2D(mserial.getOrignalImageSizeX(), mserial.getOrignalImageSizeY()));
         if (mserial.getCropViewWidth() > 0) {
             m.setCropView(new Rectangle2D(mserial.getCropViewX(), mserial.getCropViewY(), mserial.getCropViewWidth(), mserial.getCropViewHeigth()));
         } else {
@@ -210,7 +214,7 @@ public class MediaFile_Serializable implements Serializable {
 
     public void setLoadingError(boolean loadingError) {
         this.loadingError = loadingError;
-    }        
+    }
 
     public String getTitle() {
         return title;
@@ -308,12 +312,20 @@ public class MediaFile_Serializable implements Serializable {
         this.cropViewHeigth = cropViewHeigth;
     }
 
-    public Point2D getOrignalImageSize() {
-        return orignalImageSize;
+    public double getOrignalImageSizeX() {
+        return orignalImageSizeX;
     }
 
-    public void setOrignalImageSize(Point2D orignalImageSize) {
-        this.orignalImageSize = orignalImageSize;
+    public void setOrignalImageSizeX(double orignalImageSizeX) {
+        this.orignalImageSizeX = orignalImageSizeX;
+    }
+
+    public double getOrignalImageSizeY() {
+        return orignalImageSizeY;
+    }
+
+    public void setOrignalImageSizeY(double orignalImageSizeY) {
+        this.orignalImageSizeY = orignalImageSizeY;
     }
 
     public LocalDateTime getRecordTime() {

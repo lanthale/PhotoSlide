@@ -382,6 +382,9 @@ public class CollectionsController implements Initializable {
     }
 
     public void Shutdown() {
+        Thread.ofVirtual().start(() -> {
+            directorywatchSelected.stopWatch();
+        });        
         if (searchIndexProcess != null) {
             searchIndexProcess.shutdown();
         }

@@ -21,6 +21,8 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.photoslide.datamodel.FileTypes;
 
 /**
@@ -81,6 +83,11 @@ public class DirectoryWatcher {
     public void stopWatch() {
         if (key != null) {
             key.cancel();
+        }
+        try {
+            watchService.close();
+        } catch (IOException ex) {
+            Logger.getLogger(DirectoryWatcher.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

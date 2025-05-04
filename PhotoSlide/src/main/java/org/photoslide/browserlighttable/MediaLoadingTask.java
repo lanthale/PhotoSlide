@@ -261,17 +261,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 e2 = (ArrayList<MediaFile>) objectInputStream.readObject();
                 //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());                 
-                System.out.println("e2 size: "+e2.size());
-                cacheList.addAll(e2);
-                /*while (cacheList.size() != e2.size()) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }*/
-                System.out.println("cacheList size: "+cacheList.size());
-                
+                //System.out.println("e2 size: "+e2.size());
+                cacheList.addAll(e2);                
                 Platform.runLater(() -> {
                     fullMediaList.setAll(cacheList);
                     factory.setListFilesActive(false);

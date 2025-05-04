@@ -114,7 +114,9 @@ public class App extends Application {
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(1);
-
+            RAWImageLoaderFactory.getDecoderSettings().put("Canon EOS 5DS", new RawDecoderSettings());
+            RAWImageLoaderFactory.getDecoderSettings().get("Canon EOS 5DS").setAutoBrightness(true);
+            RAWImageLoaderFactory.getDecoderSettings().get("Canon EOS 5DS").setEnableExposureCorrection(true);
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);

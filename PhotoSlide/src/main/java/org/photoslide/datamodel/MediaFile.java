@@ -61,7 +61,7 @@ import org.photoslide.imageops.ImageFilter;
  */
 public class MediaFile implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
     private String name;
     private String pathStorage;
     private SimpleBooleanProperty loading;

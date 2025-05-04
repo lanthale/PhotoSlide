@@ -345,7 +345,8 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setText("Sorting media list...");
             setDefaultSorting();            
             mainController.getStatusLabelRight().setText("Sorting media list...finished.");            
-            factory.setListFilesActive(false);            
+            factory.setListFilesActive(false);  
+            imageGrid.requestLayout();
             taskMLoading.saveCacheToDisk();
         });
         taskMLoading.setOnFailed((t2) -> {
@@ -357,20 +358,17 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelRight().setVisible(false);
         });
         taskMLoading.setOnScheduled((t) -> {
+            imageGrid.requestFocus();
+            imageGrid.setCellFactory(factory);
+            imageGrid.requestFocus();
+            mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
+            mainController.getProgressbarLabel().textProperty().bind(taskMLoading.titleProperty());
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setVisible(true);
         });
-        Platform.runLater(() -> {
-            mainController.getStatusLabelRight().textProperty().bind(taskMLoading.messageProperty());
-            mainController.getProgressbarLabel().textProperty().bind(taskMLoading.titleProperty());
-        });
+        
         executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
         this.mainController.getTaskProgressView().getTasks().add(taskMLoading);
-
-        imageGrid.setCellFactory(factory);
-        Platform.runLater(() -> {
-            imageGrid.requestFocus();
-        });
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();

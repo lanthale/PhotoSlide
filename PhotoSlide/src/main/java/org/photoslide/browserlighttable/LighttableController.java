@@ -330,6 +330,7 @@ public class LighttableController implements Initializable {
         taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);        
         taskMLoading.setOnRunning((t) -> {
             factory.setListFilesActive(true);
+            mediaQTYLabel.setText("-- media files.");
             mainController.getStatusLabelLeft().setVisible(true);
             mainController.getProgressPane().setVisible(true);            
         });        

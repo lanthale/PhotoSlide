@@ -95,17 +95,18 @@ public class MediaLoadingTask extends Task<MediaFile> {
             updateTitle("Reading cache...finished");
 
             updateTitle("Counting mediafiles...");
-
-            File[] fileListCount = selectedPath.toFile().listFiles((pathname) -> {
-                return FileTypes.isValidType(pathname.toString());
-            });
-            /*Stream<Path> fileListCount = Files.list(selectedPath).filter((t5) -> {
+            
+            Stream<Path> fileListCount = Files.list(selectedPath).parallel().filter((t5) -> {
                 return FileTypes.isValidType(t5.getFileName().toString());
-            }).sorted(new FilenameComparator());*/
+            }).sorted(new FilenameComparator());   
+            qty = fileListCount.count();               
+            fileListCount.close();
+            updateTitle("Counting mediafiles...finished");
+            updateTitle("Preparing mediafile list...");
 
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
-            }).sorted(new FilenameComparator());
+            }).sorted(new FilenameComparator());            
 
             Stream<Path> finalFileList;
             if (cacheList.isEmpty() == true) {
@@ -137,10 +138,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 long end = System.currentTimeMillis();
                 loadedFromCache = true;
                 Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Calculatiing difference between cache and disk took " + (end - start) / 1000 + "s");
-            }
-
-            qty = fileListCount.length;//fileListCount.count();
-            //System.out.println("count "+fileList.count());
+            }            
 
             if (qty < cacheList.size()) {
                 Stream<Path> fileListNew = Files.list(selectedPath).filter((t) -> {
@@ -155,7 +153,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
                 outpath.delete();
             }
-            updateTitle("Counting mediafiles...finished");
+            updateTitle("Preparing mediafile list...finished");
             if (qty == 0) {
                 updateTitle("0 mediafiles found.");
                 Platform.runLater(() -> {
@@ -240,6 +238,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 return null;
             }            
             long endtime = System.currentTimeMillis();
+            fileList.close();
             updateMessage("Finished MediaLoading Task.");
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
             updateMessage("Sorting media list...");
@@ -294,10 +293,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     fileOutputStream = new FileOutputStream(outpath, false);
                     try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
                         updateMessage("Save cache...Writing to disk");
-                        // show progress during writing wiht filteredOutputStream 
-                        System.out.println("Cache size: "+cacheList.size());
-                        final List<MediaFile> finalCache = Collections.synchronizedList(cacheList);
-                        System.out.println("finalCache size: "+finalCache.size());
+                        // show progress during writing wiht filteredOutputStream                         
+                        final List<MediaFile> finalCache = Collections.synchronizedList(cacheList);                        
                         objectOutputStream.writeObject(finalCache);
                         objectOutputStream.flush();
                     }

@@ -20,7 +20,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -247,11 +246,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     public void handleGridCellSelection(Event t) throws MalformedURLException {
         if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
             String name = ((MediaGridCell) t.getSource()).getItem().getName();
-            Platform.runLater(() -> {
-                setStdGUIState();
-                lightController.getFilenameLabel().setVisible(true);
-                lightController.getFilenameLabel().setText(name);
-            });
+            setStdGUIState();
+            lightController.getFilenameLabel().setVisible(true);
+            lightController.getFilenameLabel().setText(name);
             return;
         }
         if (t.getTarget().getClass().equals(StackPane.class)) {
@@ -348,28 +345,24 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
         updateGUIAccordingSelection();
 
-        Platform.runLater(() -> {
-            lightController.getPlayIcon().setVisible(false);
-            lightController.getImageView().setImage(null);
-            lightController.getMediaView().setMediaPlayer(null);
-        });
+        lightController.getPlayIcon().setVisible(false);
+        lightController.getImageView().setImage(null);
+        lightController.getMediaView().setMediaPlayer(null);
         switch (selectedMediaItem.getMediaType()) {
             case VIDEO:
                 metadataController.setSelectedFile(selectedMediaItem);
                 try {
-                    Platform.runLater(() -> {
-                        lightController.getImageProgress().progressProperty().unbind();
-                        lightController.getImageProgress().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-                        lightController.getImageProgress().setVisible(true);
-                        lightController.getImageView().setVisible(false);
-                        lightController.getMediaView().setVisible(true);
-                        lightController.getImageProgress().setVisible(false);
-                        lightController.getInvalidStackPane().setVisible(false);
-                        lightController.getPlayIcon().setVisible(true);
-                        lightController.getMediaView().toFront();
-                        lightController.getPlayIcon().toFront();
-                        lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
-                    });
+                    lightController.getImageProgress().progressProperty().unbind();
+                    lightController.getImageProgress().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                    lightController.getImageProgress().setVisible(true);
+                    lightController.getImageView().setVisible(false);
+                    lightController.getMediaView().setVisible(true);
+                    lightController.getImageProgress().setVisible(false);
+                    lightController.getInvalidStackPane().setVisible(false);
+                    lightController.getPlayIcon().setVisible(true);
+                    lightController.getMediaView().toFront();
+                    lightController.getPlayIcon().toFront();
+                    lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
                     Task mediaTask = loadVideo();
                     executor.submit(mediaTask);
                     this.lightController.getMainController().getTaskProgressView().getTasks().add(mediaTask);
@@ -382,95 +375,89 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
                         Label lb = new Label("Filtype not supported!");
                         lb.setStyle("-fx-font-size: 20px;");
-                        Platform.runLater(() -> {
-                            lightController.getPlayIcon().setVisible(false);
-                            lightController.getImageView().setVisible(false);
-                            lightController.getMediaView().setVisible(false);
-                            lightController.getImageProgress().setVisible(false);
-                            vb.getChildren().clear();
-                            vb.getChildren().add(filmIcon);
-                            vb.getChildren().add(lb);
-                            lightController.getInvalidStackPane().getChildren().clear();
-                            lightController.getInvalidStackPane().getChildren().add(vb);
-                            lightController.getInvalidStackPane().getChildren().add(controlIcon);
-                            lightController.getInvalidStackPane().setVisible(true);
-                        });
+                        lightController.getPlayIcon().setVisible(false);
+                        lightController.getImageView().setVisible(false);
+                        lightController.getMediaView().setVisible(false);
+                        lightController.getImageProgress().setVisible(false);
+                        vb.getChildren().clear();
+                        vb.getChildren().add(filmIcon);
+                        vb.getChildren().add(lb);
+                        lightController.getInvalidStackPane().getChildren().clear();
+                        lightController.getInvalidStackPane().getChildren().add(vb);
+                        lightController.getInvalidStackPane().getChildren().add(controlIcon);
+                        lightController.getInvalidStackPane().setVisible(true);
                     }
                 }
                 break;
 
             case IMAGE:
                 metadataController.setSelectedFile(selectedMediaItem);
-                Platform.runLater(() -> {
-                    lightController.getImageProgress().progressProperty().unbind();
-                    lightController.getImageView().setImage(null);
-                    lightController.getInvalidStackPane().setVisible(false);
-                    lightController.getImageView().setVisible(true);
-                    lightController.getImageView().setCache(true);
-                    lightController.getImageView().setCacheHint(CacheHint.SPEED);
-                    lightController.getMediaView().setVisible(false);
-                    lightController.getImageProgress().setProgress(0);
-                    lightController.getImageProgress().setVisible(true);
-                    lightController.getDetailToolbar().setDisable(false);
-                    lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().titleProperty());
-                    lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().cameraProperty());
-                    lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
-                    lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
-                    lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
-                    lightController.getTitleLabel().setVisible(true);
-                    lightController.getCameraLabel().setVisible(true);
-                    lightController.getFilenameLabel().setVisible(true);
-                    lightController.getRatingControl().setVisible(true);
-                    switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
-                        case 0:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                            break;
-                        case 180:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                            break;
-                        case 360:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                            break;
-                        case -180:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                            break;
-                        case -360:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                            break;
-                        case 90:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                            break;
-                        case 270:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                            break;
-                        case -90:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                            break;
-                        case -270:
-                            lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                            lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                            break;
-                    }
-                    lightController.getImageView().setImage(selectedMediaItem.getImage());
-                });
+                lightController.getImageProgress().progressProperty().unbind();
+                lightController.getImageView().setImage(null);
+                lightController.getInvalidStackPane().setVisible(false);
+                lightController.getImageView().setVisible(true);
+                lightController.getImageView().setCache(true);
+                lightController.getImageView().setCacheHint(CacheHint.SPEED);
+                lightController.getMediaView().setVisible(false);
+                lightController.getImageProgress().setProgress(0);
+                lightController.getImageProgress().setVisible(true);
+                lightController.getDetailToolbar().setDisable(false);
+                lightController.getTitleLabel().textProperty().bind(selectedCell.getItem().titleProperty());
+                lightController.getCameraLabel().textProperty().bind(selectedCell.getItem().cameraProperty());
+                lightController.getFilenameLabel().setText(new File(selectedCell.getItem().getName()).getName());
+                lightController.getRatingControl().ratingProperty().bind(selectedCell.getItem().getRatingProperty());
+                lightController.getImageView().rotateProperty().bind(selectedCell.getItem().getRotationAngleProperty());
+                lightController.getTitleLabel().setVisible(true);
+                lightController.getCameraLabel().setVisible(true);
+                lightController.getFilenameLabel().setVisible(true);
+                lightController.getRatingControl().setVisible(true);
+                switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
+                    case 0:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                        break;
+                    case 180:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                        break;
+                    case 360:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                        break;
+                    case -180:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                        break;
+                    case -360:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
+                        break;
+                    case 90:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                        break;
+                    case 270:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                        break;
+                    case -90:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                        break;
+                    case -270:
+                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
+                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
+                        break;
+                }
+                lightController.getImageView().setImage(selectedMediaItem.getImage());
                 loadImage();
                 break;
             case NONE:
-                Platform.runLater(() -> {
-                    lightController.getImageView().setVisible(false);
-                    lightController.getMediaView().setVisible(false);
-                    lightController.getImageProgress().setVisible(false);
-                    lightController.getInvalidStackPane().setVisible(false);
-                    lightController.getPlayIcon().setVisible(false);
-                });
+                lightController.getImageView().setVisible(false);
+                lightController.getMediaView().setVisible(false);
+                lightController.getImageProgress().setVisible(false);
+                lightController.getInvalidStackPane().setVisible(false);
+                lightController.getPlayIcon().setVisible(false);
                 break;
             default:
         }
@@ -491,14 +478,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 lightController.getMediaView().getMediaPlayer().stop();
             }
             lightController.getMediaView().setOnMouseMoved((k) -> {
-                Platform.runLater(() -> {
-                    lightController.getPlayIcon().setVisible(true);
-                });
+                lightController.getPlayIcon().setVisible(true);
                 if (lightController.getMediaView().getMediaPlayer() != null) {
                     if (lightController.getMediaView().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
-                        Platform.runLater(() -> {
-                            lightController.getPlayIcon().setVisible(true);
-                        });
+                        lightController.getPlayIcon().setVisible(true);
                         lightController.getPlayIcon().setIconLiteral("fa-pause");
                     } else {
                         lightController.getPlayIcon().setIconLiteral("fa-play");
@@ -533,17 +516,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public void loadImage() throws MalformedURLException {
         if (selectedMediaItem.getLoadingError() == true) {
-            Platform.runLater(() -> {
-                lightController.getImageProgress().setVisible(false);
-                lightController.getImageView().setImage(null);
-            });
+            lightController.getImageProgress().setVisible(false);
+            lightController.getImageView().setImage(null);
             return;
         }
         String url = selectedMediaItem.getImageUrl().toString();
         img = new Image(url, true);
-        Platform.runLater(() -> {
-            lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-        });
+        lightController.getImageProgress().progressProperty().bind(img.progressProperty());
         img.progressProperty().addListener((ov, g, g1) -> {
             if ((Double) g1 == 1.0 && !img.isError()) {
                 lightController.getImageProgress().setVisible(false);
@@ -573,15 +552,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 
         if (selectedCell.getItem().getCropView() != null) {
-            Platform.runLater(() -> {
-                resetCrop.setVisible(true);
-                lightController.getOptionPane().getChildren().clear();
-                lightController.getOptionPane().getChildren().add(resetCrop);
-            });
+            resetCrop.setVisible(true);
+            lightController.getOptionPane().getChildren().clear();
+            lightController.getOptionPane().getChildren().add(resetCrop);
         } else {
-            Platform.runLater(() -> {
-                resetCrop.setVisible(false);
-            });
+            resetCrop.setVisible(false);
         }
     }
 

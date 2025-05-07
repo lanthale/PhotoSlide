@@ -11,17 +11,11 @@ import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,13 +28,11 @@ import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -90,10 +82,6 @@ import java.util.prefs.Preferences;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.collections.ListChangeListener;
 import javafx.scene.CacheHint;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.SplitPane;
@@ -249,30 +237,23 @@ public class LighttableController implements Initializable {
      * @param sPath The root path where all collections via directories exists
      */
     public void setSelectedPath(Path sPath) {
-        Platform.runLater(() -> {
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Scanning...");
-            mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("");
-            mainController.getStatusLabelRight().setVisible(true);
-            mainController.getProgressPane().setVisible(true);
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().setText("Retrieving media files...");
-        });
+        mainController.getStatusLabelLeft().setVisible(true);
+        mainController.getStatusLabelLeft().setText("Scanning...");
+        mainController.getStatusLabelRight().textProperty().unbind();
+        mainController.getStatusLabelRight().setText("");
+        mainController.getStatusLabelRight().setVisible(true);
+        mainController.getProgressPane().setVisible(true);
+        mainController.getProgressbar().progressProperty().unbind();
+        mainController.getProgressbar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        mainController.getProgressbarLabel().textProperty().unbind();
+        mainController.getProgressbarLabel().setText("Retrieving media files...");
 
         if (directorywatch != null) {
             directorywatch.stopWatch();
         }
 
-        if (Platform.isFxApplicationThread()) {
-            imageGridPane.getChildren().clear();
-        } else {
-            Platform.runLater(() -> {
-                imageGridPane.getChildren().clear();
-            });
-        }
+        imageGridPane.getChildren().clear();
+
         if (taskMLoading != null) {
             taskMLoading.cancel();
             if (fullMediaList != null) {
@@ -296,15 +277,15 @@ public class LighttableController implements Initializable {
         metadataController.resetGUI();
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;
-        Platform.runLater(() -> {
-            sortOrderComboBox.getSelectionModel().selectFirst();
-            detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
-            mainController.handleMenuDisable(true);
-            pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
-            //sortOrderComboBox.setDisable(true);            
-            mainController.getStatusLabelRight().textProperty().unbind();
-            mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
-        });
+
+        sortOrderComboBox.getSelectionModel().selectFirst();
+        detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
+        mainController.handleMenuDisable(true);
+        pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
+        //sortOrderComboBox.setDisable(true);            
+        mainController.getStatusLabelRight().textProperty().unbind();
+        mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
+
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
@@ -318,23 +299,21 @@ public class LighttableController implements Initializable {
         double defaultCellHight = imageGrid.getCellHeight();
         factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
 
-        Platform.runLater(() -> {
-            if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
-                imageGridPane.getChildren().add(imageGrid);
-            }
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().unbind();
-            zoomSlider.setValue(0);
-        });
+        if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
+            imageGridPane.getChildren().add(imageGrid);
+        }
+        mainController.getProgressbar().progressProperty().unbind();
+        mainController.getProgressbarLabel().textProperty().unbind();
+        zoomSlider.setValue(0);
 
-        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);        
+        taskMLoading = new MediaLoadingTask(fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController, this);
         taskMLoading.setOnRunning((t) -> {
             factory.setListFilesActive(true);
             mediaQTYLabel.setText("-- media files.");
             mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getProgressPane().setVisible(true);            
-        });        
-        taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {            
+            mainController.getProgressPane().setVisible(true);
+        });
+        taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -344,9 +323,9 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setText("");
             //sort media List
             mainController.getStatusLabelRight().setText("Sorting media list...");
-            setDefaultSorting();            
-            mainController.getStatusLabelRight().setText("Sorting media list...finished.");            
-            factory.setListFilesActive(false);  
+            setDefaultSorting();
+            mainController.getStatusLabelRight().setText("Sorting media list...finished.");
+            factory.setListFilesActive(false);
             imageGrid.requestLayout();
             taskMLoading.saveCacheToDisk();
         });
@@ -367,8 +346,8 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(true);
             mainController.getStatusLabelLeft().setVisible(true);
         });
-        
-        executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
+        executorParallel.submit(taskMLoading);
+        //executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
         this.mainController.getTaskProgressView().getTasks().add(taskMLoading);
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
@@ -424,7 +403,6 @@ public class LighttableController implements Initializable {
             t.consume();
         });
         imageGrid.setOnDragDropped((t) -> {
-            System.out.println("Drop Target dragged");
             Dragboard db = t.getDragboard();
             boolean success = false;
             if (db.hasFiles()) {
@@ -549,11 +527,9 @@ public class LighttableController implements Initializable {
     }
 
     public void Shutdown() {
-        Platform.runLater(() -> {
-            if (!imageGridPane.getChildren().isEmpty()) {
-                imageGridPane.getChildren().remove(0);
-            }
-        });
+        if (!imageGridPane.getChildren().isEmpty()) {
+            imageGridPane.getChildren().remove(0);
+        }
         if (taskMLoading != null) {
             taskMLoading.cancel();
         }
@@ -1061,10 +1037,8 @@ public class LighttableController implements Initializable {
     }
 
     public void copyAction() {
-        Platform.runLater(() -> {
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Copying to clipboard...");
-        });
+        mainController.getStatusLabelLeft().setVisible(true);
+        mainController.getStatusLabelLeft().setText("Copying to clipboard...");
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         final ClipboardContent content = new ClipboardContent();
         List<File> filesForClipboard = new ArrayList<>();
@@ -1076,19 +1050,15 @@ public class LighttableController implements Initializable {
         });
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
-        Platform.runLater(() -> {
-            pasteButton.setDisable(false);
-            mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
-            util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
-        });
+        pasteButton.setDisable(false);
+        mainController.getStatusLabelLeft().setText("Copying to clipboard...Done!");
+        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     public void pastAction() {
-        Platform.runLater(() -> {
-            mainController.getProgressPane().setVisible(true);
-            mainController.getStatusLabelLeft().setVisible(true);
-            mainController.getStatusLabelLeft().setText("Pasting...");
-        });
+        mainController.getProgressPane().setVisible(true);
+        mainController.getStatusLabelLeft().setVisible(true);
+        mainController.getStatusLabelLeft().setText("Pasting...");
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         List<File> clipboardFileList = new ArrayList<>();
         if (clipboard.hasFiles()) {
@@ -1139,12 +1109,10 @@ public class LighttableController implements Initializable {
             Thread.ofVirtual().start(pasteTask);
             mainController.getTaskProgressView().getTasks().add(pasteTask);
         } else {
-            Platform.runLater(() -> {
-                mainController.getProgressbarLabel().textProperty().unbind();
-                mainController.getProgressbar().progressProperty().unbind();
-                mainController.getProgressPane().setVisible(false);
-                mainController.getStatusLabelLeft().setVisible(false);
-            });
+            mainController.getProgressbarLabel().textProperty().unbind();
+            mainController.getProgressbar().progressProperty().unbind();
+            mainController.getProgressPane().setVisible(false);
+            mainController.getStatusLabelLeft().setVisible(false);
         }
     }
 

@@ -7,7 +7,6 @@ package org.photoslide.browserlighttable;
 
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
-import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
@@ -32,7 +31,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     private final SortedList<MediaFile> sortedMediaList;
     private MediaGridCellStackedDetailView selectedCell;
     private final LighttableController lighttableController;
-    private final Comparator<MediaFile> stackNameComparator;    
+    private final Comparator<MediaFile> stackNameComparator;
     private final ExecutorService executor;
     private boolean changed;
     private final MediaFileLoader fileLoader;
@@ -42,10 +41,10 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         this.sortedMediaList = sortedMediaList;
         this.lighttableController = controller;
         stackNameComparator = Comparator.comparing(MediaFile::getStackPos);
-        this.executor = executor;        
+        this.executor = executor;
         changed = false;
         fileLoader = new MediaFileLoader();
-        this.mediaGrid=mediaGrid;
+        this.mediaGrid = mediaGrid;
     }
 
     @Override
@@ -121,7 +120,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
             changed = true;
         }
     }
-    
+
     /**
      *
      * @param input Mediacell to check
@@ -177,16 +176,14 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         });
         sortedMediaList.setComparator(stackNameComparator);
         lighttableController.updateSortFiltering();
-        Platform.runLater(() -> {
-            ObservableList<MediaFile> fullMediaList = lighttableController.getFullMediaList();
-            fullMediaList.set(fullMediaList.indexOf(selectedMediaFile), selectedMediaFile);
-        });
+        ObservableList<MediaFile> fullMediaList = lighttableController.getFullMediaList();
+        fullMediaList.set(fullMediaList.indexOf(selectedMediaFile), selectedMediaFile);
     }
 
     public boolean isChanged() {
         return changed;
     }
-    
+
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
         VirtualFlow vf = (VirtualFlow) lighttableController.getImageGrid().getChildrenUnmodifiable().get(0);
         for (int i = 0; i < vf.getCellCount(); i++) {
@@ -198,7 +195,5 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
         }
         return null;
     }
-    
-    
 
 }

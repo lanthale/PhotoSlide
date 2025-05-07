@@ -138,7 +138,7 @@ public class EditorMediaViewController implements Initializable {
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
-        }        
+        }
         stackPane.requestFocus();
         selectedMediaFile = f;
         editorImageView.setImage(null);
@@ -159,6 +159,9 @@ public class EditorMediaViewController implements Initializable {
                             editorImageView.setVisible(true);
                             imageProgress.setVisible(true);
                         });
+                        if (selectedMediaFile.getLoadingError() == true) {                            
+                            return false;
+                        }
                         String url = selectedMediaFile.getImageUrl().toString();
                         img = new Image(url, true);
                         Platform.runLater(() -> {
@@ -187,6 +190,12 @@ public class EditorMediaViewController implements Initializable {
                 return true;
             }
         };
+        task.setOnSucceeded((t) -> {
+            if ((Boolean) t.getSource().getValue() == false) {
+                imageProgress.setVisible(false);
+                editorImageView.setImage(null);
+            }
+        });
         executor.submit(task);
     }
 
@@ -214,7 +223,9 @@ public class EditorMediaViewController implements Initializable {
     private void cancleTask() {
         if (task != null) {
             task.cancel();
-            editorImageView.getImage().cancel();
+            if (editorImageView.getImage() != null) {
+                editorImageView.getImage().cancel();
+            }
             resetUI();
             editMetadataController.cancleTask();
             editorToolsController.cancleTask();
@@ -251,7 +262,7 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private void showGridViewAction(ActionEvent event) {
-        if (mediaGridView.isShowing()){
+        if (mediaGridView.isShowing()) {
             mediaGridView.hide();
         }
         box = new VBox();
@@ -261,7 +272,7 @@ public class EditorMediaViewController implements Initializable {
         box.setAlignment(Pos.CENTER);
         mediaGrid = new GridView<>();
         factory = new EditMediaGridCellFactory(executor, EditorMediaViewController.this);
-        mediaGrid.setCellFactory(factory);        
+        mediaGrid.setCellFactory(factory);
         mediaGridView.setContentNode(box);
         if (!box.getChildren().contains(mediaGrid)) {
             box.getChildren().add(mediaGrid);
@@ -298,8 +309,8 @@ public class EditorMediaViewController implements Initializable {
                     deleteAction();
                 }
                 t.consume();
-            });            
-            factory.getSelectionModel().add(selectedMediaFile);            
+            });
+            factory.getSelectionModel().add(selectedMediaFile);
         }
     }
 

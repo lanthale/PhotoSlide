@@ -9,6 +9,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -36,11 +37,13 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
     private final FontIcon restoreIcon;
     private final SimpleDoubleProperty rotationAngle;
     private FontIcon dummyIcon;
-    private ProgressIndicator prgInd;    
+    private ProgressIndicator prgInd;
     private FontIcon filmIcon;
+    private final Label errorLabel;
+    private final FontIcon errorIcon;
 
     public EditMediaGridCell() {
-        this.setId("MediaGridCell");        
+        this.setId("MediaGridCell");
         rootPane = new StackPane();
         rotationAngle = new SimpleDoubleProperty(0.0);
         imageView = new ImageView();
@@ -61,9 +64,19 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
         restoreIcon = new FontIcon("ti-back-right");
         filmIcon = new FontIcon("fa-file-movie-o");
         filmIcon.setOpacity(0.3);
-        dummyIcon = new FontIcon("fa-file-movie-o");        
+        dummyIcon = new FontIcon("fa-file-movie-o");
+        errorIcon = new FontIcon("ti-bolt");
+        rootPane.getChildren().add(prgInd);
+        errorLabel = new Label("Error loading");
+        Tooltip tp = new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);
+        errorLabel.setStyle("-fx-font-size:6");
+        errorLabel.setGraphic(errorIcon);
+        errorLabel.setContentDisplay(ContentDisplay.TOP);
     }
-    
+
     private void updateIconSize() {
         DoubleBinding subtract = rootPane.heightProperty().subtract(42);
         DoubleBinding subtract1 = rootPane.heightProperty().subtract(28);
@@ -77,7 +90,27 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
         }
         if (subtract2.intValue() > 0) {
             dummyIcon.setIconSize(subtract2.intValue());
-            filmIcon.setIconSize(subtract2.intValue());            
+            filmIcon.setIconSize(subtract2.intValue());
+        }
+    }
+
+    public final void setError(MediaFile item) {
+        rootPane.getChildren().clear();
+        dummyIcon.setIconLiteral("ti-bolt");
+        Label errorLabel = new Label("Error loading");
+        Tooltip tp = new Tooltip("Cannot load mediafile, because format is not supported!");
+        tp.setFont(new Font(13));
+        errorLabel.setPadding(new Insets(-5));
+        errorLabel.setTooltip(tp);
+        errorLabel.setStyle("-fx-font-size:6");
+        errorLabel.setGraphic(dummyIcon);
+        errorLabel.setContentDisplay(ContentDisplay.TOP);
+        HBox hb = new HBox();
+        hb.setAlignment(Pos.BOTTOM_CENTER);
+        hb.getChildren().add(errorLabel);
+        rootPane.getChildren().add(hb);
+        if (item.deletedProperty().getValue() == true) {
+            setDeletedNode();
         }
     }
 
@@ -98,7 +131,7 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
             if (item.isSelected() == true) {
                 if (item.isStacked()) {
                     this.setId("MediaGridCellSelectedStacked");
-                } else {                    
+                } else {
                     this.setId("MediaGridCellSelected");
                 }
             } else {
@@ -107,9 +140,9 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
                 } else {
                     this.setId("MediaGridCell");
                 }
-            }            
+            }
             item.loadingProperty().addListener((ov, t, t1) -> {
-                if (t1 == false) {                    
+                if (t1 == false) {
                     this.requestLayout();
                 }
             });
@@ -131,46 +164,48 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
             }
         }
     }
-    
-    public final void setError(MediaFile item) {
-        rootPane.getChildren().clear();
-        dummyIcon.setIconLiteral("ti-bolt");        
-        Label errorLabel=new Label("Error loading");        
-        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
-        tp.setFont(new Font(13));
-        errorLabel.setPadding(new Insets(-5));
-        errorLabel.setTooltip(tp);                
-        errorLabel.setStyle("-fx-font-size:6");        
-        errorLabel.setGraphic(dummyIcon);
-        errorLabel.setContentDisplay(ContentDisplay.TOP);
-        HBox hb=new HBox();
-        hb.setAlignment(Pos.BOTTOM_CENTER);
-        hb.getChildren().add(errorLabel);
-        rootPane.getChildren().add(hb);
-        if (item.deletedProperty().getValue() == true) {
-            setDeletedNode();
-        }
-    }
 
     public final void setImage(MediaFile item) {
         if (item.isLoading() == true) {
             setLoadingNode(item.getMediaType());
         } else {
-            if (item.getUnModifiyAbleImage() == null) {
-                item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
-            }
-            item.setImage(item.setFilters());
-            //calc cropview based on small imageview
-            //imageView.setViewport(item.getCropView());
-            rootPane.getChildren().clear();
-            rootPane.getChildren().add(imageView);
-            imageView.setImage(item.getImage());
-            rotationAngle.set(item.getRotationAngleProperty().get());
-            setRatingNode(item.getRatingProperty().get());
-            setBookmarked(item.isBookmarked());
-            setStacked(item.isStacked(), item.getStackPos());
-            if (item.deletedProperty().getValue() == true) {
-                setDeletedNode();
+            if (item.getLoadingError() == true) {
+                setError(item);
+            } else {
+                if (item.getUnModifiyAbleImage() == null) {
+                    item.setUnModifiyAbleImage(item.getClonedImage(item.getImage()));
+                }
+                item.setImage(item.setFilters());
+                rootPane.getChildren().clear();
+                rootPane.getChildren().add(imageView);
+                if (item.getCropView() != null) {
+                    if (item.getOrignalImageSize() != null) {
+                        //calc cropview based on small imageview                
+                        double wPreview = item.getImage().getWidth();
+                        double hPreview = item.getImage().getHeight();
+                        double ratioW = item.getOrignalImageSize().getX() / item.getImage().getWidth();
+                        double ratioH = item.getOrignalImageSize().getY() / item.getImage().getHeight();
+
+                        double fW = item.getCropView().getWidth() / ratioW;
+                        double fH = item.getCropView().getHeight() / ratioH;
+                        double fWX = item.getCropView().getMinX() / ratioW;
+                        double fHY = item.getCropView().getMinY() / ratioH;
+                        Rectangle2D viewP = new Rectangle2D(fWX, fHY, fW, fH);
+                        imageView.setViewport(viewP);
+                    } else {
+                        imageView.setViewport(null);
+                    }
+                } else {
+                    imageView.setViewport(null);
+                }
+                imageView.setImage(item.getImage());
+                rotationAngle.set(item.getRotationAngleProperty().get());
+                setRatingNode(item.getRatingProperty().get());
+                setBookmarked(item.isBookmarked());
+                setStacked(item.isStacked(), item.getStackPos());
+                if (item.deletedProperty().getValue() == true) {
+                    setDeletedNode();
+                }
             }
         }
     }
@@ -242,7 +277,7 @@ public class EditMediaGridCell extends GridCell<MediaFile> {
             rootPane.getChildren().remove(vb);
         }
     }
-    
+
     private void setBookmarked(boolean bookmarked) {
         if (bookmarked) {
             VBox vb = new VBox();

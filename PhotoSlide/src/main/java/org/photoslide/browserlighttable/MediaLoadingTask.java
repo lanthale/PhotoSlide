@@ -35,7 +35,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
-import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.FilenameComparator;
 

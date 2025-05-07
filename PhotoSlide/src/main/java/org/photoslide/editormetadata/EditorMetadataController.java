@@ -32,6 +32,8 @@ import javafx.util.Duration;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
+import static org.photoslide.datamodel.MediaFile.MediaTypes.IMAGE;
+import static org.photoslide.datamodel.MediaFile.MediaTypes.VIDEO;
 
 /**
  *
@@ -89,33 +91,27 @@ public class EditorMetadataController implements Initializable {
         progressMetaDataIndicator.setVisible(true);
         selectedMediaFile = f;
         gridPaneMetaInfo.getChildren().clear();
-        task = new Task<>() {
-
-            @Override
-            protected Boolean call() throws Exception {
-                switch (selectedMediaFile.getMediaType()) {
-                    case VIDEO:
-                        break;
-                    case IMAGE:
-                        Platform.runLater(() -> {
-                            imageVIew.setImage(null);
-                            gridPaneMetaInfo.getChildren().clear();
-                            progressIndicator.setVisible(true);
-                            imageVIew.setImage(selectedMediaFile.getImage());
-                        });
-                        break;
+        switch (selectedMediaFile.getMediaType()) {
+            case VIDEO:
+                break;
+            case IMAGE:
+                imageVIew.setImage(null);
+                gridPaneMetaInfo.getChildren().clear();
+                progressIndicator.setVisible(true);
+                imageVIew.setImage(selectedMediaFile.getImage());
+                if (selectedMediaFile.getLoadingError() == true) {
+                    imageVIew.setImage(null);
                 }
-                return true;
-            }
-        };
-        task.setOnSucceeded((t) -> {
-            progressIndicator.setVisible(false);
-        });
+                progressIndicator.setVisible(false);
+                break;
+        }
         taskMetaData = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                metadatacontroller.setActualMediaFile(selectedMediaFile);
-                metadatacontroller.readBasicMetadata(this, selectedMediaFile);
+                if (selectedMediaFile.getLoadingError() == false) {
+                    metadatacontroller.setActualMediaFile(selectedMediaFile);
+                    metadatacontroller.readBasicMetadata(this, selectedMediaFile);
+                }
                 return true;
             }
 
@@ -133,7 +129,7 @@ public class EditorMetadataController implements Initializable {
             ft1.play();
         });
         executor.submit(taskMetaData);
-        executor.submit(task);
+        //executor.submit(task);
     }
 
     private void updateUIWithExtendedMetadata() {

@@ -466,7 +466,7 @@ public class CollectionsController implements Initializable {
         actCollectionTitlePane.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         actCollectionTitlePane.setAnimated(true);
         actCollectionTitlePane.setTextAlignment(TextAlignment.LEFT);
-
+        
         Platform.runLater(() -> {
             accordionPane.getPanes().add(actCollectionTitlePane);
         });

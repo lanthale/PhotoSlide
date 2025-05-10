@@ -51,19 +51,19 @@ public class DirectoryWatcher {
                 StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
         if (recrusive == true) {
             registerRecursive(watchPath);
-        }        
+        }
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> event : key.pollEvents()) {
                 Path resolveP = watchPath.resolve((Path) event.context());
                 pathElement = resolveP.toString();
-                eventType = event.kind().toString();                 
-                boolean validFileType = FileTypes.isValidType(pathElement);          
-                if (validFileType == false) {                                          
+                eventType = event.kind().toString();
+                boolean validFileType = FileTypes.isValidType(pathElement);
+                if (validFileType == false) {
                     controller.refreshTreeParent(pathElement, eventType);
                 }
             }
             List<WatchEvent<?>> pollEvents = key.pollEvents();
-            if (pollEvents.isEmpty() == true) {                
+            if (pollEvents.isEmpty() == true) {
             }
             key.reset();
         }
@@ -85,7 +85,9 @@ public class DirectoryWatcher {
             key.cancel();
         }
         try {
-            watchService.close();
+            if (watchService != null) {
+                watchService.close();
+            }
         } catch (IOException ex) {
             Logger.getLogger(DirectoryWatcher.class.getName()).log(Level.SEVERE, null, ex);
         }

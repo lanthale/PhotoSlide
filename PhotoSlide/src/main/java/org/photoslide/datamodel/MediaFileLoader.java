@@ -32,7 +32,7 @@ public class MediaFileLoader {
 
     public MediaFileLoader() {
         if (Utility.nativeMemorySize > 4194500) {
-            //executorParallel = Executors.newFixedThreadPool(20, new ThreadFactoryPS("mediaFileLoaderThread"));
+            //executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
             executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
         } else {
             executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());

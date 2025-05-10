@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import javafx.application.Platform;
 import javafx.application.Preloader.ProgressNotification;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -69,7 +70,7 @@ public class App extends Application {
 
     @Override
     public void stop() throws Exception {
-        super.stop(); //To change body of generated methods, choose Tools | Templates.        
+        super.stop(); //To change body of generated methods, choose Tools | Templates.                
     }
 
     @Override
@@ -108,15 +109,11 @@ public class App extends Application {
 
         try {
             RAWImageLoaderFactory.install();
-            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setWhiteBalance("CAMERA");
+            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());            
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setAutoBrightness(true);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(1);
-            RAWImageLoaderFactory.getDecoderSettings().put("Canon EOS 5DS", new RawDecoderSettings());
-            RAWImageLoaderFactory.getDecoderSettings().get("Canon EOS 5DS").setAutoBrightness(true);
-            RAWImageLoaderFactory.getDecoderSettings().get("Canon EOS 5DS").setEnableExposureCorrection(true);
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(2);            
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
@@ -137,6 +134,7 @@ public class App extends Application {
         stage.setOnCloseRequest((final WindowEvent event) -> {
             MainViewController controller = fxmlLoader.getController();
             saveSettings(stage, controller);
+            Platform.exit();
             System.exit(0);
         });
 
@@ -147,6 +145,9 @@ public class App extends Application {
             if (keyComb.match(event)) {
                 event.consume();
                 App.saveSettings((Stage) scene.getWindow(), fxmlLoader.getController());
+                MainViewController controller = fxmlLoader.getController();
+                controller.Shutdown();        
+                Platform.exit();
                 System.exit(0);
             }
         });

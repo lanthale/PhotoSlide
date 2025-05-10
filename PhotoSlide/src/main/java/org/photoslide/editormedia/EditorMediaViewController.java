@@ -159,7 +159,7 @@ public class EditorMediaViewController implements Initializable {
                             editorImageView.setVisible(true);
                             imageProgress.setVisible(true);
                         });
-                        if (selectedMediaFile.getLoadingError() == true) {                            
+                        if (selectedMediaFile.getLoadingError() == true) {
                             return false;
                         }
                         String url = selectedMediaFile.getImageUrl().toString();
@@ -200,7 +200,9 @@ public class EditorMediaViewController implements Initializable {
     }
 
     public void shutdown() {
-        factory.shutdown();
+        if (factory != null) {
+            factory.shutdown();
+        }
         executor.shutdownNow();
     }
 

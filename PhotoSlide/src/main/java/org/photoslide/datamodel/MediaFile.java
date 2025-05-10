@@ -536,7 +536,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setTitle(String title) {
-        this.title.set(title);
+        if (Platform.isFxApplicationThread()) {
+            this.title.set(title);
+        } else {
+            Platform.runLater(() -> {
+                this.title.set(title);
+            });
+        }
     }
 
     public SimpleStringProperty cameraProperty() {
@@ -544,7 +550,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setCamera(String camera) {
-        this.camera.set(camera);
+        if (Platform.isFxApplicationThread()) {
+            this.camera.set(camera);
+        } else {
+            Platform.runLater(() -> {
+                this.camera.set(camera);
+            });
+        }
     }
 
     public SimpleBooleanProperty deletedProperty() {
@@ -556,7 +568,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setDeleted(boolean deleted) {
-        this.deleted.set(deleted);
+        if (Platform.isFxApplicationThread()) {
+            this.deleted.set(deleted);
+        } else {
+            Platform.runLater(() -> {
+                this.deleted.set(deleted);
+            });
+        }
     }
 
     public LocalDateTime getRecordTime() {
@@ -647,7 +665,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setKeywords(String keywords) {
-        this.keywords.set(keywords);
+        if (Platform.isFxApplicationThread()) {
+            this.keywords.set(keywords);
+        } else {
+            Platform.runLater(() -> {
+                this.keywords.set(keywords);
+            });
+        }
     }
 
     public String getKeywords() {
@@ -906,7 +930,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setLoading(boolean value) {
-        this.loading.set(value);
+        if (Platform.isFxApplicationThread()) {
+            this.loading.set(value);
+        } else {
+            Platform.runLater(() -> {
+                this.loading.set(value);
+            });
+        }
     }
 
     public boolean getLoadingError() {
@@ -914,17 +944,27 @@ public class MediaFile implements Serializable {
     }
 
     public void setLoadingError(boolean loadingError) {
-        this.loadingError.set(loadingError);
+        if (Platform.isFxApplicationThread()) {
+            this.loadingError.set(loadingError);
+        } else {
+            Platform.runLater(() -> {
+                this.loadingError.set(loadingError);
+            });
+        }
     }
-    
-    
 
     public boolean isBookmarked() {
         return bookmarked.get();
     }
 
     public void setBookmarked(boolean bookmarked) {
-        this.bookmarked.set(bookmarked);
+        if (Platform.isFxApplicationThread()) {
+            this.bookmarked.set(bookmarked);
+        } else {
+            Platform.runLater(() -> {
+                this.bookmarked.set(bookmarked);
+            });
+        }
     }
 
     public SimpleBooleanProperty loadingProperty() {
@@ -940,7 +980,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setPlace(String place) {
-        this.place.set(place);
+        if (Platform.isFxApplicationThread()) {
+            this.place.set(place);
+        } else {
+            Platform.runLater(() -> {
+                this.place.set(place);
+            });
+        }
     }
 
     public SimpleStringProperty getFaces() {
@@ -948,7 +994,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setFaces(String faces) {
-        this.faces.set(faces);
+        if (Platform.isFxApplicationThread()) {
+            this.faces.set(faces);
+        } else {
+            Platform.runLater(() -> {
+                this.faces.set(faces);
+            });
+        }
     }
 
     public SimpleStringProperty getTitle() {
@@ -964,7 +1016,13 @@ public class MediaFile implements Serializable {
     }
 
     public void setComments(String comments) {
-        this.comments.set(comments);
+        if (Platform.isFxApplicationThread()) {
+            this.comments.set(comments);
+        } else {
+            Platform.runLater(() -> {
+                this.comments.set(comments);
+            });
+        }
     }
 
     public void removeAllEdits() {

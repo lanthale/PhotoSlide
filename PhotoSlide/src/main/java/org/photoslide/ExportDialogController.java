@@ -5,12 +5,8 @@
  */
 package org.photoslide;
 
-import com.sothawo.mapjfx.Coordinate;
-import com.sothawo.mapjfx.MapCircle;
-import com.sothawo.mapjfx.MapType;
-import com.sothawo.mapjfx.MapView;
-import com.sothawo.mapjfx.Marker;
-import com.sothawo.mapjfx.event.MapViewEvent;
+import com.gluonhq.maps.MapPoint;
+import com.gluonhq.maps.MapView;
 import fr.dudie.nominatim.model.Address;
 import java.io.File;
 import java.net.URL;
@@ -36,6 +32,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -103,12 +101,12 @@ public class ExportDialogController implements Initializable {
     private CustomTextField customField;
     @FXML
     private Button searchButton;
-    private Marker markerPos;
+    private MapPoint markerPos;
     @FXML
     private VBox mapSelectionPane;
     @FXML
     private CustomTextField heightTextField;
-    private MapCircle circle;
+    private MapPoint circle;
     @FXML
     private TextField qualityTextField;
     @FXML
@@ -207,15 +205,15 @@ public class ExportDialogController implements Initializable {
         keywordList = FXCollections.observableArrayList();
         geoCoding = new GeoCoding();
         customField.setRight(new FontIcon("ti-close"));
-        mapView.setMapType(MapType.OSM);
+        //mapView.setMapType(MapType.OSM);
         mapView.setPrefSize(350, 90);
         mapView.setMaxSize(350, 90);
-        mapView.initialize();
-        Coordinate c = new Coordinate(48.135125, 11.581981);
+        //mapView.initialize();
+        MapPoint c = new MapPoint(48.135125, 11.581981);
         mapView.setCenter(c);
-        markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
+        //markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
         mapView.setEffect(new ColorAdjust(0, -0.5, 0, 0));
-        mapView.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
+        /*mapView.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
             eventMap.consume();
             final Coordinate newPosition = eventMap.getCoordinate().normalize();
             mapView.setCenter(newPosition);
@@ -237,7 +235,7 @@ public class ExportDialogController implements Initializable {
                 customField.setText(((Address) k.getSource().getValue()).getDisplayName());
             });
             new Thread(taskFind).start();
-        }); 
+        }); */
         outputDirToolTip.textProperty().bind(outputDirText.textProperty());
         sortComboBox.getItems().addAll("Record time based", "Actual view");
         sortComboBox.getSelectionModel().selectFirst();
@@ -375,10 +373,11 @@ public class ExportDialogController implements Initializable {
                     index = 0;
                 }
                 geoCoding.setLastSearchGPSResult(geoCoding.getLastSearchResult().get(index));
-                Coordinate c = new Coordinate(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
+                MapPoint c = new MapPoint(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
                 mapView.setCenter(c);
-                markerPos.setPosition(c).setVisible(true);
-                mapView.addMarker(markerPos);
+                MarkerLayer markerPos=new MarkerLayer();
+                markerPos.addPoint(c, new Circle(5, Color.BLUE));
+                mapView.addLayer(markerPos);                
             });
         });
         task.setOnFailed((t) -> {
@@ -436,7 +435,5 @@ public class ExportDialogController implements Initializable {
     public ComboBox<String> getSortComboBox() {
         return sortComboBox;
     }
-    
-    
 
 }

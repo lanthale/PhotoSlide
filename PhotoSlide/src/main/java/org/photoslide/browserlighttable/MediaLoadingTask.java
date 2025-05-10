@@ -35,6 +35,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.FilenameComparator;
 
@@ -58,10 +59,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private List<Thread> loadingThreads;
     private boolean loadedFromCache;
     private final LighttableController lightcontroller;
-    private List<Path> dummyfileList;
+    private List<Path> dummyfileList;    
 
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam, LighttableController lightcontroller) {
-        selectedPath = sPath;
+        selectedPath = sPath;        
         fileLoader = new MediaFileLoader();
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
@@ -74,8 +75,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
         loadingThreads = new ArrayList<>();
         loadedFromCache = false;
         this.lightcontroller = lightcontroller;
-        executorParallel = Executors.newVirtualThreadPerTaskExecutor();
-        //executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
+        //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(8).setNamePrefix("lightTableControllerSelectionMediaLoading").build());
         if (Utility.nativeMemorySize > 4194500) {
             loadingLimit = 75;
         } else {
@@ -94,18 +95,20 @@ public class MediaLoadingTask extends Task<MediaFile> {
             updateTitle("Reading cache...finished");
 
             updateTitle("Counting mediafiles...");
-            
+
             Stream<Path> fileListCount = Files.list(selectedPath).parallel().filter((t5) -> {
                 return FileTypes.isValidType(t5.getFileName().toString());
-            }).sorted(new FilenameComparator());   
-            qty = fileListCount.count();               
+            }).sorted(new FilenameComparator());
+            qty = fileListCount.count();
             fileListCount.close();
             updateTitle("Counting mediafiles...finished");
+                        
+            
             updateTitle("Preparing mediafile list...");
 
             Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
                 return FileTypes.isValidType(t.getFileName().toString());
-            }).sorted(new FilenameComparator());            
+            }).sorted(new FilenameComparator());
 
             Stream<Path> finalFileList;
             if (cacheList.isEmpty() == true) {
@@ -133,11 +136,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     }
                     return retVal;
                 }).map(MediaFile::getPathStorage);
-                finalFileList = Stream.concat(diffFileList, editFileList);
+                finalFileList = diffFileList;//Stream.concat(diffFileList, editFileList);
                 long end = System.currentTimeMillis();
                 loadedFromCache = true;
-                Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Calculatiing difference between cache and disk took " + (end - start) / 1000 + "s");
-            }            
+                Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Calculating difference between cache and disk took " + (end - start) / 1000 + "s");
+            }
 
             if (qty < cacheList.size()) {
                 Stream<Path> fileListNew = Files.list(selectedPath).filter((t) -> {
@@ -235,7 +238,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             });
             if (this.isCancelled()) {
                 return null;
-            }            
+            }
             long endtime = System.currentTimeMillis();
             fileList.close();
             updateMessage("Finished MediaLoading Task.");
@@ -250,19 +253,18 @@ public class MediaLoadingTask extends Task<MediaFile> {
         return null;
     }
 
-    private void restoreCacheFromDisk(File inPath) {
+    private void restoreCacheFromDisk(File inPath) {        
         //restore cache   
         FileInputStream fileInputStream;
         try {
             fileInputStream = new FileInputStream(inPath);
             List<MediaFile> e2;
             try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-                e2 = (ArrayList<MediaFile>) objectInputStream.readObject();
-                //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());                 
-                //System.out.println("e2 size: "+e2.size());
+                e2 = (List<MediaFile>) objectInputStream.readObject();
+                //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());                
                 cacheList.addAll(e2);                
                 Platform.runLater(() -> {
-                    fullMediaList.setAll(cacheList);
+                    fullMediaList.addAll(cacheList);                    
                     factory.setListFilesActive(false);
                 });
             }
@@ -271,10 +273,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
         }
     }
 
-    public void saveCacheToDisk() {
-        String hash="";
+    public synchronized void saveCacheToDisk() {
+        String hash = "";        
         try {
-            hash=createMD5Hash(selectedPath.toString());
+            hash = createMD5Hash(selectedPath.toString());
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, "Hash calculation algorithm exception", ex);
         }
@@ -283,9 +285,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             @Override
             protected Object call() throws Exception {
                 updateMessage("Prepare saving cache...finished.");
-                updateMessage("Saving cache...");
+                updateMessage("Saving cache...");                
                 //save cache to disk
-                long start = System.currentTimeMillis();                
+                long start = System.currentTimeMillis();
 
                 FileOutputStream fileOutputStream;
                 try {
@@ -293,7 +295,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
                         updateMessage("Save cache...Writing to disk");
                         // show progress during writing wiht filteredOutputStream                         
-                        final List<MediaFile> finalCache = Collections.synchronizedList(cacheList);                        
+                        final List<MediaFile> finalCache = Collections.synchronizedList(cacheList);
                         objectOutputStream.writeObject(finalCache);
                         objectOutputStream.flush();
                     }
@@ -304,10 +306,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 }
                 long end = System.currentTimeMillis();
                 Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Save to disk took " + (end - start) / 1000 + "s");
-                //end save to disk
+                //end save to disk                
                 return null;
             }
-        };        
+        };
         safeDiskTask.setOnSucceeded((p2) -> {
             new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 5, true);
         });
@@ -377,7 +379,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         if (v != null) {
             super.updateValue(v);
             Platform.runLater(() -> {
-                fullMediaList.add(v);                
+                fullMediaList.add(v);
             });
         }
     }

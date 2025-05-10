@@ -11,6 +11,8 @@ import com.drew.imaging.mp4.Mp4MetadataReader;
 import com.drew.imaging.quicktime.QuickTimeMetadataReader;
 import com.drew.imaging.webp.WebpMetadataReader;
 import com.drew.metadata.Directory;
+import com.gluonhq.maps.MapPoint;
+import com.gluonhq.maps.MapView;
 import com.icafe4j.image.ImageIO;
 import com.icafe4j.image.ImageParam;
 import com.icafe4j.image.ImageType;
@@ -34,13 +36,6 @@ import com.icafe4j.image.options.PNGOptions;
 import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.FieldType;
 import com.icafe4j.image.writer.ImageWriter;
-import com.sothawo.mapjfx.Coordinate;
-import com.sothawo.mapjfx.MapCircle;
-import com.sothawo.mapjfx.MapType;
-import com.sothawo.mapjfx.MapView;
-import com.sothawo.mapjfx.Marker;
-import com.sothawo.mapjfx.event.MapViewEvent;
-import fr.dudie.nominatim.model.Address;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -71,7 +66,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -120,6 +114,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import org.controlsfx.control.PopOver;
@@ -130,6 +125,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.libheiffx.LibheifImage;
 import org.librawfx.LibrawImage;
 import org.librawfx.RawDecoderSettings;
+import org.photoslide.MarkerLayer;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
@@ -206,8 +202,6 @@ public class MetadataController implements Initializable {
     @FXML
     private TextField gpsDateTime;
     private MapView map;
-    private Marker markerPos;
-    private MapCircle circle;
     @FXML
     private Button gpsPosButton;
     @FXML
@@ -229,17 +223,13 @@ public class MetadataController implements Initializable {
         executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataControllerParallel").build());
         executorFilter = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("metaDataControllerParallel").build());
         keywordList = FXCollections.observableArrayList();
-        Platform.runLater(() -> {
-            anchorKeywordPane.setDisable(true);
-            accordionPane.setExpandedPane(keywordsPane);
-            progressPane.setVisible(false);
-            map = new MapView();
-            map.setMapType(MapType.OSM);
-            map.setPrefSize(400, 266);
-            map.setMaxSize(400, 266);
-            map.initialize();
-            markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
-        });
+        anchorKeywordPane.setDisable(true);
+        accordionPane.setExpandedPane(keywordsPane);
+        progressPane.setVisible(false);        
+        map = new MapView();
+        map.setPrefSize(400, 266);
+        map.setMaxSize(400, 266);        
+        //markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
@@ -323,11 +313,9 @@ public class MetadataController implements Initializable {
     public void setSelectedFile(MediaFile file) {
         actualMediaFile = file;
         resetGUI();
-        Platform.runLater(() -> {
-            progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-            progressPane.setVisible(true);
-            progressLabel.setText("Loading metadata...");
-        });
+        progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        progressPane.setVisible(true);
+        progressLabel.setText("Loading metadata...");
         if (task != null) {
             task.cancel();
         }
@@ -413,22 +401,20 @@ public class MetadataController implements Initializable {
             } catch (NumberFormatException ex) {
             }
             final double altitude = alti;
-            Platform.runLater(() -> {
-                if (rawMetaData != null) {
-                    if (rawMetaData.get("GPS Position") != null) {
-                        if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                            file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
-                        }
-                        if (altitude != -1) {
-                            if (altitude != 0.0) {
-                                file.setGpsHeight(altitude);
-                            }
+            if (rawMetaData != null) {
+                if (rawMetaData.get("GPS Position") != null) {
+                    if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                        file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                    }
+                    if (altitude != -1) {
+                        if (altitude != 0.0) {
+                            file.setGpsHeight(altitude);
                         }
                     }
                 }
-                file.setRecordTime(ofEpochSecond);
-                file.setCamera(rawMetaData.get("CameraModel"));
-            });
+            }
+            file.setRecordTime(ofEpochSecond);
+            file.setCamera(rawMetaData.get("CameraModel"));
             long endraw = System.currentTimeMillis();
             Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time raw: " + (endraw - startraw) + " ms");
         } else if (file.isHEIFImage()) {
@@ -457,21 +443,20 @@ public class MetadataController implements Initializable {
             }
             final double altitude = alti;
             final LocalDateTime recordT = date;
-            Platform.runLater(() -> {
-                if (rawMetaData.get("GPS Longitude") != null) {
-                    if (!rawMetaData.get("GPS Longitude").equalsIgnoreCase("0;0")) {
-                        file.setGpsPositionFromDMS(rawMetaData.get("GPS Latitude") + rawMetaData.get("GPS Latitude Ref") + ";" + rawMetaData.get("GPS Longitude") + rawMetaData.get("GPS Longitude Ref"));
-                    }
+            if (rawMetaData.get("GPS Longitude") != null) {
+                if (!rawMetaData.get("GPS Longitude").equalsIgnoreCase("0;0")) {
+                    file.setGpsPositionFromDMS(rawMetaData.get("GPS Latitude") + rawMetaData.get("GPS Latitude Ref") + ";" + rawMetaData.get("GPS Longitude") + rawMetaData.get("GPS Longitude Ref"));
                 }
-                if (altitude != -1) {
-                    if (altitude != 0.0) {
-                        file.setGpsHeight(altitude);
-                    }
+            }
+            if (altitude != -1) {
+                if (altitude != 0.0) {
+                    file.setGpsHeight(altitude);
                 }
-                file.setRecordTime(recordT);
-                file.setGpsDateTime(timeStr);
-                file.setCamera(rawMetaData.get("Model"));
-            });
+            }
+
+            file.setRecordTime(recordT);
+            file.setGpsDateTime(timeStr);
+            file.setCamera(rawMetaData.get("Model"));
             long endheif = System.currentTimeMillis();
             Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + "reading time heif: " + (endheif - startheif) + " ms");
         } else if (file.isVideoFile()) {
@@ -519,20 +504,18 @@ public class MetadataController implements Initializable {
                     }
                     final double altitude = alti;
                     final LocalDateTime recordT = date;
-                    Platform.runLater(() -> {
-                        if (rawMetaData.get("GPS Position") != null) {
-                            if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                                file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
-                            }
-                            if (altitude != -1) {
-                                if (altitude != 0.0) {
-                                    file.setGpsHeight(altitude);
-                                }
+                    if (rawMetaData.get("GPS Position") != null) {
+                        if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
+                            file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                        }
+                        if (altitude != -1) {
+                            if (altitude != 0.0) {
+                                file.setGpsHeight(altitude);
                             }
                         }
-                        file.setRecordTime(recordT);
-                        file.setCamera(rawMetaData.get("CameraModel"));
-                    });
+                    }
+                    file.setRecordTime(recordT);
+                    file.setCamera(rawMetaData.get("CameraModel"));
                 }
             } catch (ImageProcessingException ex) {
                 Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
@@ -559,13 +542,7 @@ public class MetadataController implements Initializable {
                                     commentsdata.forEach(comment -> {
                                         sb.append(comment);
                                     });
-                                    if (Platform.isFxApplicationThread() == true) {
-                                        file.commentsProperty().set(sb.toString());
-                                    } else {
-                                        Platform.runLater(() -> {
-                                            file.commentsProperty().set(sb.toString());
-                                        });
-                                    }
+                                    file.setComments(sb.toString());
                                 }
                                 break;
                             case IPTC:
@@ -575,22 +552,10 @@ public class MetadataController implements Initializable {
                                     MetadataEntry item = iterator.next();
                                     switch (item.getKey()) {
                                         case "Keywords":
-                                            if (Platform.isFxApplicationThread() == true) {
-                                                file.setKeywords(item.getValue());
-                                            } else {
-                                                Platform.runLater(() -> {
-                                                    file.setKeywords(item.getValue());
-                                                });
-                                            }
+                                            file.setKeywords(item.getValue());
                                             break;
                                         case "Caption Abstract":
-                                            if (Platform.isFxApplicationThread() == true) {
-                                                file.setTitle(item.getValue());
-                                            } else {
-                                                Platform.runLater(() -> {
-                                                    file.setTitle(item.getValue());
-                                                });
-                                            }
+                                            file.setTitle(item.getValue());
                                             break;
                                     }
                                 }
@@ -697,13 +662,7 @@ public class MetadataController implements Initializable {
                                     if (item.getKey().equalsIgnoreCase("IFD0")) {
                                         entries.stream().parallel().forEach((mediaEntry) -> {
                                             if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
-                                                if (Platform.isFxApplicationThread() == true) {
-                                                    file.setCamera(mediaEntry.getValue());
-                                                } else {
-                                                    Platform.runLater(() -> {
-                                                        file.setCamera(mediaEntry.getValue());
-                                                    });
-                                                }
+                                                file.setCamera(mediaEntry.getValue());
                                             }
                                         });
                                     }
@@ -840,11 +799,9 @@ public class MetadataController implements Initializable {
     }
 
     public void resetGUI() {
-        Platform.runLater(() -> {
-            metaDataGrid.getChildren().clear();
-            metaDataGrid.setDisable(true);
-            keywordText.getChildren().clear();
-        });
+        metaDataGrid.getChildren().clear();
+        metaDataGrid.setDisable(true);
+        keywordText.getChildren().clear();
         if (!keywordText.getChildren().isEmpty()) {
             keywordText.getChildren().removeListener(keywordsChangeListener);
             captionTextField.textProperty().removeListener(captionChangeListener);
@@ -1205,11 +1162,9 @@ public class MetadataController implements Initializable {
         final String keysw = keywords;
         final String titlew = title;
         if (file.isRawImage()) {
-            Platform.runLater(() -> {
-                file.setKeywords(keysw);
-                file.setTitle(titlew);
-                file.saveEdits();
-            });
+            file.setKeywords(keysw);
+            file.setTitle(titlew);
+            file.saveEdits();
             return;
         }
         try {
@@ -1375,14 +1330,18 @@ public class MetadataController implements Initializable {
                     return null;
                 }
             };
+            taskApplyToAll.setOnScheduled((t) -> {
+                mainController.getProgressbar().progressProperty().unbind();
+                mainController.getProgressbar().progressProperty().bind(taskApplyToAll.progressProperty());
+                mainController.getProgressbarLabel().textProperty().unbind();
+                mainController.getProgressbarLabel().textProperty().bind(taskApplyToAll.messageProperty());
+            });
             taskApplyToAll.setOnSucceeded((t) -> {
                 mainController.getProgressbar().progressProperty().unbind();
                 mainController.getProgressbarLabel().textProperty().unbind();
-                Platform.runLater(() -> {
-                    mainController.getProgressbarLabel().setText("");
-                    mainController.getProgressPane().setVisible(false);
-                    mainController.getStatusLabelLeft().setVisible(false);
-                });
+                mainController.getProgressbarLabel().setText("");
+                mainController.getProgressPane().setVisible(false);
+                mainController.getStatusLabelLeft().setVisible(false);
                 actualMediaFile = lightController.getFactory().getSelectedCell().getItem();
                 setSelectedFile(actualMediaFile);
             });
@@ -1392,10 +1351,6 @@ public class MetadataController implements Initializable {
                 mainController.getProgressPane().setVisible(false);
                 mainController.getStatusLabelLeft().setVisible(false);
             });
-            mainController.getProgressbar().progressProperty().unbind();
-            mainController.getProgressbar().progressProperty().bind(taskApplyToAll.progressProperty());
-            mainController.getProgressbarLabel().textProperty().unbind();
-            mainController.getProgressbarLabel().textProperty().bind(taskApplyToAll.messageProperty());
             executor.submit(taskApplyToAll);
             mainController.getTaskProgressView().getTasks().add(taskApplyToAll);
         }
@@ -1413,12 +1368,10 @@ public class MetadataController implements Initializable {
             actualMediaFile.removeImageFilter(exposerFilter);
             actualMediaFile.saveEdits();
         });
-        Platform.runLater(() -> {
-            exposureSlider.setValue(1);
-            lightController.getImageView().setImage(exposerFilter.reset());
-            actualMediaFile.setImage(exposerFilter.reset());
-            exposerFilter = null;
-        });
+        exposureSlider.setValue(1);
+        lightController.getImageView().setImage(exposerFilter.reset());
+        actualMediaFile.setImage(exposerFilter.reset());
+        exposerFilter = null;
     }
 
     @FXML
@@ -1495,16 +1448,15 @@ public class MetadataController implements Initializable {
         map.setZoom(19);
         double lat = actualMediaFile.getGpsLatPosAsDouble();
         double lon = actualMediaFile.getGpsLonPosAsDouble();
-        Coordinate c = new Coordinate(lat, lon);
+        MapPoint c = new MapPoint(lat, lon);
         map.setCenter(c);
-        markerPos.setPosition(c).setVisible(true);
-        map.addMarker(markerPos);
-        circle = new MapCircle(c, 3);
-        circle.setVisible(true);
+        MarkerLayer markerPos=new MarkerLayer();
+        markerPos.addPoint(c, new Circle(5, Color.BLUE));
+        map.addLayer(markerPos);                
         //circle.setFillColor(Color.TRANSPARENT);        
-        circle.setColor(javafx.scene.paint.Color.BLUE);
-        circle.setWidth(1);
-        map.addMapCircle(circle);
+        //circle.setColor(javafx.scene.paint.Color.BLUE);
+        //circle.setWidth(1);
+        //map.addMapCircle(circle);
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
@@ -1594,24 +1546,20 @@ public class MetadataController implements Initializable {
         map.setZoom(19);
         double lat = actualMediaFile.getGpsLatPosAsDouble();
         double lon = actualMediaFile.getGpsLonPosAsDouble();
-        Coordinate c = new Coordinate(lat, lon);
+        MapPoint c = new MapPoint(lat, lon);
         map.setCenter(c);
-        markerPos.setPosition(c).setVisible(true);
-        map.addMarker(markerPos);
-        circle = new MapCircle(c, 3);
-        circle.setVisible(true);
-        circle.setFillColor(Color.TRANSPARENT);
-        circle.setColor(javafx.scene.paint.Color.BLUE);
-        circle.setWidth(1);
-        map.addMapCircle(circle);
+        MarkerLayer markerPos=new MarkerLayer();
+        markerPos.addPoint(c, new Circle(5, Color.BLUE));
+        markerPos.addFlag(c);
+        map.addLayer(markerPos);        
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
-        map.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
+        /*map.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
             eventMap.consume();
-            final Coordinate newPosition = eventMap.getCoordinate().normalize();
+            final MapPoint newPosition = eventMap.getCoordinate().normalize();
             map.setCenter(newPosition);
             markerPos.setPosition(newPosition).setVisible(true);
             circle = new MapCircle(newPosition, 3);
@@ -1629,7 +1577,7 @@ public class MetadataController implements Initializable {
                 searchField.setText(((Address) k.getSource().getValue()).getDisplayName());
             });
             new Thread(taskFind).start();
-        });
+        });*/
     }
 
     private void searchButtonAction(CustomTextField customField) {
@@ -1662,10 +1610,12 @@ public class MetadataController implements Initializable {
                     index = 0;
                 }
                 geoCoding.setLastSearchGPSResult(geoCoding.getLastSearchResult().get(index));
-                Coordinate c = new Coordinate(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
+                MapPoint c = new MapPoint(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
                 map.setCenter(c);
-                markerPos.setPosition(c).setVisible(true);
-                map.addMarker(markerPos);
+                MarkerLayer marker = new MarkerLayer();
+                
+                map.addLayer(marker);
+                
             });
         });
         task.setOnFailed((t) -> {
@@ -1680,15 +1630,13 @@ public class MetadataController implements Initializable {
             actualMediaFile.removeImageFilter(gainFilter);
             actualMediaFile.saveEdits();
         });
-        Platform.runLater(() -> {
-            gainSlider.setValue(0.5);
-            biasSlider.setValue(0.5);
-            if (gainFilter != null) {
-                lightController.getImageView().setImage(gainFilter.reset());
-                actualMediaFile.setImage(gainFilter.reset());
-                gainFilter = null;
-            }
-        });
+        gainSlider.setValue(0.5);
+        biasSlider.setValue(0.5);
+        if (gainFilter != null) {
+            lightController.getImageView().setImage(gainFilter.reset());
+            actualMediaFile.setImage(gainFilter.reset());
+            gainFilter = null;
+        }
     }
 
     private class KeywordChangeListener implements ListChangeListener {

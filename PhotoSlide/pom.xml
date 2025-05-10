@@ -207,10 +207,10 @@
             <version>1.2.7</version>  
         </dependency>
         <dependency>
-            <groupId>com.sothawo</groupId>
-            <artifactId>mapjfx</artifactId>
-            <version>3.1.0</version>            
-        </dependency>
+            <groupId>com.gluonhq</groupId>
+            <artifactId>maps</artifactId>
+            <version>2.0.0-ea+6</version>
+        </dependency>        
         <dependency>
             <groupId>org.boofcv</groupId>
             <artifactId>boofcv-core</artifactId>

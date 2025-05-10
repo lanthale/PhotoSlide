@@ -354,7 +354,7 @@ public class MainViewController implements Initializable {
         return statusLabelRight;
     }
 
-    public void Shutdown() {
+    public void Shutdown() {        
         if (searchtools != null) {
             searchtools.shutdown();
         }

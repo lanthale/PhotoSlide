@@ -28,6 +28,11 @@
     -fx-icon-color: #9f9f9f;
 }
 
+#map-icon {
+    -fx-icon-size: 32;    
+    -fx-icon-color: blue;
+}
+
 .progress-indicator {
     -fx-progress-color: #e17c08;
 }

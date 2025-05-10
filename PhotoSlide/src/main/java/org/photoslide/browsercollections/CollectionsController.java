@@ -186,8 +186,10 @@ public class CollectionsController implements Initializable {
                             executorParallel.submit(() -> {
                                 try {
                                     directoryRootwatch.startWatch(Path.of(dTree.getValue()), false);
-                                } catch (IOException | InterruptedException ex) {
+                                } catch (IOException ex) {
                                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                                } catch (InterruptedException ex) {
+                                    //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             });
                         }
@@ -516,8 +518,10 @@ public class CollectionsController implements Initializable {
                         try {
                             directorywatchSelected.stopWatch();
                             directorywatchSelected.startWatch(selectedItem.getValue().getFilePath().getParent(), false);
-                        } catch (IOException | InterruptedException ex) {
+                        } catch (IOException ex) {
                             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (InterruptedException ex) {
+                            //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     });
                 }

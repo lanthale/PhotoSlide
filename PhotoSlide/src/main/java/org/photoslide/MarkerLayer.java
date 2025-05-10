@@ -50,6 +50,11 @@ public class MarkerLayer extends MapLayer {
             icon.setTranslateY(mapPoint.getY());
         }
     }
+    
+    public void removeAllPoints(){
+        points.clear();
+        this.markDirty();
+    }
 
     
     

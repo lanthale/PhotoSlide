@@ -36,6 +36,7 @@ import com.icafe4j.image.options.PNGOptions;
 import com.icafe4j.image.png.Filter;
 import com.icafe4j.image.tiff.FieldType;
 import com.icafe4j.image.writer.ImageWriter;
+import fr.dudie.nominatim.model.Address;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -75,6 +76,7 @@ import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -225,10 +227,10 @@ public class MetadataController implements Initializable {
         keywordList = FXCollections.observableArrayList();
         anchorKeywordPane.setDisable(true);
         accordionPane.setExpandedPane(keywordsPane);
-        progressPane.setVisible(false);        
+        progressPane.setVisible(false);
         map = new MapView();
         map.setPrefSize(400, 266);
-        map.setMaxSize(400, 266);        
+        map.setMaxSize(400, 266);
         //markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
@@ -1450,13 +1452,9 @@ public class MetadataController implements Initializable {
         double lon = actualMediaFile.getGpsLonPosAsDouble();
         MapPoint c = new MapPoint(lat, lon);
         map.setCenter(c);
-        MarkerLayer markerPos=new MarkerLayer();
-        markerPos.addPoint(c, new Circle(5, Color.BLUE));
-        map.addLayer(markerPos);                
-        //circle.setFillColor(Color.TRANSPARENT);        
-        //circle.setColor(javafx.scene.paint.Color.BLUE);
-        //circle.setWidth(1);
-        //map.addMapCircle(circle);
+        MarkerLayer markerPos = new MarkerLayer();
+        markerPos.addFlag(c);
+        map.addLayer(markerPos);        
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
@@ -1548,25 +1546,19 @@ public class MetadataController implements Initializable {
         double lon = actualMediaFile.getGpsLonPosAsDouble();
         MapPoint c = new MapPoint(lat, lon);
         map.setCenter(c);
-        MarkerLayer markerPos=new MarkerLayer();
-        markerPos.addPoint(c, new Circle(5, Color.BLUE));
+        MarkerLayer markerPos = new MarkerLayer();
         markerPos.addFlag(c);
-        map.addLayer(markerPos);        
+        map.addLayer(markerPos);
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
         ((Parent) popOver.getSkin().getNode()).getStylesheets()
                 .add(getClass().getResource("/org/photoslide/css/PopOver.css").toExternalForm());
-        /*map.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
-            eventMap.consume();
-            final MapPoint newPosition = eventMap.getCoordinate().normalize();
-            map.setCenter(newPosition);
-            markerPos.setPosition(newPosition).setVisible(true);
-            circle = new MapCircle(newPosition, 3);
-            circle.setVisible(true);
-            circle.setColor(javafx.scene.paint.Color.BLUE);
-            circle.setWidth(1);
-            //set name in textbox
+        map.setOnMouseClicked((t) -> {
+            t.getPickResult();
+            final MapPoint newPosition = map.getMapPosition(t.getSceneX(), t.getSceneY());
+            markerPos.removeAllPoints();
+            markerPos.addFlag(newPosition);
             Task<Address> taskFind = new Task<>() {
                 @Override
                 protected Address call() throws Exception {
@@ -1577,7 +1569,7 @@ public class MetadataController implements Initializable {
                 searchField.setText(((Address) k.getSource().getValue()).getDisplayName());
             });
             new Thread(taskFind).start();
-        });*/
+        });
     }
 
     private void searchButtonAction(CustomTextField customField) {
@@ -1613,9 +1605,9 @@ public class MetadataController implements Initializable {
                 MapPoint c = new MapPoint(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
                 map.setCenter(c);
                 MarkerLayer marker = new MarkerLayer();
-                
+                marker.addFlag(c);
                 map.addLayer(marker);
-                
+
             });
         });
         task.setOnFailed((t) -> {

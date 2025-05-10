@@ -101,7 +101,6 @@ public class ExportDialogController implements Initializable {
     private CustomTextField customField;
     @FXML
     private Button searchButton;
-    private MapPoint markerPos;
     @FXML
     private VBox mapSelectionPane;
     @FXML
@@ -113,6 +112,8 @@ public class ExportDialogController implements Initializable {
     private Tooltip outputDirToolTip;
     @FXML
     private ComboBox<String> sortComboBox;
+
+    private MarkerLayer markerPos;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -211,20 +212,16 @@ public class ExportDialogController implements Initializable {
         //mapView.initialize();
         MapPoint c = new MapPoint(48.135125, 11.581981);
         mapView.setCenter(c);
-        //markerPos = new Marker(getClass().getResource("/org/photoslide/img/map_marker.png"), -16, -32);
+        markerPos = new MarkerLayer();
+        mapView.addLayer(markerPos);
+        markerPos.addFlag(c);
         mapView.setEffect(new ColorAdjust(0, -0.5, 0, 0));
-        /*mapView.addEventHandler(MapViewEvent.MAP_CLICKED, eventMap -> {
-            eventMap.consume();
-            final Coordinate newPosition = eventMap.getCoordinate().normalize();
+        mapView.setOnMouseClicked((t) -> {
+            t.getPickResult();
+            final MapPoint newPosition = mapView.getMapPosition(t.getSceneX(), t.getSceneY());
             mapView.setCenter(newPosition);
-            markerPos.setPosition(newPosition).setVisible(true);
-            mapView.addMarker(markerPos);
-            circle = new MapCircle(newPosition, 3);
-            circle.setVisible(true);
-            circle.setColor(javafx.scene.paint.Color.BLUE);
-            circle.setWidth(1);
-            mapView.addMapCircle(circle);
-            //set name in textbox
+            markerPos.removeAllPoints();
+            markerPos.addFlag(newPosition);
             Task<Address> taskFind = new Task<>() {
                 @Override
                 protected Address call() throws Exception {
@@ -232,10 +229,10 @@ public class ExportDialogController implements Initializable {
                 }
             };
             taskFind.setOnSucceeded((k) -> {
-                customField.setText(((Address) k.getSource().getValue()).getDisplayName());
+                customField.setText(((Address) k.getSource().getValue()).getDisplayName());                
             });
             new Thread(taskFind).start();
-        }); */
+        });
         outputDirToolTip.textProperty().bind(outputDirText.textProperty());
         sortComboBox.getItems().addAll("Record time based", "Actual view");
         sortComboBox.getSelectionModel().selectFirst();
@@ -375,9 +372,8 @@ public class ExportDialogController implements Initializable {
                 geoCoding.setLastSearchGPSResult(geoCoding.getLastSearchResult().get(index));
                 MapPoint c = new MapPoint(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
                 mapView.setCenter(c);
-                MarkerLayer markerPos=new MarkerLayer();
-                markerPos.addPoint(c, new Circle(5, Color.BLUE));
-                mapView.addLayer(markerPos);                
+                markerPos.removeAllPoints();
+                markerPos.addFlag(c);
             });
         });
         task.setOnFailed((t) -> {

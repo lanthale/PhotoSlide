@@ -214,7 +214,7 @@ public class ExportDialogController implements Initializable {
         mapView.setCenter(c);
         markerPos = new MarkerLayer();
         mapView.addLayer(markerPos);
-        markerPos.addFlag(c);
+        //markerPos.addFlag(c);
         mapView.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         mapView.setOnMouseClicked((t) -> {
             t.getPickResult();

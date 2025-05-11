@@ -17,6 +17,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -61,8 +65,8 @@ public class App extends Application {
     private static final double DEFAULT_X = 100;
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
-    private static final double DEFAULT_HEIGHT = 800;
-    private static LocalDate SEARCHINDEXFINISHED = LocalDate.now();
+    private static final double DEFAULT_HEIGHT = 800;    
+    private static HashMap<String,LocalDate> SEARCHINDEXFINISHEDMAP=new HashMap<>();
     private static boolean MAXIMIZED = true;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
@@ -163,8 +167,10 @@ public class App extends Application {
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());
         preferences.putDouble(WINDOW_WIDTH, stage.getWidth());
-        preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());
-        preferences.putLong("SEARCHINDEXFINISHED", SEARCHINDEXFINISHED.toEpochDay());
+        preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());        
+        SEARCHINDEXFINISHEDMAP.entrySet().iterator().forEachRemaining((t) -> {
+            preferences.putLong(t.getKey(), t.getValue().toEpochDay());
+        });
         preferences.putBoolean("MAXIMIZED", stage.isMaximized());
         try {
             preferences.flush();
@@ -180,8 +186,16 @@ public class App extends Application {
         double x = pref.getDouble(WINDOW_POSITION_X, DEFAULT_X);
         double y = pref.getDouble(WINDOW_POSITION_Y, DEFAULT_Y);
         double width = pref.getDouble(WINDOW_WIDTH, DEFAULT_WIDTH);
-        double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);
-        SEARCHINDEXFINISHED = LocalDate.ofEpochDay(pref.getLong("SEARCHINDEXFINISHED", LocalDate.now().toEpochDay()));
+        double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);        
+        try {
+            List<String> list=Arrays.asList(pref.keys());
+            list.stream().filter((t) -> t.startsWith("SEARCHINDEX_")).forEach((t) -> {
+                SEARCHINDEXFINISHEDMAP.put(t, LocalDate.ofEpochDay(pref.getLong(t, 0)));                
+            });
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         MAXIMIZED = pref.getBoolean("MAXIMIZED", MAXIMIZED);
         stage.setMaximized(MAXIMIZED);
         stage.setX(x);
@@ -285,12 +299,12 @@ public class App extends Application {
         return searchDBConnection;
     }
 
-    public static LocalDate getSEARCHINDEXFINISHED() {
-        return SEARCHINDEXFINISHED;
+    public static LocalDate getSEARCHINDEXFINISHED(String collectionName) {
+        return SEARCHINDEXFINISHEDMAP.get("SEARCHINDEX_"+collectionName);
     }
 
-    public static void setSEARCHINDEXFINISHED(LocalDate SEARCHINDEXFINISHED) {
-        App.SEARCHINDEXFINISHED = SEARCHINDEXFINISHED;
+    public static void setSEARCHINDEXFINISHED(String collectionName, LocalDate SEARCHINDEXFINISHED) {
+        SEARCHINDEXFINISHEDMAP.put("SEARCHINDEX_"+collectionName, SEARCHINDEXFINISHED);
     }
 
 }

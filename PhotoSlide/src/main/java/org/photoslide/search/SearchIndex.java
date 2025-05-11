@@ -13,12 +13,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +58,7 @@ public class SearchIndex {
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
     }
 
-    public void createCheckSearchIndex(String searchPath) {        
+    public void createCheckSearchIndex(String searchPath) {
         String collectionName = searchPath;
         Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "Start time create searchDB: " + LocalDateTime.now());
         PathItem pathItem = new PathItem(Paths.get(searchPath));
@@ -66,22 +68,22 @@ public class SearchIndex {
                 if (task.isCancelled()) {
                     return null;
                 }
-                if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
-                    Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
-                    if (period.getDays() < 14) {
+                LocalDate searchindexfinished = App.getSEARCHINDEXFINISHED(collectionName);
+                if (searchindexfinished.isBefore(LocalDate.now()) || searchindexfinished.isEqual(LocalDate.now())) {
+                    Period period = Period.between(App.getSEARCHINDEXFINISHED(collectionName), LocalDate.now());
+                    if (period.getDays() < 14 || period.getDays() == 0) {
                         Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
                         return null;
                     }
                 }
-                updateTitle("Creating/Updating search index...");                
-                updateMessage("Creating/Updating search index...");                                
+                updateTitle("Creating search index...");
                 try {
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
-                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {                               
+                        public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
                             if (task.isCancelled()) {
                                 return FileVisitResult.TERMINATE;
-                            }                            
+                            }
                             int pathlength = fileItem.toString().length();
                             if (pathlength > 35) {
                                 updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
@@ -94,7 +96,10 @@ public class SearchIndex {
                             if (task.isCancelled() == true) {
                                 return FileVisitResult.TERMINATE;
                             }
-                            
+
+                            if (attrs.isDirectory()) {
+                                return FileVisitResult.CONTINUE;
+                            }
                             if (fileItem.getFileName().toString().startsWith(".")) {
                                 return FileVisitResult.CONTINUE;
                             }
@@ -109,29 +114,41 @@ public class SearchIndex {
                                 m.setName(fileItem.getFileName().toString());
                                 m.setPathStorage(fileItem);
                                 if (checkIfIndexed(m) == false) {
-                                    m.readEdits();
-                                    m.getCreationTime();
-                                    if (!m.getGpsPosition().equalsIgnoreCase("")) {
-                                        if (m.placeProperty().getValue() == null) {
-                                            GeoCoding geoCoding = new GeoCoding();
-                                            Address geoSearchForGPS = geoCoding.geoSearchForGPS(m.getGpsLonPosAsDouble(), m.getGpsLatPosAsDouble());
-                                            m.placeProperty().setValue(geoSearchForGPS.getDisplayName());
-                                        }
+                                    updateTitle("Creating search index...");
+                                    if (task.isCancelled() == true) {
+                                        return FileVisitResult.TERMINATE;
                                     }
-                                    if (FileTypes.isValidVideo(fileItem.toString())) {
-                                        m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                                    } else if (FileTypes.isValidImage(fileItem.toString())) {
-                                        m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                                    insertMediaFileToIndex(m, fileItem, collectionName);
+                                    if (task.isCancelled() == true) {
+                                        return FileVisitResult.TERMINATE;
+                                    }
+                                } else {
+                                    FileTime lastModifiedTime = attrs.lastModifiedTime();
+                                    LocalDate lastModifiedTimeLD = LocalDate.ofInstant(lastModifiedTime.toInstant(), ZoneId.systemDefault());
+                                    LocalDate savedIndexDate;
+                                    if (App.getSEARCHINDEXFINISHED(collectionName) == null) {
+                                        savedIndexDate = LocalDate.now();
                                     } else {
-                                        m.setMediaType(MediaFile.MediaTypes.NONE);
+                                        savedIndexDate = App.getSEARCHINDEXFINISHED(collectionName);
                                     }
-                                    try {
-                                        metadataController.readBasicMetadata(task, m);
-                                        if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
-                                            insertMediaFileIntoSearchDB(collectionName, m);
+                                    Period period = Period.between(savedIndexDate, lastModifiedTimeLD);
+                                    if (period.getDays() < 0) {
+                                        pathlength = fileItem.toString().length();
+                                        if (pathlength > 15) {
+                                            updateMessage("MediaFile not changed! " + fileItem.toString().substring(pathlength - 15, pathlength));
+                                        } else {
+                                            updateMessage("MediaFile not changed! " + fileItem.toString());
                                         }
-                                    } catch (Throwable ex) {
-                                        Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
+                                    } else {
+                                        if (task.isCancelled() == true) {
+                                            return FileVisitResult.TERMINATE;
+                                        }
+                                        //remove from index
+                                        removeMediaFileInSearchDB(fileItem.toString());
+                                        insertMediaFileToIndex(m, fileItem, collectionName);
+                                        if (task.isCancelled() == true) {
+                                            return FileVisitResult.TERMINATE;
+                                        }
                                     }
                                 }
                             }
@@ -140,14 +157,13 @@ public class SearchIndex {
 
                         @Override
                         public FileVisitResult postVisitDirectory(Path dir, IOException e)
-                                throws IOException {                            
+                                throws IOException {
                             if (task.isCancelled()) {
                                 return FileVisitResult.TERMINATE;
                             }
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
                             if (finishedSearch) {
-                                App.setSEARCHINDEXFINISHED(LocalDate.now());
-                                checkSearchIndex(pathItem.getFilePath().toString());
+                                App.setSEARCHINDEXFINISHED(collectionName, LocalDate.now());
                                 return FileVisitResult.TERMINATE;
                             }
                             return FileVisitResult.CONTINUE;
@@ -158,28 +174,26 @@ public class SearchIndex {
                             return FileVisitResult.CONTINUE;
                         }
                     });
-                } catch (IOException ex) {                    
+                } catch (IOException ex) {
                     Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, null, ex);
                 }
                 return null;
             }
         };
-        task.setOnScheduled((t) -> {
-            mainViewController.getTaskProgressView().getTasks().add(task);
-        });
-        task.setOnSucceeded((t) -> { 
+        task.setOnSucceeded((t) -> {
             mainViewController.getTaskProgressView().getTasks().remove(task);
             //checkSearchIndex(pathItem.getFilePath().toString());
             Logger.getLogger(SearchIndex.class.getName()).log(Level.FINE, "End time create searchDB: " + LocalDateTime.now());
         });
-        task.setOnFailed((t) -> {            
+        task.setOnFailed((t) -> {
             mainViewController.getTaskProgressView().getTasks().remove(task);
             Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, "Error creating searchIndexDB", t.getSource().getException());
         });
+        mainViewController.getTaskProgressView().getTasks().add(task);
         executorParallel.submit(task);
     }
 
-    public void checkSearchIndex(String searchPath) {
+    public void checkSearchIndex(String searchPath, String collectionName) {
         PathItem pathItem = new PathItem(Paths.get(searchPath));
         taskCheck = new Task<>() {
             @Override
@@ -187,18 +201,26 @@ public class SearchIndex {
                 if (taskCheck.isCancelled()) {
                     return null;
                 }
-                if (App.getSEARCHINDEXFINISHED().isBefore(LocalDate.now())) {
-                    Period period = Period.between(App.getSEARCHINDEXFINISHED(), LocalDate.now());
-                    if (period.getDays() < 14) {
-                        Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
-                        return null;
-                    }
-                }
                 try {
                     updateTitle("Checking search index...");
                     Files.walkFileTree(pathItem.getFilePath(), new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+
+                            if (attrs.isRegularFile()) {
+                                FileTime lastModifiedTime = attrs.lastModifiedTime();
+                                LocalDate lastModifiedTimeLD = LocalDate.ofInstant(lastModifiedTime.toInstant(), ZoneId.systemDefault());
+                                Period period = Period.between(App.getSEARCHINDEXFINISHED(collectionName), lastModifiedTimeLD);
+                                if (period.getDays() < 0) {
+                                    int pathlength = fileItem.toString().length();
+                                    if (pathlength > 35) {
+                                        updateMessage("MediaFile not changed! " + fileItem.toString().substring(pathlength - 35, pathlength));
+                                    } else {
+                                        updateMessage("MediaFile not changed! " + fileItem.toString());
+                                    }
+                                    return FileVisitResult.TERMINATE;
+                                }
+                            }
                             int pathlength = fileItem.toString().length();
                             if (pathlength > 35) {
                                 updateMessage("..." + fileItem.toString().substring(pathlength - 35, pathlength));
@@ -231,7 +253,7 @@ public class SearchIndex {
                             boolean finishedSearch = Files.isSameFile(dir, pathItem.getFilePath());
                             if (finishedSearch) {
                                 //System.out.println("Checking indexing files finished");
-                                App.setSEARCHINDEXFINISHED(LocalDate.now());
+                                App.setSEARCHINDEXFINISHED(collectionName, LocalDate.now());
                                 //checkSearchIndex(pathItem.getFilePath().toString());
                                 return FileVisitResult.TERMINATE;
                             }
@@ -243,15 +265,13 @@ public class SearchIndex {
                 return null;
             }
         };
-        taskCheck.setOnScheduled((t) -> {
-            mainViewController.getTaskProgressView().getTasks().add(taskCheck);
-        });
         taskCheck.setOnSucceeded((t) -> {
             mainViewController.getTaskProgressView().getTasks().remove(taskCheck);
         });
         taskCheck.setOnFailed((t) -> {
             mainViewController.getTaskProgressView().getTasks().remove(taskCheck);
         });
+        mainViewController.getTaskProgressView().getTasks().add(taskCheck);
         executorParallel.submit(taskCheck);
     }
 
@@ -264,6 +284,33 @@ public class SearchIndex {
             taskCheck.cancel();
         }
         executorParallel.shutdown();
+    }
+
+    public void insertMediaFileToIndex(MediaFile m, final Path fileItem, String collectionName) throws IOException {
+        m.readEdits();
+        m.getCreationTime();
+        if (!m.getGpsPosition().equalsIgnoreCase("")) {
+            if (m.placeProperty().getValue() == null) {
+                GeoCoding geoCoding = new GeoCoding();
+                Address geoSearchForGPS = geoCoding.geoSearchForGPS(m.getGpsLonPosAsDouble(), m.getGpsLatPosAsDouble());
+                m.placeProperty().setValue(geoSearchForGPS.getDisplayName());
+            }
+        }
+        if (FileTypes.isValidVideo(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.VIDEO);
+        } else if (FileTypes.isValidImage(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+        } else {
+            m.setMediaType(MediaFile.MediaTypes.NONE);
+        }
+        try {
+            metadataController.readBasicMetadata(task, m);
+            if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
+                insertMediaFileIntoSearchDB(collectionName, m);
+            }
+        } catch (Throwable ex) {
+            Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
+        }
     }
 
     public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m) throws IOException {

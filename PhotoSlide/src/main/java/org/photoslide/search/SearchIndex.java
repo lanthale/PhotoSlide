@@ -123,6 +123,7 @@ public class SearchIndex {
                                         return FileVisitResult.TERMINATE;
                                     }
                                 } else {
+                                    updateTitle("Checking search index...");
                                     FileTime lastModifiedTime = attrs.lastModifiedTime();
                                     LocalDate lastModifiedTimeLD = LocalDate.ofInstant(lastModifiedTime.toInstant(), ZoneId.systemDefault());
                                     LocalDate savedIndexDate;
@@ -140,6 +141,7 @@ public class SearchIndex {
                                             updateMessage("MediaFile not changed! " + fileItem.toString());
                                         }
                                     } else {
+                                        //media changed
                                         if (task.isCancelled() == true) {
                                             return FileVisitResult.TERMINATE;
                                         }
@@ -148,6 +150,11 @@ public class SearchIndex {
                                         insertMediaFileToIndex(m, fileItem, collectionName);
                                         if (task.isCancelled() == true) {
                                             return FileVisitResult.TERMINATE;
+                                        }
+                                        try {
+                                            Thread.sleep(500);
+                                        } catch (InterruptedException ex) {
+                                            Logger.getLogger(SearchIndex.class.getName()).log(Level.SEVERE, null, ex);
                                         }
                                     }
                                 }

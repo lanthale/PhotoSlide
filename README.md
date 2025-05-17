@@ -89,3 +89,5 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 If you are stuck at JDK 11 than remove in pom.xml the dependency for librawfx/libheiffx and comment in App.java out the line `RAWImageLoaderFactory.install();` and you are ready to build it under JDK11.
 
 The maven file is downloading every dependency automatically in the background.
+
+[![JFXCentral](https://img.shields.io/badge/Find_me_on-JFXCentral-blue?logo=googlechrome&logoColor=white)](https://www.jfx-central.com/showcases/photoslide)

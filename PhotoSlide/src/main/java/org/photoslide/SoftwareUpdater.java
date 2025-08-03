@@ -410,6 +410,7 @@ public class SoftwareUpdater {
                     }
                     downloadDialog.close();
                     App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);
+                    Platform.exit();
                     System.exit(0);
                 });
         downloadTask

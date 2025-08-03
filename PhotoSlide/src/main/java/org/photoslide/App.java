@@ -135,13 +135,6 @@ public class App extends Application {
         restoreSettings(stage, fxmlLoader.getController());
         notifyPreloader(new ProgressNotification(0.9));
 
-        stage.setOnCloseRequest((final WindowEvent event) -> {
-            MainViewController controller = fxmlLoader.getController();
-            saveSettings(stage, controller);
-            Platform.exit();
-            System.exit(0);
-        });
-
         scene = new Scene(root, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.setFill(Paint.valueOf("rgb(80, 80, 80)"));
         final KeyCombination keyComb = new KeyCodeCombination(KeyCode.Q, KeyCombination.META_DOWN);
@@ -151,8 +144,7 @@ public class App extends Application {
                 App.saveSettings((Stage) scene.getWindow(), fxmlLoader.getController());
                 MainViewController controller = fxmlLoader.getController();
                 controller.Shutdown();        
-                Platform.exit();
-                System.exit(0);
+                Platform.exit();                
             }
         });
         stage.setScene(scene);

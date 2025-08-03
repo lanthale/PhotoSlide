@@ -69,11 +69,13 @@ public class SearchIndex {
                     return null;
                 }
                 LocalDate searchindexfinished = App.getSEARCHINDEXFINISHED(collectionName);
-                if (searchindexfinished.isBefore(LocalDate.now()) || searchindexfinished.isEqual(LocalDate.now())) {
-                    Period period = Period.between(App.getSEARCHINDEXFINISHED(collectionName), LocalDate.now());
-                    if (period.getDays() < 14 || period.getDays() == 0) {
-                        Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
-                        return null;
+                if (searchindexfinished != null) {
+                    if (searchindexfinished.isBefore(LocalDate.now()) || searchindexfinished.isEqual(LocalDate.now())) {
+                        Period period = Period.between(App.getSEARCHINDEXFINISHED(collectionName), LocalDate.now());
+                        if (period.getDays() < 14 || period.getDays() == 0) {
+                            Logger.getLogger(SearchIndex.class.getName()).log(Level.INFO, "Index update not required because it is up to date.");
+                            return null;
+                        }
                     }
                 }
                 updateTitle("Creating search index...");
@@ -145,7 +147,7 @@ public class SearchIndex {
                                         if (task.isCancelled() == true) {
                                             return FileVisitResult.TERMINATE;
                                         }
-                                        //remove from index
+                                        //remove from index                                        
                                         removeMediaFileInSearchDB(fileItem.toString());
                                         insertMediaFileToIndex(m, fileItem, collectionName);
                                         if (task.isCancelled() == true) {

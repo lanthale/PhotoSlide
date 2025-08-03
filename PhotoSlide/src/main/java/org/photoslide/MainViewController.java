@@ -249,19 +249,19 @@ public class MainViewController implements Initializable {
         taskPopOver.setTitle("Taskmanager");
         taskPopOver.setHeaderAlwaysVisible(true);
         taskPopOver.setFadeInDuration(new Duration(100));
-        taskPopOver.setContentNode(taskProgressView);        
+        taskPopOver.setContentNode(taskProgressView);
         taskProgressView.getTasks().addListener((Observable taskChange) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
-            } else {              
+            } else {
                 processListIcon.setIconColor(activityColor);
             }
         });
         processListIcon.iconColorProperty().addListener((o) -> {
             if (!taskProgressView.getTasks().isEmpty()) {
                 processListIcon.setIconColor(Paint.valueOf("lightgreen"));
-            } else {                                                
-                processListIcon.setIconColor(activityColor);                
+            } else {
+                processListIcon.setIconColor(activityColor);
             }
         });
         taskProgressView.setPrefSize(300, 200);
@@ -354,7 +354,7 @@ public class MainViewController implements Initializable {
         return statusLabelRight;
     }
 
-    public void Shutdown() {        
+    public void Shutdown() {
         if (searchtools != null) {
             searchtools.shutdown();
         }
@@ -668,7 +668,7 @@ public class MainViewController implements Initializable {
         IntegerProperty integerProperty = new SimpleIntegerProperty(12);
         DoubleProperty doubleProperty = new SimpleDoubleProperty(6.5);
 
-        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));        
+        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
         preferencesFx.getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         preferencesFx.show();
@@ -677,7 +677,8 @@ public class MainViewController implements Initializable {
     @FXML
     public void quitMenuAction(ActionEvent event) {
         App.saveSettings((Stage) browseButton.getScene().getWindow(), MainViewController.this);
-        System.exit(0);
+        Shutdown();
+        Platform.exit();
     }
 
     @FXML

@@ -43,7 +43,7 @@ import javax.imageio.spi.ServiceRegistry;
 import org.h2.fulltext.FullText;
 import org.libheiffx.HEIFImageLoaderFactory;
 import org.librawfx.RAWImageLoaderFactory;
-import org.librawfx.RawDecoderSettings;
+import org.librawdecodersettings.RawDecoderSettings;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.datamodel.customformats.webpsupport.WEBPImageLoaderFactory;

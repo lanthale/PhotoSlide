@@ -16,6 +16,7 @@
 --description "${project.description}"
 --copyright "(C) ${windows.vendor}"
 --java-options -XX:+UseZGC
+--java-options -XX:+UseCompactObjectHeaders
 --java-options -Xms2g
 --java-options --enable-preview
 --java-options --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED

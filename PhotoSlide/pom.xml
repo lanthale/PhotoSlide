@@ -114,7 +114,7 @@
         <dependency>
             <groupId>com.github.dragon66</groupId>
             <artifactId>icafe</artifactId>
-            <version>master</version>            
+            <version>master-ffef223f3a-1</version>
         </dependency>
         <dependency>
             <groupId>com.github.jai-imageio</groupId>

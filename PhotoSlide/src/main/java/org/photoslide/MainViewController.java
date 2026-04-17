@@ -1,8 +1,6 @@
 package org.photoslide;
 
 import animatefx.animation.Bounce;
-import com.dlsc.preferencesfx.PreferencesFx;
-import com.dlsc.preferencesfx.model.Category;
 import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browserlighttable.LighttableController;
@@ -668,10 +666,10 @@ public class MainViewController implements Initializable {
         IntegerProperty integerProperty = new SimpleIntegerProperty(12);
         DoubleProperty doubleProperty = new SimpleDoubleProperty(6.5);
 
-        PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
+        /*PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
         preferencesFx.getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-        preferencesFx.show();
+        preferencesFx.show();*/
     }
 
     @FXML

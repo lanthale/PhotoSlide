@@ -62,6 +62,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -389,7 +390,7 @@ public class MetadataController implements Initializable {
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws java.io.EOFException, IOException {
         if (file.isRawImage()) {
             long startraw = System.currentTimeMillis();
-            HashMap<String, RawDecoderSettings> settings = new HashMap<>();
+            ConcurrentHashMap<String, RawDecoderSettings> settings = new ConcurrentHashMap<>();
             settings.put("Default", new RawDecoderSettings());
             rawMetaData = new LibrawImage(file.getPathStorage().toString(), settings).getMetaData();
             String timeStr = rawMetaData.get("Timestamp (EpocheSec)");

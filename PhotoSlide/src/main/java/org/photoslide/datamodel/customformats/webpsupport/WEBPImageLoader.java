@@ -10,28 +10,33 @@ import com.sun.javafx.iio.ImageMetadata;
 import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.common.ImageLoaderImpl;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.stage.Screen;
 import javax.imageio.ImageIO;
 import org.photoslide.datamodel.customformats.dimension.Dimension;
 import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
 
 /**
- * Class to load the image requested by the file
+ * Loads a WebP image for JavaFX. The descriptor's signature can only match
+ * "RIFF" at offset 0, therefore this loader must verify the full
+ * "RIFF....WEBP" header itself and reject other RIFF containers (WAV, AVI)
+ * with an {@link ImageFormatException}.
  *
  * @author selfemp
  */
 public class WEBPImageLoader extends ImageLoaderImpl {
 
     private static final int BYTES_PER_PIXEL = 4; // RGBA
+    private static final int HEADER_SIZE = 12;     // "RIFF" + size + "WEBP"
+
+    private static final Logger LOG = Logger.getLogger(WEBPImageLoader.class.getName());
 
     private final InputStream input;
-    private float maxPixelScale = 0;
     private final DimensionProvider dimensionProvider;
 
     protected WEBPImageLoader(InputStream input, DimensionProvider dimensionProvider) {
@@ -46,54 +51,76 @@ public class WEBPImageLoader extends ImageLoaderImpl {
 
     @Override
     public void dispose() {
+        // nothing to release; stream is owned by the caller/ImageStorage
     }
 
     @Override
-    protected void updateImageMetadata(ImageMetadata im) {
-        super.updateImageMetadata(im);
-    }
+    public ImageFrame load(int imageIndex, double width, double height,
+            boolean preserveAspectRatio, boolean smooth,
+            float screenPixelScale, float imagePixelScale) throws IOException {
 
-    @Override
-    protected void updateImageProgress(float f) {
-        super.updateImageProgress(f);
-    }
-
-    @Override
-    protected void emitWarning(String string) {
-        super.emitWarning(string); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ImageFrame load(int imageIndex, double width, double height, boolean preserveAspectRatio, boolean smooth, float screenPixelScale, float imagePixelScale) throws IOException {
-        if (0 != imageIndex) {
+        if (imageIndex != 0) {
             return null;
-        }        
+        }
 
-        Dimension fallbackDimension = (width <= 0 || height <= 0) ? dimensionProvider.getDimension() : null;
+        // The signature in WEBPDescriptor only covers "RIFF" (offset 0),
+        // because bytes 4-7 hold the variable file size. JavaFX may therefore
+        // select this loader for any RIFF container. Verify "WEBP" at bytes
+        // 8-11 here, without consuming the stream for the decoder.
+        verifyWebpHeader();
 
-        float imageWidth = (int) width > 0 ? (int) width : (float) fallbackDimension.getWidth();
-        float imageHeight = (int) height > 0 ? (int) height : (float) fallbackDimension.getHeight();
+        Dimension fallbackDimension
+                = (width <= 0 || height <= 0) ? dimensionProvider.getDimension() : null;
+
+        float imageWidth = width > 0 ? (float) width : (float) fallbackDimension.getWidth();
+        float imageHeight = height > 0 ? (float) height : (float) fallbackDimension.getHeight();
 
         ImageMetadata md = new ImageMetadata(null, true,
                 null, null, null, null, null,
-                (int) width, (int) height, null, null, null);
-
+                (int) imageWidth, (int) imageHeight, null, null, null);
         updateImageMetadata(md);
 
         try {
             return createImageFrame(imageWidth, imageHeight, screenPixelScale);
         } catch (IOException ex) {
-            throw new IOException(ex);
+            LOG.log(Level.FINE, "Error reading WEBP file format!", ex);
+            throw ex;
         }
     }
 
-    public float calculateMaxRenderScale() {
-        float maxRenderScale = 0;
-        ScreenHelper.ScreenAccessor accessor = ScreenHelper.getScreenAccessor();
-        for (Screen screen : Screen.getScreens()) {
-            maxRenderScale = Math.max(maxRenderScale, accessor.getRenderScale(screen));
+    /**
+     * Reads the first 12 bytes, checks "RIFF" + "WEBP" and resets the stream.
+     * Throws {@link ImageFormatException} for non-WebP RIFF files (WAV, AVI)
+     * so JavaFX can report/handle the unsupported format cleanly.
+     */
+    private void verifyWebpHeader() throws IOException {
+        boolean marked = false;
+        if (input.markSupported()) {
+            input.mark(HEADER_SIZE);
+            marked = true;
         }
-        return maxRenderScale;
+        try {
+            byte[] header = input.readNBytes(HEADER_SIZE);
+            if (!WEBPDescriptor.isWEBPStream(header)) {
+                throw new IOException(
+                        "RIFF stream is not WEBP (RIFF header: " + toHex(header) + ")");
+            }
+        } finally {
+            if (marked) {
+                input.reset();
+            }
+        }
+    }
+
+    private static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 3);
+        for (byte b : bytes) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
     }
 
     private ImageFrame createImageFrame(float width, float height, float pixelScale)
@@ -101,31 +128,24 @@ public class WEBPImageLoader extends ImageLoaderImpl {
         BufferedImage bufferedImage = getTranscodedImage(width * pixelScale, height * pixelScale);
         ByteBuffer imageData = getImageData(bufferedImage);
 
-        return new ImageFrame(ImageStorage.ImageType.RGBA, imageData, bufferedImage.getWidth(),
-                bufferedImage.getHeight(), getStride(bufferedImage), pixelScale, null);
+        return new ImageFrame(ImageStorage.ImageType.RGBA, imageData,
+                bufferedImage.getWidth(), bufferedImage.getHeight(),
+                getStride(bufferedImage), pixelScale, null);
     }
 
-    private BufferedImage getTranscodedImage(float width, float height)
-            throws IOException {
-        BufferedImage read;
-        try {            
-            if (width <= 300) {
-                BufferedImage rBufImg = readFile();
-                read = resize(rBufImg, (int) width, (int) height);
-            } else {
-                BufferedImage rBufImg = readFile();
-                read = resize(rBufImg, (int) width * 4, (int) height * 4);
-            }            
-        } catch (IOException e) {
-            Logger.getLogger(WEBPImageLoader.class.getName()).log(Level.FINE, "Error reading WEBP file format!");
-            throw new IOException(e);
-        }
-        return read;
+    private BufferedImage getTranscodedImage(float width, float height) throws IOException {
+        BufferedImage source = readFile();
+        return resize(source, Math.max(1, (int) width), Math.max(1, (int) height));
     }
 
     private BufferedImage readFile() throws IOException {
-        BufferedImage image = null;
-        image = ImageIO.read(input);
+        BufferedImage image = ImageIO.read(input);
+        if (image == null) {
+            // ImageIO found no reader -> either not a decodable image or the
+            // TwelveMonkeys imageio-webp codec is missing on the classpath.
+            throw new IOException(
+                    "ImageIO cannot decode WEBP stream (is imageio-webp 3.15.x on the classpath?)");
+        }
         return image;
     }
 
@@ -134,11 +154,10 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     }
 
     private ByteBuffer getImageData(BufferedImage bufferedImage) {
-        int[] rgb = bufferedImage.getRGB(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight(), null, 0,
-                bufferedImage.getWidth());
+        int[] rgb = bufferedImage.getRGB(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight(),
+                null, 0, bufferedImage.getWidth());
 
         byte[] imageData = new byte[getStride(bufferedImage) * bufferedImage.getHeight()];
-
         copyColorToBytes(rgb, imageData);
         return ByteBuffer.wrap(imageData);
     }
@@ -148,64 +167,45 @@ public class WEBPImageLoader extends ImageLoaderImpl {
             throw new ArrayIndexOutOfBoundsException();
         }
 
-        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
-
         for (int i = 0; i < rgb.length; i++) {
-            byte[] bytes = byteBuffer.putInt(rgb[i]).array();
-
+            int pixel = rgb[i];
             int dataOffset = BYTES_PER_PIXEL * i;
-            imageData[dataOffset] = bytes[1];
-            imageData[dataOffset + 1] = bytes[2];
-            imageData[dataOffset + 2] = bytes[3];
-            imageData[dataOffset + 3] = bytes[0];
-
-            byteBuffer.clear();
+            imageData[dataOffset] = (byte) (pixel >> 16);      // R
+            imageData[dataOffset + 1] = (byte) (pixel >> 8);   // G
+            imageData[dataOffset + 2] = (byte) pixel;          // B
+            imageData[dataOffset + 3] = (byte) (pixel >>> 24); // A
         }
     }
 
+    /**
+     * Scales the image to the given bounding box preserving the aspect ratio.
+     * Uses bilinear interpolation for acceptable downsampling quality; the
+     * final smooth scaling to screen size is done by JavaFX (smooth=true).
+     */
     private BufferedImage resize(BufferedImage image, int scaledWidth, int scaledHeight) {
-        double imageHeight = image.getHeight();
         double imageWidth = image.getWidth();
+        double imageHeight = image.getHeight();
 
         if (imageHeight / scaledHeight > imageWidth / scaledWidth) {
-            scaledWidth = (int) (scaledHeight * imageWidth / imageHeight);
+            scaledWidth = (int) Math.max(1, Math.round(scaledHeight * imageWidth / imageHeight));
         } else {
-            scaledHeight = (int) (scaledWidth * imageHeight / imageWidth);
+            scaledHeight = (int) Math.max(1, Math.round(scaledWidth * imageHeight / imageWidth));
         }
 
-        BufferedImage resized = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage resized = new BufferedImage(scaledWidth, scaledHeight,
+                BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = resized.createGraphics();
-        g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
-        g.dispose();
-
+        try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g.drawImage(image, 0, 0, scaledWidth, scaledHeight, null);
+        } finally {
+            g.dispose();
+        }
         return resized;
     }
-
-    private static class Lock {
-
-        private boolean locked;
-
-        public Lock() {
-            locked = false;
-        }
-
-        public synchronized boolean isLocked() {
-            return locked;
-        }
-
-        public synchronized void lock() {
-            if (locked) {
-                throw new IllegalStateException("Recursive loading is not allowed.");
-            }
-            locked = true;
-        }
-
-        public synchronized void unlock() {
-            if (!locked) {
-                throw new IllegalStateException("Invalid loader state.");
-            }
-            locked = false;
-        }
-    }
-
 }

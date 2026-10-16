@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -105,11 +106,14 @@ public class App extends Application {
             }
         }
         notifyPreloader(new ProgressNotification(0.6));
-        setDefaultTIFFCodec();
-        notifyPreloader(new ProgressNotification(0.7));
+        
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
         WEBPImageLoaderFactory.install();
+        
+        //setDefaultTIFFCodec();
+        
+        notifyPreloader(new ProgressNotification(0.7));        
 
         try {
             RAWImageLoaderFactory.install();
@@ -121,7 +125,11 @@ public class App extends Application {
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
-        }
+        }  
+                
+        
+        printAllCodecs();
+                
         //create cache dir
         if (Files.exists(Path.of(Utility.getAppData() + File.separatorChar + "cache")) == false) {
             Files.createDirectory(Path.of(Utility.getAppData() + File.separatorChar + "cache"));
@@ -278,9 +286,22 @@ public class App extends Application {
             registry.deregisterServiceProvider(jaiProvider);
         }
     }
+    
+    private void printAllCodecs() {
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        Iterator<ImageReaderSpi> readers =
+                registry.getServiceProviders(ImageReaderSpi.class, true);
+        while (readers.hasNext()) {
+            ImageReaderSpi spi = readers.next();
+            System.out.println(spi.getClass().getName()
+                    + " | " + spi.getDescription(java.util.Locale.getDefault())
+                    + " | Formate: " + Arrays.toString(spi.getFormatNames())
+                    + " | Endungen: " + Arrays.toString(spi.getFileSuffixes()));
+        }
+    }
 
     private static <T> T lookupProviderByName(final ServiceRegistry registry, final String providerClassName) {
-        try {
+        try {            
             return (T) registry.getServiceProviderByClass(Class.forName(providerClassName));
         } catch (ClassNotFoundException ignore) {
             return null;

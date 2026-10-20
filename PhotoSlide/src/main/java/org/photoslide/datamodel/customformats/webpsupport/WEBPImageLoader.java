@@ -1,31 +1,38 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.photoslide.datamodel.customformats.webpsupport;
 
 import com.sun.javafx.iio.ImageFrame;
 import com.sun.javafx.iio.ImageMetadata;
 import com.sun.javafx.iio.ImageStorage;
 import com.sun.javafx.iio.common.ImageLoaderImpl;
+import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import org.photoslide.datamodel.customformats.dimension.Dimension;
 import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
 
 /**
- * Loads a WebP image for JavaFX. The descriptor's signature can only match
- * "RIFF" at offset 0, therefore this loader must verify the full
- * "RIFF....WEBP" header itself and reject other RIFF containers (WAV, AVI)
- * with an {@link ImageFormatException}.
+ * Loads a WebP image for JavaFX.
+ * <p>
+ * The descriptor's signature can only match "RIFF" at offset 0, therefore this
+ * loader verifies the full "RIFF....WEBP" header itself and rejects other RIFF
+ * containers (WAV, AVI).
+ * <p>
+ * Decoding does NOT use the ImageIO registry. The TwelveMonkeys reader is
+ * created directly from its SPI, so the plugin can be deregistered globally
+ * (to avoid the JavaFX ImageIO ClassCastException) without breaking this
+ * loader. The SPI is stateless; every call creates its own reader instance,
+ * which makes this thread-safe.
  *
  * @author selfemp
  */
@@ -36,6 +43,9 @@ public class WEBPImageLoader extends ImageLoaderImpl {
 
     private static final Logger LOG = Logger.getLogger(WEBPImageLoader.class.getName());
 
+    /** Stateless, shared. Independent of the IIORegistry. */
+    private static final WebPImageReaderSpi WEBP_SPI = new WebPImageReaderSpi();
+
     private final InputStream input;
     private final DimensionProvider dimensionProvider;
 
@@ -45,7 +55,8 @@ public class WEBPImageLoader extends ImageLoaderImpl {
         if (input == null) {
             throw new IllegalArgumentException("input == null!");
         }
-        this.input = input;
+        // mark/reset is required by verifyWebpHeader(); wrap if unsupported
+        this.input = input.markSupported() ? input : new BufferedInputStream(input);
         this.dimensionProvider = dimensionProvider;
     }
 
@@ -83,22 +94,17 @@ public class WEBPImageLoader extends ImageLoaderImpl {
         try {
             return createImageFrame(imageWidth, imageHeight, screenPixelScale);
         } catch (IOException ex) {
-            LOG.log(Level.FINE, "Error reading WEBP file format!", ex);
+            LOG.log(Level.WARNING, "Error reading WEBP file format!", ex);
             throw ex;
         }
     }
 
     /**
      * Reads the first 12 bytes, checks "RIFF" + "WEBP" and resets the stream.
-     * Throws {@link ImageFormatException} for non-WebP RIFF files (WAV, AVI)
-     * so JavaFX can report/handle the unsupported format cleanly.
+     * The stream is guaranteed to support mark/reset (see constructor).
      */
     private void verifyWebpHeader() throws IOException {
-        boolean marked = false;
-        if (input.markSupported()) {
-            input.mark(HEADER_SIZE);
-            marked = true;
-        }
+        input.mark(HEADER_SIZE);
         try {
             byte[] header = input.readNBytes(HEADER_SIZE);
             if (!WEBPDescriptor.isWEBPStream(header)) {
@@ -106,9 +112,7 @@ public class WEBPImageLoader extends ImageLoaderImpl {
                         "RIFF stream is not WEBP (RIFF header: " + toHex(header) + ")");
             }
         } finally {
-            if (marked) {
-                input.reset();
-            }
+            input.reset();
         }
     }
 
@@ -134,19 +138,44 @@ public class WEBPImageLoader extends ImageLoaderImpl {
     }
 
     private BufferedImage getTranscodedImage(float width, float height) throws IOException {
-        BufferedImage source = readFile();
-        return resize(source, Math.max(1, (int) width), Math.max(1, (int) height));
+        int targetW = Math.max(1, (int) width);
+        int targetH = Math.max(1, (int) height);
+        BufferedImage source = readFile(targetW, targetH);
+        return resize(source, targetW, targetH);
     }
 
-    private BufferedImage readFile() throws IOException {
-        BufferedImage image = ImageIO.read(input);
-        if (image == null) {
-            // ImageIO found no reader -> either not a decodable image or the
-            // TwelveMonkeys imageio-webp codec is missing on the classpath.
-            throw new IOException(
-                    "ImageIO cannot decode WEBP stream (is imageio-webp 3.15.x on the classpath?)");
+    /**
+     * Decodes the WebP stream directly via the TwelveMonkeys SPI (no
+     * IIORegistry lookup). Uses source subsampling to reduce the amount of
+     * pixel data for large images; the exact scaling is done afterwards in
+     * {@link #resize}.
+     */
+    private BufferedImage readFile(int targetW, int targetH) throws IOException {
+        // closing this stream does NOT close the underlying InputStream
+        try (ImageInputStream iis = new MemoryCacheImageInputStream(input)) {
+            ImageReader reader = WEBP_SPI.createReaderInstance();
+            try {
+                // seekForwardOnly=false: the reader needs to seek back after
+                // reading the header (getWidth/getHeight) before decoding
+                reader.setInput(iis, false, true);
+
+                ImageReadParam param = reader.getDefaultReadParam();
+                int w = reader.getWidth(0);
+                int h = reader.getHeight(0);
+                int sub = Math.max(1, Math.min(w / targetW, h / targetH));
+                if (sub > 1) {
+                    param.setSourceSubsampling(sub, sub, 0, 0);
+                }
+
+                BufferedImage image = reader.read(0, param);
+                if (image == null) {
+                    throw new IOException("WebP reader returned no image");
+                }
+                return image;
+            } finally {
+                reader.dispose();
+            }
         }
-        return image;
     }
 
     private int getStride(BufferedImage bufferedImage) {
@@ -179,8 +208,8 @@ public class WEBPImageLoader extends ImageLoaderImpl {
 
     /**
      * Scales the image to the given bounding box preserving the aspect ratio.
-     * Uses bilinear interpolation for acceptable downsampling quality; the
-     * final smooth scaling to screen size is done by JavaFX (smooth=true).
+     * Uses bilinear interpolation; the final smooth scaling to screen size is
+     * done by JavaFX (smooth=true).
      */
     private BufferedImage resize(BufferedImage image, int scaledWidth, int scaledHeight) {
         double imageWidth = image.getWidth();

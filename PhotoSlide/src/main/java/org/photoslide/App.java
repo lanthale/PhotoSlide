@@ -40,6 +40,7 @@ import javafx.scene.paint.Paint;
 import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
 import org.h2.fulltext.FullText;
 import org.libheiffx.HEIFImageLoaderFactory;
@@ -66,8 +67,8 @@ public class App extends Application {
     private static final double DEFAULT_X = 100;
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
-    private static final double DEFAULT_HEIGHT = 800;    
-    private static HashMap<String,LocalDate> SEARCHINDEXFINISHEDMAP=new HashMap<>();
+    private static final double DEFAULT_HEIGHT = 800;
+    private static HashMap<String, LocalDate> SEARCHINDEXFINISHEDMAP = new HashMap<>();
     private static boolean MAXIMIZED = true;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
@@ -80,7 +81,8 @@ public class App extends Application {
 
     @Override
     public void init() throws Exception {
-        super.init(); //To change body of generated methods, choose Tools | Templates.            
+        super.init(); //To change body of generated methods, choose Tools | Templates.      
+        removeTwelveMonkeys();
         notifyPreloader(new ProgressNotification(0.2));
 
         notifyPreloader(new ProgressNotification(0.3));
@@ -106,30 +108,28 @@ public class App extends Application {
             }
         }
         notifyPreloader(new ProgressNotification(0.6));
-        
+
         TIFFImageLoaderFactory.install();
         PSDImageLoaderFactory.install();
         WEBPImageLoaderFactory.install();
-        
-        //setDefaultTIFFCodec();
-        
-        notifyPreloader(new ProgressNotification(0.7));        
+
+        setDefaultTIFFCodec();
+        notifyPreloader(new ProgressNotification(0.7));
 
         try {
             RAWImageLoaderFactory.install();
-            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());            
+            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setAutoBrightness(true);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
             RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(2);            
+            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(2);
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
-        }  
-                
-        
+        }
+
         printAllCodecs();
-                
+
         //create cache dir
         if (Files.exists(Path.of(Utility.getAppData() + File.separatorChar + "cache")) == false) {
             Files.createDirectory(Path.of(Utility.getAppData() + File.separatorChar + "cache"));
@@ -151,8 +151,8 @@ public class App extends Application {
                 event.consume();
                 App.saveSettings((Stage) scene.getWindow(), fxmlLoader.getController());
                 MainViewController controller = fxmlLoader.getController();
-                controller.Shutdown();        
-                Platform.exit();                
+                controller.Shutdown();
+                Platform.exit();
             }
         });
         stage.setScene(scene);
@@ -167,7 +167,7 @@ public class App extends Application {
         preferences.putDouble(WINDOW_POSITION_X, stage.getX());
         preferences.putDouble(WINDOW_POSITION_Y, stage.getY());
         preferences.putDouble(WINDOW_WIDTH, stage.getWidth());
-        preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());        
+        preferences.putDouble(WINDOW_HEIGHT, stage.getHeight());
         SEARCHINDEXFINISHEDMAP.entrySet().iterator().forEachRemaining((t) -> {
             preferences.putLong(t.getKey(), t.getValue().toEpochDay());
         });
@@ -186,16 +186,16 @@ public class App extends Application {
         double x = pref.getDouble(WINDOW_POSITION_X, DEFAULT_X);
         double y = pref.getDouble(WINDOW_POSITION_Y, DEFAULT_Y);
         double width = pref.getDouble(WINDOW_WIDTH, DEFAULT_WIDTH);
-        double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);        
+        double height = pref.getDouble(WINDOW_HEIGHT, DEFAULT_HEIGHT);
         try {
-            List<String> list=Arrays.asList(pref.keys());
+            List<String> list = Arrays.asList(pref.keys());
             list.stream().filter((t) -> t.startsWith("SEARCHINDEX_")).forEach((t) -> {
-                SEARCHINDEXFINISHEDMAP.put(t, LocalDate.ofEpochDay(pref.getLong(t, 0)));                
+                SEARCHINDEXFINISHEDMAP.put(t, LocalDate.ofEpochDay(pref.getLong(t, 0)));
             });
         } catch (BackingStoreException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         MAXIMIZED = pref.getBoolean("MAXIMIZED", MAXIMIZED);
         stage.setMaximized(MAXIMIZED);
         stage.setX(x);
@@ -205,22 +205,39 @@ public class App extends Application {
     }
 
     public static void main(String[] args) {
-
         try {
             String appData = Utility.getAppData();
             Logger logger = Logger.getLogger("org");
             File logFile = new File(appData + File.separator + "photoslide.log");
             Handler handler = new FileHandler(logFile.getAbsolutePath(), 50000, 1, true);
-            logger.addHandler(handler);
-            logger.setLevel(Level.INFO);
+
+            // Default: INFO (jpackage). In der IDE per -Dphotoslide.loglevel=ALL überschreiben
+            Level level = resolveLogLevel();
+            logger.setLevel(level);
+            handler.setLevel(level);          // wichtig: Handler filtert separat!
             handler.setFormatter(new SimpleFormatter());
+            logger.addHandler(handler);
+
+            Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+                Logger.getLogger(App.class.getName())
+                        .log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
+                e.printStackTrace();   // garantiert in der IDE-Konsole
+            });
+
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
             Application.launch(App.class, args);
-            //com.sun.javafx.application.LauncherImpl.launchApplication(App.class, PSPreloader.class, args);
         } catch (IOException ex) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
 
+    private static Level resolveLogLevel() {
+        String value = System.getProperty("photoslide.loglevel", "INFO");
+        try {
+            return Level.parse(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Level.INFO;
+        }
     }
 
     public static void initDB() {
@@ -286,11 +303,30 @@ public class App extends Application {
             registry.deregisterServiceProvider(jaiProvider);
         }
     }
-    
+
+    public static void removeTwelveMonkeys() {
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+
+        // erst sammeln, dann entfernen (sonst ConcurrentModificationException)
+        List<Object> toRemove = new ArrayList<>();
+        for (Class<?> category : new Class<?>[]{ImageReaderSpi.class, ImageWriterSpi.class}) {
+            Iterator<?> it = registry.getServiceProviders(category, false);
+            while (it.hasNext()) {
+                Object spi = it.next();
+                if (spi.getClass().getName().startsWith("com.twelvemonkeys.")) {
+                    toRemove.add(spi);
+                }
+            }
+        }
+        for (Object spi : toRemove) {
+            registry.deregisterServiceProvider(spi);   // aus allen Kategorien
+        }
+    }
+
     private void printAllCodecs() {
         IIORegistry registry = IIORegistry.getDefaultInstance();
-        Iterator<ImageReaderSpi> readers =
-                registry.getServiceProviders(ImageReaderSpi.class, true);
+        Iterator<ImageReaderSpi> readers
+                = registry.getServiceProviders(ImageReaderSpi.class, true);
         while (readers.hasNext()) {
             ImageReaderSpi spi = readers.next();
             System.out.println(spi.getClass().getName()
@@ -301,7 +337,7 @@ public class App extends Application {
     }
 
     private static <T> T lookupProviderByName(final ServiceRegistry registry, final String providerClassName) {
-        try {            
+        try {
             return (T) registry.getServiceProviderByClass(Class.forName(providerClassName));
         } catch (ClassNotFoundException ignore) {
             return null;
@@ -313,11 +349,11 @@ public class App extends Application {
     }
 
     public static LocalDate getSEARCHINDEXFINISHED(String collectionName) {
-        return SEARCHINDEXFINISHEDMAP.get("SEARCHINDEX_"+collectionName);
+        return SEARCHINDEXFINISHEDMAP.get("SEARCHINDEX_" + collectionName);
     }
 
     public static void setSEARCHINDEXFINISHED(String collectionName, LocalDate SEARCHINDEXFINISHED) {
-        SEARCHINDEXFINISHEDMAP.put("SEARCHINDEX_"+collectionName, SEARCHINDEXFINISHED);
+        SEARCHINDEXFINISHEDMAP.put("SEARCHINDEX_" + collectionName, SEARCHINDEXFINISHED);
     }
 
 }

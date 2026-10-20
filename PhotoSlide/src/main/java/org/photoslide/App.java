@@ -81,8 +81,7 @@ public class App extends Application {
 
     @Override
     public void init() throws Exception {
-        super.init(); //To change body of generated methods, choose Tools | Templates.      
-        removeTwelveMonkeys();
+        super.init(); //To change body of generated methods, choose Tools | Templates.              
         notifyPreloader(new ProgressNotification(0.2));
 
         notifyPreloader(new ProgressNotification(0.3));
@@ -301,25 +300,6 @@ public class App extends Application {
         ImageReaderSpi twelvProvider = lookupProviderByName(registry, "com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi");
         if (jaiProvider != null && twelvProvider != null) {
             registry.deregisterServiceProvider(jaiProvider);
-        }
-    }
-
-    public static void removeTwelveMonkeys() {
-        IIORegistry registry = IIORegistry.getDefaultInstance();
-
-        // erst sammeln, dann entfernen (sonst ConcurrentModificationException)
-        List<Object> toRemove = new ArrayList<>();
-        for (Class<?> category : new Class<?>[]{ImageReaderSpi.class, ImageWriterSpi.class}) {
-            Iterator<?> it = registry.getServiceProviders(category, false);
-            while (it.hasNext()) {
-                Object spi = it.next();
-                if (spi.getClass().getName().startsWith("com.twelvemonkeys.")) {
-                    toRemove.add(spi);
-                }
-            }
-        }
-        for (Object spi : toRemove) {
-            registry.deregisterServiceProvider(spi);   // aus allen Kategorien
         }
     }
 

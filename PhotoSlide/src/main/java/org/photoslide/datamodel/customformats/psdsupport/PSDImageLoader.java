@@ -10,13 +10,17 @@ import java.awt.image.DataBufferInt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Objects;
 import javax.imageio.ImageIO;
-import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 /**
- * Lädt ein PSD-Bild über ImageIO (benötigt einen PSD-Reader, z. B.
- * TwelveMonkeys) und liefert es als JavaFX-ImageFrame.
+ * Lädt PSD-Bilder über einen ImageIO-Reader (z. B. TwelveMonkeys imageio-psd)
+ * und verkleinert sie speicherschonend auf die gewünschte Größe.
  *
  * @author selfemp
  */
@@ -25,12 +29,6 @@ public class PSDImageLoader extends ImageLoaderImpl {
     private static final int BYTES_PER_PIXEL = 4; // RGBA
 
     private final InputStream input;
-
-    // dimensionProvider wird nicht mehr benötigt, Parameter bleibt für die Factory erhalten
-    protected PSDImageLoader(InputStream input, DimensionProvider dimensionProvider) {
-        super(PSDDescriptor.getInstance());
-        this.input = Objects.requireNonNull(input, "input == null!");
-    }
 
     protected PSDImageLoader(InputStream input) {
         super(PSDDescriptor.getInstance());
@@ -54,24 +52,59 @@ public class PSDImageLoader extends ImageLoaderImpl {
             return null;
         }
 
-        BufferedImage source;
-        try {
-            source = ImageIO.read(input);
+        BufferedImage image;
+        // Memory-Cache statt Platten-Cache: lokal, ohne globales ImageIO.setUseCache(false)
+        try (ImageInputStream iis = new MemoryCacheImageInputStream(input)) {
+            image = readScaled(iis, width, height, preserveAspectRatio, smooth);
         } finally {
-            dispose(); // Stream ist nach dem Lesen verbraucht
+            dispose();
         }
-        if (source == null) {
+
+        return new ImageFrame(ImageStorage.ImageType.RGBA, toRgbaBuffer(image),
+                image.getWidth(), image.getHeight(),
+                image.getWidth() * BYTES_PER_PIXEL, 1.0f, null);
+    }
+
+    private static BufferedImage readScaled(ImageInputStream iis, double reqW, double reqH,
+            boolean keepRatio, boolean smooth) throws IOException {
+        Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+        if (!readers.hasNext()) {
             throw new IOException("Kein ImageIO-Reader für PSD gefunden "
                     + "(imageio-psd / TwelveMonkeys im Classpath?)");
         }
+        ImageReader reader = readers.next();
+        try {
+            reader.setInput(iis, true, true);
+            int srcW = reader.getWidth(0);
+            int srcH = reader.getHeight(0);
+            int[] target = computeTargetSize(srcW, srcH, reqW, reqH, keepRatio);
 
-        int[] size = computeTargetSize(source.getWidth(), source.getHeight(),
-                width, height, preserveAspectRatio);
-        BufferedImage argb = toArgb(source, size[0], size[1], smooth);
+            // 1. Grobes Verkleinern schon beim Lesen (spart RAM und Zeit)
+            ImageReadParam param = reader.getDefaultReadParam();
+            int sub = computeSubsampling(srcW, srcH, target[0], target[1], smooth);
+            if (sub > 1) {
+                param.setSourceSubsampling(sub, sub, 0, 0);
+            }
+            BufferedImage read = reader.read(0, param);
 
-        return new ImageFrame(ImageStorage.ImageType.RGBA, toRgbaBuffer(argb),
-                argb.getWidth(), argb.getHeight(),
-                argb.getWidth() * BYTES_PER_PIXEL, 1.0f, null);
+            // 2. Feines Verkleinern in Halbierungsschritten
+            return scaleProgressive(read, target[0], target[1], smooth);
+        } finally {
+            reader.dispose();
+        }
+    }
+
+    /**
+     * Subsampling überspringt Pixel ohne Filter und aliast daher selbst.
+     * Deshalb nur so weit verkleinern, dass noch mindestens das 2-fache der
+     * Zielgröße übrig bleibt. Den Rest erledigt die gefilterte Skalierung.
+     */
+    private static int computeSubsampling(int srcW, int srcH, int tw, int th, boolean smooth) {
+        double ratio = Math.min((double) srcW / tw, (double) srcH / th);
+        if (ratio < 2) {
+            return 1;
+        }
+        return Math.max(1, smooth ? (int) (ratio / 2) : (int) ratio);
     }
 
     private static int[] computeTargetSize(int srcW, int srcH,
@@ -100,16 +133,31 @@ public class PSDImageLoader extends ImageLoaderImpl {
         return new int[]{Math.max(1, (int) Math.round(w)), Math.max(1, (int) Math.round(h))};
     }
 
-    /**
-     * Zeichnet (ggf. skaliert) in ein frisches TYPE_INT_ARGB-Bild.
-     */
-    private static BufferedImage toArgb(BufferedImage src, int w, int h, boolean smooth) {
+    /** Halbiert schrittweise, bis die Zielgröße weniger als 2x entfernt ist, dann Endskalierung. */
+    private static BufferedImage scaleProgressive(BufferedImage src, int tw, int th, boolean smooth) {
+        BufferedImage cur = src;
+        int cw = src.getWidth();
+        int ch = src.getHeight();
+        if (smooth) {
+            while (cw / 2 >= tw && ch / 2 >= th) {
+                cw /= 2;
+                ch /= 2;
+                cur = drawScaled(cur, cw, ch, true);
+            }
+        }
+        if (cw != tw || ch != th || cur.getType() != BufferedImage.TYPE_INT_ARGB) {
+            cur = drawScaled(cur, tw, th, smooth);
+        }
+        return cur;
+    }
+
+    private static BufferedImage drawScaled(BufferedImage src, int w, int h, boolean smooth) {
         BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = dst.createGraphics();
         try {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                     smooth ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
-                            : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                           : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g.drawImage(src, 0, 0, w, h, null);
         } finally {
@@ -118,17 +166,15 @@ public class PSDImageLoader extends ImageLoaderImpl {
         return dst;
     }
 
-    /**
-     * ARGB (int) -> RGBA (byte), ohne Zwischenkopie des Pixel-Arrays.
-     */
+    /** ARGB (int) -> RGBA (byte). */
     private static ByteBuffer toRgbaBuffer(BufferedImage argbImage) {
         int[] argb = ((DataBufferInt) argbImage.getRaster().getDataBuffer()).getData();
         byte[] out = new byte[argb.length * BYTES_PER_PIXEL];
         for (int i = 0, o = 0; i < argb.length; i++, o += BYTES_PER_PIXEL) {
             int p = argb[i];
-            out[o] = (byte) (p >> 16); // R
-            out[o + 1] = (byte) (p >> 8);  // G
-            out[o + 2] = (byte) p;         // B
+            out[o]     = (byte) (p >> 16);  // R
+            out[o + 1] = (byte) (p >> 8);   // G
+            out[o + 2] = (byte) p;          // B
             out[o + 3] = (byte) (p >>> 24); // A
         }
         return ByteBuffer.wrap(out);

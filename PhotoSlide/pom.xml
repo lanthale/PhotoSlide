@@ -3,31 +3,30 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>1.6.1-SNAPSHOT</version>   
+    <version>1.6.1-SNAPSHOT</version>
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
 
-    <properties>        
+    <properties>
         <mainClass>org.photoslide.App</mainClass>
-        <app.name>Photoslide</app.name>        
+        <app.name>Photoslide</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>1.6.1</app.version>        
+        <app.version>1.6.1</app.version>
         <jvm.modules>javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>27</maven.compiler.source>
-        <maven.compiler.target>27</maven.compiler.target> 
+        <maven.compiler.target>27</maven.compiler.target>
         <javafx.version>27</javafx.version>
         <!-- UUID via https://www.uuidgenerator.net -->
-        <windows.upgrade.uuid>5be0a831-ee20-4692-8c71-6616381d9ccf</windows.upgrade.uuid>        
-        <windows.vendor>ITArchitects</windows.vendor>        
-    </properties>    
-    
-    <repositories>        
+        <windows.upgrade.uuid>5be0a831-ee20-4692-8c71-6616381d9ccf</windows.upgrade.uuid>
+        <windows.vendor>ITArchitects</windows.vendor>
+    </properties>
+
+    <repositories>
         <repository>
             <id>osgeo</id>
             <name>OSGeo Release Repository</name>
@@ -42,7 +41,7 @@
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
-        </repository> 
+        </repository>
         <repository>
             <id>central-portal-snapshots</id>
             <url>https://central.sonatype.com/repository/maven-snapshots/</url>
@@ -52,9 +51,9 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>       
-    </repositories> 
-    
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <!-- Erzwingt EINE JavaFX-Version fuer alle Artefakte, auch transitive -->
@@ -88,10 +87,10 @@
                 <artifactId>javafx-swing</artifactId>
                 <version>${javafx.version}</version>
             </dependency>
-            
+
         </dependencies>
-    </dependencyManagement>                                            
-    
+    </dependencyManagement>
+
     <pluginRepositories>
         <pluginRepository>
             <snapshots>
@@ -104,27 +103,25 @@
     </pluginRepositories>
 
     <dependencies>
-        <!-- This dependency is a normal Maven dependency, here mainly as an example. It brings in other transitive
-        dependencies as well. You can remove it from your project (unless you happen to need to generate test data.  -->
         <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
-            <version>11.2.5</version>                        
-        </dependency>          
+            <version>11.2.5</version>
+        </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-core</artifactId>
-            <version>12.4.0</version>            
-        </dependency>        
+            <version>12.4.0</version>
+        </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-javafx</artifactId>
-            <version>12.4.0</version>            
-        </dependency>        
+            <version>12.4.0</version>
+        </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
             <artifactId>ikonli-themify-pack</artifactId>
-            <version>12.4.0</version>            
+            <version>12.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.kordamp.ikonli</groupId>
@@ -134,18 +131,18 @@
         <dependency>
             <groupId>com.github.dragon66</groupId>
             <artifactId>icafe</artifactId>
-            <version>c969c07d7b</version>            
+            <version>c969c07d7b</version>
         </dependency>
         <dependency>
             <groupId>com.github.jai-imageio</groupId>
             <artifactId>jai-imageio-core</artifactId>
             <version>1.4.0</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-core</artifactId>
             <version>3.15.3</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-lang</artifactId>
@@ -160,7 +157,7 @@
             <groupId>com.twelvemonkeys.common</groupId>
             <artifactId>common-image</artifactId>
             <version>3.15.3</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-tiff</artifactId>
@@ -194,13 +191,13 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.5.250</version>            
-        </dependency>                
+            <version>2.5.250</version>
+        </dependency>
         <dependency>
             <groupId>javax.media</groupId>
             <artifactId>jai_core</artifactId>
-            <version>1.1.3</version>            
-        </dependency>                        
+            <version>1.1.3</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -215,27 +212,27 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>2.18.3</version>
-        </dependency>                 
+        </dependency>
         <dependency>
             <groupId>org.librawfx</groupId>
             <artifactId>LibRawFX</artifactId>
             <version>2.0.1</version>
         </dependency>
-        <dependency>  
-            <groupId>org.libheiffx</groupId>    
-            <artifactId>LibHeifFX</artifactId>  
-            <version>1.2.9</version>  
+        <dependency>
+            <groupId>org.libheiffx</groupId>
+            <artifactId>LibHeifFX</artifactId>
+            <version>1.2.9</version>
         </dependency>
         <dependency>
             <groupId>com.gluonhq</groupId>
             <artifactId>maps</artifactId>
             <version>2.0.0-ea+6</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.boofcv</groupId>
             <artifactId>boofcv-core</artifactId>
             <version>1.5.0</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>fr.dudie</groupId>
             <artifactId>nominatim-api</artifactId>
@@ -244,7 +241,7 @@
         <dependency>
             <groupId>com.drewnoakes</groupId>
             <artifactId>metadata-extractor</artifactId>
-            <version>2.21.0</version>            
+            <version>2.21.0</version>
         </dependency>
         <dependency>
             <groupId>de.jangassen</groupId>
@@ -254,48 +251,49 @@
         <dependency>
             <groupId>io.github.typhon0</groupId>
             <artifactId>AnimateFX</artifactId>
-            <version>1.3.0</version>            
-        </dependency>                      
+            <version>1.3.0</version>
+        </dependency>
 
         <!-- This downloads the platform specific JavaFX libraries used by the project. -->
         <!-- For the final installable, the JavaFX dependencies are provided via modules, but by including these here
         they work nicely with with IDEs and other Maven plugins (e.g. the javafx:run). -->
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>            
-        </dependency>        
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>            
+            <artifactId>javafx-base</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>            
+            <artifactId>javafx-fxml</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>                    
-        </dependency> 
+            <artifactId>javafx-graphics</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>                    
-        </dependency> 
+            <artifactId>javafx-controls</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>                                   
-        </dependency>        
+            <artifactId>javafx-media</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+        </dependency>
+
     </dependencies>
 
-    <build>        
+    <build>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
             </resource>
-            <resource>                
+            <resource>
                 <directory>${project.basedir}/src/main/resources/pkg-config</directory>
                 <filtering>true</filtering>
                 <targetPath>${project.build.directory}/pkg-config</targetPath>
-            </resource>                        
+            </resource>
         </resources>
 
         <plugins>
@@ -313,25 +311,25 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId> 
-                <artifactId>properties-maven-plugin</artifactId> 
-                <version>1.3.1</version> 
-                <executions> 
-                    <execution> 
-                        <phase>generate-resources</phase> 
-                        <goals> 
-                            <goal>write-project-properties</goal> 
-                        </goals> 
-                        <configuration> 
-                            <outputFile>${project.build.outputDirectory}/properties-from-pom.properties</outputFile> 
-                        </configuration> 
-                    </execution> 
-                </executions> 
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.3.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/properties-from-pom.properties</outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <configuration>                    
+                <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
@@ -339,23 +337,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
-                    <execution>                        
+                    <execution>
                         <id>copy-dependencies</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
-                        <configuration>                            
+                        <configuration>
                             <excludeGroupIds>org.openjfx</excludeGroupIds>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-            <plugin>                
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <archive>                   
+                    <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
@@ -364,130 +362,130 @@
                     <outputDirectory>${project.build.directory}/dependency</outputDirectory>
                 </configuration>
             </plugin>
-            <plugin>                
+            <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>                                                
+                <version>0.0.8</version>
                 <executions>
-                    <execution>                            
+                    <execution>
                         <!-- Usage: mvn clean javafx:run -->
-                        <id>default-cli</id>  
+                        <id>default-cli</id>
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
                             <options>
-                                <option>-Dphotoslide.loglevel=ALL</option>                                                                     
+                                <option>-Dphotoslide.loglevel=ALL</option>
                                 <option>-XX:+UseZGC</option>
-                                <option>-XX:+UseCompactObjectHeaders</option>                                
+                                <option>-XX:+UseCompactObjectHeaders</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
-                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>                                        
-                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>                                                                                  
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                                      
-                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>                                
+                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>
                             </options>
-                        </configuration>                          
+                        </configuration>
                     </execution>
-                    <execution>                            
+                    <execution>
                         <id>debug</id>
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
-                            <options> 
-                                <option>-Dphotoslide.loglevel=ALL</option>                                    
-                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000</option>                                    
+                            <options>
+                                <option>-Dphotoslide.loglevel=ALL</option>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000</option>
                                 <option>-XX:+UseZGC</option>
-                                <option>-XX:+UseCompactObjectHeaders</option>                                
+                                <option>-XX:+UseCompactObjectHeaders</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
-                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>                                        
-                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>                                                                                  
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                                      
-                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>                                
+                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>
                             </options>
                         </configuration>
                     </execution>
-                    <execution>                            
+                    <execution>
                         <id>ide-debug</id>
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
-                            <options>                                     
-                                <option>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</option>                                    
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</option>
                                 <option>-Dphotoslide.loglevel=ALL</option>
                                 <option>-XX:+UseZGC</option>
-                                <option>-XX:+UseCompactObjectHeaders</option>                                
+                                <option>-XX:+UseCompactObjectHeaders</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
-                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>                                        
-                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>                                                                                  
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                                      
-                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>                                
+                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>
                             </options>
                         </configuration>
                     </execution>
-                    <execution>                            
+                    <execution>
                         <id>ide-profile</id>
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
                             <options>
                                 <option>-Dphotoslide.loglevel=ALL</option>
                                 <option>-XX:+UseZGC</option>
-                                <option>-XX:+UseCompactObjectHeaders</option>                                
+                                <option>-XX:+UseCompactObjectHeaders</option>
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                        
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
-                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>                                        
-                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>                                                                                  
-                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>                                        
-                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>                                                                                
-                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>                                                      
-                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>                                
+                                <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                                <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED</option>
+                                <option>--add-exports=javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED</option>
+                                <option>--add-opens=java.base/java.net=ALL-UNNAMED</option>
                                 <option>${profiler.jvmargs.arg1}</option>
                                 <option>${profiler.jvmargs.arg2}</option>
                                 <option>${profiler.jvmargs.arg3}</option>
                                 <option>${profiler.jvmargs.arg4}</option>
-                                <option>${profiler.jvmargs.arg5}</option>                                    
+                                <option>${profiler.jvmargs.arg5}</option>
                             </options>
                         </configuration>
                     </execution>
-                </executions> 
+                </executions>
             </plugin>
-            
+
         </plugins>
         <pluginManagement>
             <plugins>
@@ -502,11 +500,11 @@
                     <version>3.11.0</version>
                     <configuration>
                         <enablePreview>true</enablePreview>
-                        <fork>true</fork>                        
+                        <fork>true</fork>
                         <compilerArgs>
                             <arg>--enable-preview</arg>
-                            <arg>-J--illegal-access=permit</arg>                            
-                        </compilerArgs>                        
+                            <arg>-J--illegal-access=permit</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -534,7 +532,6 @@
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.3.1</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
@@ -570,19 +567,21 @@
                 <configuration>
                     <processDependencyManagementTransitive>false</processDependencyManagementTransitive>
                 </configuration>
-            </plugin>            
+            </plugin>
         </plugins>
     </reporting>
-    <profiles>        
+    <profiles>
         <profile>
             <id>unix-active</id>
             <activation>
                 <os>
                     <family>unix</family>
+                    <name>Linux</name>
                 </os>
             </activation>
             <properties>
                 <platform>linux</platform>
+                <jfx.os>linux</jfx.os>
             </properties>
         </profile>
         <profile>
@@ -594,29 +593,86 @@
             </activation>
             <properties>
                 <platform>win</platform>
-            </properties>            
+                <jfx.os>windows</jfx.os>
+            </properties>
         </profile>
         <profile>
             <id>mac-active</id>
             <activation>
                 <os>
-                    <family>mac</family>                    
+                    <family>mac</family>
                 </os>
             </activation>
             <properties>
                 <platform>mac</platform>
+                <jfx.os>osx</jfx.os>
             </properties>
-        </profile>       
+        </profile>
+
+        <!-- CPU architecture for the JavaFX jmods download (override with -Djfx.arch=...) -->
+        <profile>
+            <id>arch-x64-amd64</id>
+            <activation>
+                <os>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <jfx.arch>x64</jfx.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>arch-x64-x86_64</id>
+            <activation>
+                <os>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
+            <properties>
+                <jfx.arch>x64</jfx.arch>
+            </properties>
+        </profile>
+        <profile>
+            <id>arch-aarch64</id>
+            <activation>
+                <os>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <jfx.arch>aarch64</jfx.arch>
+            </properties>
+        </profile>
         <profile>
             <id>package</id>
             <build>
                 <plugins>
+                    <!-- Downloads the platform specific JavaFX jmods (cached in ~/.m2) and unpacks them to target/jmods -->
+                    <plugin>
+                        <groupId>com.googlecode.maven-download-plugin</groupId>
+                        <artifactId>download-maven-plugin</artifactId>
+                        <version>1.13.0</version>
+                        <executions>
+                            <execution>
+                                <id>download-javafx-jmods</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>wget</goal>
+                                </goals>
+                                <configuration>
+                                    <url>https://download2.gluonhq.com/openjfx/${javafx.version}/openjfx-${javafx.version}_${jfx.os}-${jfx.arch}_bin-jmods.zip</url>
+                                    <unpack>true</unpack>
+                                    <outputDirectory>${project.build.directory}/jmods</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <!-- https://github.com/wiverson/jtoolprovider-plugin -->
                         <groupId>io.github.wiverson</groupId>
                         <artifactId>jtoolprovider-plugin</artifactId>
-                        <version>1.0.34</version>                
-                        <executions>                    
+                        <version>1.0.34</version>
+                        <executions>
                             <execution>
                                 <id>jlink</id>
                                 <phase>package</phase>
@@ -626,8 +682,7 @@
                                 <configuration>
                                     <toolName>jlink</toolName>
                                     <removeDirectories>${project.build.directory}/jvm-image/</removeDirectories>
-                                    <modulePath>${project.basedir}/jmods/${os.detected.classifier}-javafx/javafx-jmods-${javafx.version}/
-                                    </modulePath>
+                                    <modulePath>${project.build.directory}/jmods/javafx-jmods-${javafx.version}/</modulePath>
                                     <addModules>${jvm.modules}</addModules>
                                     <output>${project.build.directory}/jvm-image</output>
                                     <args>
@@ -638,7 +693,7 @@
                                         <arg>--compress=zip-6</arg>
                                     </args>
                                 </configuration>
-                            </execution>                    
+                            </execution>
                             <execution>
                                 <id>jpackage</id>
                                 <phase>package</phase>

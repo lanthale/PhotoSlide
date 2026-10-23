@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.photoslide.datamodel.customformats.tiffsupport;
 
 import com.sun.javafx.iio.ImageFormatDescription;
@@ -11,31 +6,30 @@ import com.sun.javafx.iio.ImageLoaderFactory;
 import com.sun.javafx.iio.ImageStorage;
 import java.io.IOException;
 import java.io.InputStream;
-import org.photoslide.datamodel.customformats.dimension.DefaultDimensionProvider;
-import org.photoslide.datamodel.customformats.dimension.DimensionProvider;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Class to install the TIFF renderer to the javafx image systems
+ * Registriert den TIFF-Loader im JavaFX-Imagesystem.
+ *
  * @author selfemp
  */
 public class TIFFImageLoaderFactory implements ImageLoaderFactory {
 
-    private static final TIFFImageLoaderFactory instance = new TIFFImageLoaderFactory();
+    private static final TIFFImageLoaderFactory INSTANCE = new TIFFImageLoaderFactory();
+    private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
 
-    private static DimensionProvider dimensionProvider;
-
-    public static final void install() {
-        install(new DefaultDimensionProvider());
+    private TIFFImageLoaderFactory() {
     }
 
-    public static final void install(DimensionProvider dimensionProvider) {
-        TIFFImageLoaderFactory.dimensionProvider = dimensionProvider;
-
-        ImageStorage.getInstance().addImageLoaderFactory(instance);        
+    /** Einmalig beim Start aufrufen, bevor das erste TIFF geladen wird. */
+    public static void install() {
+        if (INSTALLED.compareAndSet(false, true)) {
+            ImageStorage.getInstance().addImageLoaderFactory(INSTANCE);
+        }
     }
 
-    public static final ImageLoaderFactory getInstance() {
-        return instance;
+    public static TIFFImageLoaderFactory getInstance() {
+        return INSTANCE;
     }
 
     @Override
@@ -45,7 +39,6 @@ public class TIFFImageLoaderFactory implements ImageLoaderFactory {
 
     @Override
     public ImageLoader createImageLoader(InputStream input) throws IOException {
-        return new TIFFImageLoader(input, dimensionProvider);
+        return new TIFFImageLoader(input);
     }
-
 }

@@ -1,62 +1,40 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.photoslide.datamodel.customformats.tiffsupport;
 
 import com.sun.javafx.iio.common.ImageDescriptor;
 
 /**
+ * Descriptor für TIFF und BigTIFF.
  *
  * @author selfemp
  */
 public class TIFFDescriptor extends ImageDescriptor {
 
-    private static final String formatName = "TIFF";
+    private static final String FORMAT_NAME = "TIFF";
 
-    private static final String[] extensions = {"tif", "tiff"};
+    private static final String[] EXTENSIONS = {"tif", "tiff"};
 
-    private static final Signature[] signatures = {
-        new Signature(hexStringToByteArray("492049")), new Signature(hexStringToByteArray("49492B00")), new Signature(hexStringToByteArray("4D4D002A")), new Signature(hexStringToByteArray("4D4D002B")), new Signature(hexStringToByteArray("49492A000E30"))};
+    private static final Signature[] SIGNATURES = {
+        // TIFF, Little Endian ("II*\0")
+        new Signature(new byte[]{0x49, 0x49, 0x2A, 0x00}),
+        // TIFF, Big Endian ("MM\0*")
+        new Signature(new byte[]{0x4D, 0x4D, 0x00, 0x2A}),
+        // BigTIFF, Little Endian
+        new Signature(new byte[]{0x49, 0x49, 0x2B, 0x00}),
+        // BigTIFF, Big Endian
+        new Signature(new byte[]{0x4D, 0x4D, 0x00, 0x2B}),
+        // seltene Variante ("I I"), falls bewusst benötigt
+        new Signature(new byte[]{0x49, 0x20, 0x49})
+    };
 
-    private static final String[] mimesubtype = {"tif", "tiff"};
-    
-    private static ImageDescriptor theInstance = null;
+    private static final String[] MIME_SUBTYPES = {"tiff", "x-tiff"};
+
+    private static final TIFFDescriptor INSTANCE = new TIFFDescriptor();
 
     private TIFFDescriptor() {
-        super(formatName, extensions, signatures, mimesubtype);
+        super(FORMAT_NAME, EXTENSIONS, SIGNATURES, MIME_SUBTYPES);
     }
 
-    public static synchronized ImageDescriptor getInstance() {
-        if (theInstance == null) {
-            theInstance = new TIFFDescriptor();
-        }
-        return theInstance;
-    }
-
-    public static byte[] hexStringToByteArray(String input) {
-        int len = input.length();
-
-        if (len == 0) {
-            return new byte[]{};
-        }
-
-        byte[] data;
-        int startIdx;
-        if (len % 2 != 0) {
-            data = new byte[(len / 2) + 1];
-            data[0] = (byte) Character.digit(input.charAt(0), 16);
-            startIdx = 1;
-        } else {
-            data = new byte[len / 2];
-            startIdx = 0;
-        }
-
-        for (int i = startIdx; i < len; i += 2) {
-            data[(i + 1) / 2] = (byte) ((Character.digit(input.charAt(i), 16) << 4)
-                    + Character.digit(input.charAt(i + 1), 16));
-        }
-        return data;
+    public static TIFFDescriptor getInstance() {
+        return INSTANCE;
     }
 }

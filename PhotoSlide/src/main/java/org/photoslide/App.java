@@ -17,11 +17,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -37,10 +37,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Paint;
-import javafx.stage.WindowEvent;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
-import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
 import org.h2.fulltext.FullText;
 import org.libheiffx.HEIFImageLoaderFactory;
@@ -68,7 +66,7 @@ public class App extends Application {
     private static final double DEFAULT_Y = 200;
     private static final double DEFAULT_WIDTH = 1280;
     private static final double DEFAULT_HEIGHT = 800;
-    private static HashMap<String, LocalDate> SEARCHINDEXFINISHEDMAP = new HashMap<>();
+    private static final HashMap<String, LocalDate> SEARCHINDEXFINISHEDMAP = new HashMap<>();
     private static boolean MAXIMIZED = true;
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
@@ -117,17 +115,23 @@ public class App extends Application {
 
         try {
             RAWImageLoaderFactory.install();
-            RAWImageLoaderFactory.getDecoderSettings().put("Sigma DP2 Merrill", new RawDecoderSettings());
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setAutoBrightness(true);
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setExposureCorrection(1);
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setEnableExposureCorrection(true);
-            RAWImageLoaderFactory.getDecoderSettings().get("Sigma DP2 Merrill").setBlackPoint(2);
+            Map<String, RawDecoderSettings> settings = RAWImageLoaderFactory.getDecoderSettings();
+            RawDecoderSettings sigma = new RawDecoderSettings();
+            sigma.setEnableExposureCorrection(false);   
+            sigma.setExposureShift(1.2f);
+            sigma.setAutoBrightness(true);
+            sigma.setBrightNess(1.0f);
+            sigma.setAutoWhitebalance(false);
+            sigma.setWhiteBalance("CAMERA");            
+            settings.put("Sigma DP2 Merrill", sigma);
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
         }
 
-        printAllCodecs();
+        if (Logger.getGlobal().getLevel() == Level.FINEST) {
+            printAllCodecs();
+        }
 
         //create cache dir
         if (Files.exists(Path.of(Utility.getAppData() + File.separatorChar + "cache")) == false) {
@@ -220,7 +224,6 @@ public class App extends Application {
             Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
                 Logger.getLogger(App.class.getName())
                         .log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
-                e.printStackTrace();   // garantiert in der IDE-Konsole
             });
 
             System.setProperty("javafx.preloader", PSPreloader.class.getCanonicalName());
@@ -309,7 +312,7 @@ public class App extends Application {
                 = registry.getServiceProviders(ImageReaderSpi.class, true);
         while (readers.hasNext()) {
             ImageReaderSpi spi = readers.next();
-            System.out.println(spi.getClass().getName()
+            Logger.getLogger(App.class.getName()).log(Level.FINEST, spi.getClass().getName()
                     + " | " + spi.getDescription(java.util.Locale.getDefault())
                     + " | Formate: " + Arrays.toString(spi.getFormatNames())
                     + " | Endungen: " + Arrays.toString(spi.getFileSuffixes()));

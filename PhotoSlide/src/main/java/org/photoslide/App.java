@@ -47,6 +47,7 @@ import org.librawdecodersettings.RawDecoderSettings;
 import org.photoslide.datamodel.customformats.psdsupport.PSDImageLoaderFactory;
 import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoaderFactory;
 import org.photoslide.datamodel.customformats.webpsupport.WEBPImageLoaderFactory;
+import org.photoslide.preferences.RawSettingsStore;
 import org.photoslide.pspreloader.PSPreloader;
 
 /**
@@ -115,15 +116,16 @@ public class App extends Application {
 
         try {
             RAWImageLoaderFactory.install();
-            Map<String, RawDecoderSettings> settings = RAWImageLoaderFactory.getDecoderSettings();
+            /*Map<String, RawDecoderSettings> settings = RAWImageLoaderFactory.getDecoderSettings();
             RawDecoderSettings sigma = new RawDecoderSettings();
-            sigma.setEnableExposureCorrection(false);   
+            sigma.setEnableExposureCorrection(false);
             sigma.setExposureShift(1.2f);
             sigma.setAutoBrightness(true);
             sigma.setBrightNess(1.0f);
             sigma.setAutoWhitebalance(false);
-            sigma.setWhiteBalance("CAMERA");            
-            settings.put("Sigma DP2 Merrill", sigma);
+            sigma.setWhiteBalance("CAMERA");
+            settings.put("Sigma DP2 Merrill", sigma);*/
+            RawSettingsStore.loadAndApply();
             HEIFImageLoaderFactory.install();
         } catch (UnsatisfiedLinkError e) {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);

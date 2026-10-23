@@ -1,0 +1,167 @@
+/* ---------- Grundlayout ---------- */
+.root {
+    -fx-background-color: #2b2b2b;
+}
+
+/* ---------- Kategorie-Baum links ---------- */
+.tree-view {
+    -fx-background-color: #232323;
+    -fx-padding: 8 0 8 0;
+    -fx-border-color: transparent #3a3a3a transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+.tree-view .tree-cell {
+    -fx-background-color: transparent;
+    /* NICHT selektiert: deutlich dunklere/kräftigere Schriftfarbe als Modena-Default */
+    -fx-text-fill: #c9c9c9;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+}
+.tree-view .tree-cell:hover {
+    -fx-background-color: #2f2f2f;
+}
+.tree-view .tree-cell:selected {
+    /* gleiche Farbe wie die Toolbar (siehe .tool-bar) => balken-uniformes Erscheinungsbild */
+    -fx-background-color: #333333;
+    -fx-background-radius: 4;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Toolbars & Buttons ---------- */
+.tool-bar {
+    -fx-background-color: #333333;
+    -fx-padding: 8;
+    -fx-spacing: 6;
+    -fx-border-color: transparent transparent #1f1f1f transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.tool-bar .label {
+    -fx-text-fill: #cfcfcf;
+    -fx-font-size: 12px;
+}
+.tool-bar:bottom {
+    -fx-border-color: #1f1f1f transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+.button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #e6e6e6;
+    -fx-background-radius: 6;
+    -fx-padding: 5 12 5 12;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: #4a4a4a;
+}
+.button:disabled {
+    -fx-background-color: #333333;
+    -fx-text-fill: #6a6a6a;
+}
+
+/* ---------- Settings-Panel rechts: Cards ---------- */
+.settings-card {
+    -fx-background-color: #323232;
+    -fx-background-radius: 10;
+    -fx-border-color: #3e3e3e;
+    -fx-border-radius: 10;
+    -fx-padding: 10 14 12 14;
+}
+.settings-card > .separator .line {
+    -fx-background-color: #4a4a4a;
+}
+.settings-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ececec;
+    -fx-padding: 0 0 2 0;
+}
+.settings-row {
+    -fx-padding: 3 0 3 0;
+    -fx-alignment: center-left;
+}
+.settings-row > .label,
+.check-box > .label,
+.check-box,
+.label {
+    -fx-text-fill: #bcbcbc;
+    -fx-font-size: 12px;
+}
+.check-box {
+    -fx-text-fill: #bcbcbc;
+}
+
+/* ---------- Profil-Liste ---------- */
+.list-view {
+    -fx-background-color: #2c2c2c;
+    -fx-background-radius: 6;
+    -fx-border-color: #4a4a4a;
+    -fx-border-radius: 6;
+    -fx-padding: 2;
+}
+.list-view .list-cell {
+    -fx-text-fill: #c9c9c9;
+    -fx-background-color: transparent;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 12px;
+}
+.list-view .list-cell:filled:hover {
+    -fx-background-color: #2f2f2f;
+}
+.list-view .list-cell:filled:selected {
+    -fx-background-color: #333333;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Eingabefelder ---------- */
+.choice-box, .spinner, .text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #e0e0e0;
+    -fx-background-radius: 6;
+    -fx-border-color: #4a4a4a;
+    -fx-border-radius: 6;
+}
+.choice-box:hover, .spinner:hover {
+    -fx-border-color: #5a5a5a;
+}
+.choice-box .label, .spinner .label {
+    -fx-text-fill: #e0e0e0;
+}
+.spinner .increment-arrow-button, .spinner .decrement-arrow-button {
+    -fx-background-color: transparent;
+}
+
+/* ---------- Slider ---------- */
+.slider .track {
+    -fx-background-color: #4a4a4a;
+    -fx-background-radius: 2;
+    -fx-pref-height: 4;
+}
+.slider .thumb {
+    -fx-background-color: #d0d0d0;
+    -fx-background-radius: 5;
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+    -fx-effect: dropshadow(two-pass-box, rgba(0,0,0,0.5), 3, 0, 0, 1);
+}
+.slider .slider-value {
+    -fx-text-fill: #9f9f9f;
+    -fx-font-size: 11px;
+}
+
+/* ---------- Status/Info ---------- */
+#statusLabel {
+    -fx-text-fill: #9f9f9f;
+    -fx-font-size: 12px;
+    -fx-padding: 0 8 0 8;
+}
+#hintLabel {
+    -fx-text-fill: #8f8f8f;
+    -fx-font-size: 11px;
+    -fx-padding: 6 10 6 10;
+}
+#cameraLabel {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}

@@ -75,6 +75,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -661,15 +662,22 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void preferencesMenuAction(ActionEvent event) {
-        StringProperty stringProperty = new SimpleStringProperty("String");
-        BooleanProperty booleanProperty = new SimpleBooleanProperty(true);
-        IntegerProperty integerProperty = new SimpleIntegerProperty(12);
-        DoubleProperty doubleProperty = new SimpleDoubleProperty(6.5);
-
-        /*PreferencesFx preferencesFx = PreferencesFx.of(App.class, Category.of("probe"), Category.of("probe2"));
-        preferencesFx.getStylesheets().add(
-                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-        preferencesFx.show();*/
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/RawSettingsLab.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/org/photoslide/css/MainView.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource("/org/photoslide/css/RawSettingsLab.css").toExternalForm());
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.initOwner(progressPane.getScene().getWindow());
+            stage.getIcons().add(dialogIcon);
+            stage.setTitle("RAW Decoder Settings");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @FXML

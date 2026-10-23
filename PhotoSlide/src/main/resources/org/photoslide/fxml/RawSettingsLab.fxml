@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.TreeItem?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.photoslide.preferences.RawSettingsLabController"
+            prefWidth="1250.0" prefHeight="720.0" styleClass="root">
+    <left>
+        <TreeView fx:id="settingsTree" prefWidth="220.0" showRoot="false"/>
+    </left>
+    <center>
+        <StackPane>
+            <!-- Seite: RAW Developer Settings -->
+            <VBox fx:id="rawLabRoot">
+                <ToolBar>
+                    <Button fx:id="openButton" onAction="#openSampleAction" text="Load sample image…">
+                        <graphic><FontIcon iconLiteral="fa-folder-open-o"/></graphic>
+                    </Button>
+                    <Label fx:id="fileLabel" text="No image loaded"/>
+                    <Separator orientation="VERTICAL"/>
+                    <Label text="Camera:"/>
+                    <Label fx:id="cameraLabel" style="-fx-font-weight: bold;" text="—"/>
+                    <Separator orientation="VERTICAL"/>
+                    <Button fx:id="applyButton" onAction="#applyAction" text="Apply settings" disable="true">
+                        <graphic><FontIcon iconLiteral="fa-refresh"/></graphic>
+                    </Button>
+                    <Button fx:id="resetButton" onAction="#resetAction" text="Reset" disable="true">
+                        <graphic><FontIcon iconLiteral="fa-undo"/></graphic>
+                    </Button>
+                </ToolBar>
+                <HBox spacing="5.0" alignment="CENTER_LEFT">
+                    <padding><Insets left="8.0" right="8.0" top="4.0" bottom="4.0"/></padding>
+                    <Label fx:id="hintLabel" text="Load a RAW file, change the settings, click 'Apply settings' to see the result. Left: reference (defaults), right: your settings."/>
+                </HBox>
+                <!-- Inhalt: links Profil-Liste (volle Hoehe), rechts Bilder + Settings -->
+                <HBox spacing="10.0" VBox.vgrow="ALWAYS">
+                    <padding><Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/></padding>
+                    <!-- 1. Profil-Spalte: Liste mit +/- ueber die komplette Hoehe -->
+                    <VBox fx:id="profileColumn" spacing="6.0" minWidth="180.0" prefWidth="240.0">
+                        <Label text="Profiles" styleClass="settings-section-title"/>
+                        <ListView fx:id="profileList" VBox.vgrow="ALWAYS"/>
+                        <HBox spacing="6.0">
+                            <Button fx:id="addProfileButton" onAction="#addProfileAction" text="New">
+                                <graphic><FontIcon iconLiteral="fa-plus"/></graphic>
+                            </Button>
+                            <Button fx:id="deleteProfileButton" onAction="#deleteProfileAction" text="Delete" disable="true">
+                                <graphic><FontIcon iconLiteral="fa-trash-o"/></graphic>
+                            </Button>
+                        </HBox>
+                    </VBox>
+                    <!-- 2. Hauptspalte: oben 2x Bild, darunter die Settings -->
+                    <VBox fx:id="mainColumn" spacing="10.0" HBox.hgrow="ALWAYS">
+                        <!-- Bildleiste: default ausgeblendet, erst nach Dateiauswahl sichtbar.
+                             Jede Zelle: StackPane mit ImageView + zentriertem ProgressIndicator. -->
+                        <HBox fx:id="imageBox" spacing="10.0" visible="false" managed="false">
+                            <ScrollPane fitToWidth="true" fitToHeight="true" HBox.hgrow="ALWAYS" prefHeight="600.0" minHeight="400.0">
+                                <StackPane>
+                                    <ImageView fx:id="referenceView" preserveRatio="true" smooth="true"/>
+                                    <ProgressIndicator fx:id="referenceProgress" visible="false"/>
+                                </StackPane>
+                            </ScrollPane>
+                            <ScrollPane fitToWidth="true" fitToHeight="true" HBox.hgrow="ALWAYS" prefHeight="600.0" minHeight="400.0">
+                                <StackPane>
+                                    <ImageView fx:id="previewView" preserveRatio="true" smooth="true"/>
+                                    <ProgressIndicator fx:id="previewProgress" visible="false"/>
+                                </StackPane>
+                            </ScrollPane>
+                        </HBox>
+                        <ScrollPane fx:id="settingsScrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
+                            <VBox fx:id="settingsBox" spacing="10.0"/>
+                        </ScrollPane>
+                    </VBox>
+                </HBox>
+                <ToolBar>
+                    <Button fx:id="saveButton" onAction="#saveAction" text="Save into selected profile" disable="true">
+                        <graphic><FontIcon iconLiteral="fa-save"/></graphic>
+                    </Button>
+                    <Label fx:id="statusLabel" text=""/>
+                </ToolBar>
+            </VBox>
+            <!-- Seite: General (Platzhalter fuer spaetere allgemeine Optionen) -->
+            <StackPane fx:id="generalPane" visible="false" managed="false">
+                <VBox alignment="CENTER" spacing="10.0">
+                    <Label text="General"/>
+                    <Label text="No general settings yet." style="-fx-text-fill: #9f9f9f;"/>
+                </VBox>
+            </StackPane>
+        </StackPane>
+    </center>
+</BorderPane>

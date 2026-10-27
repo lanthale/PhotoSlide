@@ -255,6 +255,12 @@ public class MetadataController implements Initializable {
         };
         gainSlider.valueProperty().addListener(gainListener);
         biasSlider.valueProperty().addListener(gainListener);
+        // sidecar changed by another program: show the reloaded values
+        EditPipeline.addReloadListener(f -> {
+            if (f == actualMediaFile) {
+                showFilterValues(f);
+            }
+        });
         geoCoding = new GeoCoding();
     }
 

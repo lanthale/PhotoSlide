@@ -53,6 +53,7 @@ import org.photoslide.browsermetadata.DegreeCoordinate;
 import org.photoslide.browsermetadata.Point;
 import org.photoslide.imageops.EditPipeline;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.ToolRegistry;
 
 /**
  *
@@ -90,10 +91,14 @@ public class MediaFile implements Serializable {
     private FileTime lastModifyTime;
     private boolean subViewSelected;
     private ObservableList<ImageFilter> filterList;
+    /** Assumed width of the original when only the thumbnail is known (for radii of filters). */
+    private static final double TYPICAL_IMAGE_WIDTH = 6000;
     private Point gpsPosition;
     private LocalDateTime gpsDateTime;
     private double gpsHeight;
     private SimpleBooleanProperty bookmarked;
+    /** Counts reloads of the edits from disk, so grid cells redraw their thumbnail. */
+    private SimpleIntegerProperty editVersion;
 
     public static enum MediaTypes {
         IMAGE,
@@ -124,6 +129,7 @@ public class MediaFile implements Serializable {
     }
 
     public MediaFile() {
+        editVersion = new SimpleIntegerProperty(0);
         bookmarked = new SimpleBooleanProperty(false);
         loading = new SimpleBooleanProperty(true);
         loadingError = new SimpleBooleanProperty(false);
@@ -150,6 +156,7 @@ public class MediaFile implements Serializable {
     }
 
     public void initData() {
+        editVersion = new SimpleIntegerProperty(0);
         bookmarked = new SimpleBooleanProperty(false);
         loading = new SimpleBooleanProperty(true);
         loadingError = new SimpleBooleanProperty(false);
@@ -182,7 +189,7 @@ public class MediaFile implements Serializable {
      * base for the re-draw happening
      */
     public static Callback<MediaFile, Observable[]> extractor() {
-        return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating, p.selected};
+        return (MediaFile p) -> new Observable[]{p.loading, p.bookmarked, p.deleted, p.title, p.rotationAngle, p.rating, p.selected, p.editVersion};
     }
 
     public Image setFilters() {
@@ -190,7 +197,10 @@ public class MediaFile implements Serializable {
             if (filterList.isEmpty()) {
                 return getClonedImage(unModifiyAbleImage);
             }
-            return EditPipeline.applyTo(unModifiyAbleImage, getFilterListWithoutImageData());
+            // radii are given for the full image; its width is only known after a crop,
+            // otherwise assume a typical camera width
+            double fullWidth = orignalImageSize != null ? orignalImageSize.getX() : TYPICAL_IMAGE_WIDTH;
+            return EditPipeline.applyTo(unModifiyAbleImage, getFilterListWithoutImageData(), fullWidth);
         } else {
             return this.image;
         }
@@ -238,9 +248,10 @@ public class MediaFile implements Serializable {
     }
 
     /**
-     * Reads the XMP sidecar. Without a sidecar the former properties file
-     * ({@code Ω_<name>.edit}) is read and converted: the sidecar is written
-     * and the old file is deleted.
+     * Reads the XMP sidecar, which is the reference for all edits. Without a
+     * sidecar the former properties file ({@code Ω_<name>.edit}) is read and
+     * converted (the sidecar is written and the old file is deleted); without
+     * either, all edits are reset.
      */
     public void readEdits() {
         try {
@@ -258,7 +269,42 @@ public class MediaFile implements Serializable {
             } catch (IOException ex) {
                 Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert " + getLegacyEditFilePath() + " to XMP", ex);
             }
+        } else {
+            // no sidecar: the file has no edits (values e.g. from an old cache are dropped)
+            resetEdits();
         }
+    }
+
+    /**
+     * Reads the edits again after the sidecar was changed or deleted by
+     * another program, and lets grid cells redraw. JavaFX thread.
+     */
+    public void reloadEdits() {
+        readEdits();
+        editVersion.set(editVersion.get() + 1);
+    }
+
+    /**
+     * Sets everything that is stored in the sidecar back to the defaults.
+     * Values that come from the image file itself (camera, dates) stay.
+     */
+    private void resetEdits() {
+        filterList.clear();
+        rating.set(0);
+        title.set(null);
+        comments.set(null);
+        keywords.set(null);
+        place.set(null);
+        gpsPosition = null;
+        gpsHeight = -1;
+        gpsDateTime = null;
+        rotationAngle.set(0.0);
+        deleted.set(false);
+        cropView = null;
+        orignalImageSize = null;
+        stacked.set(false);
+        stackName.set(null);
+        stackPos.set(-1);
     }
 
     /**
@@ -353,7 +399,7 @@ public class MediaFile implements Serializable {
                     ImageFilter ifm = null;
                     try {
                         String cname = key.substring(12);
-                        ifm = (ImageFilter) mapper.readValue(prop.getProperty(key), Class.forName("org.photoslide.imageops." + cname));
+                        ifm = (ImageFilter) mapper.readValue(prop.getProperty(key), filterClass(cname));
                     } catch (JsonProcessingException | ClassNotFoundException ex) {
                         Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
                     }
@@ -1082,4 +1128,13 @@ public class MediaFile implements Serializable {
         }
     }
 
+
+    /** Class of a tool by its stored name (see ToolRegistry). */
+    private static Class<? extends ImageFilter> filterClass(String name) throws ClassNotFoundException {
+        ToolRegistry.Tool tool = ToolRegistry.find(name);
+        if (tool == null) {
+            throw new ClassNotFoundException("Unknown filter " + name);
+        }
+        return tool.type();
+    }
 }

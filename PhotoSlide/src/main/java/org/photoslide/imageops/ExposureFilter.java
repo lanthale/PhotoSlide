@@ -1,150 +1,67 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.photoslide.imageops;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
+import java.util.List;
 import org.photoslide.datamodel.Filter16;
-import org.photoslide.datamodel.LutFilter16;
+import org.photoslide.datamodel.RenderContext;
+import org.photoslide.imageops.lz.LuminanceRatioFilter16;
 
 /**
- * Exposure in stops (+1 = twice as much light), applied in linear light.
- *
- * Version 1 (the old 8 bit filter) stored a factor e of the curve
- * 1 - exp(-x * e). Such values are converted when they are read.
+ * Exposure in stops (+1 = twice as much light) on the linear 16 bit data.
+ * All channels are scaled by the same factor, so the hue stays. With
+ * "Protect highlights" the brightest tones roll off smoothly into white
+ * instead of being clipped.
  *
  * @author selfemp
  */
-public class ExposureFilter implements ImageFilter {
+public class ExposureFilter extends AbstractImageFilter {
 
     public static final String NAME = "ExposureFilter";
 
-    public static final int VERSION = 2;
-    public static final float MIN_STOPS = -5f;
-    public static final float MAX_STOPS = 5f;
+    /** Highlights above this luminance are compressed when protection is on. */
+    private static final double SHOULDER = 0.8;
 
-    private final String name;
-    private int pos;
-    private float exposure;
+    private static final List<ParamSpec> PARAMS = List.of(
+            ParamSpec.slider("ev", "Exposure (EV)", 0, -5f, 5f, 0f, 0.05f),
+            ParamSpec.check("protect", "Protect highlights", 1, true));
 
     public ExposureFilter() {
-        name = NAME;
-        exposure = 0f;
-    }
-
-    @JsonCreator
-    ExposureFilter(@JsonProperty("values") float[] values, @JsonProperty("position") int position,
-            @JsonProperty("version") Integer version) {
-        this();
-        this.pos = position;
-        if (values != null && values.length > 0) {
-            exposure = (version == null || version < VERSION) ? fromLegacy(values[0]) : values[0];
-        }
-    }
-
-    /**
-     * Same as reading the JSON form: values of version 1 (or without version)
-     * are converted from the old 8 bit curve.
-     */
-    public static ExposureFilter of(float[] values, int position, Integer version) {
-        return new ExposureFilter(values, position, version);
-    }
-
-    /**
-     * For small values the old curve is a gain of e on the encoded values,
-     * which is about e^2.2 in linear light.
-     */
-    static float fromLegacy(float e) {
-        if (e <= 0f) {
-            return MIN_STOPS;
-        }
-        float stops = (float) (2.2 * Math.log(e) / Math.log(2.0));
-        return Math.max(MIN_STOPS, Math.min(MAX_STOPS, stops));
+        super(NAME);
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    public int getVersion() {
-        return VERSION;
+    public String displayName() {
+        return "Exposure";
     }
 
     @Override
-    public float[] getValues() {
-        return new float[]{exposure};
+    public List<ParamSpec> params() {
+        return PARAMS;
     }
 
     @Override
-    public void setValues(float[] values) {
-        this.exposure = values[0];
-    }
-
-    @Override
-    public Filter16 toFilter16() {
-        if (exposure == 0f) {
+    protected Filter16 createFilter16(RenderContext ctx) {
+        final double ev = value(0);
+        if (ev == 0) {
             return null;
         }
-        return LutFilter16.exposure(exposure);
-    }
-
-    @Override
-    public void setPosition(int val) {
-        this.pos = val;
-    }
-
-    @Override
-    public int getPosition() {
-        return pos;
+        final double k = Math.pow(2.0, ev);
+        final boolean protect = value(1) >= 0.5f;
+        return new LuminanceRatioFilter16("Exposure " + ev,
+                LuminanceRatioFilter16.ratiosFor(y -> protect ? shoulder(k * y, k) : k * y));
     }
 
     /**
-     *
-     * @return clone of the filter
+     * Identity up to SHOULDER; above, [SHOULDER, k] is mapped onto
+     * [SHOULDER, 1] with an extended Reinhard curve: slope 1 at the start,
+     * exactly 1 for the brightest input, and bright tones stay apart. For
+     * k <= 1 nothing is compressed.
      */
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+    static double shoulder(double x, double k) {
+        if (k <= 1 || x <= SHOULDER) {
+            return x;
+        }
+        double l = (k - SHOULDER) / (1 - SHOULDER);
+        double u = Math.min(l, (x - SHOULDER) / (1 - SHOULDER));
+        return SHOULDER + (1 - SHOULDER) * u * (1 + u / (l * l)) / (1 + u);
     }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 79 * hash + Objects.hashCode(this.name);
-        hash = 79 * hash + this.pos;
-        hash = 79 * hash + Float.floatToIntBits(this.exposure);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ExposureFilter other = (ExposureFilter) obj;
-        if (this.pos != other.pos) {
-            return false;
-        }
-        if (Float.floatToIntBits(this.exposure) != Float.floatToIntBits(other.exposure)) {
-            return false;
-        }
-        return Objects.equals(this.name, other.name);
-    }
-
-    @Override
-    public String toString() {
-        return "ExposureFilter{" + "name=" + name + ", pos=" + pos + ", exposure=" + exposure + '}';
-    }
-
 }

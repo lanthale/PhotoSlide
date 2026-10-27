@@ -262,6 +262,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
             List<MediaFile> e2;
             try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 e2 = (List<MediaFile>) objectInputStream.readObject();
+                // the cache is only written after loading a folder: the edits
+                // made since then are in the XMP sidecars, which are the reference
+                e2.parallelStream().forEach(MediaFile::readEdits);
                 //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());                
                 cacheList.addAll(e2);                
                 Platform.runLater(() -> {

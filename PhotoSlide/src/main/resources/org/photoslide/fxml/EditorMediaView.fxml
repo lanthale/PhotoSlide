@@ -20,7 +20,7 @@
    <children>
       <VBox layoutY="14.0" prefHeight="660.0" prefWidth="646.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <ToolBar prefWidth="646.0">
+            <ToolBar fx:id="editorToolBar" prefWidth="646.0">
                <items>
                   <Button id="toolbutton" fx:id="zoomButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#zoomButtonAction" text="100% View">
                      <font>

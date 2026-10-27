@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 /**
  * Ordered list of filters. render() is non-destructive: the source stays
  * untouched, the filters run in 16 bit (two scratch buffers are alternated).
- * Rows are processed in parallel.
+ * Rows are processed in parallel; a WholeImageFilter16 gets the whole image
+ * and returns a new one.
  */
 public final class FilterChain16 {
 
@@ -51,6 +52,10 @@ public final class FilterChain16 {
         }
         Image16 current = source;
         for (Filter16 f : filters) {
+            if (f instanceof WholeImageFilter16 whole) {
+                current = whole.process(current);
+                continue;
+            }
             int slot = current == scratch[0] ? 1 : 0;
             if (scratch[slot] == null) {
                 scratch[slot] = Image16.blank(source.width(), source.height(), source.isLinear());
@@ -62,7 +67,8 @@ public final class FilterChain16 {
         return current;
     }
 
-    private static void run(Filter16 f, Image16 src, Image16 dst) {
+    /** Runs a row filter over the whole image, rows in parallel. */
+    public static void run(Filter16 f, Image16 src, Image16 dst) {
         final int h = src.height();
         final int tasks = (h + ROWS_PER_TASK - 1) / ROWS_PER_TASK;
         IntStream.range(0, tasks).parallel().forEach(t -> {

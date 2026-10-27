@@ -2,18 +2,15 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
-<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editortools.EditorToolsController">
    <children>
@@ -39,44 +36,10 @@
           <Button mnemonicParsing="false" scaleX="0.9" scaleY="0.9" text="Button" />
         </items>
       </ToolBar>
-      <VBox fx:id="titlePaneBox" layoutX="14.0" layoutY="254.0" prefHeight="406.0" prefWidth="231.0">
+      <VBox fx:id="titlePaneBox" spacing="6.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="220.0">
          <children>
-            <TitledPane fx:id="lightPane" animated="false" text="Light">
-               <content>
-                  <VBox spacing="6.0">
-                     <children>
-                        <Label text="Exposure (EV)" />
-                        <HBox alignment="CENTER_LEFT" spacing="6.0">
-                           <children>
-                              <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" min="-5.0" value="0.0" HBox.hgrow="ALWAYS" />
-                              <Label fx:id="exposureValueLabel" minWidth="36.0" text="0.00" />
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset">
-                                 <graphic>
-                                    <FontIcon iconLiteral="fa-undo" />
-                                 </graphic>
-                              </Button>
-                           </children>
-                        </HBox>
-                        <Label text="Gain / Bias" />
-                        <HBox alignment="CENTER_LEFT" spacing="6.0">
-                           <children>
-                              <VBox HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Slider fx:id="gainSlider" blockIncrement="0.01" max="1.0" value="0.5" />
-                                    <Slider fx:id="biasSlider" blockIncrement="0.01" max="1.0" value="0.5" />
-                                 </children>
-                              </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetGainFilterAction" text="Reset">
-                                 <graphic>
-                                    <FontIcon iconLiteral="fa-undo" />
-                                 </graphic>
-                              </Button>
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </TitledPane>
+            <HBox fx:id="toolHeader" alignment="CENTER_LEFT" spacing="6.0" />
+            <ScrollPane fx:id="toolScroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
    </children>

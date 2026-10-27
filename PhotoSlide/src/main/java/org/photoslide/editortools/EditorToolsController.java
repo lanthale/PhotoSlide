@@ -16,23 +16,23 @@ import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.ImageFilter;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.event.ActionEvent;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Image16;
+import java.util.function.Consumer;
+import org.photoslide.imageops.AbstractImageFilter;
+import org.photoslide.imageops.mask.ColorSelection;
+import org.photoslide.imageops.mask.Contour;
+import org.photoslide.imageops.mask.Region;
 import org.photoslide.imageops.EditPipeline;
-import org.photoslide.imageops.ExposureFilter;
-import org.photoslide.imageops.GainFilter;
 import org.photoslide.imageops.ImagePreview16;
 
 /**
@@ -58,14 +58,11 @@ public class EditorToolsController implements Initializable {
     @FXML
     private ProgressIndicator progressHistogramm;
     @FXML
-    private Slider exposureSlider;
+    private HBox toolHeader;
     @FXML
-    private Label exposureValueLabel;
-    @FXML
-    private Slider gainSlider;
-    @FXML
-    private Slider biasSlider;
-    private boolean updatingSliders;
+    private ScrollPane toolScroll;
+    private ToolStackView toolStack;
+    private ToolStackView.DropperHost dropperHost;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -77,25 +74,64 @@ public class EditorToolsController implements Initializable {
         gc.setLineWidth(1);
         drawingCanvas.widthProperty().addListener((o) -> drawHistogram());
         drawingCanvas.heightProperty().addListener((o) -> drawHistogram());
-        exposureSlider.valueProperty().addListener((o) -> {
-            exposureValueLabel.setText(String.format("%.2f", exposureSlider.getValue()));
-            if (updatingSliders || selectedMediaFile == null) {
-                return;
+        // forwards to the editor view once it is connected (setDropperHost)
+        toolStack = new ToolStackView(new ToolStackView.DropperHost() {
+            @Override
+            public void requestPoint(Consumer<Contour.Point> onPoint) {
+                if (dropperHost != null) {
+                    dropperHost.requestPoint(onPoint);
+                }
             }
-            EditPipeline.setFilterValues(selectedMediaFile, ExposureFilter.NAME, ExposureFilter::new,
-                    new float[]{(float) exposureSlider.getValue()});
-            EditPipeline.filtersChanged(selectedMediaFile);
+
+            @Override
+            public void requestOutline(Consumer<List<Contour.Point>> onOutline) {
+                if (dropperHost != null) {
+                    dropperHost.requestOutline(onOutline);
+                }
+            }
+
+            @Override
+            public void cancelPick() {
+                if (dropperHost != null) {
+                    dropperHost.cancelPick();
+                }
+            }
+
+            @Override
+            public double[] sampleBelow(AbstractImageFilter tool, Contour.Point p) {
+                return dropperHost != null ? dropperHost.sampleBelow(tool, p) : null;
+            }
+
+            @Override
+            public double[] imageSize() {
+                return dropperHost != null ? dropperHost.imageSize() : null;
+            }
+
+            @Override
+            public void showRegion(AbstractImageFilter tool) {
+                if (dropperHost != null) {
+                    dropperHost.showRegion(tool);
+                }
+            }
+
+            @Override
+            public Region selectedRegion() {
+                return dropperHost != null ? dropperHost.selectedRegion() : Region.EMPTY;
+            }
+
+            @Override
+            public ColorSelection selectedColors() {
+                return dropperHost != null ? dropperHost.selectedColors() : ColorSelection.NONE;
+            }
         });
-        InvalidationListener gainListener = (o) -> {
-            if (updatingSliders || selectedMediaFile == null) {
-                return;
+        toolHeader.getChildren().add(toolStack.addButton());
+        toolScroll.setContent(toolStack.node());
+        // sidecar changed by another program: show the reloaded tools
+        EditPipeline.addReloadListener(f -> {
+            if (f == selectedMediaFile) {
+                toolStack.setFile(f);
             }
-            EditPipeline.setFilterValues(selectedMediaFile, GainFilter.NAME, GainFilter::new,
-                    new float[]{(float) gainSlider.getValue(), (float) biasSlider.getValue()});
-            EditPipeline.filtersChanged(selectedMediaFile);
-        };
-        gainSlider.valueProperty().addListener(gainListener);
-        biasSlider.valueProperty().addListener(gainListener);
+        });
     }
 
     public void cancleTask() {
@@ -108,7 +144,12 @@ public class EditorToolsController implements Initializable {
         }
         resetUI();
         selectedMediaFile = f;
-        showFilterValues(f);
+        toolStack.setFile(f);
+    }
+
+    /** The editor view that handles dropper clicks on the image. */
+    public void setDropperHost(ToolStackView.DropperHost host) {
+        this.dropperHost = host;
     }
 
     /**
@@ -136,41 +177,6 @@ public class EditorToolsController implements Initializable {
                 ft1.play();
             }
         });
-    }
-
-    private void showFilterValues(MediaFile file) {
-        ImageFilter exposure = file.getFilterForName(ExposureFilter.NAME);
-        ImageFilter gain = file.getFilterForName(GainFilter.NAME);
-        updatingSliders = true;
-        try {
-            exposureSlider.setValue(exposure != null ? exposure.getValues()[0] : 0);
-            gainSlider.setValue(gain != null ? gain.getValues()[0] : 0.5);
-            biasSlider.setValue(gain != null ? gain.getValues()[1] : 0.5);
-        } finally {
-            updatingSliders = false;
-        }
-    }
-
-    @FXML
-    private void resetExposureAction(ActionEvent event) {
-        resetFilter(ExposureFilter.NAME);
-    }
-
-    @FXML
-    private void resetGainFilterAction(ActionEvent event) {
-        resetFilter(GainFilter.NAME);
-    }
-
-    private void resetFilter(String name) {
-        if (selectedMediaFile == null) {
-            return;
-        }
-        ImageFilter filter = selectedMediaFile.getFilterForName(name);
-        if (filter != null) {
-            selectedMediaFile.removeImageFilter(filter);
-        }
-        showFilterValues(selectedMediaFile);
-        EditPipeline.filtersChanged(selectedMediaFile);
     }
 
     private void drawHistogram() {

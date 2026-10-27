@@ -18,6 +18,14 @@ public final class LutFilter16 implements Filter16 {
         this.lutB = b;
     }
 
+    /** Per channel tables of 65536 entries (unsigned 16 bit values). */
+    public static LutFilter16 of(String name, short[] r, short[] g, short[] b) {
+        if (r.length != 65536 || g.length != 65536 || b.length != 65536) {
+            throw new IllegalArgumentException("tables need 65536 entries");
+        }
+        return new LutFilter16(name, r, g, b);
+    }
+
     /** Exposure in stops (+1 = twice as bright). Meant for LINEAR images. */
     public static LutFilter16 exposure(float stops) {
         short[] lut = build(v -> v * Math.pow(2.0, stops));
@@ -50,16 +58,6 @@ public final class LutFilter16 implements Filter16 {
             return inSrgbSpace ? Display16.srgbDecode(out) : out;
         });
         return new LutFilter16("Curve", lut, lut, lut);
-    }
-
-    /**
-     * Same mapping on all channels, defined on sRGB encoded values 0..1 (for
-     * operations that were designed for 8 bit display values, e.g. gain/bias).
-     * The image itself is expected to be LINEAR.
-     */
-    public static LutFilter16 encodedTone(String name, java.util.function.DoubleUnaryOperator f) {
-        short[] lut = build(v -> Display16.srgbDecode(f.applyAsDouble(Display16.srgbEncode(v))));
-        return new LutFilter16(name, lut, lut, lut);
     }
 
     private interface Mapping {

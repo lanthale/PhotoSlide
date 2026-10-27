@@ -6,8 +6,10 @@ import java.util.stream.IntStream;
  * Converts a 16 bit image to 8 bit ARGB pixels for display, with optional
  * ordered dithering against banding. No JavaFX dependency.
  *
- * Assumes sRGB primaries (LibRaw output_color = 1) and the sRGB curve. Linear
- * images are encoded with the sRGB curve, gamma encoded images are only scaled.
+ * Linear images are in the working space (linear ProPhoto, see WorkingSpace):
+ * they are converted to linear sRGB by matrix (colours outside sRGB are
+ * clipped), then encoded with the sRGB curve. Gamma encoded images are only
+ * scaled (they are expected to have sRGB primaries already).
  */
 public final class Display16 {
 
@@ -73,21 +75,47 @@ public final class Display16 {
         final int w = img.width();
         final int h = img.height();
         final short[] s = img.data();
-        final float[] lut = img.isLinear() ? FROM_LINEAR : FROM_ENCODED;
         final int[] out = new int[w * h];
+        if (!img.isLinear()) {
+            IntStream.range(0, h).parallel().forEach(y -> {
+                final float[] thr = THRESHOLD[y & 7];
+                int i = y * w * Image16.CHANNELS;
+                int o = y * w;
+                for (int x = 0; x < w; x++, i += 3, o++) {
+                    float t = dither ? thr[x & 7] : 0.5f;
+                    out[o] = 0xFF000000 | (quantize(FROM_ENCODED[s[i] & 0xFFFF], t) << 16)
+                            | (quantize(FROM_ENCODED[s[i + 1] & 0xFFFF], t) << 8)
+                            | quantize(FROM_ENCODED[s[i + 2] & 0xFFFF], t);
+                }
+            });
+            return out;
+        }
+        final double[][] m = WorkingSpace.WORKING_TO_SRGB;
+        final float m00 = (float) m[0][0], m01 = (float) m[0][1], m02 = (float) m[0][2];
+        final float m10 = (float) m[1][0], m11 = (float) m[1][1], m12 = (float) m[1][2];
+        final float m20 = (float) m[2][0], m21 = (float) m[2][1], m22 = (float) m[2][2];
         IntStream.range(0, h).parallel().forEach(y -> {
             final float[] thr = THRESHOLD[y & 7];
             int i = y * w * Image16.CHANNELS;
             int o = y * w;
             for (int x = 0; x < w; x++, i += 3, o++) {
                 float t = dither ? thr[x & 7] : 0.5f;
-                int r = quantize(lut[s[i] & 0xFFFF], t);
-                int g = quantize(lut[s[i + 1] & 0xFFFF], t);
-                int b = quantize(lut[s[i + 2] & 0xFFFF], t);
-                out[o] = 0xFF000000 | (r << 16) | (g << 8) | b;
+                float r = s[i] & 0xFFFF;
+                float g = s[i + 1] & 0xFFFF;
+                float b = s[i + 2] & 0xFFFF;
+                int sr = toIndex(m00 * r + m01 * g + m02 * b);
+                int sg = toIndex(m10 * r + m11 * g + m12 * b);
+                int sb = toIndex(m20 * r + m21 * g + m22 * b);
+                out[o] = 0xFF000000 | (quantize(FROM_LINEAR[sr], t) << 16)
+                        | (quantize(FROM_LINEAR[sg], t) << 8) | quantize(FROM_LINEAR[sb], t);
             }
         });
         return out;
+    }
+
+    private static int toIndex(float v) {
+        int q = (int) (v + 0.5f);
+        return q < 0 ? 0 : (q > 65535 ? 65535 : q);
     }
 
     private static int quantize(float v, float threshold) {

@@ -162,6 +162,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getInfoPane().setDisable(false);
             lightController.getImageView().setViewport(null);
             selectedMediaItem.setCropView(null);
+            final MediaFile cropReset = selectedMediaItem;
+            executor.submit(() -> cropReset.saveEdits());
             lightController.getImageStackPane().getChildren().clear();
             lightController.getImageStackPane().getChildren().add(lightController.getImageView());
             lightController.getOptionPane().getChildren().clear();

@@ -7,7 +7,9 @@ package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.EditPipeline;
 import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.datamodel.SidecarWatcher;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
@@ -113,6 +115,7 @@ public class LighttableController implements Initializable {
     @FXML
     private ImageView imageView;
     private ImagePreview16 preview;
+    private SidecarWatcher sidecarWatcher;
     @FXML
     private ProgressIndicator imageProgress;
     @FXML
@@ -296,6 +299,7 @@ public class LighttableController implements Initializable {
         mainController.getStatusLabelRight().setText("Retrieve images for " + selectedPath.toString() + "...");
 
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
+        startSidecarWatcher(sPath);
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
         sortedMediaList = new SortedList<>(filteredMediaList);
@@ -536,6 +540,9 @@ public class LighttableController implements Initializable {
     }
 
     public void Shutdown() {
+        if (sidecarWatcher != null) {
+            sidecarWatcher.stop();
+        }
         if (!imageGridPane.getChildren().isEmpty()) {
             imageGridPane.getChildren().remove(0);
         }
@@ -812,7 +819,10 @@ public class LighttableController implements Initializable {
                 }
                 if (KeyCode.ENTER == t.getCode()) {
                     Rectangle2D selection = snapshotView.getSelection();
-                    Point2D imgSize = new Point2D(imageView.getImage().getWidth(), imageView.getImage().getHeight());
+                    // the view may show a smaller preview: store sizes in pixels of the original
+                    double displayScale = preview.getDisplayScale();
+                    Point2D imgSize = new Point2D(imageView.getImage().getWidth() / displayScale,
+                            imageView.getImage().getHeight() / displayScale);
                     factory.getSelectedCell().getItem().setOrignalImageSize(imgSize);
                     imageView.setViewport(new Rectangle2D(0, 0, imageView.getImage().getWidth(), imageView.getImage().getHeight()));
                     Point2D imageViewToImageUp = util.imageViewToImage(imageView, new Point2D(selection.getMinX(), selection.getMinY()));
@@ -826,7 +836,9 @@ public class LighttableController implements Initializable {
                     snapshotView.setNode(null);
                     imageStackPane.getChildren().clear();
                     imageStackPane.getChildren().add(imageView);
-                    factory.getSelectedCell().getItem().setCropView(cropView);
+                    factory.getSelectedCell().getItem().setCropView(new Rectangle2D(
+                            cropView.getMinX() / displayScale, cropView.getMinY() / displayScale,
+                            cropView.getWidth() / displayScale, cropView.getHeight() / displayScale));
                     infoPane.setDisable(false);
                     optionPane.setDisable(false);
                     snapshotView.setSelectionRatioFixed(false);
@@ -888,6 +900,40 @@ public class LighttableController implements Initializable {
         imageProgress.setProgress(0);
         imageProgress.setVisible(true);
         preview.reload();
+    }
+
+    /**
+     * Reloads the edits of the shown media files when their XMP sidecars are
+     * changed or deleted by another program while the folder is open.
+     */
+    private void startSidecarWatcher(Path folder) {
+        if (sidecarWatcher != null) {
+            sidecarWatcher.stop();
+        }
+        final ObservableList<MediaFile> list = fullMediaList;
+        sidecarWatcher = new SidecarWatcher(folder, sidecar -> {
+            Path key = sidecar.toAbsolutePath().normalize();
+            List<MediaFile> matches = new ArrayList<>();
+            synchronized (list) {
+                for (MediaFile m : list) {
+                    if (m.getEditFilePath().toAbsolutePath().normalize().equals(key)) {
+                        matches.add(m);
+                    }
+                }
+            }
+            return matches;
+        }, (m, sidecar) -> {
+            m.reloadEdits();
+            EditPipeline.editsReloaded(m);
+            if (factory != null && factory.getSelectedMediaItem() == m && snapshotView == null) {
+                // the crop is in pixels of the original, the view may show a preview
+                Rectangle2D crop = m.getCropView();
+                double sc = preview.getDisplayScale();
+                imageView.setViewport(crop == null ? null : new Rectangle2D(crop.getMinX() * sc,
+                        crop.getMinY() * sc, crop.getWidth() * sc, crop.getHeight() * sc));
+            }
+        });
+        sidecarWatcher.start();
     }
 
     /**

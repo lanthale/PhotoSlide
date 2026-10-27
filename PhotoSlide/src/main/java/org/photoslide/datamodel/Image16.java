@@ -65,6 +65,23 @@ public final class Image16 {
         return new Image16(width, height, data.clone(), linear);
     }
 
+    /** Copy of a rectangle (clipped to the image). */
+    public Image16 crop(int x, int y, int w, int h) {
+        int x0 = Math.max(0, x);
+        int y0 = Math.max(0, y);
+        int x1 = Math.min(width, x + w);
+        int y1 = Math.min(height, y + h);
+        if (x1 <= x0 || y1 <= y0) {
+            throw new IllegalArgumentException("Rectangle outside the image");
+        }
+        Image16 out = blank(x1 - x0, y1 - y0, linear);
+        for (int row = y0; row < y1; row++) {
+            System.arraycopy(data, (row * width + x0) * CHANNELS, out.data, (row - y0) * out.width * CHANNELS,
+                    (x1 - x0) * CHANNELS);
+        }
+        return out;
+    }
+
     /**
      * Area-averaging scale, meant for preview proxies. Upscaling is nearest
      * neighbour. Returns this if the size is unchanged.

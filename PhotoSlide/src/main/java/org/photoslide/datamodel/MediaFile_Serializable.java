@@ -26,6 +26,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import org.photoslide.browsermetadata.Point;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.ToolRegistry;
 
 /**
  *
@@ -466,7 +467,7 @@ public class MediaFile_Serializable implements Serializable {
             ImageFilter ifm = null;
             try {
                 String cname = fname.substring(12);
-                ifm = (ImageFilter) mapper.readValue(value, Class.forName("org.photoslide.imageops." + cname));
+                ifm = (ImageFilter) mapper.readValue(value, filterClass(cname));
             } catch (JsonProcessingException | ClassNotFoundException ex) {
                 Logger.getLogger(MediaFile_Serializable.class.getName()).log(Level.SEVERE, "Cannot find class name in config file", ex);
             }
@@ -564,4 +565,13 @@ public class MediaFile_Serializable implements Serializable {
         return FileTime.from(parse.atZone(ZoneId.systemDefault()).toInstant());
     }
 
+
+    /** Class of a tool by its stored name (see ToolRegistry). */
+    private static Class<? extends ImageFilter> filterClass(String name) throws ClassNotFoundException {
+        ToolRegistry.Tool tool = ToolRegistry.find(name);
+        if (tool == null) {
+            throw new ClassNotFoundException("Unknown filter " + name);
+        }
+        return tool.type();
+    }
 }

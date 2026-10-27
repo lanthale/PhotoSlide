@@ -22,12 +22,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.StringTokenizer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import java.util.zip.CRC32;
 import java.util.logging.Logger;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import org.photoslide.imageops.ExposureFilter;
+import org.photoslide.imageops.AbstractImageFilter;
+import org.photoslide.imageops.BlendMode;
+import org.photoslide.imageops.mask.MaskCodec;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.ToolRegistry;
 
 /**
  * Reads and writes the edits of a media file as XMP sidecar
@@ -50,7 +56,6 @@ public final class XmpSidecar {
 
     public static final String NS_PHOTOSLIDE = "http://ns.photoslide.org/1.0/";
     private static final String PREFIX = "photoslide";
-    private static final String FILTER_PACKAGE = "org.photoslide.imageops.";
 
     /** All PhotoSlide properties, used to remove them in one go. */
     private static final String[][] OWN_PROPERTIES = {
@@ -87,6 +92,10 @@ public final class XmpSidecar {
         return new SerializeOptions().setUseCompactFormat(false).setIndent("  ").setPadding(0);
     }
 
+    /** Last content (CRC32) PhotoSlide wrote per sidecar, DELETED if it removed it. */
+    private static final Map<Path, Long> OWN_STATE = new ConcurrentHashMap<>();
+    private static final long DELETED = -1;
+
     private XmpSidecar() {
     }
 
@@ -112,6 +121,7 @@ public final class XmpSidecar {
                     serializeOptions());
             Path tmp = path.resolveSibling(path.getFileName() + ".tmp");
             Files.write(tmp, bytes);
+            OWN_STATE.put(key(path), checksum(bytes));
             try {
                 Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             } catch (java.nio.file.AtomicMoveNotSupportedException ex) {
@@ -155,14 +165,46 @@ public final class XmpSidecar {
                 meta.deleteProperty(p[0], p[1]);
             }
             if (!meta.iterator().hasNext()) {
+                OWN_STATE.put(key(path), DELETED);
                 Files.delete(path);
                 return;
             }
-            Files.write(path, XMPMetaFactory.serializeToBuffer(meta,
-                    serializeOptions()));
+            byte[] bytes = XMPMetaFactory.serializeToBuffer(meta, serializeOptions());
+            OWN_STATE.put(key(path), checksum(bytes));
+            Files.write(path, bytes);
         } catch (XMPException ex) {
             throw new IOException("Cannot change " + path, ex);
         }
+    }
+
+    /**
+     * @return true if the sidecar is exactly as PhotoSlide wrote (or deleted)
+     * it last; false if another program changed it since, or if PhotoSlide
+     * never touched it
+     */
+    public static boolean isOwnState(Path sidecar) {
+        Long own = OWN_STATE.get(key(sidecar));
+        if (own == null) {
+            return false;
+        }
+        if (!Files.isRegularFile(sidecar)) {
+            return own == DELETED;
+        }
+        try {
+            return own == checksum(Files.readAllBytes(sidecar));
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    private static Path key(Path p) {
+        return p.toAbsolutePath().normalize();
+    }
+
+    private static long checksum(byte[] bytes) {
+        CRC32 crc = new CRC32();
+        crc.update(bytes);
+        return crc.getValue();
     }
 
     private static XMPMeta readMeta(Path path) throws IOException, XMPException {
@@ -237,8 +279,18 @@ public final class XmpSidecar {
             String item = XMPPathFactory.composeArrayItemPath("Filters", i);
             m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Name", filter.getName());
             m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Position", Integer.toString(filter.getPosition()));
-            m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Version",
-                    Integer.toString(filter instanceof ExposureFilter e ? e.getVersion() : 1));
+            m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Active", Boolean.toString(filter.isActive()));
+            m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Opacity", Float.toString(filter.getOpacity()));
+            m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "BlendMode", filter.getBlendMode().name());
+            if (filter instanceof AbstractImageFilter af) {
+                if (!af.getRegion().isEmpty()) {
+                    m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Region", MaskCodec.encode(af.getRegion()));
+                }
+                if (af.getColorSelection().isActive()) {
+                    m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "ColorSelection",
+                            MaskCodec.encode(af.getColorSelection()));
+                }
+            }
             StringJoiner values = new StringJoiner(";");
             for (float v : filter.getValues()) {
                 values.add(Float.toString(v));
@@ -360,13 +412,18 @@ public final class XmpSidecar {
                     field(m, item, "Name"),
                     field(m, item, "Values"),
                     field(m, item, "Position"),
-                    field(m, item, "Version"));
-            if (filter != null && !f.getFilterList().contains(filter)) {
+                    field(m, item, "Active"),
+                    field(m, item, "Opacity"),
+                    field(m, item, "BlendMode"),
+                    field(m, item, "Region"),
+                    field(m, item, "ColorSelection"));
+            if (filter != null) {
                 list.add(filter);
             }
         }
         list.sort(Comparator.comparingInt(ImageFilter::getPosition));
-        f.getFilterList().addAll(list);
+        // the sidecar is the reference: its tools replace any (cached) list
+        f.getFilterList().setAll(list);
     }
 
     private static String field(XMPMeta m, String item, String name) throws XMPException {
@@ -374,30 +431,43 @@ public final class XmpSidecar {
         return p == null ? null : p.getValue();
     }
 
-    private static ImageFilter createFilter(String name, String values, String position, String version) {
-        if (name == null || name.isEmpty()) {
+    private static ImageFilter createFilter(String name, String values, String position,
+            String active, String opacity, String blendMode, String region, String colorSelection) {
+        ImageFilter filter = ToolRegistry.create(name);
+        if (filter == null) {
+            LOG.log(Level.WARNING, "Unknown filter in XMP: {0}", name);
             return null;
         }
         try {
             double[] dv = split(values, -1);
-            float[] fv = new float[dv == null ? 0 : dv.length];
-            for (int i = 0; i < fv.length; i++) {
-                fv[i] = (float) dv[i];
-            }
-            int pos = position == null ? 0 : Integer.parseInt(position.trim());
-            Integer ver = version == null ? null : Integer.valueOf(version.trim());
-            if (ExposureFilter.NAME.equals(name)) {
-                return ExposureFilter.of(fv, pos, ver);
-            }
-            ImageFilter filter = (ImageFilter) Class.forName(FILTER_PACKAGE + name)
-                    .getDeclaredConstructor().newInstance();
-            if (fv.length > 0) {
+            if (dv != null) {
+                float[] fv = new float[dv.length];
+                for (int i = 0; i < fv.length; i++) {
+                    fv[i] = (float) dv[i];
+                }
                 filter.setValues(fv);
             }
-            filter.setPosition(pos);
+            filter.setPosition(position == null ? 0 : Integer.parseInt(position.trim()));
+            if (active != null) {
+                filter.setActive(Boolean.parseBoolean(active.trim()));
+            }
+            if (opacity != null) {
+                filter.setOpacity(Float.parseFloat(opacity.trim()));
+            }
+            if (filter instanceof AbstractImageFilter af) {
+                af.setRegion(MaskCodec.decodeRegion(region));
+                af.setColorSelection(MaskCodec.decodeColorSelection(colorSelection));
+            }
+            if (blendMode != null) {
+                try {
+                    filter.setBlendMode(BlendMode.valueOf(blendMode.trim()));
+                } catch (IllegalArgumentException ex) {
+                    LOG.log(Level.WARNING, "Unknown blend mode in XMP: {0}", blendMode);
+                }
+            }
             return filter;
-        } catch (ReflectiveOperationException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Unknown or invalid filter in XMP: " + name, ex);
+        } catch (RuntimeException ex) {
+            LOG.log(Level.WARNING, "Invalid filter in XMP: " + name, ex);
             return null;
         }
     }

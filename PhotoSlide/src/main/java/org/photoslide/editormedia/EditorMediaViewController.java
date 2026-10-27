@@ -22,6 +22,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
@@ -47,6 +48,14 @@ import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.datamodel.Image16;
+import org.photoslide.editortools.ToolStackView;
+import java.util.function.Consumer;
+import org.photoslide.imageops.AbstractImageFilter;
+import org.photoslide.imageops.mask.ColorSelection;
+import org.photoslide.imageops.mask.Contour;
+import org.photoslide.imageops.mask.Region;
+import org.photoslide.imageops.EditPipeline;
 
 /**
  *
@@ -62,6 +71,9 @@ public class EditorMediaViewController implements Initializable {
 
     @FXML
     private Button zoomButton;
+    @FXML
+    private ToolBar editorToolBar;
+    private SelectionTools selectionTools;
     @FXML
     private Rating editorRatingControl;
     @FXML
@@ -84,6 +96,7 @@ public class EditorMediaViewController implements Initializable {
     private EditorMetadataController editMetadataController;
     private EditorToolsController editorToolsController;
     private ImagePreview16 preview;
+    private RegionOverlay regionOverlay;
     private GridView<MediaFile> mediaGrid;
     private EditMediaGridCellFactory factory;
     @FXML
@@ -96,6 +109,18 @@ public class EditorMediaViewController implements Initializable {
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
         preview = new ImagePreview16(editorImageView, "editorPreview");
+        regionOverlay = new RegionOverlay(editorImageView, preview);
+        stackPane.getChildren().add(regionOverlay);
+        // colour of the edited image (all tools applied) for the colour selection
+        selectionTools = new SelectionTools(editorToolBar, regionOverlay, p -> {
+            Image16 source = preview.getSource();
+            if (source == null || selectedMediaFile == null) {
+                return null;
+            }
+            int x = (int) Math.max(0, Math.min(source.width() - 1, p.x()));
+            int y = (int) Math.max(0, Math.min(source.height() - 1, p.y()));
+            return EditPipeline.sampleBelow(selectedMediaFile, source, Integer.MAX_VALUE, x, y);
+        });
         preview.setOnProgress((p) -> imageProgress.setProgress(p));
         preview.setOnShown(() -> imageProgress.setVisible(false));
         preview.setOnFailed((ex) -> {
@@ -141,11 +166,62 @@ public class EditorMediaViewController implements Initializable {
     public void injectEditorToolsController(EditorToolsController c) {
         this.editorToolsController = c;
         c.setPreview(preview);
+        c.setDropperHost(new ToolStackView.DropperHost() {
+            @Override
+            public void requestPoint(Consumer<Contour.Point> onPoint) {
+                regionOverlay.requestPoint(onPoint);
+            }
+
+            @Override
+            public void requestOutline(Consumer<List<Contour.Point>> onOutline) {
+                regionOverlay.requestOutline(onOutline);
+            }
+
+            @Override
+            public void cancelPick() {
+                regionOverlay.cancel();
+            }
+
+            @Override
+            public double[] sampleBelow(AbstractImageFilter tool, Contour.Point p) {
+                Image16 source = preview.getSource();
+                if (source == null || selectedMediaFile == null) {
+                    return null;
+                }
+                int x = (int) Math.max(0, Math.min(source.width() - 1, p.x()));
+                int y = (int) Math.max(0, Math.min(source.height() - 1, p.y()));
+                return EditPipeline.sampleBelow(selectedMediaFile, source, tool.getPosition(), x, y);
+            }
+
+            @Override
+            public double[] imageSize() {
+                Image16 source = preview.getSource();
+                return source == null ? null : new double[]{source.width(), source.height()};
+            }
+
+            @Override
+            public void showRegion(AbstractImageFilter tool) {
+                regionOverlay.show(tool);
+            }
+
+            @Override
+            public Region selectedRegion() {
+                return selectionTools.region();
+            }
+
+            @Override
+            public ColorSelection selectedColors() {
+                return selectionTools.colors();
+            }
+        });
     }
 
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;
+        }
+        if (f != selectedMediaFile) {
+            selectionTools.clear();
         }
         stackPane.requestFocus();
         selectedMediaFile = f;

@@ -1,121 +1,70 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.photoslide.imageops;
 
-import java.util.Objects;
+import java.util.List;
 import org.photoslide.datamodel.Filter16;
-import org.photoslide.datamodel.LutFilter16;
+import org.photoslide.datamodel.RenderContext;
+import org.photoslide.imageops.lz.LuminanceRatioFilter16;
 
 /**
- * Set the gain and bias (contrast and brightness curve of Perlin). Works on
- * the sRGB encoded values like the former 8 bit filter, so stored settings
- * keep their look. 0.5 / 0.5 has no effect.
+ * Contrast (gain) and brightness of the midtones (bias) on the luminance.
+ * The curve works on a perceptual scale (log, like LightZone's zones) with
+ * middle grey (18 %) as pivot; colours keep their hue. 0.5 / 0.5 has no
+ * effect.
  *
- * @min-value: 0
- * @max-value: 1
  * @author selfemp
  */
-public class GainFilter implements ImageFilter {
+public class GainFilter extends AbstractImageFilter {
 
     public static final String NAME = "GainFilter";
 
-    private final String name;
-    private int pos;
-    private float gain;
-    private float bias;
+    private static final double PIVOT = perceptual(0.18);
+
+    private static final List<ParamSpec> PARAMS = List.of(
+            ParamSpec.slider("gain", "Contrast", 0, 0f, 1f, 0.5f, 0.01f),
+            ParamSpec.slider("bias", "Brightness", 1, 0f, 1f, 0.5f, 0.01f));
 
     public GainFilter() {
-        name = NAME;
-        gain = 0.5f;
-        bias = 0.5f;
+        super(NAME);
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String displayName() {
+        return "Contrast / Brightness";
     }
 
     @Override
-    public float[] getValues() {
-        return new float[]{gain, bias};
+    public List<ParamSpec> params() {
+        return PARAMS;
     }
 
     @Override
-    public void setValues(float[] values) {
-        this.gain = values[0];
-        this.bias = values[1];
-    }
-
-    @Override
-    public Filter16 toFilter16() {
+    protected Filter16 createFilter16(RenderContext ctx) {
+        final float gain = clamp(value(0));
+        final float bias = clamp(value(1));
         if (gain == 0.5f && bias == 0.5f) {
             return null;
         }
-        final float g = gain;
-        final float b = bias;
-        return LutFilter16.encodedTone("Gain " + g + "/" + b,
-                v -> ImageMath.bias(ImageMath.gain((float) v, g), b));
+        return new LuminanceRatioFilter16("Contrast " + gain + "/" + bias,
+                LuminanceRatioFilter16.ratiosFor(y -> linear(tone(perceptual(y), gain, bias))));
     }
 
-    @Override
-    public void setPosition(int val) {
-        this.pos = val;
+    /** Pivot to 0.5, Perlin gain (contrast) and bias (midtones), back. */
+    static double tone(double u, float gain, float bias) {
+        float v = (float) (u <= PIVOT ? 0.5 * u / PIVOT : 0.5 + 0.5 * (u - PIVOT) / (1 - PIVOT));
+        v = ImageMath.bias(ImageMath.gain(v, gain), bias);
+        return v <= 0.5f ? 2 * v * PIVOT : PIVOT + (v - 0.5) * 2 * (1 - PIVOT);
     }
 
-    @Override
-    public int getPosition() {
-        return pos;
+    /** linear luminance 0..1 -> perceptual 0..1 (8 stops, LightZone zones) */
+    static double perceptual(double y) {
+        return Math.log(255 * y + 1) / Math.log(2) / 8;
     }
 
-    /**
-     *
-     * @return clone of the filter
-     */
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+    static double linear(double u) {
+        return (Math.pow(2, 8 * u) - 1) / 255;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 79 * hash + Objects.hashCode(this.name);
-        hash = 79 * hash + this.pos;
-        hash = 79 * hash + Float.floatToIntBits(this.gain);
-        hash = 79 * hash + Float.floatToIntBits(this.bias);
-        return hash;
+    private static float clamp(float v) {
+        return Math.max(0.01f, Math.min(0.99f, v));
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final GainFilter other = (GainFilter) obj;
-        if (this.pos != other.pos) {
-            return false;
-        }
-        if (Float.floatToIntBits(this.gain) != Float.floatToIntBits(other.gain)) {
-            return false;
-        }
-        if (Float.floatToIntBits(this.bias) != Float.floatToIntBits(other.bias)) {
-            return false;
-        }
-        return Objects.equals(this.name, other.name);
-    }
-
-    @Override
-    public String toString() {
-        return "GainFilter{" + "name=" + name + ", pos=" + pos + ", gain=" + gain + ", bias=" + bias + '}';
-    }
-
 }

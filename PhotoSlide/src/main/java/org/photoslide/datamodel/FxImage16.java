@@ -6,19 +6,20 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 
 /**
- * Bridge between JavaFX images (8 bit, sRGB encoded) and Image16 (linear).
+ * Bridge between JavaFX images (8 bit, sRGB encoded) and Image16 (linear
+ * working space, see WorkingSpace).
  * Used for files that are not decoded by LibRaw (JPEG, PNG, TIFF, HEIF) and
  * for one-shot results such as thumbnails and exports. For an ImageView that
  * is updated often use DisplaySurface.
  */
 public final class FxImage16 {
 
-    /** sRGB encoded 8 bit value -> linear 16 bit value */
-    private static final short[] TO_LINEAR = new short[256];
+    /** sRGB encoded 8 bit value -> linear 0..65535 (not rounded) */
+    private static final float[] TO_LINEAR = new float[256];
 
     static {
         for (int i = 0; i < 256; i++) {
-            TO_LINEAR[i] = (short) Math.round(Display16.srgbDecode(i / 255.0) * 65535.0);
+            TO_LINEAR[i] = (float) (Display16.srgbDecode(i / 255.0) * 65535.0);
         }
     }
 
@@ -38,12 +39,34 @@ public final class FxImage16 {
             int o = i * Image16.CHANNELS;
             for (int x = 0; x < w; x++, i++, o += 3) {
                 int p = argb[i];
-                d[o] = TO_LINEAR[(p >> 16) & 0xFF];
-                d[o + 1] = TO_LINEAR[(p >> 8) & 0xFF];
-                d[o + 2] = TO_LINEAR[p & 0xFF];
+                toWorking(TO_LINEAR[(p >> 16) & 0xFF], TO_LINEAR[(p >> 8) & 0xFF], TO_LINEAR[p & 0xFF], d, o);
             }
         });
         return out;
+    }
+
+    private static final float[] SRGB_TO_WORKING = flatten(WorkingSpace.SRGB_TO_WORKING);
+
+    /**
+     * Converts linear sRGB (0..65535) to the working space and stores it at
+     * d[o..o+2]. Used for all non-RAW sources.
+     */
+    static void toWorking(float r, float g, float b, short[] d, int o) {
+        final float[] m = SRGB_TO_WORKING;
+        d[o] = clamp16(m[0] * r + m[1] * g + m[2] * b);
+        d[o + 1] = clamp16(m[3] * r + m[4] * g + m[5] * b);
+        d[o + 2] = clamp16(m[6] * r + m[7] * g + m[8] * b);
+    }
+
+    private static short clamp16(float v) {
+        int q = (int) (v + 0.5f);
+        return (short) (q < 0 ? 0 : (q > 65535 ? 65535 : q));
+    }
+
+    private static float[] flatten(double[][] m) {
+        return new float[]{(float) m[0][0], (float) m[0][1], (float) m[0][2],
+            (float) m[1][0], (float) m[1][1], (float) m[1][2],
+            (float) m[2][0], (float) m[2][1], (float) m[2][2]};
     }
 
     /** Converts to a new 8 bit image (dithered). Any thread. */

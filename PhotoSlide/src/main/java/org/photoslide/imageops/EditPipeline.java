@@ -26,12 +26,15 @@ import javafx.scene.image.Image;
 import org.librawfx.RAWImageLoader;
 import org.librawjava.LibrawException;
 import org.librawjava.LibrawImage;
+import org.librawjava.OutputColor;
 import org.librawjava.RawFormatDetector;
+import org.photoslide.datamodel.AwtImage16;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.FilterChain16;
 import org.photoslide.datamodel.FxImage16;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.RenderContext;
 
 /**
  * The one way from a media file to a displayed or exported image: load the
@@ -49,6 +52,8 @@ public final class EditPipeline {
     private static final Map<String, CompletableFuture<Image16>> CACHE = new LinkedHashMap<>(4, 0.75f, true);
 
     private static final List<Consumer<MediaFile>> FILTER_LISTENERS = new CopyOnWriteArrayList<>();
+
+    private static final List<Consumer<MediaFile>> RELOAD_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static final Set<MediaFile> PENDING_SAVES = ConcurrentHashMap.newKeySet();
 
@@ -115,9 +120,10 @@ public final class EditPipeline {
     }
 
     /**
-     * Decodes the file without the cache (for exports of many files). RAW
-     * files are decoded by LibRaw in 16 bit linear, all others by JavaFX in 8
-     * bit and converted to linear 16 bit.
+     * Decodes the file without the cache (for exports of many files) into the
+     * working space (16 bit linear ProPhoto). RAW files are decoded by LibRaw
+     * directly in ProPhoto, 16 bit TIFF/PNG by ImageIO, all others by JavaFX in
+     * 8 bit; non-RAW data is converted from sRGB.
      */
     public static Image16 loadSourceUncached(MediaFile file) throws IOException {
         return loadSourceUncached(file, p -> {
@@ -137,13 +143,20 @@ public final class EditPipeline {
                 try {
                     LibrawImage libraw = new LibrawImage(path.toString(), RAWImageLoader.getSettings());
                     libraw.setProgressListener((done, total) -> progress.accept((double) done / total));
-                    return Image16.fromRaw(libraw.readPixelData16(bytes, true));
+                    return Image16.fromRaw(libraw.readPixelData16(bytes, true, OutputColor.PROPHOTO));
                 } catch (LibrawException ex) {
                     if (!ex.isUnsupportedFormat()) {
                         throw ex;
                     }
                     LOG.log(Level.FINE, "{0} is not a RAW file, using JavaFX", path);
                 }
+            }
+        }
+        String lower = path.getFileName().toString().toLowerCase();
+        if (lower.endsWith(".tif") || lower.endsWith(".tiff") || lower.endsWith(".png")) {
+            Image16 deep = AwtImage16.read16(path, progress);     // null = only 8 bit per channel
+            if (deep != null) {
+                return deep;
             }
         }
         Image img = loadFxImage(file.getImageUrl().toString(), progress);
@@ -200,13 +213,54 @@ public final class EditPipeline {
         }
     }
 
-    /** Filter chain for the given settings, ordered by position. */
-    public static FilterChain16 chain(List<ImageFilter> filters) {
+    /**
+     * Colour of the image as it enters the tool at the given position (all
+     * tools below applied), averaged over 3 x 3 pixels. For droppers.
+     *
+     * @param source full size source of the file
+     * @param x pixel of the original
+     * @param y pixel of the original
+     * @return linear working space colour 0..1
+     */
+    public static double[] sampleBelow(MediaFile file, Image16 source, int position, int x, int y) {
+        final int r = 48;
+        Image16 crop = source.crop(x - r, y - r, 2 * r + 1, 2 * r + 1);
+        final int x0 = Math.max(0, x - r);
+        final int y0 = Math.max(0, y - r);
+        List<ImageFilter> below = new ArrayList<>();
+        for (ImageFilter f : file.getFilterListWithoutImageData()) {
+            if (f.getPosition() < position) {
+                below.add(f);
+            }
+        }
+        Image16 img = chain(below, new RenderContext(1.0, x0, y0)).render(crop);
+        int cx = Math.min(img.width() - 1, Math.max(0, x - x0));
+        int cy = Math.min(img.height() - 1, Math.max(0, y - y0));
+        double[] sum = new double[3];
+        int n = 0;
+        for (int yy = Math.max(0, cy - 1); yy <= Math.min(img.height() - 1, cy + 1); yy++) {
+            for (int xx = Math.max(0, cx - 1); xx <= Math.min(img.width() - 1, cx + 1); xx++) {
+                int i = (yy * img.width() + xx) * 3;
+                for (int c = 0; c < 3; c++) {
+                    sum[c] += (img.data()[i + c] & 0xFFFF) / 65535.0;
+                }
+                n++;
+            }
+        }
+        return new double[]{sum[0] / n, sum[1] / n, sum[2] / n};
+    }
+
+    /**
+     * Filter chain for the given settings, ordered by position.
+     *
+     * @param ctx size of the rendered image relative to the original
+     */
+    public static FilterChain16 chain(List<ImageFilter> filters, RenderContext ctx) {
         List<ImageFilter> sorted = new ArrayList<>(filters);
         sorted.sort(Comparator.comparingInt(ImageFilter::getPosition));
         FilterChain16 chain = new FilterChain16();
         for (ImageFilter f : sorted) {
-            Filter16 op = f.toFilter16();
+            Filter16 op = f.toFilter16(ctx);
             if (op != null) {
                 chain.add(op);
             }
@@ -217,9 +271,12 @@ public final class EditPipeline {
     /**
      * Applies the filters to a small 8 bit image (thumbnails). The image is
      * not changed.
+     *
+     * @param originalWidth width of the full image, to scale radii; 0 = unknown
      */
-    public static Image applyTo(Image img, List<ImageFilter> filters) {
-        FilterChain16 chain = chain(filters);
+    public static Image applyTo(Image img, List<ImageFilter> filters, double originalWidth) {
+        double scale = originalWidth > 0 ? Math.min(1.0, img.getWidth() / originalWidth) : 1.0;
+        FilterChain16 chain = chain(filters, new RenderContext(scale));
         Image16 result = chain.render(FxImage16.fromImage(img));
         return FxImage16.toImage(result);
     }
@@ -227,12 +284,12 @@ public final class EditPipeline {
     /** Full size 8 bit result with all filters (export). */
     public static Image renderForExport(MediaFile file) throws IOException {
         Image16 source = loadSourceUncached(file);
-        return FxImage16.toImage(chain(file.getFilterListWithoutImageData()).render(source));
+        return FxImage16.toImage(chain(file.getFilterListWithoutImageData(), RenderContext.FULL).render(source));
     }
 
     /**
      * Returns the filter with the name, adds the one from the factory if the
-     * file has none, and sets the values.
+     * file has none, and sets the first values (the rest keep their values).
      */
     public static ImageFilter setFilterValues(MediaFile file, String name,
             java.util.function.Supplier<ImageFilter> factory, float[] values) {
@@ -241,8 +298,32 @@ public final class EditPipeline {
             f = factory.get();
             file.addImageFilter(f);
         }
-        f.setValues(values);
+        // only the given values change, the others (e.g. set in the editor) stay
+        float[] merged = f.getValues();
+        System.arraycopy(values, 0, merged, 0, Math.min(values.length, merged.length));
+        f.setValues(merged);
         return f;
+    }
+
+    /**
+     * Called by views that must redraw their controls when the edits of a
+     * file were reloaded from its sidecar (changed by another program).
+     */
+    public static void addReloadListener(Consumer<MediaFile> listener) {
+        RELOAD_LISTENERS.add(listener);
+    }
+
+    /**
+     * The edits of the file were reloaded from disk (JavaFX thread): all views
+     * redraw, nothing is saved.
+     */
+    public static void editsReloaded(MediaFile file) {
+        for (Consumer<MediaFile> l : FILTER_LISTENERS) {
+            l.accept(file);
+        }
+        for (Consumer<MediaFile> l : RELOAD_LISTENERS) {
+            l.accept(file);
+        }
     }
 
     /** Called by every view that shows filtered images of a file. */

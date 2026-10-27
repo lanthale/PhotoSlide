@@ -42,6 +42,7 @@ import javafx.stage.Window;
 import org.librawdecodersettings.RawDecoderSettings;
 import org.librawfx.RAWImageLoaderFactory;
 import org.librawjava.LibrawImage;
+import org.librawjava.OutputColor;
 import org.photoslide.datamodel.FxImage16;
 import org.photoslide.datamodel.Image16;
 
@@ -303,7 +304,7 @@ public class RawSettingsLabController implements Initializable {
                         spinner("Greybox Y", 0, 100000, 0, model.greyBoxYProperty()),
                         spinner("Greybox width", 0, 100000, 0, model.greyBoxWProperty()),
                         spinner("Greybox height", 0, 100000, 0, model.greyBoxHProperty()),
-                        choice("Output color space (output_color) — thumbnails only, editing is always sRGB", COLOR_SPACE_VALUES, model.outputColorSpaceProperty(),
+                        choice("Output color space (output_color) — thumbnails only, editing is always ProPhoto", COLOR_SPACE_VALUES, model.outputColorSpaceProperty(),
                                 v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
                         choice("Camera matrix: -1 untouched, 0 off, 1 default, 3 always (use_camera_matrix)",
                                 List.of("Untouched (-1)", "Off (0)", "Default (1)", "Always (3)"),
@@ -688,7 +689,7 @@ public class RawSettingsLabController implements Initializable {
      * Dekodiert das Beispielbild mit den uebergebenen Settings in einem
      * Hintergrund-Thread. setSettingsOverride() laesst die globale Map
      * unberuehrt; die Aenderungen gelten nur fuer diesen Aufruf.
-     * Dekodiert wird wie im Leuchttisch und Editor: 16 Bit linear (sRGB,
+     * Dekodiert wird wie im Leuchttisch und Editor: 16 Bit linear (ProPhoto,
      * ohne Gamma und Auto-Helligkeit), angezeigt ueber Display16. Die
      * Vorschau zeigt also das Bild, das der Editor ohne Bearbeitung zeigt.
      * Der ProgressIndicator wird ab Task-Start eingeblendet (das View hat
@@ -717,7 +718,7 @@ public class RawSettingsLabController implements Initializable {
                 LibrawImage librawImage = new LibrawImage(file.toString(), new ConcurrentHashMap<>());
                 librawImage.setSettingsOverride(settings);
                 byte[] bytes = java.nio.file.Files.readAllBytes(file);
-                Image16 linear = Image16.fromRaw(librawImage.readPixelData16(bytes, true));
+                Image16 linear = Image16.fromRaw(librawImage.readPixelData16(bytes, true, OutputColor.PROPHOTO));
                 return FxImage16.toImage(linear);
             }
         };

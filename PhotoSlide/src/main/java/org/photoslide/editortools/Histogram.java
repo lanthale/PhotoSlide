@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.paint.Color;
 
 /**
  * Calculate the histogram of an image.
@@ -28,26 +25,26 @@ public class Histogram {
     private final List<Integer> g;
     private final List<Integer> b;
 
-    public Histogram(Image image) {
+    /**
+     * @param argb opaque 8 bit pixels as displayed (see Display16.toArgb)
+     */
+    public Histogram(int[] argb) {
         r = new ArrayList<>(Collections.nCopies(BITS, 0));
         g = new ArrayList<>(Collections.nCopies(BITS, 0));
         b = new ArrayList<>(Collections.nCopies(BITS, 0));
         // Calculate frequency of each level
-        PixelReader pixelReader = image.getPixelReader();
-        int valR, valG, valB;
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                // Actual color
-                Color color = pixelReader.getColor(x, y);
-                // from [0,1) to [0,BITS)
-                valR = (int) (color.getRed() * (BITS - 1));
-                valG = (int) (color.getGreen() * (BITS - 1));
-                valB = (int) (color.getBlue() * (BITS - 1));
-                // Increase counter
-                r.set(valR, r.get(valR) + 1);
-                g.set(valG, g.get(valG) + 1);
-                b.set(valB, b.get(valB) + 1);
-            }
+        int[] countR = new int[BITS];
+        int[] countG = new int[BITS];
+        int[] countB = new int[BITS];
+        for (int p : argb) {
+            countR[(p >> 16) & 0xFF]++;
+            countG[(p >> 8) & 0xFF]++;
+            countB[p & 0xFF]++;
+        }
+        for (int i = 0; i < BITS; i++) {
+            r.set(i, countR[i]);
+            g.set(i, countG[i]);
+            b.set(i, countB[i]);
         }
         // Calculare max value
         int maxR = Collections.max(r);

@@ -7,6 +7,7 @@ package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.ImagePreview16;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
@@ -111,6 +112,7 @@ public class LighttableController implements Initializable {
 
     @FXML
     private ImageView imageView;
+    private ImagePreview16 preview;
     @FXML
     private ProgressIndicator imageProgress;
     @FXML
@@ -179,6 +181,8 @@ public class LighttableController implements Initializable {
     @FXML
     private ToggleSwitch showPreviewPaneToggle;
     @FXML
+    private Button reloadButton;
+    @FXML
     private CheckMenuItem fiveStarMenu;
     @FXML
     private CheckMenuItem fourStarMenu;
@@ -202,6 +206,10 @@ public class LighttableController implements Initializable {
         imageView.fitWidthProperty().bind(stackPane.widthProperty());
         imageView.fitHeightProperty().bind(stackPane.heightProperty());
         imageView.setVisible(false);
+        preview = new ImagePreview16(imageView, "lighttablePreview");
+        preview.setOnProgress((p) -> imageProgress.setProgress(p));
+        preview.setOnShown(() -> imageProgress.setVisible(false));
+        preview.setOnFailed((ex) -> imageProgress.setVisible(false));
         mediaView.fitWidthProperty().bind(stackPane.widthProperty());
         mediaView.fitHeightProperty().bind(stackPane.heightProperty());
         mediaView.setVisible(false);
@@ -222,6 +230,7 @@ public class LighttableController implements Initializable {
         showPreviewPaneToggle.selectedProperty().addListener((o) -> {
             previewPaneAnimation();
         });
+        reloadButton.visibleProperty().bind(showPreviewPaneToggle.selectedProperty());
     }
 
     public void injectMainController(MainViewController mainController) {
@@ -864,6 +873,28 @@ public class LighttableController implements Initializable {
 
     public ImageView getImageView() {
         return imageView;
+    }
+
+    /**
+     * Decodes the shown image again from disk, e.g. after the RAW settings
+     * were changed.
+     */
+    @FXML
+    private void reloadImageAction(ActionEvent event) {
+        if (preview.getFile() == null) {
+            return;
+        }
+        imageProgress.progressProperty().unbind();
+        imageProgress.setProgress(0);
+        imageProgress.setVisible(true);
+        preview.reload();
+    }
+
+    /**
+     * @return the 16 bit pipeline that fills the image view
+     */
+    public ImagePreview16 getPreview() {
+        return preview;
     }
 
     public MediaView getMediaView() {

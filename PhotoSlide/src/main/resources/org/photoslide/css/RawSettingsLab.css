@@ -54,9 +54,59 @@
 .button:hover {
     -fx-background-color: #4a4a4a;
 }
+/* Kompakte +/--Buttons neben den Slidern (0.001er-Schritte) */
+.step-button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #e6e6e6;
+    -fx-background-radius: 6;
+    -fx-padding: 2 8 2 8;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-min-width: 30;
+}
+.step-button:hover {
+    -fx-background-color: #4a4a4a;
+}
+.step-button:pressed {
+    -fx-background-color: #5a7fa0;
+}
 .button:disabled {
     -fx-background-color: #333333;
     -fx-text-fill: #6a6a6a;
+}
+/* ControlsFX ToggleSwitch: dunkles Theme, Label hell, aktiver Knopf blau.
+   Wichtig: thumb-area/thumb brauchen explizite Groessen (40x18 / 14x14),
+   sonst kollabiert der Schalter in der Hoehe. */
+.toggle-switch > .label {
+    -fx-text-fill: #e6e6e6;
+    -fx-font-size: 12px;
+    -fx-padding: 0 4 0 4;
+}
+.toggle-switch .thumb-area {
+    -fx-background-color: #4a4a4a;
+    -fx-background-radius: 10;
+    -fx-min-width: 40;
+    -fx-pref-width: 40;
+    -fx-max-width: 40;
+    -fx-min-height: 18;
+    -fx-pref-height: 18;
+    -fx-max-height: 18;
+}
+.toggle-switch .thumb {
+    -fx-background-color: #c9c9c9;
+    -fx-background-radius: 8;
+    -fx-min-width: 14;
+    -fx-pref-width: 14;
+    -fx-max-width: 14;
+    -fx-min-height: 14;
+    -fx-pref-height: 14;
+    -fx-max-height: 14;
+}
+.toggle-switch:selected .thumb-area {
+    -fx-background-color: #5a7fa0;
+}
+.toggle-switch:selected .thumb {
+    -fx-background-color: #ffffff;
 }
 
 /* ---------- Settings-Panel rechts: Cards ---------- */
@@ -89,6 +139,13 @@
 }
 .check-box {
     -fx-text-fill: #bcbcbc;
+}
+
+/* ---------- Progress-Indicators ueber den Bildern ---------- */
+.progress-indicator {
+    -fx-progress-color: #d0d0d0;
+    -fx-max-width: 64;
+    -fx-max-height: 64;
 }
 
 /* ---------- Profil-Liste ---------- */
@@ -124,6 +181,10 @@
 }
 .choice-box:hover, .spinner:hover {
     -fx-border-color: #5a5a5a;
+}
+/* Ungueltige Eingabe in Textfeldern (Bitmaske/Gamma): roter Rahmen */
+.text-field.invalid {
+    -fx-border-color: #ff6961;
 }
 .choice-box .label, .spinner .label {
     -fx-text-fill: #e0e0e0;

@@ -89,52 +89,7 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
     private void handleGridCellSelection(MouseEvent t) {
         selectedMediaFile = ((EditMediaGridCell) t.getSource()).getItem();
         selectedCell = (EditMediaGridCell) t.getSource();
-        task = new Task<>() {
-            private Image imageWithFilters;
-            private ObservableList<ImageFilter> filterList;
-            private Image img;
-
-            @Override
-            protected Boolean call() throws Exception {
-                switch (selectedMediaFile.getMediaType()) {
-                    case VIDEO:
-                        break;
-                    case IMAGE:
-                        Platform.runLater(() -> {
-                            mediaViewController.getImageProgress().progressProperty().unbind();
-                            mediaViewController.getEditorImageView().setImage(null);
-                            mediaViewController.getEditorImageView().setVisible(true);
-                            mediaViewController.getImageProgress().setVisible(true);
-                        });
-                        String url = selectedMediaFile.getImageUrl().toString();
-                        img = new Image(url, true);
-                        Platform.runLater(() -> {
-                            mediaViewController.getImageProgress().progressProperty().bind(img.progressProperty());
-                            img.progressProperty().addListener((ov, t, t1) -> {
-                                if ((Double) t1 == 1.0 && !img.isError()) {
-                                    mediaViewController.getImageProgress().setVisible(false);
-                                    imageWithFilters = img;
-                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
-                                    for (ImageFilter imageFilter : filterList) {
-                                        imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
-                                        imageFilter.filterMediaData(imageFilter.getValues());
-                                    }
-                                    img = imageWithFilters;
-                                    mediaViewController.getEditorImageView().setImage(img);
-                                    mediaViewController.getStackPane().requestFocus();
-                                } else {
-                                    mediaViewController.getImageProgress().setVisible(true);
-                                    mediaViewController.getStackPane().requestFocus();
-                                }
-                            });
-                            mediaViewController.getEditorImageView().setImage(img);
-                        });
-                        break;
-                }
-                return true;
-            }
-        };
-        executor.submit(task);
+        mediaViewController.setMediaFileForEdit(selectedMediaFile);
     }
 
     public MediaFile getSelectedMediaFile() {

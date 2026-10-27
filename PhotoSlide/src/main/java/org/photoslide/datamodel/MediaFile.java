@@ -9,12 +9,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +51,7 @@ import org.photoslide.browsermetadata.Coordinate;
 import org.photoslide.browsermetadata.DMSCoordinate;
 import org.photoslide.browsermetadata.DegreeCoordinate;
 import org.photoslide.browsermetadata.Point;
+import org.photoslide.imageops.EditPipeline;
 import org.photoslide.imageops.ImageFilter;
 
 /**
@@ -188,12 +187,10 @@ public class MediaFile implements Serializable {
 
     public Image setFilters() {
         if (this.unModifiyAbleImage != null) {
-            Image imageWithFilters = getClonedImage(unModifiyAbleImage);
-            for (ImageFilter imageFilter : filterList) {
-                imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
-                imageFilter.filterMediaData(imageFilter.getValues());
+            if (filterList.isEmpty()) {
+                return getClonedImage(unModifiyAbleImage);
             }
-            return imageWithFilters;
+            return EditPipeline.applyTo(unModifiyAbleImage, getFilterListWithoutImageData());
         } else {
             return this.image;
         }
@@ -228,102 +225,64 @@ public class MediaFile implements Serializable {
         this.name = name;
     }
 
+    /**
+     * Writes the edits and metadata into the XMP sidecar of the file (see
+     * XmpSidecar). Properties of other programs in that file are kept.
+     */
     public void saveEdits() {
-        //String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
-        //String fileNameWithExt = "Ω_" + fileNameWithOutExt + ".edit";
-
-        String fileNameWithExt = getEditFilePath().toString();
-
-        try (OutputStream output = new FileOutputStream(fileNameWithExt)) {
-            Properties prop = new Properties();
-            // set the properties value
-            if (title.getValue() != null) {
-                prop.setProperty("title", title.getValue());
-            }
-            if (keywords.getValue() != null) {
-                prop.setProperty("keywords", keywords.getValue());
-            }
-            if (comments.getValue() != null) {
-                prop.setProperty("comments", comments.getValue());
-            }
-            if (camera.getValue() != null) {
-                prop.setProperty("camera", camera.getValue());
-            }
-            if (rotationAngle.getValue() != null) {
-                prop.setProperty("rotation", rotationAngle.getValue() + "");
-            }
-            if (rating.getValue() != null) {
-                prop.setProperty("rating", rating.getValue() + "");
-            }
-            if (deleted.getValue() != null) {
-                prop.setProperty("deleted", deleted.getValue() + "");
-            }
-            if (cropView != null) {
-                prop.setProperty("crop", cropView.getMinX() + ";" + cropView.getMinY() + ";" + cropView.getWidth() + ";" + cropView.getHeight());
-            }
-            if (orignalImageSize != null) {
-                prop.setProperty("orgImgSize", orignalImageSize.getX() + ";" + orignalImageSize.getY());
-            }
-            if (stacked.getValue() != null) {
-                prop.setProperty("stacked", stacked.getValue() + "");
-            }
-            if (stackName.getValue() != null) {
-                prop.setProperty("stackName", stackName.getValue());
-            }
-            if (stackPos.getValue() != null) {
-                prop.setProperty("stackPos", stackPos.getValue() + "");
-            }
-            if (filterList.isEmpty() == false) {
-                ObjectMapper mapper = new ObjectMapper();
-                filterList.forEach((imgFilter) -> {
-                    try {
-                        String value = mapper.writeValueAsString(imgFilter);
-                        prop.put("ImageFilter:" + imgFilter.getName(), value);
-                    } catch (JsonProcessingException ex) {
-                        Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                });
-            } else {
-                for (Enumeration<?> names = prop.propertyNames(); names.hasMoreElements();) {
-                    String key = (String) names.nextElement();
-                    if (key.contains("ImageFilter:") == true) {
-                        prop.remove(key);
-                    }
-                }
-            }
-            if (place.getValue() != null) {
-                prop.setProperty("place", place.getValue());
-            }
-            if (gpsDateTime != null) {
-                prop.setProperty("gpsDateTime", gpsDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            }
-            if (gpsHeight != -1) {
-                prop.setProperty("gpsHeight", "" + gpsHeight);
-            }
-            if (gpsPosition != null) {
-                prop.setProperty("gpsPosition", gpsPosition.latitude + ";" + gpsPosition.longitude);
-            }
-            prop.store(output, null);
-
+        try {
+            XmpSidecar.write(this);
         } catch (IOException ex) {
-            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot save edit to file " + fileNameWithExt, ex);
+            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot save edits to " + getEditFilePath(), ex);
         }
     }
 
+    /**
+     * Reads the XMP sidecar. Without a sidecar the former properties file
+     * ({@code Ω_<name>.edit}) is read and converted: the sidecar is written
+     * and the old file is deleted.
+     */
     public void readEdits() {
+        try {
+            if (XmpSidecar.read(this)) {
+                return;
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot read " + getEditFilePath(), ex);
+            return;
+        }
+        if (readLegacyEditFile()) {
+            try {
+                XmpSidecar.write(this);
+                Files.deleteIfExists(getLegacyEditFilePath());
+            } catch (IOException ex) {
+                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot convert " + getLegacyEditFilePath() + " to XMP", ex);
+            }
+        }
+    }
+
+    /**
+     * Reads the former properties file. Kept to convert old edits.
+     *
+     * @return true if the file existed and was read
+     */
+    private boolean readLegacyEditFile() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         String fileNameWithExt = fileNameWithOutExt + ".edit";
         Path source = new File(fileNameWithExt).toPath();
 
         if (new File(fileNameWithExt).exists()) {
             try {
-                Files.move(source, getEditFilePath());
+                Files.move(source, getLegacyEditFilePath());
             } catch (IOException ex) {
                 Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        fileNameWithExt = getEditFilePath().toString();
+        fileNameWithExt = getLegacyEditFilePath().toString();
+        if (!new File(fileNameWithExt).exists()) {
+            return false;
+        }
 
         try (InputStream input = new FileInputStream(fileNameWithExt)) {
 
@@ -437,8 +396,10 @@ public class MediaFile implements Serializable {
                     setGpsPositionFromDegree(property);
                 }
             }
+            return true;
         } catch (IOException ex) {
-            //Do nothing if file not found
+            Logger.getLogger(MediaFile.class.getName()).log(Level.WARNING, "Cannot read " + fileNameWithExt, ex);
+            return false;
         }
     }
 
@@ -621,7 +582,17 @@ public class MediaFile implements Serializable {
         this.lastModifyTime = lastModifyTime;
     }
 
+    /**
+     * @return the XMP sidecar that holds the edits ({@code <name>.xmp})
+     */
     public Path getEditFilePath() {
+        return XmpSidecar.sidecarPath(this);
+    }
+
+    /**
+     * @return the former properties file {@code Ω_<name>.edit}
+     */
+    public Path getLegacyEditFilePath() {
         String fileNameWithOutExt = pathStorage.toString().substring(0, pathStorage.toString().lastIndexOf("."));
         String fileNameWithExt = fileNameWithOutExt + ".edit";
         Path source = new File(fileNameWithExt).toPath();
@@ -676,6 +647,10 @@ public class MediaFile implements Serializable {
 
     public String getKeywords() {
         return this.keywords.get();
+    }
+
+    public SimpleStringProperty keywordsProperty() {
+        return keywords;
     }
 
     public ObservableList<ImageFilter> getFilterList() {
@@ -780,6 +755,10 @@ public class MediaFile implements Serializable {
         String ret = toDMSCoordinateLat.wholeDegrees + "°" + toDMSCoordinateLat.minutes + "'" + toDMSCoordinateLat.seconds + "''" + latRef;
         ret = ret + ";" + toDMSCoordinateLon.wholeDegrees + "°" + toDMSCoordinateLon.minutes + "'" + toDMSCoordinateLon.seconds + "''" + lonRef;
         return ret;
+    }
+
+    public boolean hasGpsPosition() {
+        return gpsPosition != null;
     }
 
     public double getGpsLatPosAsDouble() {
@@ -915,6 +894,10 @@ public class MediaFile implements Serializable {
         this.gpsDateTime = parse;
     }
 
+    public void setGpsDateTime(LocalDateTime dateTime) {
+        this.gpsDateTime = dateTime;
+    }
+
     public double getGpsHeight() {
         return gpsHeight;
     }
@@ -1025,22 +1008,26 @@ public class MediaFile implements Serializable {
         }
     }
 
+    /**
+     * Removes all PhotoSlide edits. Only the PhotoSlide properties are taken
+     * out of the XMP sidecar; the file itself is deleted only if nothing of
+     * other programs is left in it.
+     */
     public void removeAllEdits() {
-        String fileNameWithExt = getEditFilePath().toString();
-        File editFile = new File(fileNameWithExt);
-        if (editFile.exists()) {
-            Platform.runLater(() -> {
-                editFile.delete();
-            });
-            deleted.set(false);
-            place.set("");
-            faces.set("");
-            rotationAngle.set(0.0);
-            rating.set(0);
-            gpsHeight = -1;
-            cropView = null;
-            orignalImageSize = null;
+        try {
+            XmpSidecar.removeAll(this);
+            Files.deleteIfExists(getLegacyEditFilePath());
+        } catch (IOException ex) {
+            Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot remove edits of " + name, ex);
         }
+        deleted.set(false);
+        place.set("");
+        faces.set("");
+        rotationAngle.set(0.0);
+        rating.set(0);
+        gpsHeight = -1;
+        cropView = null;
+        orignalImageSize = null;
     }
 
     /**

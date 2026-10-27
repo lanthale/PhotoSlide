@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import org.librawdecodersettings.RawDecoderSettings;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.Utility;
+import org.photoslide.imageops.EditPipeline;
 
 /**
  * Laedt/speichert die RAW-Decoder-Settings pro Kameramodell als JSON im
@@ -23,7 +24,11 @@ import org.photoslide.Utility;
 public final class RawSettingsStore {
 
     private static final Logger LOG = Logger.getLogger(RawSettingsStore.class.getName());
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** FAIL_ON_UNKNOWN_PROPERTIES aus: aeltere JSON-Profile enthalten Felder, die es
+     *  im Modell nicht (mehr) gibt (z.B. exposureCorrection). Diese werden ignoriert
+     *  statt das ganze Profil abzulehnen; die restlichen Werte laden normal. */
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     public static final String DEFAULT_KEY = "Default";
     private static final String FILE_NAME = "rawdecodersettings.json";
 
@@ -122,6 +127,8 @@ public final class RawSettingsStore {
     public static void saveProfile(String key, RawDecoderSettingsFx profile) {
         // 1) LibRawFX-Map: Thread-Safety-konform
         RAWImageLoaderFactory.getDecoderSettings().put(key, profile.toRawDecoderSettings());
+        // dekodierte Bilder im Cache sind mit den alten Werten entstanden
+        EditPipeline.clearCache();
         // 2) Persistenz
         ConcurrentHashMap<String, RawDecoderSettingsFx> profiles = new ConcurrentHashMap<>();
         java.util.List<String> names = listProfileNames();
@@ -146,6 +153,7 @@ public final class RawSettingsStore {
             return;
         }
         RAWImageLoaderFactory.getDecoderSettings().remove(key);
+        EditPipeline.clearCache();
         ConcurrentHashMap<String, RawDecoderSettingsFx> profiles = new ConcurrentHashMap<>();
         for (String name : listProfileNames()) {
             if (!name.equals(key)) {

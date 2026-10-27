@@ -97,6 +97,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.beans.InvalidationListener;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
@@ -129,6 +130,7 @@ import org.photoslide.MarkerLayer;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
+import org.photoslide.imageops.EditPipeline;
 import org.photoslide.imageops.ExposureFilter;
 import org.photoslide.imageops.GainFilter;
 import org.photoslide.imageops.ImageFilter;
@@ -161,8 +163,7 @@ public class MetadataController implements Initializable {
     private ExecutorService executorFilter;
 
     private Image shownImage;
-    private ImageFilter exposerFilter;
-    private ImageFilter gainFilter;
+    private boolean updatingFilterSliders;
 
     @FXML
     private Accordion accordionPane;
@@ -235,70 +236,25 @@ public class MetadataController implements Initializable {
         captionChangeListener = new CaptionChangeListener();
         exposureTextField.textProperty().bind(exposureSlider.valueProperty().asString());
         exposureSlider.valueProperty().addListener((o) -> {
-            if (exposerFilter == null) {
-                exposerFilter = new ExposureFilter();
-                actualMediaFile.addImageFilter(exposerFilter);
-                //lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
-                lightController.getImageView().setImage(exposerFilter.loadMediaData(lightController.getImageView().getImage()));
+            if (updatingFilterSliders || actualMediaFile == null) {
+                return;
             }
-            /*else {                
-                if (((ExposureFilter) exposerFilter).isGpuInit() == false) {
-                    lightController.getImageView().setImage(exposerFilter.loadGPU(lightController.getImageView().getImage()));
-                }
-            }*/
-            double val = exposureSlider.getValue();
-            /*exposerFilter.filterGPU(new float[]{(float) val});
-            ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
-            if (filterForName != null) {
-                filterForName.setValues(exposerFilter.getValues());
-            }*/
-            executorFilter.submit(() -> {
-                exposerFilter.filterMediaData(new float[]{(float) val});
-                ImageFilter filterForName = actualMediaFile.getFilterForName(exposerFilter.getName());
-                if (filterForName != null) {
-                    filterForName.setValues(exposerFilter.getValues());
-                }
-                actualMediaFile.saveEdits();
-            });
+            EditPipeline.setFilterValues(actualMediaFile, ExposureFilter.NAME, ExposureFilter::new,
+                    new float[]{(float) exposureSlider.getValue()});
+            EditPipeline.filtersChanged(actualMediaFile);
         });
         gainTextField.textProperty().bindBidirectional(gainSlider.valueProperty(), new NumberStringConverter("#.##"));
         biasTextField.textProperty().bindBidirectional(biasSlider.valueProperty(), new NumberStringConverter("#.##"));
-        gainSlider.valueProperty().addListener((o) -> {
-            if (gainFilter == null) {
-                gainFilter = new GainFilter();
-                actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.loadMediaData(lightController.getImageView().getImage()));
+        InvalidationListener gainListener = (o) -> {
+            if (updatingFilterSliders || actualMediaFile == null) {
+                return;
             }
-
-            double valGain = gainSlider.getValue();
-            double valBias = biasSlider.getValue();
-            executorFilter.submit(() -> {
-                gainFilter.filterMediaData(new float[]{(float) valGain, (float) valBias});
-                ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
-                if (filterForName != null) {
-                    filterForName.setValues(gainFilter.getValues());
-                }
-                actualMediaFile.saveEdits();
-            });
-        });
-        biasSlider.valueProperty().addListener((o) -> {
-            if (gainFilter == null) {
-                gainFilter = new GainFilter();
-                actualMediaFile.addImageFilter(gainFilter);
-                lightController.getImageView().setImage(gainFilter.loadMediaData(lightController.getImageView().getImage()));
-            }
-
-            double valGain = gainSlider.getValue();
-            double valBias = biasSlider.getValue();
-            executorFilter.submit(() -> {
-                gainFilter.filterMediaData(new float[]{(float) valGain, (float) valBias});
-                ImageFilter filterForName = actualMediaFile.getFilterForName(gainFilter.getName());
-                if (filterForName != null) {
-                    filterForName.setValues(gainFilter.getValues());
-                }
-                actualMediaFile.saveEdits();
-            });
-        });
+            EditPipeline.setFilterValues(actualMediaFile, GainFilter.NAME, GainFilter::new,
+                    new float[]{(float) gainSlider.getValue(), (float) biasSlider.getValue()});
+            EditPipeline.filtersChanged(actualMediaFile);
+        };
+        gainSlider.valueProperty().addListener(gainListener);
+        biasSlider.valueProperty().addListener(gainListener);
         geoCoding = new GeoCoding();
     }
 
@@ -826,11 +782,11 @@ public class MetadataController implements Initializable {
         recordDateField.clear();
         progressPane.setVisible(false);
         anchorKeywordPane.setDisable(true);
-        exposureSlider.setValue(1);
+        updatingFilterSliders = true;
+        exposureSlider.setValue(0);
         gainSlider.setValue(0.5);
         biasSlider.setValue(0.5);
-        exposerFilter = null;
-        gainFilter = null;
+        updatingFilterSliders = false;
     }
 
     @FXML
@@ -1364,14 +1320,7 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void resetExposureAction(ActionEvent event) {
-        executorFilter.submit(() -> {
-            actualMediaFile.removeImageFilter(exposerFilter);
-            actualMediaFile.saveEdits();
-        });
-        exposureSlider.setValue(1);
-        lightController.getImageView().setImage(exposerFilter.reset());
-        actualMediaFile.setImage(exposerFilter.reset());
-        exposerFilter = null;
+        resetFilter(ExposureFilter.NAME);
     }
 
     @FXML
@@ -1616,16 +1565,35 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void resetGainFilterAction(ActionEvent event) {
-        executorFilter.submit(() -> {
-            actualMediaFile.removeImageFilter(gainFilter);
-            actualMediaFile.saveEdits();
-        });
-        gainSlider.setValue(0.5);
-        biasSlider.setValue(0.5);
-        if (gainFilter != null) {
-            lightController.getImageView().setImage(gainFilter.reset());
-            actualMediaFile.setImage(gainFilter.reset());
-            gainFilter = null;
+        resetFilter(GainFilter.NAME);
+    }
+
+    private void resetFilter(String name) {
+        if (actualMediaFile == null) {
+            return;
+        }
+        ImageFilter filter = actualMediaFile.getFilterForName(name);
+        if (filter != null) {
+            actualMediaFile.removeImageFilter(filter);
+        }
+        showFilterValues(actualMediaFile);
+        EditPipeline.filtersChanged(actualMediaFile);
+    }
+
+    /**
+     * Shows the filter settings of the file in the sliders without changing
+     * the file.
+     */
+    public void showFilterValues(MediaFile file) {
+        ImageFilter exposure = file.getFilterForName(ExposureFilter.NAME);
+        ImageFilter gain = file.getFilterForName(GainFilter.NAME);
+        updatingFilterSliders = true;
+        try {
+            exposureSlider.setValue(exposure != null ? exposure.getValues()[0] : 0);
+            gainSlider.setValue(gain != null ? gain.getValues()[0] : 0.5);
+            biasSlider.setValue(gain != null ? gain.getValues()[1] : 0.5);
+        } finally {
+            updatingFilterSliders = false;
         }
     }
 
@@ -1739,14 +1707,6 @@ public class MetadataController implements Initializable {
             }
         }*/
         return sb.toString();
-    }
-
-    public void setExposerFilter(ImageFilter exposerFilter) {
-        this.exposerFilter = exposerFilter;
-    }
-
-    public void setGainFilter(ImageFilter gainFilter) {
-        this.gainFilter = gainFilter;
     }
 
     public Slider getGainSlider() {

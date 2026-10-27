@@ -122,7 +122,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
                 //edit file list
                 dummyfileList = Files.list(selectedPath).filter((t) -> {
-                    return t.getFileName().toString().startsWith("Ω");
+                    String n = t.getFileName().toString();
+                    return n.startsWith("Ω") || n.toLowerCase().endsWith(".xmp");
                 }).sorted(new FilenameComparator()).collect(Collectors.toList());
                 Stream<Path> editFileList = cacheList.stream().filter((t) -> {
                     boolean retVal = false;

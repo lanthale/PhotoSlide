@@ -46,7 +46,7 @@ import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.ImagePreview16;
 
 /**
  *
@@ -83,7 +83,7 @@ public class EditorMediaViewController implements Initializable {
     private LighttableController lightTableController;
     private EditorMetadataController editMetadataController;
     private EditorToolsController editorToolsController;
-    private Task<Boolean> task;
+    private ImagePreview16 preview;
     private GridView<MediaFile> mediaGrid;
     private EditMediaGridCellFactory factory;
     @FXML
@@ -95,6 +95,13 @@ public class EditorMediaViewController implements Initializable {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("editorMediaViewController").build());
         editorImageView.fitWidthProperty().bind(stackPane.widthProperty());
         editorImageView.fitHeightProperty().bind(stackPane.heightProperty());
+        preview = new ImagePreview16(editorImageView, "editorPreview");
+        preview.setOnProgress((p) -> imageProgress.setProgress(p));
+        preview.setOnShown(() -> imageProgress.setVisible(false));
+        preview.setOnFailed((ex) -> {
+            imageProgress.setVisible(false);
+            editorImageView.setImage(null);
+        });
         stackPane.setOnKeyPressed((t) -> {
             if (t.getCode().equals(KeyCode.RIGHT)) {
                 nextMediaItem();
@@ -133,6 +140,7 @@ public class EditorMediaViewController implements Initializable {
 
     public void injectEditorToolsController(EditorToolsController c) {
         this.editorToolsController = c;
+        c.setPreview(preview);
     }
 
     public void setMediaFileForEdit(MediaFile f) {
@@ -141,62 +149,25 @@ public class EditorMediaViewController implements Initializable {
         }
         stackPane.requestFocus();
         selectedMediaFile = f;
-        editorImageView.setImage(null);
-        task = new Task<>() {
-            private Image imageWithFilters;
-            private ObservableList<ImageFilter> filterList;
-            private Image img;
+        if (f.getMediaType() != MediaFile.MediaTypes.IMAGE || f.getLoadingError()) {
+            preview.clear();
+            imageProgress.setVisible(false);
+            editorImageView.setImage(null);
+            return;
+        }
+        editorImageView.setImage(f.getImage());
+        editorImageView.setVisible(true);
+        imageProgress.progressProperty().unbind();
+        imageProgress.setProgress(0);
+        imageProgress.setVisible(true);
+        preview.show(f);
+    }
 
-            @Override
-            protected Boolean call() throws Exception {
-                switch (selectedMediaFile.getMediaType()) {
-                    case VIDEO:
-                        break;
-                    case IMAGE:
-                        Platform.runLater(() -> {
-                            imageProgress.progressProperty().unbind();
-                            editorImageView.setImage(null);
-                            editorImageView.setVisible(true);
-                            imageProgress.setVisible(true);
-                        });
-                        if (selectedMediaFile.getLoadingError() == true) {
-                            return false;
-                        }
-                        String url = selectedMediaFile.getImageUrl().toString();
-                        img = new Image(url, true);
-                        Platform.runLater(() -> {
-                            imageProgress.progressProperty().bind(img.progressProperty());
-                            img.progressProperty().addListener((ov, t, t1) -> {
-                                if ((Double) t1 == 1.0 && !img.isError()) {
-                                    imageProgress.setVisible(false);
-                                    imageWithFilters = img;
-                                    filterList = selectedMediaFile.getFilterListWithoutImageData();
-                                    for (ImageFilter imageFilter : filterList) {
-                                        imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
-                                        imageFilter.filterMediaData(imageFilter.getValues());
-                                    }
-                                    img = imageWithFilters;
-                                    editorImageView.setImage(img);
-                                    stackPane.requestFocus();
-                                } else {
-                                    imageProgress.setVisible(true);
-                                    stackPane.requestFocus();
-                                }
-                            });
-                            editorImageView.setImage(img);
-                        });
-                        break;
-                }
-                return true;
-            }
-        };
-        task.setOnSucceeded((t) -> {
-            if ((Boolean) t.getSource().getValue() == false) {
-                imageProgress.setVisible(false);
-                editorImageView.setImage(null);
-            }
-        });
-        executor.submit(task);
+    /**
+     * @return the 16 bit pipeline that fills the editor image view
+     */
+    public ImagePreview16 getPreview() {
+        return preview;
     }
 
     public void shutdown() {
@@ -204,6 +175,7 @@ public class EditorMediaViewController implements Initializable {
             factory.shutdown();
         }
         executor.shutdownNow();
+        preview.shutdown();
     }
 
     @FXML
@@ -223,15 +195,10 @@ public class EditorMediaViewController implements Initializable {
     }
 
     private void cancleTask() {
-        if (task != null) {
-            task.cancel();
-            if (editorImageView.getImage() != null) {
-                editorImageView.getImage().cancel();
-            }
-            resetUI();
-            editMetadataController.cancleTask();
-            editorToolsController.cancleTask();
-        }
+        preview.clear();
+        resetUI();
+        editMetadataController.cancleTask();
+        editorToolsController.cancleTask();
     }
 
     @FXML

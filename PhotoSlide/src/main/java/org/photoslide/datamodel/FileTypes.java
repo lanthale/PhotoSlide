@@ -40,13 +40,15 @@ public class FileTypes {
         return isValid;
     }
     
+    /**
+     * @return the XMP sidecar of the media file ({@code <name>.xmp}), see XmpSidecar
+     */
     public static String convertEditNameToFilename(String fileNameWithPath){
         int lastIndexOfExt = fileNameWithPath.lastIndexOf('.');
         int lastIndexOfSlash = fileNameWithPath.lastIndexOf(File.separatorChar);
         if (lastIndexOfExt != -1) {
-            String fileEndingStr = ".edit";
             String fileStartStr = fileNameWithPath.substring(lastIndexOfSlash+1,lastIndexOfExt);
-            String res= fileNameWithPath.substring(0, lastIndexOfSlash)+File.separatorChar+"Ω_"+fileStartStr+fileEndingStr;
+            String res= fileNameWithPath.substring(0, lastIndexOfSlash)+File.separatorChar+fileStartStr+".xmp";
             return res;
         } else {
             return "";

@@ -117,7 +117,7 @@ import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.EditPipeline;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
@@ -499,15 +499,7 @@ public class MainViewController implements Initializable {
                                         continue;
                                     }
                                 }
-                                String url = mediaItem.getImageUrl().toString();
-                                Image img = new Image(url, false);
-                                ObservableList<ImageFilter> filterList = mediaItem.getFilterListWithoutImageData();
-                                Image imageWithFilters = img;
-                                for (ImageFilter imageFilter : filterList) {
-                                    imageWithFilters = imageFilter.loadMediaData(imageWithFilters);
-                                    imageFilter.filterMediaData(imageFilter.getValues());
-                                }
-                                img = imageWithFilters;
+                                Image img = EditPipeline.renderForExport(mediaItem);
                                 PixelReader reader = img.getPixelReader();
                                 BufferedImage fromFXImage;
                                 WritableImage newImage;

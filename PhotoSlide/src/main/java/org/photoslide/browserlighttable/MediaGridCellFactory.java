@@ -62,7 +62,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
 import org.photoslide.datamodel.MediaFileLoader;
-import org.photoslide.imageops.ImageFilter;
 
 /**
  *
@@ -70,7 +69,7 @@ import org.photoslide.imageops.ImageFilter;
  */
 public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridCell<MediaFile>> {
 
-    private Image img;
+    private boolean imageLoaded;
 
     private final Utility util;
     private final MetadataController metadataController;
@@ -83,8 +82,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
     private final Image dialogIcon;
-    private ObservableList<ImageFilter> filterList;
-    private Image imageWithFilters;
     private final Button resetCrop;
     private final MediaFileLoader fileLoader;
     private boolean listFilesActive;
@@ -256,12 +253,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if (target != null && target.getClass().equals(FontIcon.class)) {
                 if (!target.toString().startsWith("fa-file-movie-o")) {
                     handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
-                    if (lightController.getImageView().getImage() != null) {
-                        if (lightController.getImageView().getImage() != null) {
-                            if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImageUrl().toString())) {
-                                return;
-                            }
-                        }
+                    MediaFile shownFile = lightController.getPreview().getFile();
+                    if (shownFile != null && shownFile.getName().equals(((MediaGridCell) t.getSource()).getItem().getName())) {
+                        return;
                     }
                 }
             }
@@ -271,12 +265,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             if (target != null && target.getClass().equals(FontIcon.class)) {
                 if (!target.toString().startsWith("fa-file-movie-o")) {
                     handleStackButtonAction(((MediaGridCell) t.getSource()).getItem().getStackName(), (MediaGridCell) t.getSource());
-                    if (lightController.getImageView().getImage() != null) {
-                        if (lightController.getImageView().getImage() != null) {
-                            if (lightController.getImageView().getImage().getUrl().equalsIgnoreCase(((MediaGridCell) t.getSource()).getItem().getImageUrl().toString())) {
-                                return;
-                            }
-                        }
+                    MediaFile shownFile = lightController.getPreview().getFile();
+                    if (shownFile != null && shownFile.getName().equals(((MediaGridCell) t.getSource()).getItem().getName())) {
+                        return;
                     }
                 }
             }
@@ -297,7 +288,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getRatingControl().setVisible(false);
             return;
         }
-        if (img != null) {
+        if (imageLoaded) {
             cancleImageTask();
             lightController.getPlayIcon().setVisible(false);
             lightController.getImageView().setImage(null);
@@ -520,34 +511,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getImageView().setImage(null);
             return;
         }
-        String url = selectedMediaItem.getImageUrl().toString();
-        img = new Image(url, true);
-        lightController.getImageProgress().progressProperty().bind(img.progressProperty());
-        img.progressProperty().addListener((ov, g, g1) -> {
-            if ((Double) g1 == 1.0 && !img.isError()) {
-                lightController.getImageProgress().setVisible(false);
-                lightController.getImageView().setImage(img);
-                imageWithFilters = img;
-                filterList = selectedMediaItem.getFilterListWithoutImageData();
-                for (ImageFilter imageFilter : filterList) {
-                    switch (imageFilter.getName()) {
-                        case "ExposureFilter" -> {
-                            metadataController.setExposerFilter(imageFilter);
-                            metadataController.getApertureSlider().setValue(imageFilter.getValues()[0]);
-                        }
-                        case "GainFilter" -> {
-                            metadataController.setGainFilter(imageFilter);
-                            metadataController.getGainSlider().setValue(imageFilter.getValues()[0]);
-                            metadataController.getBiasSlider().setValue(imageFilter.getValues()[1]);
-                        }
-                    }
-                    imageWithFilters = imageFilter.loadMediaData(img);
-                    imageFilter.filterMediaData(imageFilter.getValues());
-                }
-                img = imageWithFilters;
-                lightController.getImageView().setImage(img);
-            }
-        });
+        imageLoaded = true;
+        metadataController.showFilterValues(selectedMediaItem);
+        lightController.getImageProgress().progressProperty().unbind();
+        lightController.getImageProgress().setProgress(0);
+        lightController.getPreview().show(selectedMediaItem);
 
         lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
 
@@ -664,17 +632,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public void cancleTask() {
-        if (img != null) {
-            img.cancel();
-        }
+        lightController.getPreview().clear();
         metadataController.cancelTasks();
         fileLoader.cancleTasks();
     }
 
     private void cancleImageTask() {
-        if (img != null) {
-            img.cancel();
-        }
+        lightController.getPreview().clear();
         metadataController.cancelTasks();
     }
 

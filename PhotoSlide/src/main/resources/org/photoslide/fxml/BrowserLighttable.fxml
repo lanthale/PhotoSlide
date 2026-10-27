@@ -281,6 +281,18 @@
             </VBox>
         </items>
       </SplitPane>
-      <ToggleSwitch fx:id="showPreviewPaneToggle" layoutX="580.0" layoutY="19.0" selected="true" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0" />
+      <HBox alignment="CENTER_RIGHT" pickOnBounds="false" spacing="8.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+         <children>
+            <Button id="toolbutton" fx:id="reloadButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#reloadImageAction" text="Reload">
+               <tooltip>
+                  <Tooltip text="Reload the image from disk (e.g. after changing the RAW settings)" />
+               </tooltip>
+               <graphic>
+                  <FontIcon iconLiteral="fa-refresh" iconSize="14" />
+               </graphic>
+            </Button>
+            <ToggleSwitch fx:id="showPreviewPaneToggle" selected="true" />
+         </children>
+      </HBox>
    </children>
 </AnchorPane>

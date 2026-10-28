@@ -8,6 +8,7 @@ import org.photoslide.datamodel.RenderContext;
 import org.photoslide.datamodel.WholeImageFilter16;
 import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.ParamSpec;
+import org.photoslide.imageops.simd.Simd;
 
 /**
  * Relight (tone mapper): opens up shadows and holds back highlights
@@ -83,12 +84,38 @@ public class RelightFilter extends AbstractImageFilter {
             final float[] blurred = Gauss.blur(bf, w, h, fuzz);
             Image16 out = Image16.blank(w, h, true);
             final short[] d = out.data();
+            if (Simd.ENABLED) {
+                // the two powers per pixel are most of the time: computed per row in float vectors
+                final float invShadows = (float) (1 / shadows);
+                final float fDetail = (float) detail;
+                IntStream.range(0, h).parallel().forEach(row -> {
+                    final double[] mRow = new double[w];
+                    final float[] mf = new float[w];
+                    final float[] yf = new float[w];
+                    final float[] mm = new float[w];
+                    for (int x = 0, o = row * w; x < w; x++, o++) {
+                        double m = localMean(bf, weight, blurred, wNorm, o);
+                        mRow[x] = m;
+                        boolean skip = y[o] <= 0 || m <= 0;
+                        mf[x] = skip ? 1 : (float) m;
+                        yf[x] = skip ? -1 : y[o];
+                    }
+                    Simd.powRatio(mf, yf, invShadows, fDetail, mm, w);
+                    for (int x = 0, i = row * w * 3; x < w; x++, i += 3) {
+                        if (yf[x] < 0) {
+                            d[i] = s[i];
+                            d[i + 1] = s[i + 1];
+                            d[i + 2] = s[i + 2];
+                            continue;
+                        }
+                        relight(s, d, i, mRow[x], yf[x], mm[x], highlights);
+                    }
+                });
+                return out;
+            }
             IntStream.range(0, h).parallel().forEach(row -> {
                 for (int x = 0, o = row * w, i = o * 3; x < w; x++, o++, i += 3) {
-                    double m = Math.min(1, Math.max(0, bf[o]));
-                    double um = Math.min(1, weight[o] * wNorm);
-                    um = Math.min(um * um, 1);
-                    m = um * m + (1 - um) * Math.min(1, Math.max(0, blurred[o]));
+                    double m = localMean(bf, weight, blurred, wNorm, o);
                     double yy = y[o];
                     if (yy <= 0 || m <= 0) {
                         d[i] = s[i];
@@ -97,15 +124,28 @@ public class RelightFilter extends AbstractImageFilter {
                         continue;
                     }
                     double mm = Math.pow(m, 1 / shadows) * Math.pow(yy / m, detail);
-                    double compressed = softLight(1 - m, Math.min(1, yy));
-                    double ratio = (compressed * highlights + (1 - highlights)) * mm / yy;
-                    d[i] = clamp((s[i] & 0xFFFF) * ratio);
-                    d[i + 1] = clamp((s[i + 1] & 0xFFFF) * ratio);
-                    d[i + 2] = clamp((s[i + 2] & 0xFFFF) * ratio);
+                    relight(s, d, i, m, yy, mm, highlights);
                 }
             });
             return out;
         };
+    }
+
+    /** Local brightness: the bilateral result where it is reliable, else its blur. */
+    private static double localMean(float[] bf, float[] weight, float[] blurred, float wNorm, int o) {
+        double m = Math.min(1, Math.max(0, bf[o]));
+        double um = Math.min(1, weight[o] * wNorm);
+        um = Math.min(um * um, 1);
+        return um * m + (1 - um) * Math.min(1, Math.max(0, blurred[o]));
+    }
+
+    /** Scales the pixel at i by the tone mapped luminance mm (of yy, local brightness m). */
+    private static void relight(short[] s, short[] d, int i, double m, double yy, double mm, double highlights) {
+        double compressed = softLight(1 - m, Math.min(1, yy));
+        double ratio = (compressed * highlights + (1 - highlights)) * mm / yy;
+        d[i] = clamp((s[i] & 0xFFFF) * ratio);
+        d[i + 1] = clamp((s[i + 1] & 0xFFFF) * ratio);
+        d[i + 2] = clamp((s[i + 2] & 0xFFFF) * ratio);
     }
 
     private static double softLight(double f, double b) {

@@ -14,7 +14,7 @@
 
 <AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.editortools.EditorToolsController">
    <children>
-      <TabPane layoutX="14.0" layoutY="14.0" prefHeight="156.0" prefWidth="231.0" scaleX="0.9" scaleY="0.9" tabClosingPolicy="UNAVAILABLE" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+      <TabPane fx:id="diagramTabs" layoutX="14.0" layoutY="14.0" prefHeight="156.0" prefWidth="231.0" scaleX="0.9" scaleY="0.9" tabClosingPolicy="UNAVAILABLE" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <tabs>
             <Tab text="Histogramm">
               <content>
@@ -29,6 +29,8 @@
                      </children></AnchorPane>
               </content>
             </Tab>
+            <Tab fx:id="maskTab" text="Color Mask" />
+            <Tab fx:id="samplerTab" text="Sampler" />
          </tabs>
       </TabPane>
       <ToolBar layoutX="14.0" layoutY="170.0" prefHeight="40.0" prefWidth="231.0" scaleX="0.9" scaleY="0.9" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">

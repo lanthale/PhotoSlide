@@ -21,17 +21,6 @@
       <VBox layoutY="14.0" prefHeight="660.0" prefWidth="646.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <ToolBar fx:id="editorToolBar" prefWidth="646.0">
-               <items>
-                  <Button id="toolbutton" fx:id="zoomButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#zoomButtonAction" text="100% View">
-                     <font>
-                        <Font size="11.0" />
-                     </font>
-                     <graphic>
-                        <FontIcon iconLiteral="ti-zoom-in" iconSize="17" />
-                     </graphic>
-                  </Button>
-                  <Pane prefHeight="30.0" prefWidth="18.0" />
-               </items>
             </ToolBar>
             <StackPane fx:id="stackPane" minHeight="100.0" minWidth="100.0" prefHeight="605.0" prefWidth="646.0" VBox.vgrow="ALWAYS">
                <children>

@@ -8,6 +8,8 @@ package org.photoslide.browserlighttable;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.imageops.EditPipeline;
+import org.photoslide.GridCells;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.File;
@@ -160,10 +162,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         resetCrop.setOnAction((h) -> {
             lightController.getOptionPane().setDisable(false);
             lightController.getInfoPane().setDisable(false);
-            lightController.getImageView().setViewport(null);
+            lightController.getPreview().setViewport(null);
             selectedMediaItem.setCropView(null);
-            final MediaFile cropReset = selectedMediaItem;
-            executor.submit(() -> cropReset.saveEdits());
+            EditPipeline.filtersChanged(selectedMediaItem, "Reset crop");     // saves, thumbnails, history
             lightController.getImageStackPane().getChildren().clear();
             lightController.getImageStackPane().getChildren().add(lightController.getImageView());
             lightController.getOptionPane().getChildren().clear();
@@ -612,20 +613,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getRatingControl().ratingProperty().unbind();
         lightController.getOptionPane().getChildren().clear();
 
-        if (lightController.getSnapshotView() != null) {
-            lightController.getSnapshotView().setSelectionRatioFixed(false);
-            lightController.getSnapshotView().setFixedSelectionRatio(1);
-            lightController.getSnapshotView().setSelectionActive(false);
-            lightController.getSnapshotView().setSelection(Rectangle2D.EMPTY);
-            lightController.getSnapshotView().setNode(null);
-            lightController.getImageStackPane().getChildren().clear();
-            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
-            lightController.setSnapshotView(null);
-        } else {
-            lightController.getImageStackPane().getChildren().clear();
-            lightController.getImageStackPane().getChildren().add(lightController.getImageView());
-            lightController.setSnapshotView(null);
-        }
+        lightController.cancelCrop();
+        lightController.getImageStackPane().getChildren().setAll(lightController.getImageView());
         resetCrop.setVisible(false);
     }
 
@@ -653,15 +642,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
-        VirtualFlow vf = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
-        for (int i = 0; i < vf.getCellCount(); i++) {
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
-                    return (MediaGridCell) mediaCell;
-                }
-            }
-        }
-        return null;
+        return GridCells.find(grid, input, MediaGridCell.class);
     }
 
     /**
@@ -670,26 +651,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @param input next visible media cell
      */
     public void oneRowUp(MediaGridCell input, double cellHeight) {
-        // get the underlying VirtualFlow object
-        VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
-        if (flow.getCellCount() == 0) {
-            return; // check that rows exist
-        }
-        for (int i = 0; i <= flow.cellCountProperty().get(); i++) {
-            if (flow.getCell(i).getChildrenUnmodifiable().contains(input)) {
-                int selectedRow = i;
-                int index = flow.getCell(i).getChildrenUnmodifiable().indexOf(input);
-                if (index == flow.getCell(i).getChildrenUnmodifiable().size() - 1) {
-                    if (--selectedRow < 0) {
-                        selectedRow = 0;
-                    }
-                    if (selectedRow >= flow.cellCountProperty().get()) {
-                        selectedRow = flow.getCellCount() - 1;
-                    }
-                    //flow.scrollTo(selectedRow);
-                    flow.scrollPixels(-cellHeight);
-                }
-            }
+        javafx.scene.control.IndexedCell<?> row = GridCells.visibleRowOf(grid, input);
+        if (row != null && row.getChildrenUnmodifiable().indexOf(input) == row.getChildrenUnmodifiable().size() - 1) {
+            VirtualFlow<?> flow = (VirtualFlow<?>) grid.getChildrenUnmodifiable().get(0);
+            flow.scrollPixels(-cellHeight);
         }
     }
 
@@ -700,26 +665,10 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
      * @param gridView
      */
     public void oneRowDown(MediaGridCell input, double cellHeight) {
-        // get the underlying VirtualFlow object
-        VirtualFlow flow = (VirtualFlow) grid.getChildrenUnmodifiable().get(0);
-        if (flow.getCellCount() == 0) {
-            return; // check that rows exist
-        }
-        int cellcount = flow.cellCountProperty().get();
-        for (int i = 0; i <= cellcount; i++) {
-            if (flow.getCell(i).getChildrenUnmodifiable().contains(input)) {
-                int selectedRow = i;
-                int index = flow.getCell(i).getChildrenUnmodifiable().indexOf(input);
-                if (index == 0) {
-                    if (++selectedRow >= cellcount) {
-                        selectedRow = flow.getCellCount() - 1;
-                    }
-                    //flow.scrollTo(selectedRow);
-                    flow.scrollPixels(cellHeight);
-                    break;
-                }
-                break;
-            }
+        javafx.scene.control.IndexedCell<?> row = GridCells.visibleRowOf(grid, input);
+        if (row != null && row.getChildrenUnmodifiable().indexOf(input) == 0) {
+            VirtualFlow<?> flow = (VirtualFlow<?>) grid.getChildrenUnmodifiable().get(0);
+            flow.scrollPixels(cellHeight);
         }
     }
 

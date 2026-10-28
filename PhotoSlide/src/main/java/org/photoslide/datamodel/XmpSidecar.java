@@ -31,6 +31,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.BlendMode;
+import org.photoslide.imageops.Geometry;
 import org.photoslide.imageops.mask.MaskCodec;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.ToolRegistry;
@@ -56,28 +57,6 @@ public final class XmpSidecar {
 
     public static final String NS_PHOTOSLIDE = "http://ns.photoslide.org/1.0/";
     private static final String PREFIX = "photoslide";
-
-    /** All PhotoSlide properties, used to remove them in one go. */
-    private static final String[][] OWN_PROPERTIES = {
-        {XMPConst.NS_XMP, "Rating"},
-        {XMPConst.NS_DC, "title"},
-        {XMPConst.NS_DC, "description"},
-        {XMPConst.NS_DC, "subject"},
-        {XMPConst.NS_IPTCCORE, "Location"},
-        {XMPConst.NS_EXIF, "GPSLatitude"},
-        {XMPConst.NS_EXIF, "GPSLongitude"},
-        {XMPConst.NS_EXIF, "GPSAltitude"},
-        {XMPConst.NS_EXIF, "GPSAltitudeRef"},
-        {XMPConst.NS_EXIF, "GPSTimeStamp"},
-        {NS_PHOTOSLIDE, "Rotation"},
-        {NS_PHOTOSLIDE, "Deleted"},
-        {NS_PHOTOSLIDE, "Crop"},
-        {NS_PHOTOSLIDE, "OriginalSize"},
-        {NS_PHOTOSLIDE, "Stacked"},
-        {NS_PHOTOSLIDE, "StackName"},
-        {NS_PHOTOSLIDE, "StackPos"},
-        {NS_PHOTOSLIDE, "Filters"}
-    };
 
     static {
         try {
@@ -150,31 +129,11 @@ public final class XmpSidecar {
         }
     }
 
-    /**
-     * Removes all PhotoSlide properties from the sidecar. The file is deleted
-     * if nothing of other programs is left in it.
-     */
-    public static synchronized void removeAll(MediaFile file) throws IOException {
+    /** Deletes the sidecar of the file (all edits, also those of other programs). */
+    public static synchronized void delete(MediaFile file) throws IOException {
         Path path = sidecarPath(file);
-        if (!Files.isRegularFile(path)) {
-            return;
-        }
-        try {
-            XMPMeta meta = readMeta(path);
-            for (String[] p : OWN_PROPERTIES) {
-                meta.deleteProperty(p[0], p[1]);
-            }
-            if (!meta.iterator().hasNext()) {
-                OWN_STATE.put(key(path), DELETED);
-                Files.delete(path);
-                return;
-            }
-            byte[] bytes = XMPMetaFactory.serializeToBuffer(meta, serializeOptions());
-            OWN_STATE.put(key(path), checksum(bytes));
-            Files.write(path, bytes);
-        } catch (XMPException ex) {
-            throw new IOException("Cannot change " + path, ex);
-        }
+        OWN_STATE.put(key(path), DELETED);
+        Files.deleteIfExists(path);
     }
 
     /**
@@ -262,6 +221,14 @@ public final class XmpSidecar {
         Rectangle2D crop = f.getCropView();
         putString(m, NS_PHOTOSLIDE, "Crop", crop == null ? null
                 : join(crop.getMinX(), crop.getMinY(), crop.getWidth(), crop.getHeight()));
+        Geometry g = f.getGeometry();
+        putFlag(m, "FlipHorizontal", g.flipH());
+        putFlag(m, "FlipVertical", g.flipV());
+        if (g.straighten() != 0) {
+            m.setPropertyDouble(NS_PHOTOSLIDE, "Straighten", g.straighten());
+        } else {
+            m.deleteProperty(NS_PHOTOSLIDE, "Straighten");
+        }
         Point2D size = f.getOrignalImageSize();
         putString(m, NS_PHOTOSLIDE, "OriginalSize", size == null ? null : join(size.getX(), size.getY()));
         m.setPropertyBoolean(NS_PHOTOSLIDE, "Stacked", f.isStacked());
@@ -296,6 +263,15 @@ public final class XmpSidecar {
                 values.add(Float.toString(v));
             }
             m.setStructField(NS_PHOTOSLIDE, item, NS_PHOTOSLIDE, "Values", values.toString());
+        }
+    }
+
+    /** Only written when set, so files without the edit stay unchanged. */
+    private static void putFlag(XMPMeta m, String name, boolean value) throws XMPException {
+        if (value) {
+            m.setPropertyBoolean(NS_PHOTOSLIDE, name, true);
+        } else {
+            m.deleteProperty(NS_PHOTOSLIDE, name);
         }
     }
 
@@ -387,6 +363,12 @@ public final class XmpSidecar {
         if (crop != null) {
             f.setCropView(new Rectangle2D(crop[0], crop[1], crop[2], crop[3]));
         }
+        // the sidecar is the reference: missing values mean no flip / straighten
+        Boolean flipH = m.getPropertyBoolean(NS_PHOTOSLIDE, "FlipHorizontal");
+        Boolean flipV = m.getPropertyBoolean(NS_PHOTOSLIDE, "FlipVertical");
+        Double straighten = m.getPropertyDouble(NS_PHOTOSLIDE, "Straighten");
+        f.setGeometry(new Geometry(Boolean.TRUE.equals(flipH), Boolean.TRUE.equals(flipV),
+                straighten == null ? 0 : straighten));
         double[] size = split(m.getPropertyString(NS_PHOTOSLIDE, "OriginalSize"), 2);
         if (size != null) {
             f.setOrignalImageSize(new Point2D(size[0], size[1]));

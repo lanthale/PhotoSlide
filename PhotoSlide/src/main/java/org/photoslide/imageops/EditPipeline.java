@@ -28,6 +28,7 @@ import org.librawjava.LibrawException;
 import org.librawjava.LibrawImage;
 import org.librawjava.OutputColor;
 import org.librawjava.RawFormatDetector;
+import org.librawdecodersettings.RawDecoderSettings;
 import org.photoslide.datamodel.AwtImage16;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.FilterChain16;
@@ -143,7 +144,10 @@ public final class EditPipeline {
                 try {
                     LibrawImage libraw = new LibrawImage(path.toString(), RAWImageLoader.getSettings());
                     libraw.setProgressListener((done, total) -> progress.accept((double) done / total));
-                    return Image16.fromRaw(libraw.readPixelData16(bytes, true, OutputColor.PROPHOTO));
+                    Image16 linear = Image16.fromRaw(libraw.readPixelData16(bytes, true, OutputColor.PROPHOTO));
+                    // base look of the RAW profile of the camera (like the camera JPEG)
+                    RawLook look = RawLook.forCamera(cameraKey(libraw));
+                    return look.apply(linear, look.fileStops(path, libraw));
                 } catch (LibrawException ex) {
                     if (!ex.isUnsupportedFormat()) {
                         throw ex;
@@ -164,6 +168,61 @@ public final class EditPipeline {
             throw new IOException("Cannot load " + path, img.getException());
         }
         return FxImage16.fromImage(img);
+    }
+
+    /**
+     * Thumbnail of a RAW file made like the editor shows it: decoded at half
+     * size by LibRaw in the working space with the RAW profile of the camera,
+     * then the base look (exposure, colour matrix, tone curve). Without this
+     * the thumbnails would come from LibRaw's 8 bit output (auto brightness,
+     * no look) and look different from the editor.
+     *
+     * @param maxSize longest side of the thumbnail
+     * @return the thumbnail, or null if the file is not a RAW LibRaw can
+     * read (the caller loads it the usual way)
+     */
+    public static Image loadRawThumbnail(MediaFile file, int maxSize) throws IOException {
+        if (!file.isRawImage() || file.isHEIFImage()) {
+            return null;
+        }
+        Path path = file.getPathStorage();
+        byte[] bytes = Files.readAllBytes(path);
+        if (!RawFormatDetector.isRaw(bytes)) {
+            return null;
+        }
+        try {
+            LibrawImage libraw = new LibrawImage(path.toString(), RAWImageLoader.getSettings());
+            String key = cameraKey(libraw);
+            RawDecoderSettings settings = RAWImageLoader.getSettings().get(key == null ? "Default" : key);
+            if (settings == null) {
+                settings = RAWImageLoader.getSettings().get("Default");
+            }
+            settings = settings == null ? new RawDecoderSettings() : settings.copy();
+            settings.setHalfSizeOutput(true);                 // a quarter of the pixels, plenty for a thumbnail
+            libraw.setSettingsOverride(settings);
+            Image16 linear = Image16.fromRaw(libraw.readPixelData16(bytes, true, OutputColor.PROPHOTO));
+            double s = Math.min(1.0, (double) maxSize / Math.max(linear.width(), linear.height()));
+            Image16 small = linear.scaledTo(Math.max(1, (int) Math.round(linear.width() * s)),
+                    Math.max(1, (int) Math.round(linear.height() * s)));
+            RawLook look = RawLook.forCamera(key);
+            look.apply(small, look.fileStops(path, libraw));
+            return FxImage16.toImage(small);
+        } catch (LibrawException ex) {
+            if (!ex.isUnsupportedFormat()) {
+                throw ex;
+            }
+            return null;
+        }
+    }
+
+    /** "Maker Model" as the RAW profiles are named, or null. */
+    private static String cameraKey(LibrawImage libraw) {
+        try {
+            return libraw.getCameraMaker();
+        } catch (IOException | RuntimeException ex) {
+            LOG.log(Level.FINE, "Camera of the RAW file unknown", ex);
+            return null;
+        }
     }
 
     /**
@@ -223,12 +282,19 @@ public final class EditPipeline {
      * @return linear working space colour 0..1
      */
     public static double[] sampleBelow(MediaFile file, Image16 source, int position, int x, int y) {
+        return sampleBelow(file.getFilterListWithoutImageData(), source, position, x, y);
+    }
+
+    /**
+     * Like sampleBelow(file, ...) with a copy of the filters (any thread).
+     */
+    public static double[] sampleBelow(List<ImageFilter> filters, Image16 source, int position, int x, int y) {
         final int r = 48;
         Image16 crop = source.crop(x - r, y - r, 2 * r + 1, 2 * r + 1);
         final int x0 = Math.max(0, x - r);
         final int y0 = Math.max(0, y - r);
         List<ImageFilter> below = new ArrayList<>();
-        for (ImageFilter f : file.getFilterListWithoutImageData()) {
+        for (ImageFilter f : filters) {
             if (f.getPosition() < position) {
                 below.add(f);
             }
@@ -269,22 +335,35 @@ public final class EditPipeline {
     }
 
     /**
-     * Applies the filters to a small 8 bit image (thumbnails). The image is
-     * not changed.
+     * Filter chain for the given settings followed by flip and straighten
+     * (the result keeps the size of the source).
+     */
+    public static FilterChain16 chain(List<ImageFilter> filters, Geometry geometry, RenderContext ctx) {
+        FilterChain16 chain = chain(filters, ctx);
+        Filter16 g = geometry == null ? null : geometry.toFilter16();
+        if (g != null) {
+            chain.add(g);
+        }
+        return chain;
+    }
+
+    /**
+     * Applies the filters, flip and straighten to a small 8 bit image
+     * (thumbnails). The image is not changed.
      *
      * @param originalWidth width of the full image, to scale radii; 0 = unknown
      */
-    public static Image applyTo(Image img, List<ImageFilter> filters, double originalWidth) {
+    public static Image applyTo(Image img, List<ImageFilter> filters, Geometry geometry, double originalWidth) {
         double scale = originalWidth > 0 ? Math.min(1.0, img.getWidth() / originalWidth) : 1.0;
-        FilterChain16 chain = chain(filters, new RenderContext(scale));
+        FilterChain16 chain = chain(filters, geometry, new RenderContext(scale));
         Image16 result = chain.render(FxImage16.fromImage(img));
         return FxImage16.toImage(result);
     }
 
-    /** Full size 8 bit result with all filters (export). */
+    /** Full size 8 bit result with all filters, flip and straighten (export; crop and quarter turns follow). */
     public static Image renderForExport(MediaFile file) throws IOException {
         Image16 source = loadSourceUncached(file);
-        return FxImage16.toImage(chain(file.getFilterListWithoutImageData(), RenderContext.FULL).render(source));
+        return FxImage16.toImage(chain(file.getFilterListWithoutImageData(), file.getGeometry(), RenderContext.FULL).render(source));
     }
 
     /**
@@ -318,12 +397,31 @@ public final class EditPipeline {
      * redraw, nothing is saved.
      */
     public static void editsReloaded(MediaFile file) {
+        EditHistory history = EditHistory.peek(file);
+        if (history != null) {
+            history.labelNext("Changed by another program");
+            history.record(file);
+        }
         for (Consumer<MediaFile> l : FILTER_LISTENERS) {
             l.accept(file);
         }
         for (Consumer<MediaFile> l : RELOAD_LISTENERS) {
             l.accept(file);
         }
+    }
+
+    /**
+     * The edits of the file were set to a step of its history (JavaFX
+     * thread): all views redraw like after a reload, and the state is saved.
+     */
+    static void editsRestored(MediaFile file) {
+        for (Consumer<MediaFile> l : FILTER_LISTENERS) {
+            l.accept(file);
+        }
+        for (Consumer<MediaFile> l : RELOAD_LISTENERS) {
+            l.accept(file);
+        }
+        save(file);
     }
 
     /** Called by every view that shows filtered images of a file. */
@@ -337,13 +435,36 @@ public final class EditPipeline {
      * are saved in the background (several changes in a row are saved once).
      */
     public static void filtersChanged(MediaFile file) {
+        filtersChanged(file, null);
+    }
+
+    /**
+     * Like filtersChanged(file); label names the step in the history of the
+     * file (null = derived from the change). Also for crop, rotation, flip and
+     * straighten.
+     */
+    public static void filtersChanged(MediaFile file, String label) {
+        EditHistory history = EditHistory.peek(file);
+        if (history != null) {
+            if (label != null) {
+                history.labelNext(label);
+            }
+            history.record(file);
+        }
         for (Consumer<MediaFile> l : FILTER_LISTENERS) {
             l.accept(file);
         }
+        save(file);
+    }
+
+    /** Saves the edits in the background (several changes in a row are saved once). */
+    private static void save(MediaFile file) {
         if (PENDING_SAVES.add(file)) {
             SAVER.submit(() -> {
                 PENDING_SAVES.remove(file);
                 file.saveEdits();
+                // thumbnails follow once per burst of changes, not on every slider step
+                javafx.application.Platform.runLater(file::thumbnailChanged);
             });
         }
     }

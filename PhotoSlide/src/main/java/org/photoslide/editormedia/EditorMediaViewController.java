@@ -20,7 +20,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Label;
@@ -70,10 +69,10 @@ public class EditorMediaViewController implements Initializable {
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
 
     @FXML
-    private Button zoomButton;
-    @FXML
     private ToolBar editorToolBar;
     private SelectionTools selectionTools;
+    private ViewTools viewTools;
+    private CropRotateOverlay cropOverlay;
     @FXML
     private Rating editorRatingControl;
     @FXML
@@ -111,6 +110,8 @@ public class EditorMediaViewController implements Initializable {
         preview = new ImagePreview16(editorImageView, "editorPreview");
         regionOverlay = new RegionOverlay(editorImageView, preview);
         stackPane.getChildren().add(regionOverlay);
+        cropOverlay = new CropRotateOverlay(editorImageView, preview);
+        stackPane.getChildren().add(cropOverlay);
         // colour of the edited image (all tools applied) for the colour selection
         selectionTools = new SelectionTools(editorToolBar, regionOverlay, p -> {
             Image16 source = preview.getSource();
@@ -121,8 +122,23 @@ public class EditorMediaViewController implements Initializable {
             int y = (int) Math.max(0, Math.min(source.height() - 1, p.y()));
             return EditPipeline.sampleBelow(selectedMediaFile, source, Integer.MAX_VALUE, x, y);
         });
+        viewTools = new ViewTools(editorToolBar, editorImageView, stackPane, preview, cropOverlay, regionOverlay);
+        // the sampler of the tools panel follows the mouse
+        stackPane.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
+            if (editorToolsController != null) {
+                editorToolsController.sampleAt(regionOverlay.originalAt(e.getSceneX(), e.getSceneY()));
+            }
+        });
+        stackPane.addEventFilter(MouseEvent.MOUSE_EXITED, e -> {
+            if (editorToolsController != null) {
+                editorToolsController.sampleAt(null);
+            }
+        });
         preview.setOnProgress((p) -> imageProgress.setProgress(p));
-        preview.setOnShown(() -> imageProgress.setVisible(false));
+        preview.setOnShown(() -> {
+            imageProgress.setVisible(false);
+            viewTools.applyView();          // crop and zoom need the size of the original
+        });
         preview.setOnFailed((ex) -> {
             imageProgress.setVisible(false);
             editorImageView.setImage(null);
@@ -178,6 +194,11 @@ public class EditorMediaViewController implements Initializable {
             }
 
             @Override
+            public void requestCircle(double defaultRadius, java.util.function.BiConsumer<Contour.Point, Double> onCircle) {
+                regionOverlay.requestCircle(defaultRadius, onCircle);
+            }
+
+            @Override
             public void cancelPick() {
                 regionOverlay.cancel();
             }
@@ -226,6 +247,7 @@ public class EditorMediaViewController implements Initializable {
         stackPane.requestFocus();
         selectedMediaFile = f;
         if (f.getMediaType() != MediaFile.MediaTypes.IMAGE || f.getLoadingError()) {
+            viewTools.setFile(null);
             preview.clear();
             imageProgress.setVisible(false);
             editorImageView.setImage(null);
@@ -236,6 +258,7 @@ public class EditorMediaViewController implements Initializable {
         imageProgress.progressProperty().unbind();
         imageProgress.setProgress(0);
         imageProgress.setVisible(true);
+        viewTools.setFile(f);
         preview.show(f);
     }
 
@@ -252,16 +275,6 @@ public class EditorMediaViewController implements Initializable {
         }
         executor.shutdownNow();
         preview.shutdown();
-    }
-
-    @FXML
-    private void zoomButtonAction(ActionEvent event) {
-        Rectangle2D newViewportRect3 = new Rectangle2D(
-                0,
-                0,
-                100,
-                100);
-        editorImageView.setViewport(newViewportRect3);
     }
 
     public void resetUI() {

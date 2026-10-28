@@ -35,6 +35,7 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -52,6 +53,7 @@ import org.photoslide.browsermetadata.DMSCoordinate;
 import org.photoslide.browsermetadata.DegreeCoordinate;
 import org.photoslide.browsermetadata.Point;
 import org.photoslide.imageops.EditPipeline;
+import org.photoslide.imageops.Geometry;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.ToolRegistry;
 
@@ -80,6 +82,8 @@ public class MediaFile implements Serializable {
     private SimpleStringProperty place;
     private SimpleStringProperty faces;
     private Rectangle2D cropView;
+    /** Flip and straighten, applied after the tools (see Geometry). */
+    private Geometry geometry;
     private Point2D orignalImageSize;
     private LocalDateTime recordTime;
     private SimpleBooleanProperty deleted;
@@ -153,6 +157,7 @@ public class MediaFile implements Serializable {
         gpsHeight = -1;
         orignalImageSize = null;
         cropView = null;
+        geometry = Geometry.NONE;
     }
 
     public void initData() {
@@ -178,6 +183,7 @@ public class MediaFile implements Serializable {
         gpsHeight = -1;
         orignalImageSize = null;
         cropView = null;
+        geometry = Geometry.NONE;
     }
 
     /**
@@ -194,13 +200,13 @@ public class MediaFile implements Serializable {
 
     public Image setFilters() {
         if (this.unModifiyAbleImage != null) {
-            if (filterList.isEmpty()) {
+            if (filterList.isEmpty() && geometry.isIdentity()) {
                 return getClonedImage(unModifiyAbleImage);
             }
             // radii are given for the full image; its width is only known after a crop,
             // otherwise assume a typical camera width
             double fullWidth = orignalImageSize != null ? orignalImageSize.getX() : TYPICAL_IMAGE_WIDTH;
-            return EditPipeline.applyTo(unModifiyAbleImage, getFilterListWithoutImageData(), fullWidth);
+            return EditPipeline.applyTo(unModifiyAbleImage, getFilterListWithoutImageData(), geometry, fullWidth);
         } else {
             return this.image;
         }
@@ -275,13 +281,23 @@ public class MediaFile implements Serializable {
         }
     }
 
+    /** Counts saved changes of the edits: views showing the edited thumbnail listen to it. */
+    public ReadOnlyIntegerProperty editVersionProperty() {
+        return editVersion;
+    }
+
+    /** Lets grid cells redraw the thumbnail with the current edits. JavaFX thread. */
+    public void thumbnailChanged() {
+        editVersion.set(editVersion.get() + 1);
+    }
+
     /**
      * Reads the edits again after the sidecar was changed or deleted by
      * another program, and lets grid cells redraw. JavaFX thread.
      */
     public void reloadEdits() {
         readEdits();
-        editVersion.set(editVersion.get() + 1);
+        thumbnailChanged();
     }
 
     /**
@@ -301,6 +317,7 @@ public class MediaFile implements Serializable {
         rotationAngle.set(0.0);
         deleted.set(false);
         cropView = null;
+        geometry = Geometry.NONE;
         orignalImageSize = null;
         stacked.set(false);
         stackName.set(null);
@@ -528,6 +545,15 @@ public class MediaFile implements Serializable {
 
     public void setCropView(Rectangle2D cropView) {
         this.cropView = cropView;
+    }
+
+    /** Flip and straighten of the image (never null). */
+    public Geometry getGeometry() {
+        return geometry;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry == null ? Geometry.NONE : geometry;
     }
 
     public Point2D getOrignalImageSize() {
@@ -1055,25 +1081,18 @@ public class MediaFile implements Serializable {
     }
 
     /**
-     * Removes all PhotoSlide edits. Only the PhotoSlide properties are taken
-     * out of the XMP sidecar; the file itself is deleted only if nothing of
-     * other programs is left in it.
+     * Removes all edits: the XMP sidecar (and a former .edit file) is
+     * deleted and everything stored there is reset.
      */
     public void removeAllEdits() {
         try {
-            XmpSidecar.removeAll(this);
+            XmpSidecar.delete(this);
             Files.deleteIfExists(getLegacyEditFilePath());
         } catch (IOException ex) {
             Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot remove edits of " + name, ex);
         }
-        deleted.set(false);
-        place.set("");
+        resetEdits();
         faces.set("");
-        rotationAngle.set(0.0);
-        rating.set(0);
-        gpsHeight = -1;
-        cropView = null;
-        orignalImageSize = null;
     }
 
     /**

@@ -352,3 +352,23 @@
 }
 
 
+
+/* edit history of the editor */
+.history-list, .history-list .list-cell {
+    -fx-background-color: #2f2f2f;
+    -fx-text-fill: #d0d0d0;
+}
+.history-list .list-cell:odd {
+    -fx-background-color: #2a2a2a;
+}
+.history-list .list-cell:selected {
+    -fx-background-color: #4a6584;
+    -fx-text-fill: white;
+}
+.history-list .list-cell.undone {
+    -fx-text-fill: #7a7a7a;
+    -fx-font-style: italic;
+}
+.history-list .list-cell .ikonli-font-icon {
+    -fx-icon-color: #bfbfbf;
+}

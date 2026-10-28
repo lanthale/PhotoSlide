@@ -14,12 +14,12 @@ import java.util.function.DoubleConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Window;
 import org.photoslide.datamodel.DisplaySurface;
-import org.photoslide.datamodel.FilterChain16;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.RenderContext;
@@ -53,9 +53,11 @@ public final class ImagePreview16 {
     private final AtomicLong generation = new AtomicLong();
     private final AtomicLong changes = new AtomicLong();
     private final AtomicBoolean proxyQueued = new AtomicBoolean();
-    private final AtomicReference<List<ImageFilter>> pendingFilters = new AtomicReference<>();
+    private final AtomicReference<Pending> pending = new AtomicReference<>();
     private final Image16[] scratchFull = new Image16[2];
     private final Image16[] scratchProxy = new Image16[2];
+    /** Proxy renders while a slider is dragged: only the changed tool and the ones after it. */
+    private final PrefixCachedRenderer proxyRenderer = new PrefixCachedRenderer();
 
     private volatile MediaFile file;
     private volatile Image16 source;
@@ -70,6 +72,14 @@ public final class ImagePreview16 {
     /** Viewport in pixels of the original, null = whole image. JavaFX thread only. */
     private Rectangle2D fullViewport;
     private boolean settingViewport;
+
+    /** Settings the next render uses. */
+    private record Pending(List<ImageFilter> filters, Geometry geometry) {
+
+        static Pending of(MediaFile f) {
+            return new Pending(f.getFilterListWithoutImageData(), f.getGeometry());
+        }
+    }
 
     private Runnable onShown;
     private Consumer<Throwable> onFailed;
@@ -138,6 +148,22 @@ public final class ImagePreview16 {
         return currentScale();
     }
 
+    /**
+     * Sets the viewport (zoom, crop) in pixels of the original, null = whole
+     * image. Applied to every image this preview shows. JavaFX thread.
+     */
+    public void setViewport(Rectangle2D original) {
+        fullViewport = original;
+        settingViewport = true;
+        try {
+            // a thumbnail shown before the first render has another scale: show it whole
+            boolean ours = shownImage != null && view.getImage() == shownImage;
+            view.setViewport(original == null || !ours ? null : scale(original, shownScale));
+        } finally {
+            settingViewport = false;
+        }
+    }
+
     private double currentScale() {
         return shownImage != null && view.getImage() == shownImage ? shownScale : 1;
     }
@@ -151,7 +177,7 @@ public final class ImagePreview16 {
         file = f;
         source = null;
         updateProxySize();
-        pendingFilters.set(f.getFilterListWithoutImageData());
+        pending.set(Pending.of(f));
         executor.submit(() -> {
             if (gen != generation.get()) {
                 return;
@@ -163,6 +189,14 @@ public final class ImagePreview16 {
                 }
                 source = src;
                 proxySource = null;
+                // the real size of the original: thumbnails need it to place regions
+                Platform.runLater(() -> {
+                    Point2D size = f.getOrignalImageSize();
+                    if (size == null || size.getX() != src.width() || size.getY() != src.height()) {
+                        f.setOrignalImageSize(new Point2D(src.width(), src.height()));
+                        f.thumbnailChanged();
+                    }
+                });
                 if (useProxy()) {
                     render(gen, true, true);
                     render(gen, false, false);
@@ -211,7 +245,7 @@ public final class ImagePreview16 {
         if (f == null) {
             return;
         }
-        pendingFilters.set(f.getFilterListWithoutImageData());
+        pending.set(Pending.of(f));
         final long gen = generation.get();
         final long change = changes.incrementAndGet();
         if (proxyQueued.compareAndSet(false, true)) {
@@ -239,6 +273,7 @@ public final class ImagePreview16 {
             proxySource = null;
             scratchFull[0] = scratchFull[1] = null;
             scratchProxy[0] = scratchProxy[1] = null;
+            proxyRenderer.clear();
         });
     }
 
@@ -279,14 +314,16 @@ public final class ImagePreview16 {
     /** Render thread. */
     private void render(long gen, boolean first, boolean proxy) {
         Image16 full = source;
-        List<ImageFilter> filters = pendingFilters.get();
-        if (full == null || filters == null) {
+        Pending settings = pending.get();
+        if (full == null || settings == null) {
             return;
         }
         Image16 src = proxy ? proxySource(full) : full;
         double scale = (double) src.width() / full.width();
-        FilterChain16 chain = EditPipeline.chain(filters, new RenderContext(scale));
-        Image16 result = chain.render(src, proxy ? scratchProxy : scratchFull);
+        RenderContext ctx = new RenderContext(scale);
+        Image16 result = proxy
+                ? proxyRenderer.render(src, settings.filters(), settings.geometry(), ctx, scratchProxy)
+                : EditPipeline.chain(settings.filters(), settings.geometry(), ctx).render(src, scratchFull);
         if (gen != generation.get()) {
             return;
         }

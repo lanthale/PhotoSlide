@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import java.util.List;
 import org.librawdecodersettings.RawDecoderSettings;
+import org.photoslide.imageops.RawLook;
 
 /**
  * JavaFX-Property-Spiegel von {@link RawDecoderSettings} (LibRawFX 2.0.1).
@@ -89,6 +90,14 @@ public class RawDecoderSettingsFx {
     private final StringProperty cameraProfilePath = new SimpleStringProperty(this, "cameraProfilePath", "");
     private final StringProperty badPixelsPath = new SimpleStringProperty(this, "badPixelsPath", "");
     private final StringProperty darkFramePath = new SimpleStringProperty(this, "darkFramePath", "");
+    // base look of the 16 bit pipeline (not a LibRaw setting, see RawLook)
+    private final DoubleProperty baseExposure = new SimpleDoubleProperty(this, "baseExposure", RawLook.DEFAULT.exposure());
+    private final BooleanProperty useDngBaseline = new SimpleBooleanProperty(this, "useDngBaseline", RawLook.DEFAULT.useDngBaseline());
+    private final IntegerProperty toneCurve = new SimpleIntegerProperty(this, "toneCurve", RawLook.DEFAULT.curve().ordinal());
+    // colour matrix from a ColorChecker calibration, "m00;...;m22" (see RawLook)
+    private final BooleanProperty useColorMatrix = new SimpleBooleanProperty(this, "useColorMatrix", false);
+    private final StringProperty colorMatrix = new SimpleStringProperty(this, "colorMatrix", "");
+    private final BooleanProperty isoGain = new SimpleBooleanProperty(this, "isoGain", RawLook.DEFAULT.isoGain());
 
     /** Frisches Modell mit den Default-Werten (entspricht "new RawDecoderSettingsFx()"). */
     public static RawDecoderSettingsFx defaults() {
@@ -110,7 +119,8 @@ public class RawDecoderSettingsFx {
                 channelBlack2, channelBlack3, userFlip, dontStretchPixels,
                 useCropBox, cropBoxX, cropBoxY, cropBoxW, cropBoxH, shotSelect,
                 coolScanNEFGamma, rawProcessingOptions, outputProfilePath,
-                cameraProfilePath, badPixelsPath, darkFramePath);
+                cameraProfilePath, badPixelsPath, darkFramePath,
+                baseExposure, useDngBaseline, toneCurve, useColorMatrix, colorMatrix, isoGain);
     }
 
     /** Erzeugt ein konfiguriertes, fuer LibRawFX-Map geeignetes Objekt. */
@@ -267,6 +277,48 @@ public class RawDecoderSettingsFx {
     public DoubleProperty autoBrightnessThresholdProperty() { return autoBrightnessThreshold; }
     public double getAutoBrightnessThreshold() { return autoBrightnessThreshold.get(); }
     public void setAutoBrightnessThreshold(double v) { autoBrightnessThreshold.set(v); }
+
+    /** The base look of the editor (exposure, DNG baseline, tone curve). */
+    public RawLook toLook() {
+        RawLook.ToneCurve[] curves = RawLook.ToneCurve.values();
+        return new RawLook(getBaseExposure(), isUseDngBaseline(),
+                curves[Math.max(0, Math.min(curves.length - 1, getToneCurve()))],
+                isUseColorMatrix() ? RawLook.parseMatrix(getColorMatrix()) : null, isIsoGain());
+    }
+
+    /** Takes over the base look (it is not part of RawDecoderSettings). */
+    public void copyLookFrom(RawDecoderSettingsFx other) {
+        setBaseExposure(other.getBaseExposure());
+        setUseDngBaseline(other.isUseDngBaseline());
+        setToneCurve(other.getToneCurve());
+        setUseColorMatrix(other.isUseColorMatrix());
+        setColorMatrix(other.getColorMatrix());
+        setIsoGain(other.isIsoGain());
+    }
+
+    public BooleanProperty isoGainProperty() { return isoGain; }
+    public boolean isIsoGain() { return isoGain.get(); }
+    public void setIsoGain(boolean v) { isoGain.set(v); }
+
+    public BooleanProperty useColorMatrixProperty() { return useColorMatrix; }
+    public boolean isUseColorMatrix() { return useColorMatrix.get(); }
+    public void setUseColorMatrix(boolean v) { useColorMatrix.set(v); }
+
+    public StringProperty colorMatrixProperty() { return colorMatrix; }
+    public String getColorMatrix() { return colorMatrix.get(); }
+    public void setColorMatrix(String v) { colorMatrix.set(v == null ? "" : v); }
+
+    public DoubleProperty baseExposureProperty() { return baseExposure; }
+    public double getBaseExposure() { return baseExposure.get(); }
+    public void setBaseExposure(double v) { baseExposure.set(v); }
+
+    public BooleanProperty useDngBaselineProperty() { return useDngBaseline; }
+    public boolean isUseDngBaseline() { return useDngBaseline.get(); }
+    public void setUseDngBaseline(boolean v) { useDngBaseline.set(v); }
+
+    public IntegerProperty toneCurveProperty() { return toneCurve; }
+    public int getToneCurve() { return toneCurve.get(); }
+    public void setToneCurve(int v) { toneCurve.set(v); }
 
     public DoubleProperty brightNessProperty() { return brightNess; }
     public double getBrightNess() { return brightNess.get(); }

@@ -8,6 +8,9 @@ package org.photoslide.browserlighttable;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.imageops.EditPipeline;
+import org.photoslide.datamodel.Image16;
+import org.photoslide.editormedia.CropAspect;
+import org.photoslide.editormedia.CropRotateOverlay;
 import org.photoslide.imageops.ImagePreview16;
 import org.photoslide.datamodel.SidecarWatcher;
 import org.photoslide.MainViewController;
@@ -35,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.animation.PauseTransition;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -46,7 +48,7 @@ import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Point2D;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
@@ -68,6 +70,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
@@ -76,7 +79,6 @@ import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.PopOver;
 import org.controlsfx.control.Rating;
-import org.controlsfx.control.SnapshotView;
 import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.browsercollections.DirectoryWatcher;
@@ -150,7 +152,11 @@ public class LighttableController implements Initializable {
     private Button cropButton;
     @FXML
     private HBox imageStackPane;
-    private SnapshotView snapshotView;
+    /** Crop mode on the photo (same as in the editor). */
+    private CropRotateOverlay cropOverlay;
+    private HBox cropBar;
+    private ComboBox<String> cropAspect;
+    private MediaFile croppedFile;
     @FXML
     private Label titleLabel;
     @FXML
@@ -213,6 +219,9 @@ public class LighttableController implements Initializable {
         preview.setOnProgress((p) -> imageProgress.setProgress(p));
         preview.setOnShown(() -> imageProgress.setVisible(false));
         preview.setOnFailed((ex) -> imageProgress.setVisible(false));
+        cropOverlay = new CropRotateOverlay(imageView, preview);
+        cropBar = createCropBar();
+        stackPane.getChildren().addAll(cropOverlay, cropBar);
         mediaView.fitWidthProperty().bind(stackPane.widthProperty());
         mediaView.fitHeightProperty().bind(stackPane.heightProperty());
         mediaView.setVisible(false);
@@ -784,99 +793,98 @@ public class LighttableController implements Initializable {
 
     }
 
+    /** Starts the crop mode on the shown photo, or applies the frame if it is active. */
     public void cropAction() {
-        if (snapshotView != null) {
-            if (snapshotView.isSelectionActive()) {
-                snapshotView.setSelectionActive(false);
-                snapshotView.setSelection(Rectangle2D.EMPTY);
-                snapshotView.setNode(null);
-                imageStackPane.getChildren().clear();
-                imageStackPane.getChildren().add(imageView);
-                imageView.requestFocus();
-                snapshotView = null;
-            }
-        } else {
-            infoPane.setDisable(true);
-            optionPane.setDisable(true);
-            snapshotView = new SnapshotView(imageView);
-            //snapshotView.setSelectionAreaBoundary(SnapshotView.Boundary.NODE);
-
-            snapshotView.setSelectionActive(false);
-            imageStackPane.getChildren().add(snapshotView);
-            snapshotView.setOnKeyPressed((t) -> {
-                if (KeyCode.ESCAPE == t.getCode()) {
-                    snapshotView.setSelection(Rectangle2D.EMPTY);
-                    snapshotView.setNode(null);
-                    imageStackPane.getChildren().clear();
-                    imageStackPane.getChildren().add(imageView);
-                    imageView.requestFocus();
-                    infoPane.setDisable(false);
-                    optionPane.setDisable(false);
-                    snapshotView.setSelectionRatioFixed(false);
-                    snapshotView.setFixedSelectionRatio(1);
-                    snapshotView.setSelectionActive(false);
-                    snapshotView = null;
-                }
-                if (KeyCode.ENTER == t.getCode()) {
-                    Rectangle2D selection = snapshotView.getSelection();
-                    // the view may show a smaller preview: store sizes in pixels of the original
-                    double displayScale = preview.getDisplayScale();
-                    Point2D imgSize = new Point2D(imageView.getImage().getWidth() / displayScale,
-                            imageView.getImage().getHeight() / displayScale);
-                    factory.getSelectedCell().getItem().setOrignalImageSize(imgSize);
-                    imageView.setViewport(new Rectangle2D(0, 0, imageView.getImage().getWidth(), imageView.getImage().getHeight()));
-                    Point2D imageViewToImageUp = util.imageViewToImage(imageView, new Point2D(selection.getMinX(), selection.getMinY()));
-                    Point2D imageViewToImageLow = util.imageViewToImage(imageView, new Point2D(selection.getMaxX(), selection.getMaxY()));
-                    double width = imageViewToImageLow.getX() - imageViewToImageUp.getX();
-                    double hight = imageViewToImageLow.getY() - imageViewToImageUp.getY();
-                    Rectangle2D cropView = new Rectangle2D(imageViewToImageUp.getX(), imageViewToImageUp.getY(), width, hight);
-                    imageView.setViewport(cropView);
-                    snapshotView.setSelectionActive(false);
-                    snapshotView.setSelection(Rectangle2D.EMPTY);
-                    snapshotView.setNode(null);
-                    imageStackPane.getChildren().clear();
-                    imageStackPane.getChildren().add(imageView);
-                    factory.getSelectedCell().getItem().setCropView(new Rectangle2D(
-                            cropView.getMinX() / displayScale, cropView.getMinY() / displayScale,
-                            cropView.getWidth() / displayScale, cropView.getHeight() / displayScale));
-                    infoPane.setDisable(false);
-                    optionPane.setDisable(false);
-                    snapshotView.setSelectionRatioFixed(false);
-                    snapshotView = null;
-                    savingMediaFileEdits(factory.getSelectedCell().getItem());
-                }
-                t.consume();
-            });
+        if (cropOverlay.mode() == CropRotateOverlay.Mode.CROP) {
+            cropOverlay.commit();
+            return;
         }
+        MediaFile item = factory == null || factory.getSelectedCell() == null ? null : factory.getSelectedCell().getItem();
+        Image16 source = preview.getSource();
+        if (item == null || item.getMediaType() != MediaFile.MediaTypes.IMAGE || preview.getFile() != item || source == null) {
+            return;
+        }
+        croppedFile = item;
+        infoPane.setDisable(true);
+        optionPane.setDisable(true);
+        preview.setViewport(null);                  // the frame needs the whole photo
+        cropOverlay.startCrop(item.getCropView(), this::finishCrop, this::cancelCrop);
+        cropAspect.getSelectionModel().select(CropAspect.initial(item.getCropView(), source.width(), source.height(),
+                CropAspect.isQuarter(item.getRotationAngleProperty().get())));
+        cropOverlay.setAspect(cropRatio());
+        cropBar.setVisible(true);
+    }
 
-        if (snapshotView != null) {
-            double ratio = 1;
-            snapshotView.setSelectionRatioFixed(false);
-            ratio = (double) imageView.getImage().getWidth() / imageView.getImage().getHeight();
-            snapshotView.requestFocus();
-            final double ratioF = ratio;
-            snapshotView.setFixedSelectionRatio(ratioF);
-            snapshotView.setSelectionRatioFixed(true);
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished((t) -> {
-                if (factory.getSelectedCell().getItem().getCropView() == null) {
-                    Rectangle2D rect = new Rectangle2D(20, 20, 100 * ratioF, 100);
-                    snapshotView.setSelection(rect);
-                } else {
-                    Rectangle2D viewport = imageView.getViewport();
-                    imageView.setViewport(null);
-                }
-            });
-            pause.play();
+    /** Frame ratio of the chosen aspect for the photo being cropped (0 = free). */
+    private double cropRatio() {
+        Image16 source = preview.getSource();
+        if (croppedFile == null || source == null) {
+            return 0;
+        }
+        return CropAspect.frameRatio(cropAspect.getSelectionModel().getSelectedIndex(), source.width(), source.height(),
+                CropAspect.isQuarter(croppedFile.getRotationAngleProperty().get()));
+    }
+
+    private void finishCrop(Rectangle2D crop) {
+        MediaFile item = croppedFile;
+        endCrop();
+        if (item == null) {
+            return;
+        }
+        if (!java.util.Objects.equals(crop, item.getCropView())) {
+            item.setCropView(crop);
+            EditPipeline.filtersChanged(item, crop == null ? "Reset crop" : "Crop");
+        }
+        if (preview.getFile() == item) {
+            preview.setViewport(crop);
         }
     }
 
-    public SnapshotView getSnapshotView() {
-        return snapshotView;
+    /** Leaves the crop mode without changing the crop (Esc, or another photo is selected). */
+    public void cancelCrop() {
+        MediaFile item = croppedFile;
+        if (cropOverlay.mode() == CropRotateOverlay.Mode.NONE) {
+            return;
+        }
+        endCrop();
+        if (item != null && preview.getFile() == item) {
+            preview.setViewport(item.getCropView());
+        }
     }
 
-    public void setSnapshotView(SnapshotView snapshotView) {
-        this.snapshotView = snapshotView;
+    private void endCrop() {
+        cropOverlay.stop();
+        cropBar.setVisible(false);
+        infoPane.setDisable(false);
+        optionPane.setDisable(false);
+        croppedFile = null;
+        imageView.requestFocus();
+    }
+
+    public boolean isCropping() {
+        return cropOverlay.mode() != CropRotateOverlay.Mode.NONE;
+    }
+
+    /** Aspect ratio, reset and apply over the photo while cropping. */
+    private HBox createCropBar() {
+        cropAspect = CropAspect.comboBox();
+        cropAspect.setOnAction(e -> cropOverlay.setAspect(cropRatio()));
+        Label label = new Label("Aspect ratio");
+        Button reset = new Button("Whole photo", new FontIcon("fa-expand"));
+        reset.setOnAction(e -> cropOverlay.resetCrop());
+        Button cancel = new Button("Cancel");
+        cancel.setOnAction(e -> cancelCrop());
+        Button apply = new Button("Apply", new FontIcon("fa-check"));
+        apply.setOnAction(e -> cropOverlay.commit());
+        HBox bar = new HBox(8, label, cropAspect, reset, cancel, apply);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(6, 10, 6, 10));
+        bar.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        bar.setStyle("-fx-background-color: rgba(40,40,40,0.85); -fx-background-radius: 6;");
+        StackPane.setAlignment(bar, Pos.TOP_CENTER);
+        StackPane.setMargin(bar, new Insets(8));
+        bar.setVisible(false);
+        return bar;
     }
 
     public HBox getImageStackPane() {
@@ -925,7 +933,7 @@ public class LighttableController implements Initializable {
         }, (m, sidecar) -> {
             m.reloadEdits();
             EditPipeline.editsReloaded(m);
-            if (factory != null && factory.getSelectedMediaItem() == m && snapshotView == null) {
+            if (factory != null && factory.getSelectedMediaItem() == m && !isCropping()) {
                 // the crop is in pixels of the original, the view may show a preview
                 Rectangle2D crop = m.getCropView();
                 double sc = preview.getDisplayScale();

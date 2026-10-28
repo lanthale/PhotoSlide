@@ -12,6 +12,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import org.photoslide.GridCells;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
@@ -138,7 +139,8 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
             return true;
         }
         for (int i = start; i <= end; i++) {
-            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+            javafx.scene.control.IndexedCell<?> row = vf.getVisibleCell(i);
+            if (row != null && row.getChildrenUnmodifiable().contains(input)) {
                 return true;
             }
         }
@@ -185,15 +187,7 @@ public class MediaGridCellStackedFactory implements Callback<GridView<MediaFile>
     }
 
     public MediaGridCell getMediaCellForMediaFile(MediaFile input) {
-        VirtualFlow vf = (VirtualFlow) lighttableController.getImageGrid().getChildrenUnmodifiable().get(0);
-        for (int i = 0; i < vf.getCellCount(); i++) {
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                if (((MediaGridCell) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
-                    return (MediaGridCell) mediaCell;
-                }
-            }
-        }
-        return null;
+        return GridCells.find(lighttableController.getImageGrid(), input, MediaGridCell.class);
     }
 
 }

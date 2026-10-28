@@ -5,6 +5,8 @@
  */
 package org.photoslide.datamodel;
 
+import org.photoslide.imageops.EditPipeline;
+
 import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -40,10 +42,24 @@ public class MediaFileLoader {
         taskList = new HashMap<>();
     }
 
+    /** Longest side of the thumbnails in the grids. */
+    private static final int THUMBNAIL_SIZE = 200;
+
     public void loadImage(MediaFile newMediaItem) {
         Task<Image> task = new Task<Image>() {
             @Override
             public Image call() throws Exception {
+                // RAW: the same decoder, profile and base look as the editor
+                Image raw = EditPipeline.loadRawThumbnail(newMediaItem, THUMBNAIL_SIZE);
+                if (raw != null) {
+                    taskList.remove(newMediaItem.getName());
+                    // the grid cells observe the loading flag: change it on the JavaFX thread
+                    javafx.application.Platform.runLater(() -> {
+                        newMediaItem.setImage(raw);
+                        newMediaItem.setLoading(false);
+                    });
+                    return raw;
+                }
                 Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
                 image.progressProperty().addListener((ov, g, g1) -> {
                     if (this.isCancelled()) {

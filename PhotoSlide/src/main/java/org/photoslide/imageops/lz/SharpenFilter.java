@@ -7,6 +7,7 @@ import org.photoslide.datamodel.RenderContext;
 import org.photoslide.datamodel.WholeImageFilter16;
 import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.ParamSpec;
+import org.photoslide.imageops.simd.Simd;
 
 /**
  * Unsharp mask on the luminance only (no colour fringes), in a perceptual
@@ -86,6 +87,24 @@ public class SharpenFilter extends AbstractImageFilter {
                 py[i] = TO_PERCEPTUAL[index(p.y[i])];
             }
             final float[] blur = Gauss.blur(py, p.w, p.h, sigma);
+            if (Simd.ENABLED) {
+                // the threshold curve (exp per pixel) in float vectors, per row
+                IntStream.range(0, p.h).parallel().forEach(row -> {
+                    final float[] e = new float[p.w];
+                    for (int x = 0, i = row * p.w; x < p.w; x++, i++) {
+                        float d = (py[i] - blur[i]) * 65535f;
+                        e[x] = -0.05f * (20 * Math.abs(d) - threshold + 60);
+                    }
+                    Simd.exp(e, e, p.w);
+                    for (int x = 0, i = row * p.w; x < p.w; x++, i++) {
+                        float d = (py[i] - blur[i]) * 65535f;
+                        double s = 1 / (1 + (double) e[x]);
+                        float v = py[i] + (float) (gain * d * s) / 65535f;
+                        p.y[i] = TO_LINEAR[index(v)];
+                    }
+                });
+                return p.toImage();
+            }
             IntStream.range(0, p.h).parallel().forEach(row -> {
                 for (int i = row * p.w, end = i + p.w; i < end; i++) {
                     float d = (py[i] - blur[i]) * 65535f;

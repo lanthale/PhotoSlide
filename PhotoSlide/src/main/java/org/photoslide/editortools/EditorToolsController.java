@@ -17,6 +17,8 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -61,8 +63,17 @@ public class EditorToolsController implements Initializable {
     private HBox toolHeader;
     @FXML
     private ScrollPane toolScroll;
+    @FXML
+    private TabPane diagramTabs;
+    @FXML
+    private Tab maskTab;
+    @FXML
+    private Tab samplerTab;
     private ToolStackView toolStack;
     private ToolStackView.DropperHost dropperHost;
+    private ColorMaskView colorMask;
+    private SamplerView sampler;
+    private ImagePreview16 preview;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -74,6 +85,12 @@ public class EditorToolsController implements Initializable {
         gc.setLineWidth(1);
         drawingCanvas.widthProperty().addListener((o) -> drawHistogram());
         drawingCanvas.heightProperty().addListener((o) -> drawHistogram());
+        colorMask = new ColorMaskView(executor);
+        sampler = new SamplerView(executor);
+        maskTab.setContent(colorMask.node());
+        samplerTab.setContent(sampler.node());
+        diagramTabs.getSelectionModel().selectedItemProperty().addListener(
+                (o, oldValue, newValue) -> colorMask.setShown(newValue == maskTab));
         // forwards to the editor view once it is connected (setDropperHost)
         toolStack = new ToolStackView(new ToolStackView.DropperHost() {
             @Override
@@ -87,6 +104,13 @@ public class EditorToolsController implements Initializable {
             public void requestOutline(Consumer<List<Contour.Point>> onOutline) {
                 if (dropperHost != null) {
                     dropperHost.requestOutline(onOutline);
+                }
+            }
+
+            @Override
+            public void requestCircle(double defaultRadius, java.util.function.BiConsumer<Contour.Point, Double> onCircle) {
+                if (dropperHost != null) {
+                    dropperHost.requestCircle(defaultRadius, onCircle);
                 }
             }
 
@@ -109,6 +133,9 @@ public class EditorToolsController implements Initializable {
 
             @Override
             public void showRegion(AbstractImageFilter tool) {
+                if (tool != null) {
+                    colorMask.setTool(tool);
+                }
                 if (dropperHost != null) {
                     dropperHost.showRegion(tool);
                 }
@@ -144,7 +171,25 @@ public class EditorToolsController implements Initializable {
         }
         resetUI();
         selectedMediaFile = f;
+        colorMask.setFile(f);
+        sampler.clear();
         toolStack.setFile(f);
+    }
+
+    /**
+     * The mouse is over the pixel p of the original in the editor (null =
+     * outside the photo): shown in the sampler while its tab is open.
+     */
+    public void sampleAt(Contour.Point p) {
+        if (!samplerTab.isSelected() || selectedMediaFile == null || preview == null) {
+            return;
+        }
+        Image16 source = preview.getSource();
+        if (p == null || source == null) {
+            sampler.clear();
+            return;
+        }
+        sampler.sample(selectedMediaFile.getFilterListWithoutImageData(), source, p.x(), p.y());
     }
 
     /** The editor view that handles dropper clicks on the image. */
@@ -157,6 +202,8 @@ public class EditorToolsController implements Initializable {
      * render of the preview.
      */
     public void setPreview(ImagePreview16 preview) {
+        this.preview = preview;
+        colorMask.setPreview(preview);
         preview.setOnRendered(this::updateHistogram);
     }
 
@@ -168,6 +215,7 @@ public class EditorToolsController implements Initializable {
         Platform.runLater(() -> {
             histogram = h;
             drawHistogram();
+            colorMask.update();
             progressHistogramm.setVisible(false);
             if (drawingCanvas.getOpacity() == 0.0) {
                 FadeTransition ft1 = new FadeTransition(Duration.millis(500), drawingCanvas);

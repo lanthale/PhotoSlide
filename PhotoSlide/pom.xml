@@ -16,7 +16,7 @@
         <app.name>Photoslide</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>2.0.0</app.version>
-        <jvm.modules>javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi</jvm.modules>
+        <jvm.modules>javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi,jdk.incubator.vector</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>27</maven.compiler.source>
         <maven.compiler.target>27</maven.compiler.target>
@@ -386,6 +386,7 @@
                                 <option>-Dphotoslide.loglevel=ALL</option>                                
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
+                                <option>--add-modules=jdk.incubator.vector</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
                                 <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
@@ -412,6 +413,7 @@
                                 <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000</option>                                
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
+                                <option>--add-modules=jdk.incubator.vector</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
                                 <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
@@ -438,6 +440,7 @@
                                 <option>-Dphotoslide.loglevel=ALL</option>                                
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
+                                <option>--add-modules=jdk.incubator.vector</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
                                 <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
@@ -463,6 +466,7 @@
                                 <option>-Dphotoslide.loglevel=ALL</option>                                
                                 <option>-Xms2g</option>
                                 <option>--enable-preview</option>
+                                <option>--add-modules=jdk.incubator.vector</option>
                                 <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
                                 <option>--enable-native-access=ALL-UNNAMED,javafx.media,javafx.graphics</option>
                                 <option>--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED</option>
@@ -505,6 +509,8 @@
                         <fork>true</fork>
                         <compilerArgs>
                             <arg>--enable-preview</arg>
+                            <arg>--add-modules</arg>
+                            <arg>jdk.incubator.vector</arg>
                             <arg>-J--illegal-access=permit</arg>
                         </compilerArgs>
                     </configuration>

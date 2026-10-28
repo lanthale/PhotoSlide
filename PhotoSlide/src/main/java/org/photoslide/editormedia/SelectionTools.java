@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -16,6 +18,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import org.controlsfx.control.PopOver;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.imageops.mask.ColorSelection;
 import org.photoslide.imageops.mask.Contour;
@@ -39,6 +42,8 @@ final class SelectionTools {
     private final Button clear;
     private final Rectangle swatch = new Rectangle(12, 12);
     private final Label info = new Label();
+    private final PopOver menu = new PopOver();
+    private static final int TOOL_ICON = 18;
 
     /**
      * @param colorAt colour of the edited image at a point (pixels of the
@@ -47,14 +52,19 @@ final class SelectionTools {
     SelectionTools(ToolBar bar, RegionOverlay overlay, Function<Contour.Point, double[]> colorAt) {
         this.overlay = overlay;
         this.colorAt = colorAt;
+        // outlines moved or resized on the image
+        overlay.setOnSelectionEdited(r -> {
+            region = r;
+            changed();
+        });
 
         Button lasso = tool("Lasso", "fa-pencil",
-                "Draw an outline: click points, double click or Enter closes it, Esc cancels");
+                "Hold the mouse button and draw around the area (or click points and double click to close); Esc cancels");
         lasso.setOnAction(e -> overlay.requestOutline(pts -> add(new Contour(pts, feather, true, Double.NaN, Double.NaN))));
-        Button rect = tool("Rectangle", "fa-square-o", "Click two opposite corners");
-        rect.setOnAction(e -> twoPoints(false));
-        Button ellipse = tool("Ellipse", "fa-circle-thin", "Click two opposite corners of the enclosing box");
-        ellipse.setOnAction(e -> twoPoints(true));
+        Button rect = tool("Rectangle", "fa-square-o", "Hold the mouse button and drag the rectangle");
+        rect.setOnAction(e -> overlay.requestBox(false, box -> addBox(box, false)));
+        Button ellipse = tool("Ellipse", "fa-circle-thin", "Hold the mouse button and drag the ellipse");
+        ellipse.setOnAction(e -> overlay.requestBox(true, box -> addBox(box, true)));
         Button pick = tool("Color", "fa-eyedropper", "Select by colour: click a colour in the image");
         pick.setOnAction(e -> overlay.requestPoint(p -> {
             double[] rgb = colorAt.apply(p);
@@ -100,15 +110,54 @@ final class SelectionTools {
         info.setFont(new Font(11));
         info.setTextFill(Color.web("#9f9f9f"));
         swatch.setVisible(false);
-        bar.getItems().addAll(new Separator(), lasso, rect, ellipse, pick, invert, softBox, clear, swatch, info);
+        // all selection tools in one button that opens a vertical tool bar
+        for (Button b : new Button[]{lasso, rect, ellipse, pick, clear}) {
+            b.addEventHandler(ActionEvent.ACTION, e -> menu.hide());
+        }
+        invert.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        invert.setMaxWidth(Double.MAX_VALUE);
+        invert.setAlignment(Pos.CENTER_LEFT);
+        ((FontIcon) invert.getGraphic()).setIconSize(TOOL_ICON);
+        invert.setFont(new Font(13));
+        VBox tools = new VBox(2, lasso, rect, ellipse, pick, new Separator(), invert, softBox, new Separator(), clear);
+        tools.setPadding(new Insets(6));
+        tools.setFillWidth(true);
+        tools.setStyle("-fx-background-color: #3a3a3a;");
+        menu.setContentNode(tools);
+        menu.setArrowLocation(PopOver.ArrowLocation.TOP_LEFT);
+        menu.setDetachable(false);
+        menu.setAutoHide(true);
+        menu.setHideOnEscape(true);
+        menu.setAnimated(false);
+        FontIcon icon = new FontIcon("fa-object-group");
+        icon.setIconSize(ViewTools.ICON_SIZE);
+        Button select = new Button(null, icon);
+        select.setId("toolbutton");
+        select.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+        select.setTooltip(new Tooltip("Selection tools: lasso, rectangle, ellipse, colour, invert, soft edge"));
+        select.setFocusTraversable(false);
+        select.setOnAction(e -> {
+            if (menu.isShowing()) {
+                menu.hide();
+            } else {
+                menu.show(select);
+            }
+        });
+        bar.getItems().addAll(new Separator(), select, swatch, info);
         changed();
     }
 
+    /** One entry of the vertical tool bar: icon and text side by side. */
     private static Button tool(String text, String icon, String tip) {
-        Button b = new Button(text, new FontIcon(icon));
+        FontIcon graphic = new FontIcon(icon);
+        graphic.setIconSize(TOOL_ICON);
+        Button b = new Button(text, graphic);
         b.setId("toolbutton");
-        b.setContentDisplay(javafx.scene.control.ContentDisplay.TOP);
-        b.setFont(new Font(11));
+        b.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        b.setAlignment(Pos.CENTER_LEFT);
+        b.setMaxWidth(Double.MAX_VALUE);
+        b.setGraphicTextGap(8);
+        b.setFont(new Font(13));
         b.setTooltip(new Tooltip(tip));
         return b;
     }
@@ -117,28 +166,23 @@ final class SelectionTools {
         return String.format(Locale.ROOT, "Soft edge %.0f px", feather);
     }
 
-    private void twoPoints(boolean ellipse) {
-        overlay.requestPoint(a -> overlay.requestPoint(b -> {
-            double x0 = Math.min(a.x(), b.x()), x1 = Math.max(a.x(), b.x());
-            double y0 = Math.min(a.y(), b.y()), y1 = Math.max(a.y(), b.y());
-            if (x1 - x0 < 2 || y1 - y0 < 2) {
-                return;
+    /** Adds a dragged rectangle or ellipse ({x0, y0, x1, y1}, pixels of the original). */
+    private void addBox(double[] box, boolean ellipse) {
+        double x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3];
+        List<Contour.Point> pts = new ArrayList<>();
+        if (ellipse) {
+            double cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2, ry = (y1 - y0) / 2;
+            for (int i = 0; i < 32; i++) {
+                double t = 2 * Math.PI * i / 32;
+                pts.add(new Contour.Point(cx + rx * Math.cos(t), cy + ry * Math.sin(t)));
             }
-            List<Contour.Point> pts = new ArrayList<>();
-            if (ellipse) {
-                double cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2, ry = (y1 - y0) / 2;
-                for (int i = 0; i < 32; i++) {
-                    double t = 2 * Math.PI * i / 32;
-                    pts.add(new Contour.Point(cx + rx * Math.cos(t), cy + ry * Math.sin(t)));
-                }
-            } else {
-                pts.add(new Contour.Point(x0, y0));
-                pts.add(new Contour.Point(x1, y0));
-                pts.add(new Contour.Point(x1, y1));
-                pts.add(new Contour.Point(x0, y1));
-            }
-            add(new Contour(pts, feather, ellipse, Double.NaN, Double.NaN));
-        }));
+        } else {
+            pts.add(new Contour.Point(x0, y0));
+            pts.add(new Contour.Point(x1, y0));
+            pts.add(new Contour.Point(x1, y1));
+            pts.add(new Contour.Point(x0, y1));
+        }
+        add(new Contour(pts, feather, ellipse, Double.NaN, Double.NaN));
     }
 
     private void add(Contour c) {

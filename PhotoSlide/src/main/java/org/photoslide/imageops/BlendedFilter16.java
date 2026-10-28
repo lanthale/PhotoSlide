@@ -60,30 +60,56 @@ public final class BlendedFilter16 implements WholeImageFilter16 {
             FilterChain16.run(inner, back, front);
         }
         final float[] mask = maskSource == null ? null : maskSource.mask(back);
-        final Image16 out = Image16.blank(back.width(), back.height(), back.isLinear());
+        // the result replaces the front values in place: front belongs to this call
         final short[] f = front.data();
         final short[] b = back.data();
-        final short[] o = out.data();
         final int w = back.width();
-        final float scale = 1f / 65535f;
+        final float op = opacity;
         IntStream.range(0, back.height()).parallel().forEach(y -> {
-            int i = y * w * Image16.CHANNELS;
-            for (int x = 0; x < w; x++) {
-                float op = mask == null ? opacity : opacity * mask[y * w + x];
-                for (int c = 0; c < 3; c++, i++) {
-                    float bv = (b[i] & 0xFFFF) * scale;
-                    if (op <= 0f) {
-                        o[i] = b[i];
-                        continue;
-                    }
-                    float fv = (f[i] & 0xFFFF) * scale;
-                    float v = bv + op * (mode.blend(fv, bv) - bv);
-                    int q = Math.round(v * 65535f);
-                    o[i] = (short) (q < 0 ? 0 : (q > 65535 ? 65535 : q));
-                }
+            // the constant mode lets the JIT inline blend() into a loop per mode
+            switch (mode) {
+                case NORMAL -> row(BlendMode.NORMAL, f, b, mask, op, y, w);
+                case AVERAGE -> row(BlendMode.AVERAGE, f, b, mask, op, y, w);
+                case MULTIPLY -> row(BlendMode.MULTIPLY, f, b, mask, op, y, w);
+                case SCREEN -> row(BlendMode.SCREEN, f, b, mask, op, y, w);
+                case DARKEN -> row(BlendMode.DARKEN, f, b, mask, op, y, w);
+                case LIGHTEN -> row(BlendMode.LIGHTEN, f, b, mask, op, y, w);
+                case DIFFERENCE -> row(BlendMode.DIFFERENCE, f, b, mask, op, y, w);
+                case NEGATION -> row(BlendMode.NEGATION, f, b, mask, op, y, w);
+                case EXCLUSION -> row(BlendMode.EXCLUSION, f, b, mask, op, y, w);
+                case OVERLAY -> row(BlendMode.OVERLAY, f, b, mask, op, y, w);
+                case HARD_LIGHT -> row(BlendMode.HARD_LIGHT, f, b, mask, op, y, w);
+                case SOFT_LIGHT -> row(BlendMode.SOFT_LIGHT, f, b, mask, op, y, w);
+                case COLOR_DODGE -> row(BlendMode.COLOR_DODGE, f, b, mask, op, y, w);
+                case COLOR_BURN -> row(BlendMode.COLOR_BURN, f, b, mask, op, y, w);
+                case SOFT_DODGE -> row(BlendMode.SOFT_DODGE, f, b, mask, op, y, w);
+                case SOFT_BURN -> row(BlendMode.SOFT_BURN, f, b, mask, op, y, w);
+                case SHADOWS -> row(BlendMode.SHADOWS, f, b, mask, op, y, w);
+                case MID_HILIGHTS -> row(BlendMode.MID_HILIGHTS, f, b, mask, op, y, w);
+                case MIDTONES -> row(BlendMode.MIDTONES, f, b, mask, op, y, w);
             }
         });
-        return out;
+        return front;
+    }
+
+    /** Blends row y: f = back + weight * (mode(f, back) - back). */
+    private static void row(BlendMode mode, short[] f, short[] b, float[] mask, float opacity, int y, int w) {
+        final float scale = 1f / 65535f;
+        int i = y * w * Image16.CHANNELS;
+        for (int x = 0; x < w; x++) {
+            float op = mask == null ? opacity : opacity * mask[y * w + x];
+            for (int c = 0; c < 3; c++, i++) {
+                if (op <= 0f) {
+                    f[i] = b[i];
+                    continue;
+                }
+                float bv = (b[i] & 0xFFFF) * scale;
+                float fv = (f[i] & 0xFFFF) * scale;
+                float v = bv + op * (mode.blend(fv, bv) - bv);
+                int q = Math.round(v * 65535f);
+                f[i] = (short) (q < 0 ? 0 : (q > 65535 ? 65535 : q));
+            }
+        }
     }
 
     @Override

@@ -16,11 +16,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.FadeTransition;
+import javafx.beans.InvalidationListener;
+import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.image.Image;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
@@ -28,10 +31,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
+import org.photoslide.editortools.HistoryView;
+import org.photoslide.editortools.StylesView;
 import static org.photoslide.datamodel.MediaFile.MediaTypes.IMAGE;
 import static org.photoslide.datamodel.MediaFile.MediaTypes.VIDEO;
 
@@ -43,7 +49,11 @@ public class EditorMetadataController implements Initializable {
 
     private ExecutorService executor;
     @FXML
-    private Accordion editorAccordion;
+    private VBox stylesHistoryBox;
+    private final StylesView stylesView = new StylesView();
+    private final HistoryView historyView = new HistoryView();
+    /** Shows the edits in the small preview once they are saved. */
+    private final InvalidationListener editsListener = o -> showPreview();
     private MediaFile selectedMediaFile;
     @FXML
     private ImageView imageVIew;
@@ -67,6 +77,7 @@ public class EditorMetadataController implements Initializable {
         imageVIew.fitWidthProperty().bind(hboxImage.widthProperty());
         imageVIew.fitHeightProperty().bind(hboxImage.heightProperty());
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        stylesHistoryBox.getChildren().addAll(stylesView.node(), historyView.node());
     }
 
     public void injectMetaDataController(MetadataController c) {
@@ -89,7 +100,14 @@ public class EditorMetadataController implements Initializable {
         }
         imageVIew.setImage(null);
         progressMetaDataIndicator.setVisible(true);
+        if (selectedMediaFile != null) {
+            selectedMediaFile.editVersionProperty().removeListener(editsListener);
+        }
         selectedMediaFile = f;
+        f.editVersionProperty().addListener(editsListener);
+        boolean image = f.getMediaType() == IMAGE && !f.getLoadingError();
+        stylesView.setFile(image ? f : null);
+        historyView.setFile(image ? f : null);
         gridPaneMetaInfo.getChildren().clear();
         switch (selectedMediaFile.getMediaType()) {
             case VIDEO:
@@ -98,10 +116,7 @@ public class EditorMetadataController implements Initializable {
                 imageVIew.setImage(null);
                 gridPaneMetaInfo.getChildren().clear();
                 progressIndicator.setVisible(true);
-                imageVIew.setImage(selectedMediaFile.getImage());
-                if (selectedMediaFile.getLoadingError() == true) {
-                    imageVIew.setImage(null);
-                }
+                showPreview();
                 progressIndicator.setVisible(false);
                 break;
         }
@@ -211,12 +226,45 @@ public class EditorMetadataController implements Initializable {
         }
     }
 
+    /** The thumbnail with the tools, crop and quarter turn of the file. JavaFX thread. */
+    private void showPreview() {
+        MediaFile f = selectedMediaFile;
+        if (f == null || f.getMediaType() != IMAGE || f.getLoadingError() || f.getImage() == null) {
+            imageVIew.setImage(null);
+            return;
+        }
+        if (f.getUnModifiyAbleImage() == null) {
+            f.setUnModifiyAbleImage(f.getClonedImage(f.getImage()));
+        }
+        Image img = f.setFilters();
+        Rectangle2D crop = f.getCropView();
+        Point2D size = f.getOrignalImageSize();
+        if (crop != null && size != null && size.getX() > 0) {
+            double s = img.getWidth() / size.getX();
+            imageVIew.setViewport(new Rectangle2D(crop.getMinX() * s, crop.getMinY() * s,
+                    crop.getWidth() * s, crop.getHeight() * s));
+        } else {
+            imageVIew.setViewport(null);
+        }
+        double rotation = ((f.getRotationAngleProperty().get() % 360) + 360) % 360;
+        boolean quarter = Math.abs(rotation - 90) < 1 || Math.abs(rotation - 270) < 1;
+        imageVIew.fitWidthProperty().unbind();
+        imageVIew.fitHeightProperty().unbind();
+        imageVIew.fitWidthProperty().bind(quarter ? hboxImage.heightProperty() : hboxImage.widthProperty());
+        imageVIew.fitHeightProperty().bind(quarter ? hboxImage.widthProperty() : hboxImage.heightProperty());
+        imageVIew.setRotate(rotation);
+        imageVIew.setImage(img);
+    }
+
     public void resetUI() {
         progressMetaDataIndicator.setVisible(true);
         progressMetaDataIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         gridPaneMetaInfo.setOpacity(0);
         this.imageVIew.setImage(null);
+        if (selectedMediaFile != null) {
+            selectedMediaFile.editVersionProperty().removeListener(editsListener);
+        }
         selectedMediaFile = null;
         gridPaneMetaInfo.getChildren().clear();
         while (gridPaneMetaInfo.getRowConstraints().size() > 0) {

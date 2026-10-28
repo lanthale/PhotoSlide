@@ -3,6 +3,7 @@ package org.photoslide.preferences;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +16,8 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -29,20 +32,27 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.shape.Circle;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.librawdecodersettings.RawDecoderSettings;
+import org.photoslide.imageops.ColorCalibration;
+import org.photoslide.imageops.RawLook;
 import org.librawfx.RAWImageLoaderFactory;
 import org.librawjava.LibrawImage;
 import org.librawjava.OutputColor;
+import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.FxImage16;
 import org.photoslide.datamodel.Image16;
 
@@ -132,6 +142,7 @@ public class RawSettingsLabController implements Initializable {
         applyingProfile = true;
         try {
             model.fromRawDecoderSettings(profile.toRawDecoderSettings());
+            model.copyLookFrom(profile);
         } finally {
             applyingProfile = false;
         }
@@ -210,6 +221,10 @@ public class RawSettingsLabController implements Initializable {
         });
         model.properties().forEach(p -> p.addListener((obs, oldVal, newVal) -> scheduleAutoApply()));
         buildSettingsPanel();
+        // calibration: clicks on the right image, markers drawn over it
+        calibrationMarkers.setMouseTransparent(true);
+        ((StackPane) previewView.getParent()).getChildren().add(calibrationMarkers);
+        previewView.setOnMouseClicked(this::calibrationClick);
         // Zoom: initial Fit-to-view (ImageView an Viewport gebunden)
         applyZoomMode(referenceScrollPane, referenceView, false);
         applyZoomMode(previewScrollPane, previewView, false);
@@ -277,6 +292,15 @@ public class RawSettingsLabController implements Initializable {
         dcbEnhance.disableProperty().bind(notDcb);
 
         settingsBox.getChildren().addAll(
+                settingsCard("Base look (editor and lighttable, like Lightroom's camera defaults)",
+                        slider("Base exposure in stops (added to the DNG BaselineExposure)", -2.0, 3.0, model.baseExposureProperty()),
+                        check("Use the BaselineExposure of DNG files", model.useDngBaselineProperty()),
+                        check("Brighten Sigma X3F files by their ISO (LibRaw leaves the Foveon ISO gain out)",
+                                model.isoGainProperty()),
+                        choice("Tone curve", TONE_CURVES, model.toneCurveProperty(), TONE_CURVES::indexOf)),
+                settingsCard("Colour calibration (ColorChecker 24, like the colour matrix of a camera profile)",
+                        check("Use the colour matrix of this profile", model.useColorMatrixProperty()),
+                        calibrationRow()),
                 settingsCard("Demosaicing",
                         choice("Interpolation quality (user_qual)", QUALITY_VALUES, model.rawQualityProperty(),
                                 v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
@@ -602,6 +626,7 @@ public class RawSettingsLabController implements Initializable {
     @FXML
     private void resetAction(ActionEvent event) {
         model.fromRawDecoderSettings(new RawDecoderSettingsFx().toRawDecoderSettings());
+        model.copyLookFrom(new RawDecoderSettingsFx());
         decodePreview();
     }
 
@@ -676,12 +701,12 @@ public class RawSettingsLabController implements Initializable {
     /** Referenzbild mit den Defaults (bzw. dem Default-Profil) dekodieren. */
     private void decodeReference() {
         RawDecoderSettingsFx refProfile = RawSettingsStore.loadProfile(RawSettingsStore.DEFAULT_KEY);
-        runDecode(refProfile.toRawDecoderSettings(),
+        runDecode(refProfile.toRawDecoderSettings(), refProfile.toLook(),
                 img -> referenceView.setImage(img), referenceProgress);
     }
 
     private void decodePreview() {
-        runDecode(model.toRawDecoderSettings(),
+        runDecode(model.toRawDecoderSettings(), model.toLook(),
                 img -> previewView.setImage(img), previewProgress);
     }
 
@@ -699,7 +724,143 @@ public class RawSettingsLabController implements Initializable {
      */
     private static final long MIN_PROGRESS_MILLIS = 600;
 
-    private void runDecode(RawDecoderSettings settings, java.util.function.Consumer<Image> onDone,
+    // ------------------------------------------------------------------
+    // Colour calibration from a ColorChecker
+    // ------------------------------------------------------------------
+
+    private final Pane calibrationMarkers = new Pane();
+    /** Clicked corner patches, as fractions of the image width / height. */
+    private final List<double[]> calibrationClicks = new ArrayList<>();
+    private final Label calibrationInfo = new Label();
+    private boolean calibrating;
+
+    private Node calibrationRow() {
+        Button calibrate = new Button("Calibrate from ColorChecker…", new FontIcon("fa-crosshairs"));
+        calibrate.setTooltip(new Tooltip("Open a photo of a ColorChecker as sample, then click the centres of its"
+                + " four corner patches in the right image"));
+        calibrate.setOnAction(e -> startCalibration());
+        Button remove = new Button("Remove");
+        remove.setOnAction(e -> {
+            model.setUseColorMatrix(false);
+            model.setColorMatrix("");
+            calibrationMarkers.getChildren().clear();
+        });
+        remove.disableProperty().bind(model.colorMatrixProperty().isEmpty());
+        calibrationInfo.setTextFill(Color.web("#9f9f9f"));
+        Runnable info = () -> calibrationInfo.setText(RawLook.parseMatrix(model.getColorMatrix()) == null
+                ? "Not calibrated" : "Calibrated");
+        model.colorMatrixProperty().addListener((obs, o, n) -> info.run());
+        info.run();
+        HBox row = new HBox(10, calibrate, remove, calibrationInfo);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private void startCalibration() {
+        if (sampleFile == null || previewView.getImage() == null) {
+            showError("Open a RAW photo of a ColorChecker first (Open sample).");
+            return;
+        }
+        calibrating = true;
+        calibrationClicks.clear();
+        calibrationMarkers.getChildren().clear();
+        previewView.setCursor(Cursor.CROSSHAIR);
+        statusLabel.setTextFill(Color.web("#ffd24d"));
+        statusLabel.setText("Click the centres of the four corner patches of the ColorChecker in the right image (any order)");
+    }
+
+    private void calibrationClick(MouseEvent e) {
+        if (!calibrating || previewView.getImage() == null) {
+            return;
+        }
+        Bounds b = previewView.getBoundsInLocal();
+        double fx = e.getX() / b.getWidth();
+        double fy = e.getY() / b.getHeight();
+        calibrationClicks.add(new double[]{fx, fy});
+        mark(fx, fy, 7, Color.web("#ffd24d"));
+        if (calibrationClicks.size() < 4) {
+            statusLabel.setText((4 - calibrationClicks.size()) + " corner patch(es) to go");
+            return;
+        }
+        calibrating = false;
+        previewView.setCursor(null);
+        runCalibration(new ArrayList<>(calibrationClicks));
+    }
+
+    /** Decodes the sample with the current settings (no look) and fits the matrix. */
+    private void runCalibration(List<double[]> clicks) {
+        statusLabel.setTextFill(Color.web("#9f9f9f"));
+        statusLabel.setText("Calibrating…");
+        RawDecoderSettings settings = model.toRawDecoderSettings();
+        // the matrix does not contain the white balance: a fixed one only fits photos in the same light
+        boolean fixedWhiteBalance = model.isUseUserMultipliers();
+        Path file = sampleFile;
+        Task<ColorCalibration.Result> task = new Task<>() {
+            @Override
+            protected ColorCalibration.Result call() throws Exception {
+                LibrawImage libraw = new LibrawImage(file.toString(), new ConcurrentHashMap<>());
+                libraw.setSettingsOverride(settings);
+                Image16 linear = Image16.fromRaw(libraw.readPixelData16(java.nio.file.Files.readAllBytes(file),
+                        true, OutputColor.PROPHOTO));
+                double[][] corners = new double[4][];
+                for (int i = 0; i < 4; i++) {
+                    corners[i] = new double[]{clicks.get(i)[0] * linear.width(), clicks.get(i)[1] * linear.height()};
+                }
+                ColorCalibration.Result r = ColorCalibration.fit(linear, corners);
+                if (r != null) {
+                    // markers in fractions of the image
+                    for (double[] p : r.patches()) {
+                        p[0] /= linear.width();
+                        p[1] /= linear.height();
+                    }
+                }
+                return r;
+            }
+        };
+        task.setOnSucceeded(e -> {
+            ColorCalibration.Result r = task.getValue();
+            if (r == null) {
+                statusLabel.setTextFill(Color.web("#ff6961"));
+                statusLabel.setText("The chart was not found: click the centres of the four corner patches");
+                return;
+            }
+            calibrationMarkers.getChildren().clear();
+            for (double[] p : r.patches()) {
+                mark(p[0], p[1], 4, Color.web("#4dd2ff"));
+            }
+            model.setColorMatrix(RawLook.formatMatrix(r.matrix()));
+            model.setUseColorMatrix(true);
+            calibrationInfo.setText(String.format(java.util.Locale.ROOT,
+                    "Colour error %.1f → %.1f (Lab a/b, below 5 is very good)%s", r.errorBefore(), r.errorAfter(),
+                    fixedWhiteBalance ? ". Note: custom WB multipliers give every photo the white balance of"
+                    + " this one; use the camera white balance for photos in other light" : ""));
+            statusLabel.setTextFill(Color.web("#9f9f9f"));
+            statusLabel.setText("Calibrated. Save into the profile to keep it.");
+        });
+        task.setOnFailed(e -> {
+            statusLabel.setTextFill(Color.web("#ff6961"));
+            statusLabel.setText("Calibration failed: " + task.getException().getMessage());
+            LOG.log(Level.SEVERE, "Calibration failed", task.getException());
+        });
+        executor.submit(task);
+    }
+
+    /** Circle over the right image at a position given in fractions of the image. */
+    private void mark(double fx, double fy, double radius, Color color) {
+        Bounds b = previewView.getBoundsInLocal();
+        javafx.geometry.Point2D scene = previewView.localToScene(fx * b.getWidth(), fy * b.getHeight());
+        javafx.geometry.Point2D p = calibrationMarkers.sceneToLocal(scene);
+        Circle c = new Circle(p.getX(), p.getY(), radius, Color.TRANSPARENT);
+        c.setStroke(color);
+        c.setStrokeWidth(2);
+        calibrationMarkers.getChildren().add(c);
+    }
+
+    /** Labels of RawLook.ToneCurve, index = value of the profile. */
+    private static final List<String> TONE_CURVES = java.util.Arrays.stream(RawLook.ToneCurve.values())
+            .map(RawLook.ToneCurve::label).toList();
+
+    private void runDecode(RawDecoderSettings settings, RawLook look, java.util.function.Consumer<Image> onDone,
                            ProgressIndicator progress) {
         if (sampleFile == null) {
             return;
@@ -719,7 +880,7 @@ public class RawSettingsLabController implements Initializable {
                 librawImage.setSettingsOverride(settings);
                 byte[] bytes = java.nio.file.Files.readAllBytes(file);
                 Image16 linear = Image16.fromRaw(librawImage.readPixelData16(bytes, true, OutputColor.PROPHOTO));
-                return FxImage16.toImage(linear);
+                return FxImage16.toImage(look.apply(linear, look.fileStops(file, librawImage)));
             }
         };
         task.setOnSucceeded(e -> {

@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import org.photoslide.GridCells;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
@@ -92,15 +93,7 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
     }
 
     public MediaGridCellBMB getMediaCellForMediaFile(MediaFile input) {
-        VirtualFlow vf = (VirtualFlow) bmbTools.getImageGrid().getChildrenUnmodifiable().get(0);
-        for (int i = 0; i < vf.getCellCount(); i++) {
-            for (Node mediaCell : vf.getCell(i).getChildrenUnmodifiable()) {
-                if (((MediaGridCellBMB) mediaCell).getItem().getName().equalsIgnoreCase(input.getName())) {
-                    return (MediaGridCellBMB) mediaCell;
-                }
-            }
-        }
-        return null;
+        return GridCells.find(bmbTools.getImageGrid(), input, MediaGridCellBMB.class);
     }
 
     public boolean isCellVisible(MediaGridCellBMB input) {
@@ -115,7 +108,8 @@ public class MediaGridCellBMBFactory implements Callback<GridView<MediaFile>, Gr
             return true;
         }
         for (int i = start; i <= end; i++) {
-            if (vf.getCell(i).getChildrenUnmodifiable().contains(input)) {
+            javafx.scene.control.IndexedCell<?> row = vf.getVisibleCell(i);
+            if (row != null && row.getChildrenUnmodifiable().contains(input)) {
                 return true;
             }
         }

@@ -57,6 +57,9 @@ public final class ToolStackView {
         /** The user draws an outline on the image (at least 3 points). */
         void requestOutline(Consumer<List<Contour.Point>> onOutline);
 
+        /** Click (default radius) or drag from the centre to set a circle. */
+        void requestCircle(double defaultRadius, java.util.function.BiConsumer<Contour.Point, Double> onCircle);
+
         /** Ends a running request. */
         void cancelPick();
 
@@ -301,14 +304,13 @@ public final class ToolStackView {
         VBox box = new VBox(6);
         boolean spot = f instanceof SpotFilter;
         Button add = new Button(spot ? "Add spot" : "Add clone area", new FontIcon("fa-plus-circle"));
-        add.setTooltip(new Tooltip(spot ? "Click on the spot to remove"
-                : "Draw the area to cover (double click closes), then click the source"));
+        add.setTooltip(new Tooltip(spot ? "Click on the spot, or drag from its centre to set the size"
+                : "Hold the mouse button and draw around the area to cover, then click the source"));
         add.setOnAction(e -> {
             dropperHost.showRegion(f);
             if (spot) {
-                dropperHost.requestPoint(p -> {
-                    float r = ((SpotFilter) f).spotRadius();
-                    Contour c = Contour.circle(p.x(), p.y(), r, r * 0.6f);
+                dropperHost.requestCircle(((SpotFilter) f).spotRadius(), (p, r) -> {
+                    Contour c = Contour.circle(p.x(), p.y(), r, (float) (r * 0.6));
                     double[] size = dropperHost.imageSize();
                     double sx = p.x() + 2.5 * r;
                     if (size != null && sx > size[0] - r) {

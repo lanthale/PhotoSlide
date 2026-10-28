@@ -13,6 +13,7 @@ import org.librawdecodersettings.RawDecoderSettings;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.Utility;
 import org.photoslide.imageops.EditPipeline;
+import org.photoslide.imageops.RawLook;
 
 /**
  * Laedt/speichert die RAW-Decoder-Settings pro Kameramodell als JSON im
@@ -52,6 +53,7 @@ public final class RawSettingsStore {
                 try {
                     RawDecoderSettingsFx fx = MAPPER.treeToValue(entry.getValue(), RawDecoderSettingsFx.class);
                     result.put(entry.getKey(), fx.toRawDecoderSettings());
+                    RawLook.register(entry.getKey(), fx.toLook());
                 } catch (IOException ex) {
                     LOG.log(Level.WARNING, "Cannot parse RAW settings for {0}", entry.getKey());
                 }
@@ -127,6 +129,7 @@ public final class RawSettingsStore {
     public static void saveProfile(String key, RawDecoderSettingsFx profile) {
         // 1) LibRawFX-Map: Thread-Safety-konform
         RAWImageLoaderFactory.getDecoderSettings().put(key, profile.toRawDecoderSettings());
+        RawLook.register(key, profile.toLook());
         // dekodierte Bilder im Cache sind mit den alten Werten entstanden
         EditPipeline.clearCache();
         // 2) Persistenz
@@ -153,6 +156,7 @@ public final class RawSettingsStore {
             return;
         }
         RAWImageLoaderFactory.getDecoderSettings().remove(key);
+        RawLook.register(key, null);
         EditPipeline.clearCache();
         ConcurrentHashMap<String, RawDecoderSettingsFx> profiles = new ConcurrentHashMap<>();
         for (String name : listProfileNames()) {

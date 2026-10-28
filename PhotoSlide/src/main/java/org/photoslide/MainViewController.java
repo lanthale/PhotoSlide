@@ -1197,6 +1197,9 @@ public class MainViewController implements Initializable {
     private void wipeAllMediaFileEdits(ActionEvent event) {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
         selectedMediaItem.removeAllEdits();
+        // all views (editor tools, sliders, previews) show the unedited file; nothing is saved
+        EditPipeline.editsReloaded(selectedMediaItem);
+        selectedMediaItem.thumbnailChanged();
         int indexOf = lighttablePaneController.getFullMediaList().indexOf(selectedMediaItem);
         if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
             new MediaFileLoader().loadImage(selectedMediaItem);

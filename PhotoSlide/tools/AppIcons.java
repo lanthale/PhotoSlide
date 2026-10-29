@@ -276,46 +276,56 @@ public final class AppIcons {
     }
 
     /**
-     * DMG volume icon: a silver external drive seen from the front (like the
-     * macOS drive icons), with the PhotoSlide motif as its label.
+     * DMG volume icon in the style of the macOS drive icons (Big Sur and
+     * later): an upright light drive with a rounded top, a silver base with
+     * an LED, and the PhotoSlide icon on its front.
      */
     static BufferedImage volumeIcon(int size) {
         BufferedImage out = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = graphics(out);
         double s = size / 1024.0;
-        // whole drive on the canvas, the label sits on its upper part
-        double top = 196, bottom = 828, band = 700;
-        RoundRectangle2D drive = new RoundRectangle2D.Double(100 * s, top * s, 824 * s, (bottom - top) * s, 120 * s, 120 * s);
+        double x = 176, w = 672, top = 100, bottom = 924, base = 812, r = 92;
+        RoundRectangle2D drive = new RoundRectangle2D.Double(x * s, top * s, w * s, (bottom - top) * s, r * s, r * s);
         if (size >= 32) {
             shadow(out, drive, size);
         }
-        // aluminium body
-        g.setPaint(new LinearGradientPaint(0, (float) (top * s), 0, (float) (bottom * s),
-                new float[]{0f, 0.08f, 0.8f, 1f},
-                new Color[]{new Color(252, 252, 253), new Color(234, 236, 240), new Color(200, 203, 210), new Color(170, 174, 183)}));
+        // light body, a little darker towards the bottom and the sides
+        g.setPaint(new GradientPaint(0, (float) (top * s), new Color(252, 252, 253), 0, (float) (base * s), new Color(226, 228, 232)));
         g.fill(drive);
-        // front face: a slightly darker band at the bottom with a slot and an LED
-        Graphics2D gf = (Graphics2D) g.create();
-        gf.clip(drive);
-        gf.setPaint(new GradientPaint(0, (float) (band * s), new Color(150, 154, 163), 0, (float) (bottom * s), new Color(118, 122, 132)));
-        gf.fill(new Rectangle2D.Double(100 * s, band * s, 824 * s, (bottom - band + 10) * s));
-        gf.setColor(new Color(255, 255, 255, 120));
-        gf.fill(new Rectangle2D.Double(100 * s, band * s, 824 * s, Math.max(1, 3 * s)));
-        gf.setColor(new Color(70, 74, 82));
-        gf.fill(new RoundRectangle2D.Double(250 * s, (band + 56) * s, 300 * s, 14 * s, 14 * s, 14 * s));
-        gf.setColor(new Color(120, 230, 140));
-        gf.fill(new Ellipse2D.Double(820 * s, (band + 52) * s, 22 * s, 22 * s));
-        gf.dispose();
-        g.setStroke(new BasicStroke((float) Math.max(1, 4 * s)));
-        g.setColor(new Color(140, 144, 152));
+        Graphics2D gb = (Graphics2D) g.create();
+        gb.clip(drive);
+        gb.setPaint(new LinearGradientPaint((float) (x * s), 0, (float) ((x + w) * s), 0,
+                new float[]{0f, 0.12f, 0.88f, 1f},
+                new Color[]{new Color(0, 0, 0, 22), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0), new Color(0, 0, 0, 26)}));
+        gb.fill(drive);
+        // silver base with a seam above it and an LED on the right
+        gb.setColor(new Color(0, 0, 0, 40));
+        gb.fill(new Rectangle2D.Double(x * s, (base - 6) * s, w * s, 6 * s));
+        gb.setPaint(new LinearGradientPaint(0, (float) (base * s), 0, (float) (bottom * s),
+                new float[]{0f, 0.08f, 0.6f, 1f},
+                new Color[]{new Color(236, 237, 240), new Color(214, 216, 221), new Color(188, 191, 198), new Color(160, 164, 172)}));
+        gb.fill(new RoundRectangle2D.Double(x * s, base * s, w * s, (bottom - base) * s, r * s, r * s));
+        gb.fill(new Rectangle2D.Double(x * s, base * s, w * s, (bottom - base) / 2 * s));
+        gb.setColor(new Color(255, 255, 255, 170));
+        gb.fill(new Rectangle2D.Double(x * s, base * s, w * s, Math.max(1, 3 * s)));
+        if (size >= 32) {
+            double led = 22;
+            gb.setColor(new Color(130, 134, 142));
+            gb.fill(new Ellipse2D.Double((x + w - 72 - 2) * s, ((base + bottom) / 2 - led / 2 - 2) * s, (led + 4) * s, (led + 4) * s));
+            gb.setColor(Color.WHITE);
+            gb.fill(new Ellipse2D.Double((x + w - 72) * s, ((base + bottom) / 2 - led / 2) * s, led * s, led * s));
+        }
+        gb.dispose();
+        g.setStroke(new BasicStroke((float) Math.max(1, 3 * s)));
+        g.setColor(new Color(150, 154, 162));
         g.draw(drive);
         g.setStroke(new BasicStroke((float) Math.max(1, 3 * s)));
-        g.setColor(new Color(255, 255, 255, 200));
-        g.draw(new RoundRectangle2D.Double(104 * s, (top + 4) * s, 816 * s, (bottom - top - 8) * s, 114 * s, 114 * s));
-        // label: the app icon on the upper part of the drive
-        BufferedImage label = icon(Platform.MAC, (int) Math.round(500 * s));
+        g.setColor(new Color(255, 255, 255, 220));
+        g.draw(new RoundRectangle2D.Double((x + 4) * s, (top + 4) * s, (w - 8) * s, (base - top) * s, (r - 6) * s, (r - 6) * s));
+        // the PhotoSlide icon on the front
+        BufferedImage label = icon(Platform.MAC, (int) Math.round(560 * s));
         g.drawImage(label, (int) Math.round((size - label.getWidth()) / 2.0),
-                (int) Math.round(((top + band) / 2) * s - label.getHeight() / 2.0), null);
+                (int) Math.round(((top + base) / 2) * s - label.getHeight() / 2.0), null);
         g.dispose();
         return out;
     }

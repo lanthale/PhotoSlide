@@ -16,6 +16,7 @@ import com.icafe4j.image.tiff.TiffFieldEnum.Compression;
 import com.icafe4j.image.tiff.TiffFieldEnum.PhotoMetric;
 import com.icafe4j.image.writer.ImageWriter;
 import de.jangassen.MenuToolkit;
+import java.awt.Desktop;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -77,6 +78,7 @@ import javafx.geometry.VPos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Alert.AlertType;
@@ -702,31 +704,34 @@ public class MainViewController implements Initializable {
         txtHeader.setLineSpacing(2);
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
-        String aboutText = """
-                         Thanks to the opensource community:
-                          - OpenJFX for this great GUI tookit
-                          - Gluon for support of OpenJFX and provide binary's including mobile support! 
-                          
-                          - ControlsFX for very nice components
-                          - iCafe for the image codecs and metadata implementation
-                          - iKonli for nice icons
-                          - UndoFX for undo support
-                          - Worldwind for mapsupport
-                          - JMonkey for additional image format support 
-                          - Libraw for support of raw image formats
-                          - Libheif for support for raw image formats 
-                          - LightZone for the editing tools (BSD-3-Clause)
-                         
-                         License: GPL v3
-                         (c) lanthale 2022""";
-        Text txt = new Text(aboutText);
-        txt.setStyle("-fx-fill: white;-fx-font-size:10pt;");
-        txt.setLineSpacing(4);
-        txt.setTextAlignment(TextAlignment.LEFT);
-        txt.setTextOrigin(VPos.CENTER);
         vbText.getChildren().add(txtHeader);
-        vbText.getChildren().add(txt);
+        vbText.getChildren().add(aboutLine("Thanks to the opensource community:"));
+        // name, what it does in PhotoSlide, project page (opened in the browser)
+        String[][] credits = {
+            {"OpenJFX", "for this great GUI toolkit", "https://openjfx.io"},
+            {"Gluon", "for support of OpenJFX and binaries including mobile support", "https://gluonhq.com"},
+            {"ControlsFX", "for very nice components", "https://controlsfx.github.io"},
+            {"iCafe", "for the image codecs and metadata implementation", "https://github.com/dragon66/icafe"},
+            {"Ikonli", "for nice icons", "https://kordamp.org/ikonli/"},
+            {"Gluon Maps", "for map support", "https://github.com/gluonhq/maps"},
+            {"TwelveMonkeys", "for additional image format support", "https://github.com/haraldk/TwelveMonkeys"},
+            {"LibRaw", "for support of raw image formats", "https://www.libraw.org"},
+            {"libheif", "for support of HEIF images", "https://github.com/strukturag/libheif"},
+            {"LightZone", "for the editing tools (BSD-3-Clause)", "https://github.com/ktgw0316/LightZone"},
+            {"JH Labs filters", "for image math helpers (Apache 2.0)", "http://www.jhlabs.com/ip/filters/"},
+            {"Geocalc", "for GPS calculations (BSD-3-Clause)", "https://github.com/grumlimited/geocalc"}};
+        for (String[] c : credits) {
+            Hyperlink link = new Hyperlink(c[0]);
+            link.setStyle("-fx-text-fill: #9ecbff; -fx-font-size:10pt; -fx-padding: 0; -fx-border-width: 0;");
+            link.setTooltip(new Tooltip(c[2]));
+            link.setOnAction(e -> openInBrowser(c[2]));
+            HBox row = new HBox(4, aboutLine(" - "), link, aboutLine(c[1]));
+            row.setAlignment(Pos.CENTER_LEFT);
+            vbText.getChildren().add(row);
+        }
+        vbText.getChildren().add(aboutLine("\nLicense: GPL v3\n(c) lanthale 2022"));
         Hyperlink notices = new Hyperlink("Licenses and third-party notices");
+        notices.setStyle("-fx-text-fill: #9ecbff; -fx-font-size:10pt; -fx-padding: 4 0 0 0; -fx-border-width: 0;");
         notices.setOnAction(e -> showThirdPartyNotices(alert.getDialogPane().getScene().getWindow()));
         vbText.getChildren().add(notices);
         hb.getChildren().add(vbText);
@@ -739,6 +744,27 @@ public class MainViewController implements Initializable {
         alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         alert.showAndWait();
+    }
+
+    /** One line of white text in the About dialog. */
+    private static Text aboutLine(String text) {
+        Text t = new Text(text);
+        t.setStyle("-fx-fill: white;-fx-font-size:10pt;");
+        t.setLineSpacing(4);
+        return t;
+    }
+
+    /** Opens the page in the default browser (on its own thread: AWT must not block JavaFX). */
+    private static void openInBrowser(String url) {
+        Thread.ofPlatform().daemon().start(() -> {
+            try {
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    Desktop.getDesktop().browse(java.net.URI.create(url));
+                }
+            } catch (IOException | RuntimeException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.WARNING, "Cannot open " + url, ex);
+            }
+        });
     }
 
     /**

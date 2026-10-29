@@ -73,8 +73,6 @@ public class RawSettingsLabController implements Initializable {
     private static final List<String> QUALITY_VALUES = List.of("Linear (0)", "VNG (1)", "PPG (2)",
             "AHD (3)", "DCB (4)", "DHT (11)", "Modified AHD (12)");
     // output_color: 0=raw, 1=sRGB, 2=Adobe, 3=Wide, 4=ProPhoto, 5=XYZ, 6=ACES
-    private static final List<String> COLOR_SPACE_VALUES = List.of("Raw (0)", "sRGB (1)", "Adobe (2)",
-            "Wide (3)", "ProPhoto (4)", "XYZ (5)", "ACES (6)");
     // fbdd_noiserd: 0=off, 1..3 (LibRaw)
     private static final List<String> NOISE_VALUES = List.of("Off (0)", "FBDD light (1)", "FBDD strong (2)", "FBDD strongest (3)");
 
@@ -333,28 +331,17 @@ public class RawSettingsLabController implements Initializable {
                         spinner("Greybox Y", 0, 100000, 0, model.greyBoxYProperty()),
                         spinner("Greybox width", 0, 100000, 0, model.greyBoxWProperty()),
                         spinner("Greybox height", 0, 100000, 0, model.greyBoxHProperty()),
-                        choice("Output color space (output_color) — thumbnails only, editing is always ProPhoto", COLOR_SPACE_VALUES, model.outputColorSpaceProperty(),
-                                v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
                         choice("Camera matrix: -1 untouched, 0 off, 1 default, 3 always (use_camera_matrix)",
                                 List.of("Untouched (-1)", "Off (0)", "Default (1)", "Always (3)"),
                                 model.useCameraMatrixProperty(),
                                 v -> Integer.parseInt(v.replaceAll("[^\\-0-9]", ""))),
                         spinner("Saturation level, -1=dcraw default (user_sat)",
                                 -1, 20000, -1, model.saturationProperty())),
-                settingsCard("Brightness / exposure",
-                        check("Auto brightness (auto_bright) — thumbnails only", model.autoBrightnessProperty()),
-                        slider("Auto brightness threshold (auto_bright_thr) — thumbnails only", 0.0, 0.1, model.autoBrightnessThresholdProperty()),
-                        slider("Brightness (bright) — thumbnails only", 0.25, 4.0, model.brightNessProperty()),
-                        check("Exposure correction (exp_correc)", model.enableExposureCorrectionProperty()),
-                        slider("Exposure shift (exp_shift)", 0.25, 8.0, model.exposureShiftProperty()),
-                        slider("Highlight preservation (exp_preser)", 0.0, 1.0, model.expoCorrectionHighlightProperty()),
+                settingsCard("Highlights & black levels",
                         spinner("Highlight mode 0 clip,1 unclip,2 blend,3-9 rebuild,0=legacy switch (highlight)",
                                 0, 9, 0, model.unclipColorsProperty()),
                         check("Fix colors in highlights — legacy (highlight 1)", model.fixColorsHighlightsProperty()),
                         slider("Auto maximum adjust threshold (adjust_maximum_thr)", 0.0, 1.0, model.adjustMaximumThresholdProperty()),
-                        check("Custom gamma (gamm) — thumbnails only", model.useCustomGammaProperty()),
-                        slider("Gamma power = 1/gamma, sRGB ~0.45 (gamm[0]) — thumbnails only", 0.05, 1.0, model.gammaPowerProperty()),
-                        slider("Gamma toe slope, sRGB 4.5 (gamm[1]) — thumbnails only", 0.0, 10.0, model.gammaToeSlopeProperty()),
                         check("Enable black point (user_black)", model.enableBlackPointProperty()),
                         spinner("Black point", 0, 4096, 0, model.blackPointProperty()),
                         check("Black level per channel (user_cblack)", model.useChannelBlackProperty()),
@@ -375,21 +362,30 @@ public class RawSettingsLabController implements Initializable {
                                 model.userFlipProperty(),
                                 v -> Integer.parseInt(v.replaceAll("[^\\-0-9]", ""))),
                         check("Do not stretch/rotate pixels (use_fuji_rotate=0)", model.dontStretchPixelsProperty()),
+                        spinner("Shot select, multi-shot files (shot_select)", 0, 10, 0, model.shotSelectProperty())),
+                settingsCard("Correction files & special cases (files need absolute paths)",
+                        textField("Bad pixels file (bad_pixels)", model.badPixelsPathProperty()),
+                        textField("Dark frame file (dark_frame)", model.darkFramePathProperty()),
+                        doubleField("Coolscan NEF gamma, 1.0=LibRaw default (coolscan_nef_gamma)", model.coolScanNEFGammaProperty()),
+                        intField("Processing options bit mask, 0=none, e.g. 0x200 (rawparams.options)", model.rawProcessingOptionsProperty())),
+                settingsCard("Advanced (overlaps with the base look, use with care)",
+                        hint("These LibRaw settings still work, but the base look and the colour calibration above"
+                                + " do the same job and fit the editor better."),
+                        check("Exposure correction (exp_correc)", model.enableExposureCorrectionProperty()),
+                        slider("Exposure shift (exp_shift)", 0.25, 8.0, model.exposureShiftProperty()),
+                        slider("Highlight preservation (exp_preser)", 0.0, 1.0, model.expoCorrectionHighlightProperty()),
+                        hint("Added to the base exposure: both together easily make the photo too bright."
+                                + " Prefer \"Base exposure\"."),
+                        textField("Camera color profile, ICC (camera_profile)", model.cameraProfilePathProperty()),
+                        hint("LibRaw then converts to sRGB instead of the ProPhoto working space, so colours may be wrong."
+                                + " Prefer the colour calibration. Not available on Windows."),
                         check("Crop box (cropbox)", model.useCropBoxProperty()),
                         spinner("Crop X", 0, 100000, 0, model.cropBoxXProperty()),
                         spinner("Crop Y", 0, 100000, 0, model.cropBoxYProperty()),
                         spinner("Crop width", 0, 100000, 0, model.cropBoxWProperty()),
                         spinner("Crop height", 0, 100000, 0, model.cropBoxHProperty()),
-                        spinner("Shot select, multi-shot files (shot_select)", 0, 10, 0, model.shotSelectProperty())),
-                settingsCard("Output format (ImageIO mode)",
-                        check("Output TIFF instead of bitmap (output_tiff)", model.outputTiffProperty()),
-                        doubleField("Coolscan NEF gamma, 1.0=LibRaw default (coolscan_nef_gamma)", model.coolScanNEFGammaProperty()),
-                        intField("Processing options bit mask, 0=none, e.g. 0x200 (rawparams.options)", model.rawProcessingOptionsProperty())),
-                settingsCard("Profiles & correction files (need absolute paths)",
-                        textField("Output color profile (output_profile) — thumbnails only", model.outputProfilePathProperty()),
-                        textField("Camera color profile (camera_profile)", model.cameraProfilePathProperty()),
-                        textField("Bad pixels file (bad_pixels)", model.badPixelsPathProperty()),
-                        textField("Dark frame file (dark_frame)", model.darkFramePathProperty())));
+                        hint("Crops while decoding: changing it later moves the areas, crops and colour shading"
+                                + " of edited photos. Prefer the crop tool of the editor.")));
     }
 
     /**
@@ -410,6 +406,19 @@ public class RawSettingsLabController implements Initializable {
             card.getChildren().add(row);
         }
         return card;
+    }
+
+    /** Grey explanation below the settings it belongs to. */
+    private Node hint(String text) {
+        Label l = new Label(text);
+        l.setWrapText(true);
+        // wrap inside the card instead of widening the dialog
+        l.setMinWidth(0);
+        l.setPrefWidth(560);
+        l.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        l.setTextFill(Color.web("#9f9f9f"));
+        l.setStyle("-fx-font-size: 0.9em;");
+        return l;
     }
 
     private Node check(String text, javafx.beans.property.BooleanProperty prop) {

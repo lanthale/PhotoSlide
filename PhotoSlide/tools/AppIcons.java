@@ -283,36 +283,39 @@ public final class AppIcons {
         BufferedImage out = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = graphics(out);
         double s = size / 1024.0;
-        RoundRectangle2D drive = new RoundRectangle2D.Double(100 * s, 330 * s, 824 * s, 420 * s, 110 * s, 110 * s);
+        // whole drive on the canvas, the label sits on its upper part
+        double top = 196, bottom = 828, band = 700;
+        RoundRectangle2D drive = new RoundRectangle2D.Double(100 * s, top * s, 824 * s, (bottom - top) * s, 120 * s, 120 * s);
         if (size >= 32) {
             shadow(out, drive, size);
         }
         // aluminium body
-        g.setPaint(new LinearGradientPaint(0, (float) (330 * s), 0, (float) (750 * s),
-                new float[]{0f, 0.12f, 0.75f, 1f},
-                new Color[]{new Color(252, 252, 253), new Color(232, 234, 238), new Color(198, 201, 208), new Color(162, 166, 175)}));
+        g.setPaint(new LinearGradientPaint(0, (float) (top * s), 0, (float) (bottom * s),
+                new float[]{0f, 0.08f, 0.8f, 1f},
+                new Color[]{new Color(252, 252, 253), new Color(234, 236, 240), new Color(200, 203, 210), new Color(170, 174, 183)}));
         g.fill(drive);
-        // front face: a slightly darker band at the bottom with a light slot and an LED
+        // front face: a slightly darker band at the bottom with a slot and an LED
         Graphics2D gf = (Graphics2D) g.create();
         gf.clip(drive);
-        gf.setPaint(new GradientPaint(0, (float) (640 * s), new Color(150, 154, 163), 0, (float) (750 * s), new Color(118, 122, 132)));
-        gf.fill(new Rectangle2D.Double(100 * s, 640 * s, 824 * s, 120 * s));
+        gf.setPaint(new GradientPaint(0, (float) (band * s), new Color(150, 154, 163), 0, (float) (bottom * s), new Color(118, 122, 132)));
+        gf.fill(new Rectangle2D.Double(100 * s, band * s, 824 * s, (bottom - band + 10) * s));
         gf.setColor(new Color(255, 255, 255, 120));
-        gf.fill(new Rectangle2D.Double(100 * s, 640 * s, 824 * s, Math.max(1, 3 * s)));
+        gf.fill(new Rectangle2D.Double(100 * s, band * s, 824 * s, Math.max(1, 3 * s)));
         gf.setColor(new Color(70, 74, 82));
-        gf.fill(new RoundRectangle2D.Double(250 * s, 690 * s, 300 * s, 14 * s, 14 * s, 14 * s));
+        gf.fill(new RoundRectangle2D.Double(250 * s, (band + 56) * s, 300 * s, 14 * s, 14 * s, 14 * s));
         gf.setColor(new Color(120, 230, 140));
-        gf.fill(new Ellipse2D.Double(820 * s, 686 * s, 22 * s, 22 * s));
+        gf.fill(new Ellipse2D.Double(820 * s, (band + 52) * s, 22 * s, 22 * s));
         gf.dispose();
         g.setStroke(new BasicStroke((float) Math.max(1, 4 * s)));
         g.setColor(new Color(140, 144, 152));
         g.draw(drive);
         g.setStroke(new BasicStroke((float) Math.max(1, 3 * s)));
         g.setColor(new Color(255, 255, 255, 200));
-        g.draw(new RoundRectangle2D.Double(104 * s, 334 * s, 816 * s, 412 * s, 104 * s, 104 * s));
-        // label: the app icon on the drive, rising above it
-        BufferedImage label = icon(Platform.MAC, (int) Math.round(560 * s));
-        g.drawImage(label, (int) Math.round((size - label.getWidth()) / 2.0), (int) Math.round(150 * s), null);
+        g.draw(new RoundRectangle2D.Double(104 * s, (top + 4) * s, 816 * s, (bottom - top - 8) * s, 114 * s, 114 * s));
+        // label: the app icon on the upper part of the drive
+        BufferedImage label = icon(Platform.MAC, (int) Math.round(500 * s));
+        g.drawImage(label, (int) Math.round((size - label.getWidth()) / 2.0),
+                (int) Math.round(((top + band) / 2) * s - label.getHeight() / 2.0), null);
         g.dispose();
         return out;
     }

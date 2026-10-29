@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import org.librawfx.RAWImageLoader;
 import org.librawjava.LibrawException;
@@ -358,6 +359,69 @@ public final class EditPipeline {
         FilterChain16 chain = chain(filters, geometry, new RenderContext(scale));
         Image16 result = chain.render(FxImage16.fromImage(img));
         return FxImage16.toImage(result);
+    }
+
+    /**
+     * The finished photo as the user sees it, at most maxSize pixels on the
+     * long side: source (RAW with its base look), all tools, flip and
+     * straighten, then crop and quarter turn. For printing and other views
+     * outside the editor. Any thread except the JavaFX thread.
+     */
+    public static Image renderFinal(MediaFile file, int maxSize) throws IOException {
+        Image16 source = loadSource(file);
+        Rectangle2D crop = file.getCropView();
+        // scale so that the cropped part fits maxSize
+        double cropLong = crop == null ? Math.max(source.width(), source.height())
+                : Math.max(crop.getWidth(), crop.getHeight());
+        double s = Math.min(1.0, maxSize / cropLong);
+        Image16 small = source.scaledTo(Math.max(1, (int) Math.round(source.width() * s)),
+                Math.max(1, (int) Math.round(source.height() * s)));
+        Image16 result = chain(file.getFilterListWithoutImageData(), file.getGeometry(),
+                new RenderContext((double) small.width() / source.width())).render(small);
+        if (crop != null && crop.getWidth() > 0 && crop.getHeight() > 0) {
+            double k = (double) result.width() / source.width();
+            result = result.crop((int) Math.round(crop.getMinX() * k), (int) Math.round(crop.getMinY() * k),
+                    Math.max(1, (int) Math.round(crop.getWidth() * k)), Math.max(1, (int) Math.round(crop.getHeight() * k)));
+        } else if (result == small) {
+            result = result.copy();                       // the source must not be changed
+        }
+        double rotation = ((file.getRotationAngleProperty().get() % 360) + 360) % 360;
+        return FxImage16.toImage(rotateQuarters(result, (int) Math.round(rotation / 90) % 4));
+    }
+
+    /** Turns the image clockwise by quarters (0..3). */
+    static Image16 rotateQuarters(Image16 img, int quarters) {
+        if (quarters == 0) {
+            return img;
+        }
+        int w = img.width();
+        int h = img.height();
+        boolean swap = quarters % 2 == 1;
+        Image16 out = Image16.blank(swap ? h : w, swap ? w : h, img.isLinear());
+        short[] s = img.data();
+        short[] d = out.data();
+        int ow = out.width();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int nx, ny;
+                switch (quarters) {
+                    case 1 -> {
+                        nx = h - 1 - y;
+                        ny = x;
+                    }
+                    case 2 -> {
+                        nx = w - 1 - x;
+                        ny = h - 1 - y;
+                    }
+                    default -> {
+                        nx = y;
+                        ny = w - 1 - x;
+                    }
+                }
+                System.arraycopy(s, (y * w + x) * 3, d, (ny * ow + nx) * 3, 3);
+            }
+        }
+        return out;
     }
 
     /** Full size 8 bit result with all filters, flip and straighten (export; crop and quarter turns follow). */

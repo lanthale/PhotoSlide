@@ -881,8 +881,13 @@ public class MainViewController implements Initializable {
                             m.setMediaType(MediaFile.MediaTypes.VIDEO);
                         } else if (FileTypes.isValidImage(fileItem.toString())) {
                             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            Image img = null;
-                            img = new Image(m.getPathStorage().toUri().toURL().toString(), lighttablePaneController.getImageGrid().getCellWidth() + 300, lighttablePaneController.getImageGrid().getCellHeight() + 300, true, false, false);
+                            int size = (int) Math.max(lighttablePaneController.getImageGrid().getCellWidth(),
+                                    lighttablePaneController.getImageGrid().getCellHeight()) + 300;
+                            // RAW: same decoder, profile and base look as the editor
+                            Image img = EditPipeline.loadRawThumbnail(m, size);
+                            if (img == null) {
+                                img = new Image(m.getPathStorage().toUri().toURL().toString(), size, size, true, false, false);
+                            }
                             m.setImage(img);
                         } else {
                             m.setMediaType(MediaFile.MediaTypes.NONE);

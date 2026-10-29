@@ -48,6 +48,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.librawdecodersettings.RawDecoderSettings;
 import org.photoslide.imageops.ColorCalibration;
+import org.photoslide.imageops.ColorShading;
 import org.photoslide.imageops.RawLook;
 import org.librawfx.RAWImageLoaderFactory;
 import org.librawjava.LibrawImage;
@@ -300,7 +301,11 @@ public class RawSettingsLabController implements Initializable {
                         choice("Tone curve", TONE_CURVES, model.toneCurveProperty(), TONE_CURVES::indexOf)),
                 settingsCard("Colour calibration (ColorChecker 24, like the colour matrix of a camera profile)",
                         check("Use the colour matrix of this profile", model.useColorMatrixProperty()),
-                        calibrationRow()),
+                        calibrationRow(),
+                        check("Use the colour shading correction (colour towards the edges)", model.useShadingProperty()),
+                        slider("Strength of the colour shading correction (1 = as calibrated)", 0.0, 1.5,
+                                model.shadingStrengthProperty()),
+                        shadingRow()),
                 settingsCard("Demosaicing",
                         choice("Interpolation quality (user_qual)", QUALITY_VALUES, model.rawQualityProperty(),
                                 v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
@@ -786,6 +791,93 @@ public class RawSettingsLabController implements Initializable {
         previewView.setCursor(null);
         runCalibration(new ArrayList<>(calibrationClicks));
     }
+
+    private final Label shadingInfo = new Label();
+
+    private Node shadingRow() {
+        Button calibrate = new Button("Calibrate colour shading from camera JPEGs…", new FontIcon("fa-th"));
+        calibrate.setTooltip(new Tooltip("Compares the RAW photos of this camera in the folder of the sample with"
+                + " the JPEG the camera embeds (Sigma X3F) and corrects the colour drift towards the edges"));
+        calibrate.setOnAction(e -> runShadingCalibration());
+        Button remove = new Button("Remove");
+        remove.setOnAction(e -> {
+            model.setUseShading(false);
+            model.setShadingMap("");
+        });
+        remove.disableProperty().bind(model.shadingMapProperty().isEmpty());
+        shadingInfo.setTextFill(Color.web("#9f9f9f"));
+        Runnable info = () -> {
+            ColorShading cs = ColorShading.parse(model.getShadingMap());
+            shadingInfo.setText(cs == null ? "Not calibrated"
+                    : String.format(java.util.Locale.ROOT, "Calibrated, strongest correction %.0f %%", cs.strength()));
+        };
+        model.shadingMapProperty().addListener((obs, o, n) -> info.run());
+        info.run();
+        HBox row = new HBox(10, calibrate, remove, shadingInfo);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        return row;
+    }
+
+    /** All RAW photos of the sample's camera in its folder with an embedded camera JPEG. */
+    private void runShadingCalibration() {
+        if (sampleFile == null || cameraKey.get() == null) {
+            showError("Open a RAW photo of the camera first (Open sample): its folder is used.");
+            return;
+        }
+        RawDecoderSettings settings = model.toRawDecoderSettings();
+        double[] matrix = model.isUseColorMatrix() ? RawLook.parseMatrix(model.getColorMatrix()) : null;
+        Path folder = sampleFile.getParent();
+        String camera = cameraKey.get();
+        statusLabel.setTextFill(Color.web("#9f9f9f"));
+        Task<ColorShading.Calibration> task = new Task<>() {
+            @Override
+            protected ColorShading.Calibration call() throws Exception {
+                updateMessage("Looking for photos of " + camera + "…");
+                List<Path> files = new ArrayList<>();
+                try (var list = java.nio.file.Files.list(folder)) {
+                    for (Path p : list.sorted().toList()) {
+                        if (files.size() >= MAX_SHADING_PHOTOS || !p.getFileName().toString().toLowerCase().endsWith(".x3f")) {
+                            continue;
+                        }
+                        try {
+                            if (camera.equals(new LibrawImage(p.toString(), new ConcurrentHashMap<>()).getCameraMaker())) {
+                                files.add(p);
+                            }
+                        } catch (IOException ex) {
+                            LOG.log(Level.FINE, "Skipping " + p, ex);
+                        }
+                    }
+                }
+                return ColorShading.calibrate(files, settings, matrix,
+                        (done, total) -> updateMessage("Colour shading: photo " + done + " of " + total + "…"));
+            }
+        };
+        statusLabel.textProperty().bind(task.messageProperty());
+        task.setOnSucceeded(e -> {
+            statusLabel.textProperty().unbind();
+            ColorShading.Calibration c = task.getValue();
+            if (c == null) {
+                statusLabel.setTextFill(Color.web("#ff6961"));
+                statusLabel.setText("Not enough photos with an embedded camera JPEG in the folder (at least 5 X3F of this camera)");
+                return;
+            }
+            model.setShadingMap(c.shading().format());
+            model.setUseShading(true);
+            shadingInfo.setText(String.format(java.util.Locale.ROOT, "Calibrated from %d photos, strongest correction %.0f %%",
+                    c.photos(), c.shading().strength()));
+            statusLabel.setText("Colour shading calibrated. Save into the profile to keep it.");
+        });
+        task.setOnFailed(e -> {
+            statusLabel.textProperty().unbind();
+            statusLabel.setTextFill(Color.web("#ff6961"));
+            statusLabel.setText("Colour shading failed: " + task.getException().getMessage());
+            LOG.log(Level.SEVERE, "Colour shading failed", task.getException());
+        });
+        executor.submit(task);
+    }
+
+    /** Enough for a stable median; more only takes longer. */
+    private static final int MAX_SHADING_PHOTOS = 60;
 
     /** Decodes the sample with the current settings (no look) and fits the matrix. */
     private void runCalibration(List<double[]> clicks) {

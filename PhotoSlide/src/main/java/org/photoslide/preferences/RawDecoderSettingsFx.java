@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import java.util.List;
 import org.librawdecodersettings.RawDecoderSettings;
+import org.photoslide.imageops.ColorShading;
 import org.photoslide.imageops.RawLook;
 
 /**
@@ -98,6 +99,10 @@ public class RawDecoderSettingsFx {
     private final BooleanProperty useColorMatrix = new SimpleBooleanProperty(this, "useColorMatrix", false);
     private final StringProperty colorMatrix = new SimpleStringProperty(this, "colorMatrix", "");
     private final BooleanProperty isoGain = new SimpleBooleanProperty(this, "isoGain", RawLook.DEFAULT.isoGain());
+    // colour shading correction from embedded camera JPEGs, "gx;gy;gains..." (see ColorShading)
+    private final BooleanProperty useShading = new SimpleBooleanProperty(this, "useShading", false);
+    private final StringProperty shadingMap = new SimpleStringProperty(this, "shadingMap", "");
+    private final DoubleProperty shadingStrength = new SimpleDoubleProperty(this, "shadingStrength", 1.0);
 
     /** Frisches Modell mit den Default-Werten (entspricht "new RawDecoderSettingsFx()"). */
     public static RawDecoderSettingsFx defaults() {
@@ -120,7 +125,8 @@ public class RawDecoderSettingsFx {
                 useCropBox, cropBoxX, cropBoxY, cropBoxW, cropBoxH, shotSelect,
                 coolScanNEFGamma, rawProcessingOptions, outputProfilePath,
                 cameraProfilePath, badPixelsPath, darkFramePath,
-                baseExposure, useDngBaseline, toneCurve, useColorMatrix, colorMatrix, isoGain);
+                baseExposure, useDngBaseline, toneCurve, useColorMatrix, colorMatrix, isoGain,
+                useShading, shadingMap, shadingStrength);
     }
 
     /** Erzeugt ein konfiguriertes, fuer LibRawFX-Map geeignetes Objekt. */
@@ -283,7 +289,8 @@ public class RawDecoderSettingsFx {
         RawLook.ToneCurve[] curves = RawLook.ToneCurve.values();
         return new RawLook(getBaseExposure(), isUseDngBaseline(),
                 curves[Math.max(0, Math.min(curves.length - 1, getToneCurve()))],
-                isUseColorMatrix() ? RawLook.parseMatrix(getColorMatrix()) : null, isIsoGain());
+                isUseColorMatrix() ? RawLook.parseMatrix(getColorMatrix()) : null, isIsoGain(),
+                isUseShading() ? shading() : null);
     }
 
     /** Takes over the base look (it is not part of RawDecoderSettings). */
@@ -294,7 +301,28 @@ public class RawDecoderSettingsFx {
         setUseColorMatrix(other.isUseColorMatrix());
         setColorMatrix(other.getColorMatrix());
         setIsoGain(other.isIsoGain());
+        setUseShading(other.isUseShading());
+        setShadingMap(other.getShadingMap());
+        setShadingStrength(other.getShadingStrength());
     }
+
+    /** The calibrated colour shading in the chosen strength, null if none. */
+    private ColorShading shading() {
+        ColorShading cs = ColorShading.parse(getShadingMap());
+        return cs == null ? null : cs.withStrength(getShadingStrength());
+    }
+
+    public DoubleProperty shadingStrengthProperty() { return shadingStrength; }
+    public double getShadingStrength() { return shadingStrength.get(); }
+    public void setShadingStrength(double v) { shadingStrength.set(v); }
+
+    public BooleanProperty useShadingProperty() { return useShading; }
+    public boolean isUseShading() { return useShading.get(); }
+    public void setUseShading(boolean v) { useShading.set(v); }
+
+    public StringProperty shadingMapProperty() { return shadingMap; }
+    public String getShadingMap() { return shadingMap.get(); }
+    public void setShadingMap(String v) { shadingMap.set(v == null ? "" : v); }
 
     public BooleanProperty isoGainProperty() { return isoGain; }
     public boolean isIsoGain() { return isoGain.get(); }

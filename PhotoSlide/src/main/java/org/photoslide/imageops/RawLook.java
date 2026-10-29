@@ -31,8 +31,11 @@ import org.photoslide.datamodel.Image16;
  * space), from a ColorChecker calibration; null = none. Applied first.
  * @param isoGain brighten Sigma X3F files by their ISO: LibRaw does not
  * apply the ISO gain of the Foveon sensors (Sigma's software does)
+ * @param shading colour shading correction of the camera (colour towards
+ * the edges), null = none. Applied after the matrix.
  */
-public record RawLook(double exposure, boolean useDngBaseline, ToneCurve curve, double[] matrix, boolean isoGain) {
+public record RawLook(double exposure, boolean useDngBaseline, ToneCurve curve, double[] matrix, boolean isoGain,
+        ColorShading shading) {
 
     private static final Logger LOG = Logger.getLogger(RawLook.class.getName());
 
@@ -80,7 +83,7 @@ public record RawLook(double exposure, boolean useDngBaseline, ToneCurve curve, 
 
     /** Without colour matrix, with ISO gain for X3F. */
     public RawLook(double exposure, boolean useDngBaseline, ToneCurve curve) {
-        this(exposure, useDngBaseline, curve, null, true);
+        this(exposure, useDngBaseline, curve, null, true, null);
     }
 
     /** ISO of the Foveon sensors that needs no gain. */
@@ -133,13 +136,20 @@ public record RawLook(double exposure, boolean useDngBaseline, ToneCurve curve, 
      */
     public Image16 apply(Image16 linear, double fileStops) {
         double stops = exposure + fileStops;
-        if (stops == 0 && curve == ToneCurve.LINEAR && matrix == null) {
+        if (stops == 0 && curve == ToneCurve.LINEAR && matrix == null && shading == null) {
             return linear;
         }
         final short[] lut = lut(Math.pow(2, stops), curve.strength);
         final short[] d = linear.data();
         final int rowLength = linear.width() * Image16.CHANNELS;
-        final float[] m = matrix == null ? null : toFloat(matrix);
+        if (shading != null) {
+            // order: matrix, colour shading, then exposure and curve in one pass below
+            if (matrix != null) {
+                new RawLook(0, false, ToneCurve.LINEAR, matrix, false, null).apply(linear, 0);
+            }
+            shading.apply(linear);
+        }
+        final float[] m = matrix == null || shading != null ? null : toFloat(matrix);
         IntStream.range(0, linear.height()).parallel().forEach(y -> {
             for (int i = y * rowLength, end = i + rowLength; i < end; i += 3) {
                 int r = d[i] & 0xFFFF;

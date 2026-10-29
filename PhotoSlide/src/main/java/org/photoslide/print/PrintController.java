@@ -5,9 +5,10 @@
  */
 package org.photoslide.print;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import javafx.concurrent.Task;
+import java.util.List;
 import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -55,6 +56,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import org.photoslide.imageops.EditPipeline;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 
@@ -298,45 +300,47 @@ public class PrintController implements Initializable {
             previewPane.getColumnConstraints().remove(0);
         }
         int i = 0;
-        String url;
-        ObservableList<Image> pageList = FXCollections.observableArrayList();
+        // the finished photos (edits, RAW look, crop, rotation), rendered in the background
+        List<Task<Image>> pageList = new ArrayList<>();
         for (MediaFile next : allPrintItems) {
-            try {
-                url = next.getImageUrl().toString();
-                Image img = new Image(url, true);
-                pageList.add(img);
-            } catch (MalformedURLException ex) {
-                Logger.getLogger(PrintController.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            pageList.add(new Task<>() {
+                @Override
+                protected Image call() throws Exception {
+                    return EditPipeline.renderFinal(next, PRINT_SIZE);
+                }
+            });
         }
         Integer qtyPerPage = copyiesPerPageCombo.getSelectionModel().getSelectedItem();
         int row = 0;
         int col = 0;
-        for (Image image : pageList) {
+        for (Task<Image> task : pageList) {
             ProgressIndicator prg = new ProgressIndicator();
-            prg.progressProperty().bind(image.progressProperty());
             ImageView view = new ImageView();
             view.setPreserveRatio(true);
             final int cVal = correctVal;
             final int colImg = col;
             final int rowImg = row;
-            image.progressProperty().addListener((ov, t, t1) -> {
-                if ((Double) t1 == 1.0 && !image.isError()) {
-                    previewPane.getChildren().remove(prg);
-                    previewPane.add(view, colImg, rowImg);
-                    if (qtyPerPage == 1 || qtyPerPage == 2) {
-                        view.setFitHeight((previewPane.getHeight()));
-                        view.setFitWidth((previewPane.getWidth()));
+            task.setOnFailed(e -> {
+                previewPane.getChildren().remove(prg);
+                Logger.getLogger(PrintController.class.getName()).log(Level.SEVERE, "Cannot render for printing", task.getException());
+            });
+            task.setOnSucceeded(e -> {
+                Image image = task.getValue();
+                view.setImage(image);
+                previewPane.getChildren().remove(prg);
+                previewPane.add(view, colImg, rowImg);
+                if (qtyPerPage == 1 || qtyPerPage == 2) {
+                    view.setFitHeight((previewPane.getHeight()));
+                    view.setFitWidth((previewPane.getWidth()));
+                } else {
+                    if (image.getWidth() < image.getHeight()) {
+                        view.setFitHeight((previewPane.getHeight()) / 3);
+                        view.setFitWidth((previewPane.getWidth()) / 3);
                     } else {
-                        if (image.getWidth() < image.getHeight()) {
-                            view.setFitHeight((previewPane.getHeight()) / 3);
-                            view.setFitWidth((previewPane.getWidth()) / 3);
-                        } else {
-                            view.setFitHeight((previewPane.getHeight()) / 2);
-                            view.setFitWidth((previewPane.getWidth()) / 2);
-                        }
-
+                        view.setFitHeight((previewPane.getHeight()) / 2);
+                        view.setFitWidth((previewPane.getWidth()) / 2);
                     }
+
                 }
             });
             if (previewPane.getRowConstraints().size() != (row + 1)) {
@@ -356,9 +360,9 @@ public class PrintController implements Initializable {
             view.setFitHeight(50);
             view.setFitWidth(50);
             previewPane.add(prg, col, row);
-            view.setImage(image);
+            executorParallel.submit(task);
 
-            switch (pageList.indexOf(image) + 1) {
+            switch (pageList.indexOf(task) + 1) {
                 case 1:
                     row++;
                     break;
@@ -381,11 +385,14 @@ public class PrintController implements Initializable {
                     col = 0;
                     break;
             }
-            if (qtyPerPage == pageList.indexOf(image) + 1) {
+            if (qtyPerPage == pageList.indexOf(task) + 1) {
                 return;
             }
         }
     }
+
+    /** Long side of the photos for printing (A4 at about 250 dpi). */
+    private static final int PRINT_SIZE = 3000;
 
     public void setAllPrintItems(Set<MediaFile> allPrintItems) {
         this.allPrintItems = allPrintItems;

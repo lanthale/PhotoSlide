@@ -27,7 +27,6 @@ import javafx.util.Duration;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 import javafx.application.Platform;
-import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Image16;
 import java.util.function.Consumer;
 import org.photoslide.imageops.AbstractImageFilter;
@@ -43,9 +42,6 @@ import org.photoslide.editpipeline.ImagePreview16;
  */
 public class EditorToolsController implements Initializable {
 
-    private static final double OPACITY = 0.8;
-    /** Longer side of the image the histogram is computed from. */
-    private static final int HISTOGRAM_SIZE = 512;
     private ExecutorService executor;
     private MediaFile selectedMediaFile;
     private Histogram histogram;
@@ -81,8 +77,6 @@ public class EditorToolsController implements Initializable {
         drawingCanvas.widthProperty().bind(histoAnchorPane.widthProperty());
         drawingCanvas.heightProperty().bind(histoAnchorPane.heightProperty());
         gc = drawingCanvas.getGraphicsContext2D();
-        gc.setGlobalAlpha(OPACITY);
-        gc.setLineWidth(1);
         drawingCanvas.widthProperty().addListener((o) -> drawHistogram());
         drawingCanvas.heightProperty().addListener((o) -> drawHistogram());
         colorMask = new ColorMaskView(executor);
@@ -207,11 +201,10 @@ public class EditorToolsController implements Initializable {
         preview.setOnRendered(this::updateHistogram);
     }
 
-    /** Render thread of the preview. */
+    /** Render thread of the preview: histogram of the shown part (the crop). */
     private void updateHistogram(Image16 result) {
-        int step = Math.max(1, Math.max(result.width(), result.height()) / HISTOGRAM_SIZE);
-        Image16 small = result.scaledTo(Math.max(1, result.width() / step), Math.max(1, result.height() / step));
-        Histogram h = new Histogram(Display16.toArgb(small, false));
+        int[] r = cropRect(result);
+        Histogram h = r == null ? Histogram.of(result) : Histogram.of(result, r[0], r[1], r[2], r[3]);
         Platform.runLater(() -> {
             histogram = h;
             drawHistogram();
@@ -227,41 +220,32 @@ public class EditorToolsController implements Initializable {
         });
     }
 
-    private void drawHistogram() {
-        gc.setGlobalAlpha(1);
-        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-        gc.setGlobalAlpha(OPACITY);
-        if (histogram == null) {
-            return;
+    /**
+     * The crop of the shown file in pixels of the rendered image {x, y, w, h},
+     * or null for the whole image. The crop is stored in pixels of the
+     * original; the render may be a smaller proxy.
+     */
+    private int[] cropRect(Image16 result) {
+        MediaFile f = selectedMediaFile;
+        Image16 source = preview == null ? null : preview.getSource();
+        javafx.geometry.Rectangle2D crop = f == null ? null : f.getCropView();
+        if (crop == null || source == null || crop.getWidth() <= 0 || crop.getHeight() <= 0) {
+            return null;
         }
-        double height = drawingCanvas.getHeight();
-        double width = drawingCanvas.getWidth();
-        drawCurve(histogram.getRed(), Color.RED, height, width);
-        drawCurve(histogram.getGreen(), Color.GREEN, height, width);
-        drawCurve(histogram.getBlue(), Color.BLUE, height, width);
+        double k = (double) result.width() / source.width();
+        return new int[]{(int) Math.round(crop.getMinX() * k), (int) Math.round(crop.getMinY() * k),
+            Math.max(1, (int) Math.round(crop.getWidth() * k)), Math.max(1, (int) Math.round(crop.getHeight() * k))};
     }
 
-    /**
-     * Draw lines from the bottom of the histogram to the height of each given
-     * point with the given color.
-     */
-    public void drawCurve(List<Integer> points, Color color, double hight, double width) {
-        gc.setStroke(color);
-        double w = (double) width / points.size();
-        for (int i = 0; i < points.size(); i++) {
-            //gc.strokeLine(i + 0.5, 100.5, i + 0.5, 100.5 - points.get(i));
-            gc.strokeLine(w * (i), hight, w * (i), hight - points.get(i));
-        }
+    private void drawHistogram() {
+        HistogramPainter.draw(gc, histogram, drawingCanvas.getWidth(), drawingCanvas.getHeight());
     }
 
     public void resetUI() {
         histogram = null;
         progressHistogramm.setVisible(true);
         drawingCanvas.setOpacity(0);
-        gc.setGlobalAlpha(1);
-        gc.clearRect(0, 0, drawingCanvas.getWidth(),
-                drawingCanvas.getHeight());
-        gc.setGlobalAlpha(OPACITY);
+        drawHistogram();
     }
 
     public void shutdown() {

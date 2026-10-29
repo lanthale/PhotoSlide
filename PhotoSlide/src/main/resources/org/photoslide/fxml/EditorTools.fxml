@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -33,12 +31,7 @@
             <Tab fx:id="samplerTab" text="Sampler" />
          </tabs>
       </TabPane>
-      <ToolBar layoutX="14.0" layoutY="170.0" prefHeight="40.0" prefWidth="231.0" scaleX="0.9" scaleY="0.9" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
-        <items>
-          <Button mnemonicParsing="false" scaleX="0.9" scaleY="0.9" text="Button" />
-        </items>
-      </ToolBar>
-      <VBox fx:id="titlePaneBox" spacing="6.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="220.0">
+      <VBox fx:id="titlePaneBox" spacing="6.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="175.0">
          <children>
             <HBox fx:id="toolHeader" alignment="CENTER_LEFT" spacing="6.0" />
             <ScrollPane fx:id="toolScroll" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" />

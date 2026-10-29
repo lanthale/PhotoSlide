@@ -828,9 +828,12 @@ public class MetadataController implements Initializable {
         while (defaultTokenizer.hasMoreTokens()) {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }
-        Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-            bout.writeTo(outputStream);
+        // an empty list writes an empty IPTC block to a TIFF, and icafe then fails on the next insert
+        if (!keywordListLocal.isEmpty()) {
+            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
+            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
+                bout.writeTo(outputStream);
+            }
         }
         fin.close();
         bout.close();

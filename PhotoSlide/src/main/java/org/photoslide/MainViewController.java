@@ -77,6 +77,8 @@ import javafx.geometry.VPos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -713,6 +715,7 @@ public class MainViewController implements Initializable {
                           - JMonkey for additional image format support 
                           - Libraw for support of raw image formats
                           - Libheif for support for raw image formats 
+                          - LightZone for the editing tools (BSD-3-Clause)
                          
                          License: GPL v3
                          (c) lanthale 2022""";
@@ -723,6 +726,9 @@ public class MainViewController implements Initializable {
         txt.setTextOrigin(VPos.CENTER);
         vbText.getChildren().add(txtHeader);
         vbText.getChildren().add(txt);
+        Hyperlink notices = new Hyperlink("Licenses and third-party notices");
+        notices.setOnAction(e -> showThirdPartyNotices(alert.getDialogPane().getScene().getWindow()));
+        vbText.getChildren().add(notices);
         hb.getChildren().add(vbText);
         alert.getDialogPane().setContent(hb);
         alert.setResizable(false);
@@ -733,6 +739,35 @@ public class MainViewController implements Initializable {
         alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
         stage.getIcons().add(dialogIcon);
         alert.showAndWait();
+    }
+
+    /**
+     * Shows the licence notices bundled in the jar (META-INF), as the
+     * licences of the included third-party code require for binaries.
+     */
+    private void showThirdPartyNotices(javafx.stage.Window owner) {
+        StringBuilder text = new StringBuilder();
+        for (String name : new String[]{"THIRD-PARTY-NOTICES.md", "LICENSE-APACHE-2.0.txt", "LICENSE"}) {
+            try (java.io.InputStream in = getClass().getResourceAsStream("/META-INF/" + name)) {
+                if (in != null) {
+                    text.append("==== ").append(name).append(" ====\n\n")
+                            .append(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).append("\n\n");
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.WARNING, "Cannot read " + name, ex);
+            }
+        }
+        TextArea area = new TextArea(text.length() == 0 ? "The licence files are missing in this build." : text.toString());
+        area.setEditable(false);
+        area.setWrapText(false);
+        area.setPrefSize(820, 600);
+        area.setStyle("-fx-font-family: monospace;");
+        Alert dialog = new Alert(AlertType.NONE, "", ButtonType.CLOSE);
+        dialog.setTitle("Licenses and third-party notices");
+        dialog.getDialogPane().setContent(area);
+        dialog.setResizable(true);
+        dialog.initOwner(owner);
+        dialog.showAndWait();
     }
 
     @FXML

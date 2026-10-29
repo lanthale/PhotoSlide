@@ -300,6 +300,16 @@
                 <directory>${project.basedir}/src/main/resources</directory>
             </resource>
             <resource>
+                <!-- licences and third-party notices travel with every jar and app package -->
+                <directory>${project.basedir}/..</directory>
+                <targetPath>META-INF</targetPath>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>LICENSE-APACHE-2.0.txt</include>
+                    <include>THIRD-PARTY-NOTICES.md</include>
+                </includes>
+            </resource>
+            <resource>
                 <directory>${project.basedir}/src/main/resources/pkg-config</directory>
                 <filtering>true</filtering>
                 <targetPath>${project.build.directory}/pkg-config</targetPath>

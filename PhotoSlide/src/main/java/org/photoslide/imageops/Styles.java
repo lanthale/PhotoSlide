@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.lz.BlackWhiteFilter;
 import org.photoslide.imageops.lz.ColorBalanceFilter;
 import org.photoslide.imageops.lz.ContrastMaskFilter;

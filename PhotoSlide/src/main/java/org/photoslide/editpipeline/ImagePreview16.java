@@ -1,4 +1,4 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -19,6 +19,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Window;
+import org.photoslide.imageops.Geometry;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.datamodel.DisplaySurface;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.MediaFile;

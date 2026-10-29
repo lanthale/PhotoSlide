@@ -8,7 +8,7 @@ package org.photoslide.browserlighttable;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.GridCells;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;

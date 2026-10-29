@@ -15,7 +15,7 @@ import javafx.scene.shape.Rectangle;
 import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.WorkingSpace;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.lz.ZonesFilter;
 

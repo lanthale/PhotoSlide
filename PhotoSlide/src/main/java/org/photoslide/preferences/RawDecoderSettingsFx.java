@@ -11,8 +11,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import java.util.List;
 import org.librawdecodersettings.RawDecoderSettings;
-import org.photoslide.imageops.ColorShading;
-import org.photoslide.imageops.RawLook;
+import org.photoslide.editpipeline.ColorShading;
+import org.photoslide.editpipeline.RawLook;
 
 /**
  * JavaFX-Property-Spiegel von {@link RawDecoderSettings} (LibRawFX 2.0.1).

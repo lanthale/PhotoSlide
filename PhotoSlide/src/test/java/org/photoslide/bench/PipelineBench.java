@@ -10,11 +10,11 @@ import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.RenderContext;
 import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.BlendMode;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.Geometry;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.ParamSpec;
-import org.photoslide.imageops.PrefixCachedRenderer;
+import org.photoslide.editpipeline.PrefixCachedRenderer;
 import org.photoslide.imageops.Styles;
 import org.photoslide.imageops.ToolRegistry;
 

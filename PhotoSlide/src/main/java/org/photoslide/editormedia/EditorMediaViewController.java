@@ -46,7 +46,7 @@ import org.photoslide.browserlighttable.LighttableController;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.ImagePreview16;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.editortools.ToolStackView;
 import java.util.function.Consumer;
@@ -54,7 +54,7 @@ import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.mask.ColorSelection;
 import org.photoslide.imageops.mask.Contour;
 import org.photoslide.imageops.mask.Region;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 
 /**
  *

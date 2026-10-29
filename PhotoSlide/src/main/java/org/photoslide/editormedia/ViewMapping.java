@@ -14,7 +14,7 @@ import javafx.scene.transform.Transform;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.imageops.Geometry;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.ImagePreview16;
 
 /**
  * Maps between pixels of the original and a layer over the editor image.

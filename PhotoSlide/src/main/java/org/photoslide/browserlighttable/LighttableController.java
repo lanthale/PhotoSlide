@@ -7,11 +7,11 @@ package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.editormedia.CropAspect;
 import org.photoslide.editormedia.CropRotateOverlay;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.ImagePreview16;
 import org.photoslide.datamodel.SidecarWatcher;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;

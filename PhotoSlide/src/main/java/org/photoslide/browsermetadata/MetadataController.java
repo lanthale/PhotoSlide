@@ -130,7 +130,7 @@ import org.photoslide.MarkerLayer;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.MediaFile.MediaTypes;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.ExposureFilter;
 import org.photoslide.imageops.GainFilter;
 import org.photoslide.imageops.ImageFilter;

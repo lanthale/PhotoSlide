@@ -34,8 +34,8 @@ import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.mask.ColorSelection;
 import org.photoslide.imageops.mask.Contour;
 import org.photoslide.imageops.mask.Region;
-import org.photoslide.imageops.EditPipeline;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.EditPipeline;
+import org.photoslide.editpipeline.ImagePreview16;
 
 /**
  *

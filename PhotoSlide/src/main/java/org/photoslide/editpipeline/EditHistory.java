@@ -1,4 +1,4 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +12,10 @@ import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Rectangle2D;
+import org.photoslide.imageops.AbstractImageFilter;
+import org.photoslide.imageops.Geometry;
+import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.ParamSpec;
 import org.photoslide.datamodel.MediaFile;
 
 /**

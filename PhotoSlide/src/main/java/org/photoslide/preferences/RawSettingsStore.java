@@ -12,8 +12,8 @@ import java.util.logging.Logger;
 import org.librawdecodersettings.RawDecoderSettings;
 import org.librawfx.RAWImageLoaderFactory;
 import org.photoslide.Utility;
-import org.photoslide.imageops.EditPipeline;
-import org.photoslide.imageops.RawLook;
+import org.photoslide.editpipeline.EditPipeline;
+import org.photoslide.editpipeline.RawLook;
 
 /**
  * Laedt/speichert die RAW-Decoder-Settings pro Kameramodell als JSON im

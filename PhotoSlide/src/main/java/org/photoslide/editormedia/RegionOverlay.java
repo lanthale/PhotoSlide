@@ -23,7 +23,7 @@ import javafx.scene.shape.Polyline;
 import javafx.scene.shape.QuadCurveTo;
 import javafx.scene.text.Text;
 import org.photoslide.imageops.AbstractImageFilter;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.ImagePreview16;
 import org.photoslide.imageops.mask.Contour;
 import org.photoslide.imageops.mask.Region;
 

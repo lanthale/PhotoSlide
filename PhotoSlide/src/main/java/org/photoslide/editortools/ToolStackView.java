@@ -29,7 +29,7 @@ import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.WorkingSpace;
 import org.photoslide.imageops.AbstractImageFilter;
 import org.photoslide.imageops.BlendMode;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.ParamSpec;
 import org.photoslide.imageops.Pickable;

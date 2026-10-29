@@ -117,7 +117,7 @@ import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;

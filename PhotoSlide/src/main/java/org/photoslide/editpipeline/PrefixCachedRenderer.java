@@ -1,8 +1,10 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.photoslide.imageops.Geometry;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.RenderContext;
 

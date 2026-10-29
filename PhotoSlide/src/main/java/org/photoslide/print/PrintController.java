@@ -56,7 +56,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.datamodel.MediaFile;
 

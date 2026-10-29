@@ -34,10 +34,10 @@ import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.EditHistory;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditHistory;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.Geometry;
-import org.photoslide.imageops.ImagePreview16;
+import org.photoslide.editpipeline.ImagePreview16;
 
 /**
  * The view and geometry tools of the editor toolbar, as in LightZone: undo

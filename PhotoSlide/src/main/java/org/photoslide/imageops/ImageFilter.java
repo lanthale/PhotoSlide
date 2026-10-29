@@ -12,7 +12,7 @@ import org.photoslide.datamodel.RenderContext;
  * Settings of one edit step (a tool in the editor stack). The filter is
  * stored at the @MediaFile class and saved in its XMP sidecar. It holds no
  * image data: the pixels are processed by the Filter16 returned from
- * toFilter16(), see EditPipeline. All tools extend AbstractImageFilter.
+ * toFilter16(), see org.photoslide.editpipeline.EditPipeline. All tools extend AbstractImageFilter.
  *
  * @author selfemp
  */

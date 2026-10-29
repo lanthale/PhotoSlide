@@ -1,4 +1,4 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

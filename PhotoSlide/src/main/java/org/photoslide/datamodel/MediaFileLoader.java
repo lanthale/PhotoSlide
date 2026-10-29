@@ -5,7 +5,7 @@
  */
 package org.photoslide.datamodel;
 
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 
 import java.io.InterruptedIOException;
 import java.net.MalformedURLException;

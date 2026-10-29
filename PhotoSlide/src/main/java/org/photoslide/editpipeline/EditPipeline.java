@@ -1,21 +1,15 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -30,6 +24,8 @@ import org.librawjava.LibrawImage;
 import org.librawjava.OutputColor;
 import org.librawjava.RawFormatDetector;
 import org.librawdecodersettings.RawDecoderSettings;
+import org.photoslide.imageops.Geometry;
+import org.photoslide.imageops.ImageFilter;
 import org.photoslide.datamodel.AwtImage16;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.FilterChain16;
@@ -47,11 +43,6 @@ import org.photoslide.datamodel.RenderContext;
 public final class EditPipeline {
 
     private static final Logger LOG = Logger.getLogger(EditPipeline.class.getName());
-
-    /** Full size sources kept in memory (one 24 MP image is about 144 MB). */
-    private static final int CACHE_SIZE = 2;
-
-    private static final Map<String, CompletableFuture<Image16>> CACHE = new LinkedHashMap<>(4, 0.75f, true);
 
     private static final List<Consumer<MediaFile>> FILTER_LISTENERS = new CopyOnWriteArrayList<>();
 
@@ -80,45 +71,7 @@ public final class EditPipeline {
      * progress is reported and the call waits for that result.
      */
     public static Image16 loadSource(MediaFile file, DoubleConsumer progress) throws IOException {
-        Path path = file.getPathStorage();
-        FileTime modified = Files.getLastModifiedTime(path);
-        String key = path.toAbsolutePath() + "|" + modified.toMillis();
-        CompletableFuture<Image16> future;
-        boolean owner = false;
-        synchronized (CACHE) {
-            future = CACHE.get(key);
-            if (future == null) {
-                future = new CompletableFuture<>();
-                CACHE.put(key, future);
-                owner = true;
-                Iterator<String> it = CACHE.keySet().iterator();
-                while (CACHE.size() > CACHE_SIZE && it.hasNext()) {
-                    it.next();
-                    it.remove();
-                }
-            }
-        }
-        if (owner) {
-            try {
-                future.complete(loadSourceUncached(file, progress));
-            } catch (IOException | RuntimeException ex) {
-                future.completeExceptionally(ex);
-                synchronized (CACHE) {
-                    CACHE.remove(key);
-                }
-            }
-        }
-        try {
-            return future.get();
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Loading interrupted: " + path, ex);
-        } catch (ExecutionException ex) {
-            if (ex.getCause() instanceof IOException io) {
-                throw io;
-            }
-            throw new IOException("Cannot load " + path, ex.getCause());
-        }
+        return SourceCache.get(file.getPathStorage(), () -> loadSourceUncached(file, progress));
     }
 
     /**
@@ -260,17 +213,12 @@ public final class EditPipeline {
      * again (e.g. after the RAW settings were changed).
      */
     public static void invalidate(MediaFile file) {
-        String prefix = file.getPathStorage().toAbsolutePath() + "|";
-        synchronized (CACHE) {
-            CACHE.keySet().removeIf(k -> k.startsWith(prefix));
-        }
+        SourceCache.invalidate(file.getPathStorage());
     }
 
     /** Empties the source cache, e.g. after the RAW decoder settings changed. */
     public static void clearCache() {
-        synchronized (CACHE) {
-            CACHE.clear();
-        }
+        SourceCache.clear();
     }
 
     /**

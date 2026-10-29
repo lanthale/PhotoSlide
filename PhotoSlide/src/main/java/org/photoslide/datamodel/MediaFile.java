@@ -52,7 +52,7 @@ import org.photoslide.browsermetadata.Coordinate;
 import org.photoslide.browsermetadata.DMSCoordinate;
 import org.photoslide.browsermetadata.DegreeCoordinate;
 import org.photoslide.browsermetadata.Point;
-import org.photoslide.imageops.EditPipeline;
+import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.Geometry;
 import org.photoslide.imageops.ImageFilter;
 import org.photoslide.imageops.ToolRegistry;

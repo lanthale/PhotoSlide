@@ -8,7 +8,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TitledPane;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.datamodel.MediaFile;
-import org.photoslide.imageops.EditHistory;
+import org.photoslide.editpipeline.EditHistory;
 
 /**
  * The edit history of the shown photo: every step from the original to the

@@ -1,4 +1,4 @@
-package org.photoslide.imageops;
+package org.photoslide.editpipeline;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.Rational;

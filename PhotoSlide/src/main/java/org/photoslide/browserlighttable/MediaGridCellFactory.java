@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -83,7 +84,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private MediaFile selectedMediaItem;
     private final AtomicInteger xMouse;
     private final AtomicInteger yMouse;
-    private final Image dialogIcon;
+    // 1024x1024 PNG: decoded once and only when a dialog needs it, not per folder
+    private static Image dialogIcon;
     private final Button resetCrop;
     private final MediaFileLoader fileLoader;
     private boolean listFilesActive;
@@ -155,7 +157,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 yMouse.set((int) t.getY());
             }
         });
-        dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         resetCrop = new Button();
         FontIcon restoreIcon = new FontIcon("ti-back-right:24");
         resetCrop.setGraphic(restoreIcon);
@@ -193,9 +194,19 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         });
 
         cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
-            if (listFilesActive == false) {
-                if (newMediaItem != null && oldMediaItem == null) {
-                    if (newMediaItem.isLoading() == true) {
+            if (oldMediaItem != null && oldMediaItem != newMediaItem && oldMediaItem.isLoading()) {
+                // the cell was reused for another file (scrolling): drop the request
+                // of the file it does not show any more, if it has not started yet
+                fileLoader.cancel(oldMediaItem);
+            }
+            // on every new item, not only the first: a reused cell may now show a
+            // file whose request was dropped above
+            if (newMediaItem != null) {
+                // checked after the running layout: when a whole list arrives at once
+                // (from the cache), the first row gets its items before the flow
+                // knows any visible cell, and its thumbnails were never requested
+                Platform.runLater(() -> {
+                    if (listFilesActive == false && cell.getItem() == newMediaItem && newMediaItem.isLoading() == true) {
                         if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
                             if (isCellVisible(cell)) {
                                 fileLoader.loadImage(newMediaItem);
@@ -206,7 +217,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                             }
                         }
                     }
-                }
+                });
             }
         });
         return cell;
@@ -306,6 +317,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
         selectedMediaItem = ((MediaGridCell) t.getSource()).getItem();
         selectedCell = (MediaGridCell) t.getSource();
+        lightController.mediaFileSelected(selectedMediaItem);
         if (selectedMediaItem.isDeleted() == true) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
 
@@ -313,11 +325,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             dialogPane.getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(dialogIcon);
+            stage.getIcons().add(getDialogIcon());
             Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) grid.getScene().getWindow());
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);
+                lightController.recordStep(selectedMediaItem, "Restore");
                 executor.submit(() -> {
                     selectedMediaItem.saveEdits();
                 });
@@ -405,44 +418,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                 lightController.getCameraLabel().setVisible(true);
                 lightController.getFilenameLabel().setVisible(true);
                 lightController.getRatingControl().setVisible(true);
-                switch (selectedCell.getItem().getRotationAngleProperty().getValue().intValue()) {
-                    case 0:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                        break;
-                    case 180:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                        break;
-                    case 360:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                        break;
-                    case -180:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                        break;
-                    case -360:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().widthProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().heightProperty());
-                        break;
-                    case 90:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                        break;
-                    case 270:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                        break;
-                    case -90:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                        break;
-                    case -270:
-                        lightController.getImageView().fitWidthProperty().bind(lightController.getStackPane().heightProperty());
-                        lightController.getImageView().fitHeightProperty().bind(lightController.getStackPane().widthProperty());
-                        break;
-                }
+                lightController.bindFitToRotation(selectedCell.getItem().getRotationAngleProperty().get());
                 lightController.getImageView().setImage(selectedMediaItem.getImage());
                 loadImage();
                 break;
@@ -620,6 +596,13 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     public GridCellSelectionModel getSelectionModel() {
         return selectionModel;
+    }
+
+    private static Image getDialogIcon() {
+        if (dialogIcon == null) {
+            dialogIcon = new Image(MediaGridCellFactory.class.getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        }
+        return dialogIcon;
     }
 
     public void cancleTask() {

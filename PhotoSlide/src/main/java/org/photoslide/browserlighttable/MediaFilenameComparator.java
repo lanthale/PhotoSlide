@@ -16,28 +16,58 @@ import org.photoslide.datamodel.MediaFile;
 public final class MediaFilenameComparator implements Comparator<MediaFile> {
     private static final Pattern NUMBERS = 
         Pattern.compile("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+
+    // the split of a filename is computed once and kept in the media file: the
+    // comparator is called n*log(n) times on the FX thread when a large folder is sorted
+
+    private static final class Key {
+        final String[] parts;
+        final BigInteger[] numbers;
+
+        Key(String filename) {
+            parts = NUMBERS.split(filename);
+            numbers = new BigInteger[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                char c = parts[i].isEmpty() ? 0 : parts[i].charAt(0);
+                if (c >= '0' && c <= '9') {
+                    numbers[i] = new BigInteger(parts[i]);
+                }
+            }
+        }
+    }
+
+    private static Key keyOf(MediaFile m) {
+        Key k = m.getSortKey() instanceof Key key ? key : null;
+        if (k == null) {
+            k = new Key(m.getPathStorage().getFileName().toString());
+            m.setSortKey(k);
+        }
+        return k;
+    }
+
+    /** Computes the sort key in advance, e.g. in the loading thread instead of the FX thread. */
+    public void prepare(MediaFile m) {
+        keyOf(m);
+    }
+
     @Override public final int compare(MediaFile o1, MediaFile o2) {
         // Optional "NULLS LAST" semantics:
         if (o1 == null || o2 == null)
             return o1 == null ? o2 == null ? 0 : -1 : 1;
 
-        // Splitting both input strings by the above patterns
-        String[] split1 = NUMBERS.split(o1.getPathStorage().getFileName().toString());
-        String[] split2 = NUMBERS.split(o2.getPathStorage().getFileName().toString());
-        for (int i = 0; i < Math.min(split1.length, split2.length); i++) {
-            char c1 = split1[i].charAt(0);
-            char c2 = split2[i].charAt(0);
+        Key k1 = keyOf(o1);
+        Key k2 = keyOf(o2);
+        for (int i = 0; i < Math.min(k1.parts.length, k2.parts.length); i++) {
             int cmp = 0;
 
-            // If both segments start with a digit, sort them numerically using 
-            // BigInteger to stay safe
-            if (c1 >= '0' && c1 <= '9' && c2 >= 0 && c2 <= '9')
-                cmp = new BigInteger(split1[i]).compareTo(new BigInteger(split2[i]));
+            // If both segments start with a digit, sort them numerically
+            if (k1.numbers[i] != null && k2.numbers[i] != null)
+                cmp = k1.numbers[i].compareTo(k2.numbers[i]);
 
             // If we haven't sorted numerically before, or if numeric sorting yielded 
             // equality (e.g 007 and 7) then sort lexicographically
             if (cmp == 0)
-                cmp = split1[i].compareTo(split2[i]);
+                cmp = k1.parts[i].compareTo(k2.parts[i]);
 
             // Abort once some prefix has unequal ordering
             if (cmp != 0)
@@ -46,6 +76,6 @@ public final class MediaFilenameComparator implements Comparator<MediaFile> {
 
         // If we reach this, then both strings have equally ordered prefixes, but 
         // maybe one string is longer than the other (i.e. has more segments)
-        return split1.length - split2.length;
+        return k1.parts.length - k2.parts.length;
     }
 }

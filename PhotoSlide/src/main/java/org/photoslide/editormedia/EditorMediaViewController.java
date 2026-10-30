@@ -237,6 +237,20 @@ public class EditorMediaViewController implements Initializable {
         });
     }
 
+    /** The photo undo and redo act on in the editor (null = none). */
+    public MediaFile historyTarget() {
+        return selectedMediaFile != null && selectedMediaFile.getMediaType() == MediaFile.MediaTypes.IMAGE
+                && !selectedMediaFile.getLoadingError() ? selectedMediaFile : null;
+    }
+
+    public void undo() {
+        viewTools.undo();
+    }
+
+    public void redo() {
+        viewTools.redo();
+    }
+
     public void setMediaFileForEdit(MediaFile f) {
         if (f == null) {
             return;

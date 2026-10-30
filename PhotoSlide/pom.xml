@@ -15,7 +15,10 @@
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>2.0.0</app.version>
+        <app.version>2.0.1</app.version>
+        <!-- jlink creates the legal notices as symlinks: on a network share (SMB) they
+             cannot be read and jpackage fails copying them, so the image is built locally -->
+        <jvm.image.dir>${java.io.tmpdir}/photoslide-jvm-image</jvm.image.dir>
         <jvm.modules>javafx.media,javafx.controls,javafx.fxml,javafx.graphics,javafx.base,javafx.swing,java.base,jdk.management,java.naming,java.sql,java.transaction.xa,java.xml,jdk.unsupported,java.management,java.datatransfer,java.desktop,java.security.jgss,java.xml.crypto,jdk.javadoc,java.logging,jdk.charsets,java.se,java.net.http,java.prefs,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.localedata,java.compiler,jdk.net,java.instrument,java.scripting,java.rmi,jdk.incubator.vector</jvm.modules>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>27</maven.compiler.source>
@@ -701,10 +704,10 @@
                                 </goals>
                                 <configuration>
                                     <toolName>jlink</toolName>
-                                    <removeDirectories>${project.build.directory}/jvm-image/</removeDirectories>
+                                    <removeDirectories>${jvm.image.dir}/</removeDirectories>
                                     <modulePath>${project.build.directory}/jmods/javafx-jmods-${javafx.version}/</modulePath>
                                     <addModules>${jvm.modules}</addModules>
-                                    <output>${project.build.directory}/jvm-image</output>
+                                    <output>${jvm.image.dir}</output>
                                     <args>
                                         <arg>--strip-native-commands</arg>
                                         <arg>--no-header-files</arg>

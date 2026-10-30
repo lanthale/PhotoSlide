@@ -436,6 +436,36 @@ public final class EditPipeline {
         save(file);
     }
 
+    /**
+     * Records a change that is not a filter (rating, delete mark) as a step in
+     * the history of the file (JavaFX thread); label null = derived from the
+     * change. Nothing is rendered or saved, the caller saves the file.
+     */
+    public static void metadataChanged(MediaFile file, String label) {
+        EditHistory history = EditHistory.peek(file);
+        if (history != null) {
+            if (label != null) {
+                history.labelNext(label);
+            }
+            history.record(file);
+        }
+    }
+
+    /**
+     * Turns the photo by a quarter turn (degrees -90 or 90) and records it
+     * like filtersChanged (JavaFX thread). Editor and lighttable both turn
+     * with this, the angle is kept in 0..359.
+     */
+    public static void turn(MediaFile file, double degrees) {
+        file.setRotationAngle(normalizedAngle(file.getRotationAngleProperty().get() + degrees));
+        filtersChanged(file, degrees < 0 ? "Rotate left" : "Rotate right");
+    }
+
+    /** The angle in 0..359 (sidecars of older versions hold -360..360). */
+    public static double normalizedAngle(double degrees) {
+        return ((degrees % 360) + 360) % 360;
+    }
+
     /** Called by every view that shows filtered images of a file. */
     public static void addFilterListener(Consumer<MediaFile> listener) {
         FILTER_LISTENERS.add(listener);

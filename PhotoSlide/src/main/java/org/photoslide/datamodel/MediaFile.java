@@ -43,7 +43,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.media.Media;
@@ -513,6 +512,20 @@ public class MediaFile implements Serializable {
 
     public void setPathStorage(Path pathStorage) {
         this.pathStorage = pathStorage.toString();
+        this.sortKey = null;
+    }
+
+    /**
+     * Sort key of the filename, computed by the comparator that sorts the
+     * lighttable. Kept here: the lists sort all items again on every change of
+     * an item, a lookup per comparison is too slow for large folders.
+     */
+    public Object getSortKey() {
+        return sortKey;
+    }
+
+    public void setSortKey(Object sortKey) {
+        this.sortKey = sortKey;
     }
 
     public VideoTypes getVideoSupported() {
@@ -567,6 +580,27 @@ public class MediaFile implements Serializable {
     public SimpleStringProperty titleProperty() {
         return title;
     }
+
+    /**
+     * Sets the values read from the cache. The media file is not shown yet, so
+     * they are set directly: the setters would post one runLater each, for
+     * every file of a folder.
+     */
+    void restoreFromCache(boolean bookmarked, boolean deleted, String place, String faces,
+            String title, String keywords, String camera, String comments) {
+        this.loading.set(true);
+        this.loadingError.set(false);
+        this.bookmarked.set(bookmarked);
+        this.deleted.set(deleted);
+        this.place.set(place);
+        this.faces.set(faces);
+        this.title.set(title);
+        this.keywords.set(keywords);
+        this.camera.set(camera);
+        this.comments.set(comments);
+    }
+
+    private transient volatile Object sortKey;
 
     public void setTitle(String title) {
         if (Platform.isFxApplicationThread()) {
@@ -632,10 +666,19 @@ public class MediaFile implements Serializable {
 
     public FileTime getCreationTime() throws IOException {
         if (creationTime == null) {
-            BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
-            creationTime = attr.creationTime();
+            readFileTimes();
         }
         return creationTime;
+    }
+
+    /**
+     * Reads creation and modification time with one access: on a network share
+     * each access takes milliseconds, the cache of a folder needs both times.
+     */
+    private void readFileTimes() throws IOException {
+        BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
+        creationTime = attr.creationTime();
+        lastModifyTime = attr.lastModifiedTime();
     }
 
     public void setCreationTime(FileTime creationTime) {
@@ -644,8 +687,7 @@ public class MediaFile implements Serializable {
 
     public FileTime getLastModifyTime() throws IOException {
         if (lastModifyTime == null) {
-            BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
-            lastModifyTime = attr.lastModifiedTime();
+            readFileTimes();
         }
         return lastModifyTime;
     }
@@ -775,9 +817,8 @@ public class MediaFile implements Serializable {
         PixelReader pixelReader = image.getPixelReader();
         int height = (int) image.getHeight();
         int width = (int) image.getWidth();
-        byte[] buffer = new byte[width * height * 4];
         try {
-            pixelReader.getPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), buffer, 0, width * 4);
+            // the WritableImage copies the pixels itself
             Image filteredImage = new WritableImage(pixelReader, width, height);
             return filteredImage;
         } catch (Exception e) {

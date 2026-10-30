@@ -12,7 +12,7 @@
 --main-class ${mainClass}
 --input ${project.build.directory}\dependency
 --app-version ${app.version}
---runtime-image ${project.build.directory}\jvm-image
+--runtime-image ${jvm.image.dir}
 --description "${project.description}"
 --copyright "(C) ${windows.vendor}"
 --java-options -Xms2g

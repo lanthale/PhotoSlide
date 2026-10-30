@@ -50,14 +50,20 @@
                         </MenuItem>
                     </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="Edit">
+                <Menu fx:id="editMenu" mnemonicParsing="false" onShowing="#editMenuShowing" onHidden="#editMenuHidden" text="Edit">
                     <items>
-                        <MenuItem mnemonicParsing="false" text="Undo">
+                        <MenuItem fx:id="undoMenu" mnemonicParsing="false" onAction="#undoMenuAction" text="Undo">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                            </accelerator>
                             <graphic>
                                 <FontIcon iconLiteral="fa-undo" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Redo">
+                        <MenuItem fx:id="redoMenu" mnemonicParsing="false" onAction="#redoMenuAction" text="Redo">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                            </accelerator>
                             <graphic>
                                 <FontIcon iconLiteral="fa-rotate-right" />
                             </graphic>

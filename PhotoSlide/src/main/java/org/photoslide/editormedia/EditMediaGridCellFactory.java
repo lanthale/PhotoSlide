@@ -59,18 +59,29 @@ public class EditMediaGridCellFactory implements Callback<GridView<MediaFile>, G
             t.consume();
         });
         cell.itemProperty().addListener((ov, oldMediaItem, newMediaItem) -> {
-            if (newMediaItem != null && oldMediaItem == null) {
-                if (newMediaItem.isLoading() == true) {
-                    if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
-                        if (isCellVisible(cell)) {
-                            fileLoader.loadImage(newMediaItem);
-                        }
-                    } else {
-                        if (isCellVisible(cell)) {
-                            fileLoader.loadVideo(newMediaItem);
+            if (oldMediaItem != null && oldMediaItem != newMediaItem && oldMediaItem.isLoading()) {
+                // the cell was reused for another file (scrolling): drop the request
+                // of the file it does not show any more, if it has not started yet
+                fileLoader.cancel(oldMediaItem);
+            }
+            // on every new item, not only the first: a reused cell may now show a
+            // file whose request was dropped above
+            if (newMediaItem != null) {
+                // checked after the running layout: items that arrive before the
+                // first layout find no visible cell (see MediaGridCellFactory)
+                Platform.runLater(() -> {
+                    if (cell.getItem() == newMediaItem && newMediaItem.isLoading() == true) {
+                        if (newMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                            if (isCellVisible(cell)) {
+                                fileLoader.loadImage(newMediaItem);
+                            }
+                        } else {
+                            if (isCellVisible(cell)) {
+                                fileLoader.loadVideo(newMediaItem);
+                            }
                         }
                     }
-                }
+                });
             }
         });
         return cell;

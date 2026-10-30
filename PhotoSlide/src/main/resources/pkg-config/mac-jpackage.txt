@@ -6,7 +6,7 @@
 --main-class ${mainClass}
 --input ${project.build.directory}/dependency
 --app-version ${app.version}
---runtime-image ${project.build.directory}/jvm-image
+--runtime-image ${jvm.image.dir}
 --java-options -Xms2g
 --java-options --enable-preview
 --java-options --add-modules=jdk.incubator.vector

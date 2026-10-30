@@ -7,11 +7,15 @@ package org.photoslide.datamodel;
 
 import org.photoslide.editpipeline.EditPipeline;
 
-import java.io.InterruptedIOException;
+import org.photoslide.editpipeline.LoadPriority;
 import java.net.MalformedURLException;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -30,16 +34,23 @@ import org.photoslide.browserlighttable.MediaLoadingTask;
 public class MediaFileLoader {
 
     private final ExecutorService executorParallel;
-    private final HashMap<String, Task> taskList;
+    private final Map<String, Task> taskList;
 
     public MediaFileLoader() {
-        if (Utility.nativeMemorySize > 4194500) {
-            //executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
-            executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
-        } else {
-            executorParallel = Executors.newFixedThreadPool(3, new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setPriority(10).build());
-        }
-        taskList = new HashMap<>();
+        // few threads: each thumbnail reads the whole file, on a network share all
+        // reads share the bandwidth with the preview the user waits for
+        int threads = Utility.nativeMemorySize > 4194500 ? 4 : 3;
+        // newest request first: after scrolling, the cells now visible load before
+        // the ones scrolled past (those are cancelled when their cell is reused)
+        BlockingQueue<Runnable> newestFirst = new LinkedBlockingDeque<>() {
+            @Override
+            public boolean offer(Runnable r) {
+                return super.offerFirst(r);
+            }
+        };
+        executorParallel = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, newestFirst,
+                new ThreadFactoryBuilder().setNamePrefix("mediaFileLoaderThread").setDaemon(true).build());
+        taskList = new ConcurrentHashMap<>();
     }
 
     /** Longest side of the thumbnails in the grids. */
@@ -49,6 +60,11 @@ public class MediaFileLoader {
         Task<Image> task = new Task<Image>() {
             @Override
             public Image call() throws Exception {
+                LoadPriority.awaitBackground();
+                if (this.isCancelled()) {
+                    taskList.remove(newMediaItem.getName());
+                    return null;
+                }
                 // RAW: the same decoder, profile and base look as the editor
                 Image raw = EditPipeline.loadRawThumbnail(newMediaItem, THUMBNAIL_SIZE);
                 if (raw != null) {
@@ -60,37 +76,16 @@ public class MediaFileLoader {
                     });
                     return raw;
                 }
-                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, true);
-                image.progressProperty().addListener((ov, g, g1) -> {
-                    if (this.isCancelled()) {
-                        image.cancel();
-                        taskList.remove(newMediaItem.getName());
-                    }
-                    if ((Double) g1 == 1.0 && !image.isError()) {
-                        newMediaItem.setLoading(false);
-                    } else {
-                        if ((Double) g1 == 1.0 && image.isError()) {
-                            if (image.isError() == true) {
-                                //image.getException().printStackTrace();
-                            }
-                            newMediaItem.setLoading(false);
-                            newMediaItem.setLoadingError(image.isError());
-                        }
-                    }
-                    if ((Double) g1 == 1.0) {
-                        taskList.remove(newMediaItem.getName());
-                    }
+                // loaded in this thread, not in the background: JavaFX would load the
+                // thumbnails of all visible cells at once and this pool would not limit them
+                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
+                taskList.remove(newMediaItem.getName());
+                final boolean error = image.isError();
+                javafx.application.Platform.runLater(() -> {
+                    newMediaItem.setImage(image);
+                    newMediaItem.setLoadingError(error);
+                    newMediaItem.setLoading(false);
                 });
-                if (this.isCancelled()) {
-                    image.cancel();
-                    taskList.remove(newMediaItem.getName());
-                }
-                if (image.isError()) {
-                    if (image.getException() instanceof InterruptedIOException == false) {
-                        throw new Exception("Cannot load image '" + newMediaItem.getPathStorage().toUri().toURL().toString() + "'!");
-                    }
-                }
-                newMediaItem.setImage(image);
                 return image;
             }
         };
@@ -146,6 +141,17 @@ public class MediaFileLoader {
                     executorParallel.submit(task);
                 }
             }
+        }
+    }
+
+    /**
+     * Drops the thumbnail request of a media file a cell does not show any more,
+     * if it has not started yet. A started one finishes. JavaFX thread.
+     */
+    public void cancel(MediaFile m) {
+        Task t = taskList.remove(m.getName());
+        if (t != null) {
+            t.cancel(false);
         }
     }
 

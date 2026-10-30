@@ -7,6 +7,7 @@ package org.photoslide.browserlighttable;
 
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.editpipeline.EditHistory;
 import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.datamodel.Image16;
 import org.photoslide.editormedia.CropAspect;
@@ -22,18 +23,16 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -105,9 +104,14 @@ public class LighttableController implements Initializable {
     private ScheduledExecutorService executorSchedule;
     private ExecutorService executorParallel;
     private MediaLoadingTask taskMLoading;
+    private Task<Boolean> taskSortRead;
     private ObservableList<MediaFile> fullMediaList;
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
+    // one instance per folder: it caches the split filenames
+    private MediaFilenameComparator filenameComparator;
+    // the filter set when the folder was opened, to avoid filtering and sorting twice
+    private Predicate<MediaFile> loadPredicate;
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
@@ -157,6 +161,8 @@ public class LighttableController implements Initializable {
     private HBox cropBar;
     private ComboBox<String> cropAspect;
     private MediaFile croppedFile;
+    /** File of the last history step made here; undo and redo act on it (null = the selected file). */
+    private MediaFile historyFile;
     @FXML
     private Label titleLabel;
     @FXML
@@ -310,9 +316,11 @@ public class LighttableController implements Initializable {
         fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
         startSidecarWatcher(sPath);
         filteredMediaList = new FilteredList<>(fullMediaList, null);
-        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
+        loadPredicate = standardFilter().and(filterDeleted(showDeletedButton.isSelected()));
+        filteredMediaList.setPredicate(loadPredicate);
         sortedMediaList = new SortedList<>(filteredMediaList);
-        sortedMediaList.setComparator(new MediaFilenameComparator());
+        filenameComparator = new MediaFilenameComparator();
+        sortedMediaList.setComparator(filenameComparator);
         imageGrid = new GridView<>(sortedMediaList);
         imageGrid.setCache(true);
         imageGrid.setCacheShape(true);
@@ -442,7 +450,7 @@ public class LighttableController implements Initializable {
                     mainController.getStatusLabelLeft().setVisible(false);
                     mainController.getProgressPane().setVisible(false);
                     filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
-                    sortedMediaList.setComparator(new MediaFilenameComparator());
+                    sortedMediaList.setComparator(filenameComparator);
                     mainController.getProgressbar().progressProperty().unbind();
                     mainController.getProgressbarLabel().textProperty().unbind();
                     mainController.getStatusLabelRight().textProperty().unbind();
@@ -490,8 +498,14 @@ public class LighttableController implements Initializable {
 
     public void setDefaultSorting() {
         sortOrderComboBox.setDisable(false);
-        filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
-        sortedMediaList.setComparator(new MediaFilenameComparator());
+        // the lists already have this filter and order unless it was changed
+        // while loading: setting them again filters and sorts all items again
+        if (filteredMediaList.getPredicate() != loadPredicate) {
+            filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
+        }
+        if (sortedMediaList.getComparator() != filenameComparator) {
+            sortedMediaList.setComparator(filenameComparator);
+        }
     }
 
     /**
@@ -578,55 +592,7 @@ public class LighttableController implements Initializable {
     }
 
     public void rotateLeftAction() {
-        imageView.fitWidthProperty().unbind();
-        imageView.fitHeightProperty().unbind();
-        double rotate = imageView.getRotate();
-        int angle = (int) rotate - 90;
-        if (angle < -360) {
-            angle = -90;
-        }
-        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
-        //imageView.setRotate(angle);
-        item.setRotationAngle(angle);
-        switch (angle) {
-            case 0:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 180:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 360:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case -180:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case -360:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 90:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case 270:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case -90:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case -270:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-        }
-        savingMediaFileEdits(factory.getSelectedCell().getItem());
+        turn(-90);
     }
 
     @FXML
@@ -635,55 +601,28 @@ public class LighttableController implements Initializable {
     }
 
     public void rotateRightAction() {
+        turn(90);
+    }
+
+    /** Quarter turn of the selected photo, the same as in the editor (saves, thumbnails, history). */
+    private void turn(double degrees) {
+        MediaFile item = factory == null ? null : factory.getSelectedMediaItem();
+        if (item == null) {
+            return;
+        }
+        EditHistory.of(item);
+        EditPipeline.turn(item, degrees);
+        historyFile = item;
+        bindFitToRotation(item.getRotationAngleProperty().get());
+    }
+
+    /** Fits the image view into the pane, swapped for a quarter turn. */
+    public void bindFitToRotation(double angle) {
         imageView.fitWidthProperty().unbind();
         imageView.fitHeightProperty().unbind();
-        double rotate = imageView.getRotate();
-        int angle = (int) rotate + 90;
-        if (angle > 360) {
-            angle = 90;
-        }
-        MediaFile item = fullMediaList.get(fullMediaList.indexOf(factory.getSelectedCell().getItem()));
-        //imageView.setRotate(angle);
-        item.setRotationAngle(angle);
-        switch (angle) {
-            case 0:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 180:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 360:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case -180:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case -360:
-                imageView.fitWidthProperty().bind(stackPane.widthProperty());
-                imageView.fitHeightProperty().bind(stackPane.heightProperty());
-                break;
-            case 90:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case 270:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case -90:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-            case -270:
-                imageView.fitWidthProperty().bind(stackPane.heightProperty());
-                imageView.fitHeightProperty().bind(stackPane.widthProperty());
-                break;
-        }
-        savingMediaFileEdits(factory.getSelectedCell().getItem());
+        boolean quarter = EditPipeline.normalizedAngle(angle) % 180 != 0;
+        imageView.fitWidthProperty().bind(quarter ? stackPane.heightProperty() : stackPane.widthProperty());
+        imageView.fitHeightProperty().bind(quarter ? stackPane.widthProperty() : stackPane.heightProperty());
     }
 
     @FXML
@@ -692,6 +631,8 @@ public class LighttableController implements Initializable {
     }
 
     public void rateAction() {
+        final MediaFile item = factory.getSelectedCell().getItem();
+        EditHistory.of(item);
         PopOver popOver = new PopOver();
         popOver.setDetachable(false);
         popOver.setAnimated(true);
@@ -708,7 +649,8 @@ public class LighttableController implements Initializable {
             popOver.hide();
         });
         popOver.setOnHidden((t) -> {
-            savingMediaFileEdits(factory.getSelectedCell().getItem());
+            recordStep(item, null);
+            savingMediaFileEdits(item);
         });
         rate.ratingProperty().bindBidirectional(factory.getSelectedCell().getItem().getRatingProperty());
         popOver.show(rateButton);
@@ -722,13 +664,87 @@ public class LighttableController implements Initializable {
     public void deleteAction() {
         final int idx = fullMediaList.indexOf(factory.getSelectedCell().getItem());
         final MediaFile item = fullMediaList.get(idx);
+        EditHistory.of(item);
         item.setDeleted(true);
+        recordStep(item, "Delete");
+        hideDetail();
+        savingMediaFileEdits(item);
+    }
+
+    private void hideDetail() {
         imageView.setImage(null);
         getTitleLabel().setVisible(false);
         getCameraLabel().setVisible(false);
         getFilenameLabel().setVisible(false);
         getRatingControl().setVisible(false);
-        savingMediaFileEdits(item);
+    }
+
+    // ------------------------------------------------------------------
+    // history: undo / redo of the steps made here
+    // ------------------------------------------------------------------
+    /**
+     * Called when a media file is selected in the grid, before it can be
+     * changed: starts its history, so that the following changes are steps.
+     */
+    public void mediaFileSelected(MediaFile f) {
+        historyFile = null;
+        if (f != null) {
+            EditHistory.of(f);
+        }
+    }
+
+    /** Records the change of the file as a history step; undo and redo follow it. */
+    public void recordStep(MediaFile item, String label) {
+        EditPipeline.metadataChanged(item, label);
+        historyFile = item;
+    }
+
+    /** The file undo and redo act on: the one changed last here, else the selected one. */
+    public MediaFile historyTarget() {
+        if (historyFile != null) {
+            return historyFile;
+        }
+        return factory == null ? null : factory.getSelectedMediaItem();
+    }
+
+    public void undoAction() {
+        stepHistory(true);
+    }
+
+    public void redoAction() {
+        stepHistory(false);
+    }
+
+    private void stepHistory(boolean back) {
+        MediaFile f = historyTarget();
+        EditHistory history = f == null ? null : EditHistory.peek(f);
+        if (history == null || !(back ? history.canUndo() : history.canRedo())) {
+            return;
+        }
+        cancelCrop();
+        if (back) {
+            history.undo(f);
+        } else {
+            history.redo(f);
+        }
+        filteredMediaList.setPredicate(getStarFilter());       // delete mark or rating may have changed
+        boolean selected = factory.getSelectedMediaItem() == f;
+        if (f.isDeleted()) {
+            if (selected) {
+                hideDetail();
+            }
+        } else if (selected && imageView.getImage() != null) {
+            bindFitToRotation(f.getRotationAngleProperty().get());
+            preview.setViewport(f.getCropView());
+        } else {
+            MediaGridCell cell = factory.getMediaCellForMediaFile(f);
+            if (cell != null) {
+                cell.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 0,
+                        0, 0, 0, MouseButton.PRIMARY, 1, false, false, false, false,
+                        false, false, false, false, false, true, null));
+            }
+        }
+        historyFile = f;
     }
 
     /**
@@ -753,7 +769,9 @@ public class LighttableController implements Initializable {
         });
         task.setOnSucceeded((t) -> {
             mainController.getProgressPane().setVisible(false);
+            MediaFile changed = historyFile;
             selectNextImageInGrid(sIdx);
+            historyFile = changed;          // undo still goes to the changed file
         });
         Thread.ofVirtual().start(task);
     }
@@ -804,6 +822,7 @@ public class LighttableController implements Initializable {
         if (item == null || item.getMediaType() != MediaFile.MediaTypes.IMAGE || preview.getFile() != item || source == null) {
             return;
         }
+        EditHistory.of(item);
         croppedFile = item;
         infoPane.setDisable(true);
         optionPane.setDisable(true);
@@ -834,6 +853,7 @@ public class LighttableController implements Initializable {
         if (!java.util.Objects.equals(crop, item.getCropView())) {
             item.setCropView(crop);
             EditPipeline.filtersChanged(item, crop == null ? "Reset crop" : "Crop");
+            historyFile = item;
         }
         if (preview.getFile() == item) {
             preview.setViewport(crop);
@@ -999,6 +1019,10 @@ public class LighttableController implements Initializable {
         return fullMediaList;
     }
 
+    public MediaFilenameComparator getFilenameComparator() {
+        return filenameComparator;
+    }
+
     public FilteredList<MediaFile> getFilteredMediaList() {
         return filteredMediaList;
     }
@@ -1017,6 +1041,12 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void selectSortOrderAction(ActionEvent event) {
+        // a capture time read still running would keep the progressbar bound
+        if (taskSortRead != null && taskSortRead.isRunning()) {
+            taskSortRead.cancel();
+        }
+        mainController.getProgressbar().progressProperty().unbind();
+        mainController.getProgressbarLabel().textProperty().unbind();
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("Capture time")) {
             if (taskMLoading.isRunning() == true) {
                 taskMLoading.cancel();
@@ -1030,30 +1060,10 @@ public class LighttableController implements Initializable {
                 Task<Boolean> taskMeta = new Task<>() {
                     @Override
                     protected Boolean call() throws IOException {
-                        AtomicInteger i = new AtomicInteger(1);
-                        fullMediaList.parallelStream().forEach((mediaFile) -> {
-                            if (this.isCancelled() == false) {
-                                updateProgress(i.get(), fullMediaList.size());
-                                updateMessage("Read record time " + i.get() + "/" + fullMediaList.size());
-                                try {
-                                    if (mediaFile.getRecordTime() == null) {
-                                        metadataController.setActualMediaFile(mediaFile);
-                                        metadataController.readBasicMetadata(this, mediaFile);
-                                    }
-                                } catch (IOException e) {
-                                    long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
-                                    LocalDateTime triggerTime
-                                            = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
-                                    mediaFile.setRecordTime(triggerTime);
-                                }
-                                if (mediaFile.getRecordTime() == null) {
-                                    long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
-                                    LocalDateTime triggerTime
-                                            = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
-                                    mediaFile.setRecordTime(triggerTime);
-                                }
-                            }
-                            i.addAndGet(1);
+                        int total = fullMediaList.size();
+                        metadataController.readRecordTimes(this, fullMediaList, (n) -> {
+                            updateProgress(n, total);
+                            updateMessage("Read record time " + n + "/" + total);
                         });
                         return true;
                     }
@@ -1068,8 +1078,14 @@ public class LighttableController implements Initializable {
                     mainController.getStatusLabelLeft().setText("");
                     mainController.getProgressbar().progressProperty().unbind();
                     mainController.getProgressbarLabel().textProperty().unbind();
+                    // the capture times are kept in the cache: the next sort reads no file
+                    if (taskMLoading != null) {
+                        taskMLoading.saveCacheToDisk();
+                    }
                 });
                 taskMeta.setOnFailed((t) -> {
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setText("");
                     mainController.getProgressbar().progressProperty().unbind();
                     mainController.getProgressbarLabel().textProperty().unbind();
                 });
@@ -1077,6 +1093,11 @@ public class LighttableController implements Initializable {
                 mainController.getProgressbar().progressProperty().bind(taskMeta.progressProperty());
                 mainController.getProgressbarLabel().textProperty().unbind();
                 mainController.getProgressbarLabel().textProperty().bind(taskMeta.messageProperty());
+                taskMeta.setOnCancelled((t) -> {
+                    mainController.getProgressPane().setVisible(false);
+                    mainController.getStatusLabelLeft().setText("");
+                });
+                taskSortRead = taskMeta;
                 executor.submit(taskMeta);
                 mainController.getTaskProgressView().getTasks().add(taskMeta);
             }
@@ -1086,7 +1107,7 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                sortedMediaList.setComparator(new MediaFilenameComparator());
+                sortedMediaList.setComparator(filenameComparator);
             }
         }
         if (sortOrderComboBox.getSelectionModel().getSelectedItem().equalsIgnoreCase("File creation time")) {

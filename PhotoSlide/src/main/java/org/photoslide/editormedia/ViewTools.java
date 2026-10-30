@@ -217,7 +217,8 @@ final class ViewTools {
                 applyView();
             }
         });
-        // undo / redo wherever the focus is, while the editor is shown
+        // redo with Cmd+Y wherever the focus is, while the editor is shown
+        // (Cmd+Z and Cmd+Shift+Z are the accelerators of the Edit menu)
         stack.sceneProperty().addListener((o, oldScene, newScene) -> {
             if (oldScene != null) {
                 oldScene.removeEventFilter(KeyEvent.KEY_PRESSED, this::keyPressed);
@@ -320,14 +321,14 @@ final class ViewTools {
     // ------------------------------------------------------------------
     // undo / redo
     // ------------------------------------------------------------------
-    private void undo() {
+    void undo() {
         if (history != null && history.canUndo()) {
             endMode();
             history.undo(file);
         }
     }
 
-    private void redo() {
+    void redo() {
         if (history != null && history.canRedo()) {
             endMode();
             history.redo(file);
@@ -338,11 +339,8 @@ final class ViewTools {
         if (file == null || !isShowing() || e.getTarget() instanceof TextInputControl) {
             return;
         }
-        if (REDO.match(e) || REDO_Y.match(e)) {
+        if (REDO_Y.match(e)) {
             redo();
-            e.consume();
-        } else if (UNDO.match(e)) {
-            undo();
             e.consume();
         }
     }
@@ -380,7 +378,7 @@ final class ViewTools {
     }
 
     private static double normalized(double degrees) {
-        return ((degrees % 360) + 360) % 360;
+        return EditPipeline.normalizedAngle(degrees);
     }
 
     private boolean quarter() {
@@ -587,8 +585,7 @@ final class ViewTools {
         if (file == null) {
             return;
         }
-        file.setRotationAngle(normalized(file.getRotationAngleProperty().get() + degrees));
-        EditPipeline.filtersChanged(file, degrees < 0 ? "Rotate left" : "Rotate right");
+        EditPipeline.turn(file, degrees);
         if (zoom > 0) {
             zoom = 0;
             centerX = centerY = Double.NaN;

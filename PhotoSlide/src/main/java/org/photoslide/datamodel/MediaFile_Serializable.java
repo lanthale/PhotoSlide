@@ -129,10 +129,12 @@ public class MediaFile_Serializable implements Serializable {
         mserial.setTitle(m.getTitle().get());
         mserial.setKeywords(m.getKeywords());
         mserial.setCamera(m.getCamera().get());
-        mserial.setComments(m.getCamera().get());
+        mserial.setComments(m.getComments().get());
         mserial.setRotationAngle(m.getRotationAngleProperty().get());
         mserial.setRating(m.getRatingProperty().get());
         mserial.setGpsHeight(-1);
+        // reading it again means opening every file: minutes on a network share
+        mserial.setRecordTime(m.getRecordTime());
         if (m.getOrignalImageSize() != null) {
             mserial.setOrignalImageSizeX(m.getOrignalImageSize().getX());
             mserial.setOrignalImageSizeY(m.getOrignalImageSize().getY());
@@ -154,27 +156,20 @@ public class MediaFile_Serializable implements Serializable {
     public static void convertToMediaFile(MediaFile_Serializable mserial, MediaFile m) {
         m.setName(mserial.getName());
         m.setPathStorage(Path.of(mserial.getPathStorage()));
-        m.setBookmarked(mserial.isBookmarked());
-        m.setLoading(true);
-        m.setLoadingError(false);
         m.setSubViewSelected(false);
-        m.setDeleted(mserial.isDeleted());
         m.setSelected(mserial.isSelected());
         m.setStackName(mserial.getStackName());
         m.setStackPos(mserial.getStackPos());
         m.setStacked(mserial.isStacked());
-        m.setPlace(mserial.getPlace());
-        m.setFaces(mserial.getFaces());
         m.setFilterList(mserial.convertToImageFilterList(mserial.getFilterList()));
         m.setMediaType(convertToMediaType(mserial.getMediaType()));
         m.setVideoSupported(convertToVideoSupportedType(mserial.getVideoSupported()));
-        m.setTitle(mserial.getTitle());
-        m.setKeywords(mserial.getKeywords());
-        m.setCamera(mserial.getCamera());
-        m.setComments(mserial.getCamera());
+        m.restoreFromCache(mserial.isBookmarked(), mserial.isDeleted(), mserial.getPlace(), mserial.getFaces(),
+                mserial.getTitle(), mserial.getKeywords(), mserial.getCamera(), mserial.getComments());
         m.setRotationAngle(mserial.getRotationAngle());
         m.setRating(mserial.getRating());
         m.setGpsHeight(-1);
+        m.setRecordTime(mserial.getRecordTime());
         m.setOrignalImageSize(new Point2D(mserial.getOrignalImageSizeX(), mserial.getOrignalImageSizeY()));
         if (mserial.getCropViewWidth() > 0) {
             m.setCropView(new Rectangle2D(mserial.getCropViewX(), mserial.getCropViewY(), mserial.getCropViewWidth(), mserial.getCropViewHeigth()));

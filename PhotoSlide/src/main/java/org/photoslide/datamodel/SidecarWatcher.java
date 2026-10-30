@@ -58,7 +58,9 @@ public final class SidecarWatcher {
     }
 
     public void start() {
-        last = scan();
+        // the first scan reads the whole folder: not on the JavaFX thread. The
+        // timer has one thread, so it runs before the first poll
+        timer.execute(() -> last = scan());
         task = timer.scheduleWithFixedDelay(this::poll, INTERVAL_MS, INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 

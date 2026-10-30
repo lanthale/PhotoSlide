@@ -33,8 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,11 +43,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -70,6 +66,9 @@ import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.scene.Node;
+import javafx.scene.control.TextInputControl;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -121,6 +120,7 @@ import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.editormedia.EditorMediaViewController;
 import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
+import org.photoslide.editpipeline.EditHistory;
 import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
@@ -178,6 +178,12 @@ public class MainViewController implements Initializable {
     private MenuItem quitMenu;
     @FXML
     private MenuItem aboutMenu;
+    @FXML
+    private Menu editMenu;
+    @FXML
+    private MenuItem undoMenu;
+    @FXML
+    private MenuItem redoMenu;
     @FXML
     private MenuItem rotateMenuLeft;
     @FXML
@@ -445,28 +451,13 @@ public class MainViewController implements Initializable {
                     }
                     //sort
                     if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase("Record time based")) {
-                        AtomicInteger iatom = new AtomicInteger(1);
-                        exportList.parallelStream().forEach((mediaFile) -> {
-                            updateMessage("Export: Read record time " + iatom.get() + "/" + exportList.size());
-                            try {
-                                if (mediaFile.getRecordTime() == null) {
-                                    metadataPaneController.setActualMediaFile(mediaFile);
-                                    metadataPaneController.readBasicMetadata(this, mediaFile);
-                                }
-                            } catch (IOException e) {
-                                long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
-                                LocalDateTime triggerTime
-                                        = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
-                                mediaFile.setRecordTime(triggerTime);
-                            }
-                            if (mediaFile.getRecordTime() == null) {
-                                long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
-                                LocalDateTime triggerTime
-                                        = LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId());
-                                mediaFile.setRecordTime(triggerTime);
-                            }
-                            iatom.addAndGet(1);
+                        int total = exportList.size();
+                        metadataPaneController.readRecordTimes(this, exportList, (n) -> {
+                            updateMessage("Export: Read record time " + n + "/" + total);
                         });
+                        if (this.isCancelled()) {
+                            return false;
+                        }
                         exportList.sort(Comparator.comparing(MediaFile::getRecordTime));
                     }
                     //end sort
@@ -794,6 +785,69 @@ public class MainViewController implements Initializable {
         dialog.setResizable(true);
         dialog.initOwner(owner);
         dialog.showAndWait();
+    }
+
+    /** The file undo and redo act on: the photo in the editor, else the last changed one in the lighttable. */
+    private MediaFile historyTarget() {
+        return editorMediaViewPane.isVisible() ? editorMediaViewPaneController.historyTarget()
+                : lighttablePaneController.historyTarget();
+    }
+
+    /** Text field with the focus (it undoes its own typing), null if none. */
+    private TextInputControl focusedTextInput() {
+        Node focus = browseButton.getScene() == null ? null : browseButton.getScene().getFocusOwner();
+        return focus instanceof TextInputControl t && t.isEditable() ? t : null;
+    }
+
+    @FXML
+    private void editMenuShowing(Event event) {
+        TextInputControl text = focusedTextInput();
+        if (text != null) {
+            undoMenu.setText("Undo");
+            redoMenu.setText("Redo");
+            undoMenu.setDisable(!text.isUndoable());
+            redoMenu.setDisable(!text.isRedoable());
+            return;
+        }
+        MediaFile f = historyTarget();
+        EditHistory history = f == null ? null : EditHistory.peek(f);
+        String undoLabel = history == null ? null : history.undoLabel();
+        String redoLabel = history == null ? null : history.redoLabel();
+        undoMenu.setText(undoLabel == null ? "Undo" : "Undo " + undoLabel);
+        redoMenu.setText(redoLabel == null ? "Redo" : "Redo " + redoLabel);
+        undoMenu.setDisable(undoLabel == null);
+        redoMenu.setDisable(redoLabel == null);
+    }
+
+    @FXML
+    private void editMenuHidden(Event event) {
+        // the accelerators must work while the menu is closed, the state is checked then
+        undoMenu.setDisable(false);
+        redoMenu.setDisable(false);
+    }
+
+    @FXML
+    private void undoMenuAction(ActionEvent event) {
+        TextInputControl text = focusedTextInput();
+        if (text != null) {
+            text.undo();
+        } else if (editorMediaViewPane.isVisible()) {
+            editorMediaViewPaneController.undo();
+        } else {
+            lighttablePaneController.undoAction();
+        }
+    }
+
+    @FXML
+    private void redoMenuAction(ActionEvent event) {
+        TextInputControl text = focusedTextInput();
+        if (text != null) {
+            text.redo();
+        } else if (editorMediaViewPane.isVisible()) {
+            editorMediaViewPaneController.redo();
+        } else {
+            lighttablePaneController.redoAction();
+        }
     }
 
     @FXML

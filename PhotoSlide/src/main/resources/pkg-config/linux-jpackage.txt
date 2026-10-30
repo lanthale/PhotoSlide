@@ -6,7 +6,7 @@
 --main-class ${mainClass}
 --input ${project.build.directory}/dependency
 --app-version ${app.version}
---runtime-image ${project.build.directory}/jvm-image
+--runtime-image ${jvm.image.dir}
 --linux-shortcut
 --java-options -Xms2g
 --java-options --enable-preview

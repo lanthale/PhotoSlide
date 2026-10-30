@@ -20,7 +20,9 @@ import org.photoslide.datamodel.MediaFile;
 
 /**
  * Undo history of one media file, as in LightZone: every change of the
- * edits is a step, the first step is the original (no edits). Undo, redo or
+ * edits is a step, the first step is the original (no edits). Rating and
+ * delete mark (set in the lighttable) are steps as well; the original keeps
+ * the ones the file had when the history started. Undo, redo or
  * a click on any step restores that state. Changes in quick succession with
  * the same label (dragging a slider) form one step.
  *
@@ -30,7 +32,8 @@ import org.photoslide.datamodel.MediaFile;
 public final class EditHistory {
 
     /** Everything an edit step can change. */
-    public record State(List<ImageFilter> filters, Rectangle2D crop, double rotation, Geometry geometry) {
+    public record State(List<ImageFilter> filters, Rectangle2D crop, double rotation, Geometry geometry,
+            int rating, boolean deleted) {
 
         static State of(MediaFile f) {
             List<ImageFilter> copy = new ArrayList<>();
@@ -39,10 +42,14 @@ public final class EditHistory {
             }
             copy.sort(Comparator.comparingInt(ImageFilter::getPosition));
             return new State(Collections.unmodifiableList(copy), f.getCropView(),
-                    f.getRotationAngleProperty().get(), f.getGeometry());
+                    f.getRotationAngleProperty().get(), f.getGeometry(),
+                    f.getRatingProperty().get(), f.isDeleted());
         }
 
-        static final State ORIGINAL = new State(List.of(), null, 0, Geometry.NONE);
+        /** No edits, with the rating and delete mark of the opened state. */
+        static State original(State opened) {
+            return new State(List.of(), null, 0, Geometry.NONE, opened.rating(), opened.deleted());
+        }
     }
 
     public record Entry(String label, State state, long time) {
@@ -67,9 +74,10 @@ public final class EditHistory {
     private String nextLabel;
 
     private EditHistory(MediaFile f) {
-        entries.add(new Entry("Original", State.ORIGINAL, 0));
         State opened = State.of(f);
-        if (!opened.equals(State.ORIGINAL)) {
+        State original = State.original(opened);
+        entries.add(new Entry("Original", original, 0));
+        if (!opened.equals(original)) {
             entries.add(new Entry("Opened with edits", opened, 0));
         }
         fixed = entries.size();
@@ -78,7 +86,8 @@ public final class EditHistory {
 
     /**
      * The history of the file; started with its current edits on the first
-     * call (the editor calls this when it shows a file).
+     * call (the editor and the lighttable call this when they show a file,
+     * before it is changed).
      */
     public static EditHistory of(MediaFile f) {
         return HISTORIES.computeIfAbsent(f, EditHistory::new);
@@ -160,6 +169,16 @@ public final class EditHistory {
         goTo(f, current.get() + 1);
     }
 
+    /** Label of the step undo goes back from, null if there is none. */
+    public String undoLabel() {
+        return canUndo() ? entries.get(current.get()).label() : null;
+    }
+
+    /** Label of the step redo restores, null if there is none. */
+    public String redoLabel() {
+        return canRedo() ? entries.get(current.get() + 1).label() : null;
+    }
+
     private static void apply(State s, MediaFile f) {
         List<ImageFilter> copy = new ArrayList<>();
         for (ImageFilter filter : s.filters()) {
@@ -169,6 +188,8 @@ public final class EditHistory {
         f.setCropView(s.crop());
         f.setRotationAngle(s.rotation());
         f.setGeometry(s.geometry());
+        f.setRating(s.rating());
+        f.setDeleted(s.deleted());
     }
 
     private static ImageFilter copyOf(ImageFilter f) {
@@ -184,6 +205,12 @@ public final class EditHistory {
     // ------------------------------------------------------------------
     /** Short text for the change from a to b, as LightZone shows it in the history. */
     static String describe(State a, State b) {
+        if (a.deleted() != b.deleted()) {
+            return b.deleted() ? "Delete" : "Restore";
+        }
+        if (a.rating() != b.rating()) {
+            return b.rating() == 0 ? "Remove rating" : "Rating " + b.rating() + (b.rating() == 1 ? " star" : " stars");
+        }
         if (!Objects.equals(a.crop(), b.crop())) {
             return b.crop() == null ? "Reset crop" : "Crop";
         }

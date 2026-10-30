@@ -5,12 +5,14 @@
  */
 package org.photoslide.browsermetadata;
 
+import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.avi.AviMetadataReader;
 import com.drew.imaging.mp4.Mp4MetadataReader;
 import com.drew.imaging.quicktime.QuickTimeMetadataReader;
 import com.drew.imaging.webp.WebpMetadataReader;
 import com.drew.metadata.Directory;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.gluonhq.maps.MapPoint;
 import com.gluonhq.maps.MapView;
 import com.icafe4j.image.ImageIO;
@@ -49,6 +51,7 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -62,10 +65,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.beans.value.ChangeListener;
@@ -347,6 +357,117 @@ public class MetadataController implements Initializable {
         Thread.ofVirtual().start(task);
         //executor.submit(task);
         mainController.getTaskProgressView().getTasks().add(task);
+    }
+
+    private static final DateTimeFormatter EXIF_TIME = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+
+    /**
+     * Reads only the capture time of a JPEG or HEIF file: "DateTime Digitized"
+     * of the EXIF, as readBasicMetadata. metadata-extractor stops reading at
+     * the image data, and unlike readBasicMetadata (synchronized, it fills the
+     * fields of the metadata view) it runs in parallel: sorting a large folder
+     * on a network share by capture time took minutes.
+     *
+     * @return null for other formats or if the file has no such time
+     */
+    public static LocalDateTime readCaptureTime(MediaFile file) {
+        if (!readsCaptureTime(file)) {
+            return null;
+        }
+        try {
+            com.drew.metadata.Metadata metadata = ImageMetadataReader.readMetadata(file.getPathStorage().toFile());
+            for (ExifSubIFDDirectory dir : metadata.getDirectoriesOfType(ExifSubIFDDirectory.class)) {
+                String time = dir.getString(ExifSubIFDDirectory.TAG_DATETIME_DIGITIZED);
+                if (time != null && !time.isBlank()) {
+                    try {
+                        return LocalDateTime.parse(time.trim(), EXIF_TIME);
+                    } catch (DateTimeParseException ex) {
+                        // other formats: left to readBasicMetadata
+                    }
+                }
+            }
+        } catch (ImageProcessingException | IOException | RuntimeException ex) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "Cannot read the capture time of " + file.getName(), ex);
+        }
+        return null;
+    }
+
+    /**
+     * @return true if readCaptureTime handles the format (JPEG, PNG, TIFF, HEIF):
+     * its null then means the file has no capture time, readBasicMetadata
+     * would not find one either
+     */
+    public static boolean readsCaptureTime(MediaFile file) {
+        return !((file.isRawImage() && !file.isHEIFImage()) || file.isVideoFile());
+    }
+
+    // a read that hangs (e.g. a damaged file in a native decoder) must not stop the sort
+    private static final long CAPTURE_READ_TIMEOUT_S = 30;
+    // threads of hanging reads cannot be stopped: daemon threads, outside the read pool
+    private static final ExecutorService CAPTURE_READER = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("captureTimeReader").setDaemon(true).build());
+
+    /**
+     * Sets the record time of all files that have none yet, in parallel. A
+     * file without a readable capture time gets its modification time.
+     *
+     * @param progress called with the number of finished files, any thread
+     */
+    public void readRecordTimes(Task<?> task, List<MediaFile> files, IntConsumer progress) {
+        AtomicInteger done = new AtomicInteger(0);
+        // own pool: the reads block on the network share, the common
+        // pool is shared with all parallel streams of the app
+        ForkJoinPool readPool = new ForkJoinPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
+        try {
+            readPool.submit(() -> files.parallelStream().forEach((mediaFile) -> {
+                if (task.isCancelled() == false) {
+                    if (mediaFile.getRecordTime() == null) {
+                        readRecordTime(task, mediaFile);
+                    }
+                    if (mediaFile.getRecordTime() == null) {
+                        long test_timestamp = mediaFile.getPathStorage().toFile().lastModified();
+                        mediaFile.setRecordTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(test_timestamp), TimeZone.getDefault().toZoneId()));
+                    }
+                    progress.accept(done.incrementAndGet());
+                }
+            })).get();
+        } catch (InterruptedException | ExecutionException ex) {
+            if (task.isCancelled() == false) {
+                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } finally {
+            readPool.shutdownNow();
+        }
+    }
+
+    /**
+     * Reads the capture time of one file, at most CAPTURE_READ_TIMEOUT_S
+     * seconds. A file whose read hangs keeps no record time and is logged.
+     */
+    private void readRecordTime(Task<?> task, MediaFile mediaFile) {
+        Future<?> read = CAPTURE_READER.submit(() -> {
+            // not readBasicMetadata first: it is synchronized and
+            // fills the metadata view of the selected file
+            if (readsCaptureTime(mediaFile)) {
+                mediaFile.setRecordTime(readCaptureTime(mediaFile));
+            } else {
+                readBasicMetadata(task, mediaFile);
+            }
+            return null;
+        });
+        try {
+            read.get(CAPTURE_READ_TIMEOUT_S, TimeUnit.SECONDS);
+        } catch (TimeoutException ex) {
+            read.cancel(true);
+            Logger.getLogger(MetadataController.class.getName()).log(Level.WARNING,
+                    "Reading the capture time takes more than {0} s, using the file time: {1}",
+                    new Object[]{CAPTURE_READ_TIMEOUT_S, mediaFile.getPathStorage()});
+        } catch (ExecutionException ex) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE,
+                    "Cannot read the capture time of " + mediaFile.getPathStorage(), ex.getCause());
+        } catch (InterruptedException ex) {
+            read.cancel(true);
+            Thread.currentThread().interrupt();
+        }
     }
 
     public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws java.io.EOFException, IOException {

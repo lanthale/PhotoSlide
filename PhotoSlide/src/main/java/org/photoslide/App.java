@@ -162,6 +162,7 @@ public class App extends Application {
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
         stage.show();
+        FxStallWatchdog.start();
 
     }
 

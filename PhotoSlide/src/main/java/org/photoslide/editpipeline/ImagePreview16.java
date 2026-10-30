@@ -185,7 +185,7 @@ public final class ImagePreview16 {
                 return;
             }
             try {
-                Image16 src = EditPipeline.loadSource(f, p -> progress(gen, p * LOAD_SHARE));
+                Image16 src = LoadPriority.foreground(() -> EditPipeline.loadSource(f, p -> progress(gen, p * LOAD_SHARE)));
                 if (gen != generation.get()) {
                     return;
                 }

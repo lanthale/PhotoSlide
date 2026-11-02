@@ -7,24 +7,21 @@ package org.photoslide.search;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.nio.file.attribute.FileTime;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -36,17 +33,13 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Slider;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.textfield.CustomTextField;
-import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.photoslide.App;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
@@ -64,8 +57,9 @@ public class SearchToolsController implements Initializable {
     private FilteredList<MediaFile> filteredMediaList;
     private SortedList<MediaFile> sortedMediaList;
     private GridView<MediaFile> imageGrid;
-    private ScheduledExecutorService executor;
     private ScheduledExecutorService executorParallel;
+    // waits until the user stops typing
+    private PauseTransition searchDelay;
     private SRMediaLoadingTask task;
     @FXML
     private CustomTextField searchTextField;
@@ -125,18 +119,42 @@ public class SearchToolsController implements Initializable {
         });
         toolbar.setVisible(false);
         toolbar.setManaged(false);
-        fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(MediaFile.extractor()));
+        fullMediaList = FXCollections.observableArrayList(MediaFile.extractor());
         filteredMediaList = new FilteredList<>(fullMediaList, null);
         sortedMediaList = new SortedList<>(filteredMediaList);
-        executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutor").build());
+        sortedMediaList.setComparator(Comparator.comparing(SearchToolsController::sortTime, Comparator.nullsLast(Comparator.reverseOrder())));
         executorParallel = Executors.newScheduledThreadPool(20, new ThreadFactoryBuilder().setNamePrefix("SearchToolExecutorScheduledParallel").build());
         imageGrid = new GridView<>(sortedMediaList);
-        MediaGridCellSearchFactory factory = new MediaGridCellSearchFactory(executor, this, sortedMediaList);
+        factory = new MediaGridCellSearchFactory(executorParallel, this, sortedMediaList);
         imageGrid.setCellFactory(factory);
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
         imageGrid.setCellWidth(defaultCellWidth + 3 * 20);
         imageGrid.setCellHeight(defaultCellHight + 3 * 20);
+        mediaZoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
+            imageGrid.setCellWidth(defaultCellWidth + 3 * mediaZoomSlider.getValue());
+            imageGrid.setCellHeight(defaultCellHight + 3 * mediaZoomSlider.getValue());
+        });
+        searchDelay = new PauseTransition(Duration.millis(300));
+        searchDelay.setOnFinished((t) -> {
+            startSearch(searchTextField.getText().trim());
+        });
+        searchTextField.textProperty().addListener((ov, oldText, newText) -> {
+            searchTextChanged(newText);
+        });
+    }
+
+    /** Record time, or creation time of the file if it has none. */
+    private static LocalDateTime sortTime(MediaFile m) {
+        if (m.getRecordTime() != null) {
+            return m.getRecordTime();
+        }
+        try {
+            FileTime creationTime = m.getCreationTime();
+            return creationTime == null ? null : LocalDateTime.ofInstant(creationTime.toInstant(), ZoneId.systemDefault());
+        } catch (IOException ex) {
+            return null;
+        }
     }
 
     public void injectMainController(MainViewController mainC) {
@@ -152,20 +170,12 @@ public class SearchToolsController implements Initializable {
     }
 
     public void shutdown() {
-        if (task != null) {
-            task.cancel();
-            task.shutdown();
-        }
+        cancelSearch();
         if (factory != null) {
             factory.shutdown();
         }
-        executor.shutdown();
+        searchDelay.stop();
         executorParallel.shutdown();
-    }
-
-    private void searchTextFieldAction(ActionEvent event) {
-        progressInd.setVisible(true);
-
     }
 
     public Button getCloseAction() {
@@ -180,134 +190,72 @@ public class SearchToolsController implements Initializable {
         return searchTextField;
     }
 
-    @FXML
-    private void searchTextFieldAction(KeyEvent event) {
-        if (event.getCode().isModifierKey() == false || event.getCode().isNavigationKey() == false) {
-            if ((searchTextField.getText() + event.getText()).length() > 2) {
-                searchTextField.setRight(progressInd);
-                progressInd.setVisible(true);
-                searchLabel.setText("Populating results...");
-                searchProgress.setVisible(true);
-                searchProgress.setManaged(true);
-                searchLabel.setVisible(true);
-                searchResultVBox.getChildren().clear();
-                String keyword = searchTextField.getText() + event.getText();
-                if (event.getCode() == KeyCode.ENTER) {
-                    keyword = searchTextField.getText();
-                }
-                if (event.getCode() == KeyCode.SPACE) {
-                    keyword = searchTextField.getText();
-                }
-                final String searchKeyword = keyword;
-                Task<Void> srTask = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        //Thread.sleep(500);
-                        Platform.runLater(() -> {
-                            searchTextField.setRight(clearButton);
-                        });
-                        performSearch(searchKeyword);
-                        return null;
-                    }
-                };
-                srTask.setOnFailed((t) -> {
-                    progressInd.setVisible(false);
-                    infoBox.setVisible(false);
-                });
-                srTask.setOnSucceeded((t) -> {
-                    if (event.getCode() != KeyCode.BACK_SPACE) {
-                        toolbar.setVisible(true);
-                        toolbar.setManaged(true);
-                        progressInd.setVisible(false);
-                    }
-                });
-                executor.schedule(srTask, 500, TimeUnit.MILLISECONDS);
-                dialogPane.getScene().getWindow().setHeight(400);
-                mediaFileInfoLabel.setText("");
+    private void searchTextChanged(String text) {
+        searchDelay.stop();
+        cancelSearch();
+        if (text == null || text.trim().length() < 3) {
+            if (dialogPane != null) {
+                dialogPane.getScene().getWindow().setHeight(diaglogHeight);
             }
-        }
-        if (event.getCode() == KeyCode.BACK_SPACE) {
-            if (task != null) {
-                if (task.isRunning()) {
-                    task.cancel();
-                }
-            }
-            dialogPane.getScene().getWindow().setHeight(diaglogHeight);
+            progressInd.setVisible(false);
+            searchProgress.setVisible(false);
+            searchLabel.setVisible(false);
             infoBox.setVisible(false);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
             searchResultVBox.getChildren().clear();
-            if (searchTextField.getText().length() < 1) {
-                progressInd.setVisible(false);
-                toolbar.setVisible(false);
-                toolbar.setManaged(false);
-                infoBox.setVisible(false);
-            }
+            fullMediaList.clear();
+            return;
+        }
+        searchTextField.setRight(progressInd);
+        progressInd.setVisible(true);
+        searchDelay.playFromStart();
+    }
+
+    private void cancelSearch() {
+        if (task != null) {
+            task.cancel();
+            task = null;
         }
     }
 
-    private void performSearch(String keyword) {
-        try {
-            ArrayList<String> queryList = new ArrayList<>();
-            try ( ResultSet searchRS = FullText.search(App.getSearchDBConnection(), keyword, 0, 0)) {
-                while (searchRS.next()) {
-                    queryList.add("SELECT * FROM " + searchRS.getString("QUERY"));
-                }
-            }
-            fullMediaList = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-            filteredMediaList = new FilteredList<>(fullMediaList, null);
-            sortedMediaList = new SortedList<>(filteredMediaList);
-            sortedMediaList.setComparator(new Comparator<MediaFile>() {
-                @Override
-                public int compare(MediaFile o1, MediaFile o2) {
-                    if (o2.getRecordTime() != null && o1.getRecordTime() != null) {
-                        return o2.getRecordTime().compareTo(o1.getRecordTime());
-                    } else {
-                        try {
-                            return o2.getCreationTime().compareTo(o1.getCreationTime());
-                        } catch (IOException ex) {
-                            Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
-                            return -1;
-                        }
-                    }
-                }
-            });
-            imageGrid = new GridView<>(sortedMediaList);
-            double defaultCellWidth = imageGrid.getCellWidth();
-            double defaultCellHight = imageGrid.getCellHeight();
-            factory = new MediaGridCellSearchFactory(executorParallel, this, sortedMediaList);
-            imageGrid.setCellFactory(factory);
-            Platform.runLater(() -> {
-                searchResultVBox.getChildren().add(imageGrid);
-            });
-            if (task != null) {
-                task.cancel();
-                task.shutdown();
-            }
-            task = new SRMediaLoadingTask(queryList, this, fullMediaList, imageGrid, metadataController, mainViewController);
-            task.setOnSucceeded((t) -> {
+    private void startSearch(String keyword) {
+        cancelSearch();
+        searchLabel.setText("Populating results...");
+        searchProgress.setVisible(true);
+        searchProgress.setManaged(true);
+        searchLabel.setVisible(true);
+        fullMediaList.clear();
+        if (searchResultVBox.getChildren().contains(imageGrid) == false) {
+            searchResultVBox.getChildren().setAll(imageGrid);
+        }
+        dialogPane.getScene().getWindow().setHeight(400);
+        mediaFileInfoLabel.setText("");
+        SRMediaLoadingTask searchTask = new SRMediaLoadingTask(keyword, fullMediaList, mainViewController);
+        searchTask.setOnSucceeded((t) -> {
+            searchTextField.setRight(clearButton);
+            progressInd.setVisible(false);
+            toolbar.setVisible(true);
+            toolbar.setManaged(true);
+            searchProgress.setVisible(false);
+            searchLabel.setVisible(false);
+        });
+        searchTask.setOnFailed((t) -> {
+            searchTextField.setRight(clearButton);
+            progressInd.setVisible(false);
+            if (t.getSource().getException() instanceof IOException) {
+                searchLabel.setText("Nothing found!");
+                searchProgress.setVisible(false);
+                searchProgress.setManaged(false);
+            } else {
+                Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, "Search failed", t.getSource().getException());
                 searchProgress.setVisible(false);
                 searchLabel.setVisible(false);
-            });
-            task.setOnFailed((t) -> {
-                if (t.getSource().getException() instanceof IOException) {
-                    searchLabel.setText("Nothing found!");
-                    searchProgress.setVisible(false);
-                    searchProgress.setManaged(false);
-                } else {
-                    searchProgress.setVisible(false);
-                    searchLabel.setVisible(false);
-                }
-            });
-            mediaZoomSlider.valueProperty().addListener((ObservableValue<? extends Number> ov, Number t, Number t1) -> {
-                imageGrid.setCellWidth(defaultCellWidth + 3 * mediaZoomSlider.getValue());
-                imageGrid.setCellHeight(defaultCellHight + 3 * mediaZoomSlider.getValue());
-            });
-            executorParallel.schedule(task, 500, TimeUnit.MILLISECONDS);
-            mainViewController.getTaskProgressView().getTasks().add(task);
-        } catch (SQLException ex) {
-            Logger.getLogger(SearchToolsController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+            }
+        });
+        task = searchTask;
+        mainViewController.getTaskProgressView().getTasks().add(searchTask);
+        executorParallel.submit(searchTask);
     }
 
     public void setDialogPane(DialogPane pane) {

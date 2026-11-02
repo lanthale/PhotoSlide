@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -63,6 +64,7 @@ import org.photoslide.imageops.ToolRegistry;
 public class MediaFile implements Serializable {
 
     private static final long serialVersionUID = 2L;
+    private static volatile Consumer<MediaFile> editsSavedListener;
     private String name;
     private String pathStorage;
     private SimpleBooleanProperty loading;
@@ -249,7 +251,20 @@ public class MediaFile implements Serializable {
             XmpSidecar.write(this);
         } catch (IOException ex) {
             Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot save edits to " + getEditFilePath(), ex);
+            return;
         }
+        Consumer<MediaFile> listener = editsSavedListener;
+        if (listener != null) {
+            listener.accept(this);
+        }
+    }
+
+    /**
+     * Sets the listener called after the edits of any file were saved (the
+     * search index).
+     */
+    public static void setEditsSavedListener(Consumer<MediaFile> listener) {
+        editsSavedListener = listener;
     }
 
     /**

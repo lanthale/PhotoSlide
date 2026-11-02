@@ -5,8 +5,11 @@ import com.icafe4j.image.meta.MetadataEntry;
 import com.icafe4j.image.meta.exif.Exif;
 import com.icafe4j.image.meta.iptc.IPTC;
 import com.icafe4j.image.meta.xmp.XMP;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * The metadata of one file as read by MetadataController.readMetadata. Each
@@ -16,6 +19,12 @@ import java.util.Map;
  * @author selfemp
  */
 public class MetadataResult {
+
+    private static final int MAX_SEARCH_STRING = 8000;
+    // longer values are binary dumps (maker notes, thumbnails)
+    private static final int MAX_SEARCH_VALUE = 200;
+    // numbers, also as icafe4j writes them ("[206]", "[1/60]", "[0x03, 0x02]"), and "null"
+    private static final Pattern NUMERIC = Pattern.compile("(?i)[-+0-9.,:/ ()x\\[\\]]*|[\\[\\]0-9a-fx, ]*0x[\\[\\]0-9a-fx, ]*|null");
 
     private Exif exif;
     private IPTC iptc;
@@ -90,15 +99,31 @@ public class MetadataResult {
     }
 
     /**
-     * All EXIF and IPTC key/value pairs for the search database.
+     * The words of the EXIF and IPTC values for the full text index of the
+     * search database: no keys (they are the same for every file), no pure
+     * numbers, each value once.
      *
-     * @return String in the format key:value;key:value;...
+     * @return the values separated by ";", at most MAX_SEARCH_STRING chars
      */
     public String asSearchString() {
-        StringBuilder sb = new StringBuilder();
-        EntryConsumer append = (key, value) -> sb.append(key).append(":").append(value).append(";");
+        Set<String> values = new LinkedHashSet<>();
+        EntryConsumer append = (key, value) -> {
+            if (value != null) {
+                String v = value.trim();
+                if (!v.isEmpty() && v.length() <= MAX_SEARCH_VALUE && !NUMERIC.matcher(v).matches()) {
+                    values.add(v);
+                }
+            }
+        };
         forEachEntry(exif, append);
         forEachEntry(iptc, append);
+        StringBuilder sb = new StringBuilder();
+        for (String v : values) {
+            if (sb.length() + v.length() + 1 > MAX_SEARCH_STRING) {
+                break;
+            }
+            sb.append(v).append(';');
+        }
         return sb.toString();
     }
 

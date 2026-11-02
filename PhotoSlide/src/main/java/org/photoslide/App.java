@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -68,6 +67,10 @@ public class App extends Application {
     private static final double DEFAULT_HEIGHT = 800;
     private static final HashMap<String, LocalDate> SEARCHINDEXFINISHEDMAP = new HashMap<>();
     private static boolean MAXIMIZED = true;
+    // 3: metadata without icafe4j number lists
+    private static final int SEARCHDB_VERSION = 3;
+    /** Characters that separate the words of the full text index. */
+    public static final String SEARCH_WHITESPACE_CHARS = " ;-:/.,\\";
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
     private Image iconImage;
@@ -75,6 +78,7 @@ public class App extends Application {
     @Override
     public void stop() throws Exception {
         super.stop(); //To change body of generated methods, choose Tools | Templates.                
+        closeSearchDBConnection();
     }
 
     @Override
@@ -88,20 +92,20 @@ public class App extends Application {
         root = (Parent) fxmlLoader.load();
         notifyPreloader(new ProgressNotification(0.5));
         iconImage = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-        File dbFile = new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB.mv.db");
-        if (dbFile.exists() == false) {
-            initDB();
-        } else {
+        try {
+            searchDBConnection = openSearchDBConnection();
+            prepareSearchDB(searchDBConnection);
+        } catch (SQLException e) {
+            // unreadable or written by an unsupported H2 version: the index is only a cache, build it again
+            Logger.getLogger(App.class.getName()).log(Level.WARNING, "Search database is rebuilt", e);
+            closeSearchDBConnection();
+            deleteSearchDBFiles();
             try {
-                Class.forName("org.h2.Driver");
-                searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
-                checkSearchDBStructure();
-            } catch (ClassNotFoundException | SQLException e) {
-                if (e.getMessage().startsWith("Unsupported database")) {
-                    new File(Utility.getAppData() + File.separator + "SearchMediaFilesDB").delete();
-                } else {
-                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, e);
-                }
+                searchDBConnection = openSearchDBConnection();
+                prepareSearchDB(searchDBConnection);
+            } catch (SQLException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, "Cannot create search database", ex);
+                closeSearchDBConnection();
             }
         }
         notifyPreloader(new ProgressNotification(0.6));
@@ -244,58 +248,82 @@ public class App extends Application {
         }
     }
 
-    public static void initDB() {
-        try {
-            //setup search database
-            Class.forName("org.h2.Driver");
-            searchDBConnection = DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB;DB_CLOSE_ON_EXIT=FALSE", "", "");
-            Statement stat = searchDBConnection.createStatement();
-            FullText.init(searchDBConnection);
-            FullText.setIgnoreList(searchDBConnection, "to,this");
-            FullText.setWhitespaceChars(searchDBConnection, " ;-:/.\\");
+    /**
+     * Opens a connection to the search database. The indexer uses its own
+     * connection, so a search does not wait for the indexer.
+     */
+    public static Connection openSearchDBConnection() throws SQLException {
+        return DriverManager.getConnection("jdbc:h2:" + Utility.getAppData() + File.separator + "SearchMediaFilesDB", "", "");
+    }
+
+    private static void closeSearchDBConnection() {
+        if (searchDBConnection != null) {
+            try {
+                searchDBConnection.close();
+            } catch (SQLException ex) {
+            }
+            searchDBConnection = null;
+        }
+    }
+
+    private static void deleteSearchDBFiles() {
+        File[] files = new File(Utility.getAppData()).listFiles((dir, name) -> name.startsWith("SearchMediaFilesDB."));
+        if (files != null) {
+            Arrays.asList(files).forEach(File::delete);
+        }
+    }
+
+    /**
+     * Creates the search database, or creates it again if it has another
+     * schema version (it is only a cache of the media files).
+     */
+    public static void prepareSearchDB(Connection con) throws SQLException {
+        if (searchDBVersion(con) == SEARCHDB_VERSION) {
+            return;
+        }
+        try (Statement stat = con.createStatement()) {
+            try {
+                FullText.dropAll(con);
+            } catch (SQLException ef) {
+                // no full text index yet
+            }
+            stat.execute("DROP TABLE IF EXISTS MEDIAFILES");
+            stat.execute("DROP TABLE IF EXISTS SCHEMAINFO");
+            stat.execute("DROP ALIAS IF EXISTS FT_INIT");
+            FullText.init(con);
+            FullText.setIgnoreList(con, "to,this");
+            FullText.setWhitespaceChars(con, SEARCH_WHITESPACE_CHARS);
             stat.execute("CREATE TABLE \"PUBLIC\".MEDIAFILES"
                     + "("
-                    + "collectionname VARCHAR(255) NOT NULL,"
+                    + "pathStorage VARCHAR(1000) PRIMARY KEY,"
+                    + "collectionname VARCHAR(1000) NOT NULL,"
                     + "name VARCHAR(255) NOT NULL,"
-                    + "pathStorage VARCHAR(1000) NOT NULL,"
-                    + "title VARCHAR(255),"
-                    + "keywords VARCHAR(255),"
+                    + "title VARCHAR(1000),"
+                    + "keywords VARCHAR(4000),"
                     + "camera VARCHAR(255),"
                     + "rating INTEGER,"
                     + "recordTime TIMESTAMP,"
                     + "creationTime TIMESTAMP,"
-                    + "places VARCHAR(255),"
+                    + "places VARCHAR(1000),"
                     + "gpsposition VARCHAR(255)," //Format: "gpslatAsDouble;gpslongAsDouble"
-                    + "faces VARCHAR(255),"
-                    + "metadata VARCHAR(4000),"
-                    + "PRIMARY KEY (collectionname, name, pathStorage)"
+                    + "faces VARCHAR(1000),"
+                    + "metadata CLOB,"
+                    + "lastModified BIGINT," // newest modification time of the file and its sidecar in ms
+                    + "fileSize BIGINT"
                     + ")");
-            FullText.createIndex(searchDBConnection, "PUBLIC", "MEDIAFILES", null);
-        } catch (SQLException | ClassNotFoundException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+            stat.execute("CREATE INDEX MEDIAFILES_COLLECTION ON MEDIAFILES(collectionname)");
+            // only text columns: every indexed column costs words in FT.WORDS and FT.MAP on each insert
+            FullText.createIndex(con, "PUBLIC", "MEDIAFILES", "PATHSTORAGE,TITLE,KEYWORDS,CAMERA,PLACES,FACES,METADATA");
+            stat.execute("CREATE TABLE SCHEMAINFO(version INTEGER)");
+            stat.execute("INSERT INTO SCHEMAINFO VALUES(" + SEARCHDB_VERSION + ")");
         }
     }
 
-    private void checkSearchDBStructure() throws SQLException {
-        String[] colNames = {"collectionname", "name", "pathStorage", "title", "keywords", "camera", "rating", "recordTime", "creationTime", "places", "gpsposition", "faces", "metadata"};
-
-        DatabaseMetaData databaseMetaData = searchDBConnection.getMetaData();
-        ResultSet columns = databaseMetaData.getColumns(null, null, "MEDIAFILES", null);
-        int columnQTY = 0;
-        while (columns.next()) {
-            columnQTY++;
-        }
-        if (columnQTY != colNames.length) {
-            Statement stat = searchDBConnection.createStatement();
-            try {
-                stat.execute("DROP TABLE MEDIAFILES");
-            } catch (SQLException ef) {
-            }
-            try {
-                stat.execute("DROP ALIAS FT_INIT");
-            } catch (SQLException ef) {
-            }
-            initDB();
+    private static int searchDBVersion(Connection con) {
+        try (Statement stat = con.createStatement(); ResultSet rs = stat.executeQuery("SELECT version FROM SCHEMAINFO")) {
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (SQLException ex) {
+            return 0;
         }
     }
 

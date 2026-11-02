@@ -25,7 +25,7 @@
             <HBox alignment="CENTER_LEFT" minHeight="45.0" prefHeight="45.0" spacing="5.0" VBox.vgrow="NEVER">
                <children>
                   <FontIcon fx:id="sIcon" iconLiteral="ti-search" iconSize="40" />
-                  <CustomTextField id="searchtext-field" fx:id="searchTextField" onKeyPressed="#searchTextFieldAction" prefHeight="50.0" prefWidth="382.0" promptText="Mediafile search" HBox.hgrow="ALWAYS">
+                  <CustomTextField id="searchtext-field" fx:id="searchTextField" prefHeight="50.0" prefWidth="382.0" promptText="Mediafile search" HBox.hgrow="ALWAYS">
                      <font>
                         <Font size="24.0" />
                      </font></CustomTextField>

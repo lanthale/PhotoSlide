@@ -8,7 +8,6 @@ package org.photoslide;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -265,29 +264,19 @@ public class SoftwareUpdater {
                     throw new IOException("Download of " + downloadName + " incomplete: " + downloaded + " of " + contentLength + " bytes");
                 }
                 Files.move(part, target, StandardCopyOption.REPLACE_EXISTING);
+                // open the installer here, not on the FX thread: AWT Desktop
+                // on macOS can block the FX thread (beach ball)
+                if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                    throw new IOException("Cannot open " + target + ": Desktop is not supported");
+                }
+                Desktop.getDesktop().open(target.toFile());
                 return target.toString();
             }
         };
         downloadTask
                 .setOnSucceeded((t) -> {
-                    if (!Desktop.isDesktopSupported()) {
-                        Logger.getLogger(SoftwareUpdater.class
-                                .getName()).log(Level.SEVERE, "Desktop is not supported for opening files!");
-                        return;
-                    }
                     if (downloadTask.getValue() == null) {
                         return;
-                    }
-                    Desktop desktop = Desktop.getDesktop();
-                    File f = new File(downloadTask.getValue());
-                    if (f.exists()) {
-                        try {
-                            desktop.open(f);
-
-                        } catch (IOException ex) {
-                            Logger.getLogger(SoftwareUpdater.class
-                                    .getName()).log(Level.SEVERE, "Cannot open file", ex);
-                        }
                     }
                     downloadDialog.close();
                     App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);

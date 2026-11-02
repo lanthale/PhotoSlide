@@ -494,6 +494,86 @@ public class SearchIndex {
         });
     }
 
+    /**
+     * Checks some indexed files of the collection at the new location.
+     *
+     * @return {found, checked}; checked is 0 if the collection is not indexed
+     */
+    public int[] checkRelocation(String oldRoot, String newRoot, int sample) {
+        int[] result = {0, 0};
+        Connection con = App.getSearchDBConnection();
+        if (con == null) {
+            return result;
+        }
+        try (PreparedStatement stm = con.prepareStatement("SELECT PATHSTORAGE FROM MEDIAFILES WHERE COLLECTIONNAME=? LIMIT " + sample)) {
+            stm.setString(1, oldRoot);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    String path = rs.getString(1);
+                    if (path.startsWith(oldRoot)) {
+                        result[1]++;
+                        if (Files.exists(Path.of(newRoot + path.substring(oldRoot.length())))) {
+                            result[0]++;
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.WARNING, "Cannot check relocation of " + oldRoot, ex);
+        }
+        return result;
+    }
+
+    /**
+     * The files of the collection were moved to another folder (drive, SMB
+     * share): rewrites their paths and the collection instead of indexing
+     * them again, then checks the collection at the new location (only files
+     * whose modification time changed by the move are read).
+     */
+    public void relocateCollection(String oldRoot, String newRoot) {
+        if (terminated || App.getSearchDBConnection() == null) {
+            return;
+        }
+        tasks.forEach((task, collectionName) -> {
+            if (collectionName.equals(oldRoot)) {
+                task.cancel(false);
+            }
+        });
+        executor.submit(() -> {
+            try {
+                Connection con = connection();
+                con.setAutoCommit(false);
+                try (PreparedStatement stm = con.prepareStatement("UPDATE MEDIAFILES SET PATHSTORAGE = ? || SUBSTRING(PATHSTORAGE, ?), COLLECTIONNAME=? WHERE COLLECTIONNAME=? AND LEFT(PATHSTORAGE, ?) = ?")) {
+                    stm.setString(1, newRoot);
+                    stm.setInt(2, oldRoot.length() + 1);
+                    stm.setString(3, newRoot);
+                    stm.setString(4, oldRoot);
+                    stm.setInt(5, oldRoot.length());
+                    stm.setString(6, oldRoot);
+                    int moved = stm.executeUpdate();
+                    con.commit();
+                    LOG.log(Level.INFO, "Search index: {0} files relocated from {1} to {2}", new Object[]{moved, oldRoot, newRoot});
+                } catch (SQLException ex) {
+                    con.rollback();
+                    throw ex;
+                } finally {
+                    con.setAutoCommit(true);
+                }
+            } catch (SQLException ex) {
+                // e.g. files of the new location are indexed already: drop the old
+                // collection, the scan below indexes the new location
+                LOG.log(Level.WARNING, "Cannot relocate search index of " + oldRoot + ", it is indexed again", ex);
+                try (PreparedStatement stm = connection().prepareStatement("DELETE FROM MEDIAFILES WHERE COLLECTIONNAME=?")) {
+                    stm.setString(1, oldRoot);
+                    stm.executeUpdate();
+                } catch (SQLException e) {
+                    LOG.log(Level.SEVERE, null, e);
+                }
+            }
+        });
+        createCheckSearchIndex(newRoot);
+    }
+
     private final class ScanTask extends Task<Void> {
 
         private final Path root;

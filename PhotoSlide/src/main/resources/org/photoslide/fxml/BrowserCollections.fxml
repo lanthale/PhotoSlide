@@ -86,6 +86,16 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
+                  <MenuItem mnemonicParsing="false" onAction="#relocateCollectionAction" text="Relocate collection">
+                     <graphic>
+                        <StackedFontIcon alignment="CENTER_RIGHT">
+                           <children>
+                              <FontIcon iconLiteral="ti-book" />
+                              <FontIcon iconLiteral="ti-arrow-right" iconSize="6" />
+                           </children>
+                        </StackedFontIcon>
+                     </graphic>
+                  </MenuItem>
                   <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="Remove collection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_RIGHT">

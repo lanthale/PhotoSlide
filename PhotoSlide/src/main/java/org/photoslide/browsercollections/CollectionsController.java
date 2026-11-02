@@ -651,15 +651,129 @@ public class CollectionsController implements Initializable {
         }
     }
 
+    /**
+     * The files of the expanded collection were moved to another folder
+     * (drive, SMB share): the collection, its search index and the bookmarks
+     * point to the new folder. Nothing is copied or indexed again.
+     */
+    @FXML
+    private void relocateCollectionAction(ActionEvent event) {
+        TitledPane expandedPane = accordionPane.getExpandedPane();
+        if (expandedPane == null) {
+            showCollectionAlert(AlertType.ERROR, "Please expand one pane to relocate it!");
+            return;
+        }
+        String oldRoot = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
+        String urlKey = getPrefKeyForRemoving(oldRoot, "URL");
+        if (urlKey == null) {
+            return;
+        }
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("New location of " + oldRoot);
+        File initial = Path.of(oldRoot).getParent() == null ? null : Path.of(oldRoot).getParent().toFile();
+        if (initial == null || initial.isDirectory() == false) {
+            initial = new File(System.getProperty("user.home"));
+        }
+        directoryChooser.setInitialDirectory(initial);
+        File selectedDirectory = directoryChooser.showDialog(accordionPane.getScene().getWindow());
+        if (selectedDirectory == null) {
+            return;
+        }
+        String newRoot = selectedDirectory.getAbsolutePath();
+        Path newPath = Path.of(newRoot);
+        if (newPath.equals(Path.of(oldRoot))) {
+            return;
+        }
+        for (String root : collectionRoots()) {
+            Path rootPath = Path.of(root);
+            if (!rootPath.equals(Path.of(oldRoot)) && (newPath.startsWith(rootPath) || rootPath.startsWith(newPath))) {
+                showCollectionAlert(AlertType.ERROR, "'" + newRoot + "' is already part of the collection\n'" + root + "'.");
+                return;
+            }
+        }
+        String indexKey = getPrefKeyForRemoving(oldRoot, "INDEX");
+        String question = "Relocate the collection\n'" + oldRoot + "'\nto\n'" + newRoot + "'?";
+        if (indexKey != null) {
+            int[] check = searchIndexProcess.checkRelocation(oldRoot, newRoot, 20);
+            if (check[1] > 0) {
+                question += "\n\n" + check[0] + " of " + check[1] + " checked files found at the new location.";
+                if (check[0] == 0) {
+                    question += "\nThe files may not have been moved there.";
+                }
+            }
+        }
+        Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+        alert = Utility.setDefaultButton(alert, ButtonType.NO);
+        alert.setHeaderText(question);
+        styleCollectionAlert(alert);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.YES) {
+            return;
+        }
+        pref.put(urlKey, newRoot);
+        collectionStorage.put(urlKey, newRoot);
+        if (indexKey != null) {
+            pref.put(indexKey, newRoot);
+            collectionStorageSearchIndex.put(indexKey, newRoot);
+            searchIndexProcess.relocateCollection(oldRoot, newRoot);
+        }
+        mainController.relocateBookmarks(oldRoot, newRoot);
+        if (selectedPath != null && selectedPath.startsWith(Path.of(oldRoot))) {
+            selectedPath = null;
+            lighttablePaneController.resetLightTableView();
+        }
+        accordionPane.getPanes().remove(expandedPane);
+        loadDirectoryTree(newRoot);
+        executorParallel.submit(() -> {
+            try {
+                directoryRootwatch.startWatch(newPath, false);
+            } catch (IOException ex) {
+                Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException ex) {
+            }
+        });
+    }
+
+    private List<String> collectionRoots() {
+        List<String> roots = new ArrayList<>();
+        try {
+            for (String key : pref.keys()) {
+                if (key.startsWith("URL")) {
+                    roots.add(pref.get(key, ""));
+                }
+            }
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        roots.removeIf(String::isEmpty);
+        return roots;
+    }
+
+    private void showCollectionAlert(AlertType type, String text) {
+        Alert alert = new Alert(type);
+        alert.setHeaderText(text);
+        styleCollectionAlert(alert);
+        alert.show();
+    }
+
+    private void styleCollectionAlert(Alert alert) {
+        alert.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+        alert.setResizable(false);
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(iconImage);
+        Utility.centerChildWindowOnStage(stage, (Stage) accordionPane.getScene().getWindow());
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+    }
+
     private String getPrefKeyForRemoving(String path, String prefix) {
         try {
             String[] keys = pref.keys();
             for (String key : keys) {
                 String value = pref.get(key, "");
-                if (path.contains(value)) {
-                    if (key.contains(prefix)) {
-                        return key;
-                    }
+                // equal, not contained: "/Volumes/photo-1" contains "/Volumes/photo"
+                if (key.startsWith(prefix) && !value.isEmpty() && Path.of(value).equals(Path.of(path))) {
+                    return key;
                 }
             }
         } catch (BackingStoreException ex) {

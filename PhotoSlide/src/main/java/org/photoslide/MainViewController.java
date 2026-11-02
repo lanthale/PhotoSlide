@@ -1244,6 +1244,25 @@ public class MainViewController implements Initializable {
         bmbIcon.setCounter(bookmarks.size());
     }
 
+    /**
+     * The files below oldRoot were moved to newRoot: the bookmarks point to
+     * the new location.
+     */
+    public void relocateBookmarks(String oldRoot, String newRoot) {
+        Path oldPath = Path.of(oldRoot);
+        boolean changed = false;
+        for (String name : bookmarks.stringPropertyNames()) {
+            Path path = Path.of(bookmarks.getProperty(name));
+            if (path.startsWith(oldPath)) {
+                bookmarks.setProperty(name, Path.of(newRoot).resolve(oldPath.relativize(path)).toString());
+                changed = true;
+            }
+        }
+        if (changed) {
+            saveBookmarksFile();
+        }
+    }
+
     public void removeBookmarkMediaFile(MediaFile m) {
         bookmarks.remove(m.getName());
         m.setBookmarked(false);

@@ -8,6 +8,7 @@ package org.photoslide.browsermetadata;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.nio.file.OpenOption;
 import java.nio.charset.StandardCharsets;
 import com.icafe4j.image.meta.jpeg.JpegXMP;
@@ -115,6 +116,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.SnapshotParameters;
@@ -169,6 +171,11 @@ import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.imageops.ExposureFilter;
 import org.photoslide.imageops.GainFilter;
 import org.photoslide.imageops.ImageFilter;
+import org.photoslide.imageops.AbstractImageFilter;
+import org.photoslide.imageops.ParamSpec;
+import org.photoslide.imageops.lz.HueSaturationFilter;
+import org.photoslide.imageops.lz.RelightFilter;
+import org.photoslide.imageops.lz.WhiteBalanceFilter;
 
 /**
  *
@@ -210,6 +217,8 @@ public class MetadataController implements Initializable {
 
     private Image shownImage;
     private boolean updatingFilterSliders;
+    /** Quick develop sliders bound to one parameter of an editor tool. */
+    private final List<QuickParam> quickParams = new ArrayList<>();
 
     @FXML
     private Accordion accordionPane;
@@ -263,6 +272,30 @@ public class MetadataController implements Initializable {
     private Slider gainSlider;
     @FXML
     private Slider biasSlider;
+    @FXML
+    private Slider temperatureSlider;
+    @FXML
+    private Slider tintSlider;
+    @FXML
+    private TextField temperatureTextField;
+    @FXML
+    private TextField tintTextField;
+    @FXML
+    private Slider saturationSlider;
+    @FXML
+    private Slider vibranceSlider;
+    @FXML
+    private TextField saturationTextField;
+    @FXML
+    private TextField vibranceTextField;
+    @FXML
+    private Slider shadowsSlider;
+    @FXML
+    private Slider highlightsSlider;
+    @FXML
+    private TextField shadowsTextField;
+    @FXML
+    private TextField highlightsTextField;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -291,7 +324,8 @@ public class MetadataController implements Initializable {
         captionChangeListener = new CaptionChangeListener();
         captionSaveDelay.setOnFinished((e) -> flushPendingSaves());
         commentSaveDelay.setOnFinished((e) -> flushPendingSaves());
-        exposureTextField.textProperty().bind(exposureSlider.valueProperty().asString());
+        exposureTextField.textProperty().bindBidirectional(exposureSlider.valueProperty(), new NumberStringConverter("#.##"));
+        alignLabelToTrack(exposureSlider);
         exposureSlider.valueProperty().addListener((o) -> {
             if (updatingFilterSliders || actualMediaFile == null) {
                 return;
@@ -312,6 +346,17 @@ public class MetadataController implements Initializable {
         };
         gainSlider.valueProperty().addListener(gainListener);
         biasSlider.valueProperty().addListener(gainListener);
+        alignLabelToTrack(gainSlider);
+        alignLabelToTrack(biasSlider);
+        bindQuickParam(temperatureSlider, temperatureTextField, WhiteBalanceFilter.NAME, WhiteBalanceFilter::new, "temperature", "#");
+        // the tool goes up to 40000 K, a quick slider is only useful in the usual range
+        temperatureSlider.setMin(2000);
+        temperatureSlider.setMax(12000);
+        bindQuickParam(tintSlider, tintTextField, WhiteBalanceFilter.NAME, WhiteBalanceFilter::new, "tint", "#.#");
+        bindQuickParam(saturationSlider, saturationTextField, HueSaturationFilter.NAME, HueSaturationFilter::new, "saturation", "#");
+        bindQuickParam(vibranceSlider, vibranceTextField, HueSaturationFilter.NAME, HueSaturationFilter::new, "vibrance", "#");
+        bindQuickParam(shadowsSlider, shadowsTextField, RelightFilter.NAME, RelightFilter::new, "shadows", "#.##");
+        bindQuickParam(highlightsSlider, highlightsTextField, RelightFilter.NAME, RelightFilter::new, "highlights", "#.##");
         // sidecar changed by another program: show the reloaded values
         EditPipeline.addReloadListener(f -> {
             if (f == actualMediaFile) {
@@ -927,6 +972,9 @@ public class MetadataController implements Initializable {
         exposureSlider.setValue(0);
         gainSlider.setValue(0.5);
         biasSlider.setValue(0.5);
+        for (QuickParam q : quickParams) {
+            q.slider().setValue(q.spec().defaults()[0]);
+        }
         updatingFilterSliders = false;
     }
 
@@ -1875,6 +1923,75 @@ public class MetadataController implements Initializable {
         resetFilter(GainFilter.NAME);
     }
 
+    @FXML
+    private void resetWhiteBalanceAction(ActionEvent event) {
+        resetFilter(WhiteBalanceFilter.NAME);
+    }
+
+    @FXML
+    private void resetSaturationAction(ActionEvent event) {
+        resetFilter(HueSaturationFilter.NAME);
+    }
+
+    @FXML
+    private void resetRelightAction(ActionEvent event) {
+        resetFilter(RelightFilter.NAME);
+    }
+
+    /**
+     * Binds a quick develop slider to one parameter of an editor tool: range
+     * and default come from the tool, moving the slider adds the tool to the
+     * file (with defaults for its other values) or changes only this value.
+     */
+    private void bindQuickParam(Slider slider, TextField field, String filterName,
+            Supplier<? extends AbstractImageFilter> factory, String key, String format) {
+        AbstractImageFilter defaults = factory.get();
+        ParamSpec spec = defaults.params().stream()
+                .filter(p -> p.key().equals(key))
+                .findFirst()
+                .orElseThrow();
+        slider.setMin(spec.min());
+        slider.setMax(spec.max());
+        slider.setBlockIncrement(spec.step());
+        slider.setValue(spec.defaults()[0]);
+        field.textProperty().bindBidirectional(slider.valueProperty(), new NumberStringConverter(format));
+        slider.valueProperty().addListener((o) -> {
+            if (updatingFilterSliders || actualMediaFile == null) {
+                return;
+            }
+            ImageFilter existing = actualMediaFile.getFilterForName(filterName);
+            float[] values = (existing != null ? existing : defaults).getValues();
+            values[spec.index()] = (float) slider.getValue();
+            EditPipeline.setFilterValues(actualMediaFile, filterName, factory::get, values);
+            EditPipeline.filtersChanged(actualMediaFile);
+        });
+        quickParams.add(new QuickParam(slider, filterName, spec));
+        alignLabelToTrack(slider);
+    }
+
+    /**
+     * Indents the label above a quick develop slider so it starts where the
+     * track starts (the skin insets the track by half a thumb).
+     */
+    private static void alignLabelToTrack(Slider slider) {
+        if (!(slider.getParent() instanceof HBox row) || !(row.getParent() instanceof VBox box)
+                || !(box.getChildren().get(0) instanceof Label label)) {
+            return;
+        }
+        slider.skinProperty().addListener((o, oldSkin, skin) -> {
+            Node track = slider.lookup(".track");
+            if (track == null) {
+                return;
+            }
+            label.paddingProperty().bind(Bindings.createObjectBinding(
+                    () -> new Insets(0, 0, 0, row.getPadding().getLeft() + track.getBoundsInParent().getMinX()),
+                    track.boundsInParentProperty()));
+        });
+    }
+
+    private record QuickParam(Slider slider, String filterName, ParamSpec spec) {
+    }
+
     private void resetFilter(String name) {
         if (actualMediaFile == null) {
             return;
@@ -1899,6 +2016,10 @@ public class MetadataController implements Initializable {
             exposureSlider.setValue(exposure != null ? exposure.getValues()[0] : 0);
             gainSlider.setValue(gain != null ? gain.getValues()[0] : 0.5);
             biasSlider.setValue(gain != null ? gain.getValues()[1] : 0.5);
+            for (QuickParam q : quickParams) {
+                ImageFilter f = file.getFilterForName(q.filterName());
+                q.slider().setValue(f != null ? f.getValues()[q.spec().index()] : q.spec().defaults()[0]);
+            }
         } finally {
             updatingFilterSliders = false;
         }

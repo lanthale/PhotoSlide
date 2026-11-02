@@ -168,15 +168,30 @@
                      <children>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <FontIcon iconLiteral="ti-eye" iconSize="14" />
-                              <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" min="-5.0" minorTickCount="0" value="0.0" HBox.hgrow="ALWAYS" />
                               <FontIcon iconLiteral="ti-eye" iconSize="20" />
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset">
+                              <VBox alignment="CENTER_LEFT" spacing="3.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Exposure" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" min="-5.0" minorTickCount="0" value="0.0" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="exposureTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </VBox>
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Reset exposure" />
+                                 </tooltip>
                               </Button>
-                              <TextField fx:id="exposureTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" HBox.hgrow="NEVER" />
                            </children>
                         </HBox>
                         <Separator focusTraversable="false" prefWidth="200.0" VBox.vgrow="NEVER">
@@ -187,23 +202,172 @@
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
                               <FontIcon iconLiteral="ti-palette" iconSize="20" />
-                              <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                              <VBox alignment="CENTER_LEFT" spacing="3.0" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Slider fx:id="gainSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" VBox.vgrow="ALWAYS" />
-                                    <Slider fx:id="biasSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" VBox.vgrow="ALWAYS" />
+                                    <VBox>
+                                       <children>
+                                          <Label text="Gain" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="gainSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="gainTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Bias" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="biasSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="biasTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
                                  </children>
                               </VBox>
                               <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetGainFilterAction" text="Reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Reset gain / bias" />
+                                 </tooltip>
                               </Button>
-                              <VBox alignment="CENTER_LEFT" spacing="3.0">
+                           </children>
+                        </HBox>
+                        <Separator focusTraversable="false" prefWidth="200.0" VBox.vgrow="NEVER">
+                           <effect>
+                              <ColorAdjust brightness="-0.43" />
+                           </effect>
+                        </Separator>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontIcon iconLiteral="fa-thermometer-half" iconSize="20" />
+                              <VBox alignment="CENTER_LEFT" spacing="3.0" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <TextField fx:id="gainTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" VBox.vgrow="NEVER" />
-                                    <TextField fx:id="biasTextField" minWidth="42.0" prefHeight="26.0" prefWidth="42.0" VBox.vgrow="NEVER" />
+                                    <VBox>
+                                       <children>
+                                          <Label text="Temperature (K)" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="temperatureSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="temperatureTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Tint" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="tintSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="tintTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
                                  </children>
                               </VBox>
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetWhiteBalanceAction" text="Reset" HBox.hgrow="NEVER">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fa-undo" />
+                                 </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Reset white balance" />
+                                 </tooltip>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <Separator focusTraversable="false" prefWidth="200.0" VBox.vgrow="NEVER">
+                           <effect>
+                              <ColorAdjust brightness="-0.43" />
+                           </effect>
+                        </Separator>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontIcon iconLiteral="fa-tint" iconSize="20" />
+                              <VBox alignment="CENTER_LEFT" spacing="3.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Saturation" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="saturationSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="saturationTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Vibrance" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="vibranceSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="vibranceTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </VBox>
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetSaturationAction" text="Reset" HBox.hgrow="NEVER">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fa-undo" />
+                                 </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Reset saturation" />
+                                 </tooltip>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <Separator focusTraversable="false" prefWidth="200.0" VBox.vgrow="NEVER">
+                           <effect>
+                              <ColorAdjust brightness="-0.43" />
+                           </effect>
+                        </Separator>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <children>
+                              <FontIcon iconLiteral="fa-adjust" iconSize="20" />
+                              <VBox alignment="CENTER_LEFT" spacing="3.0" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Shadows" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="shadowsSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="shadowsTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <VBox>
+                                       <children>
+                                          <Label text="Highlights" />
+                                          <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                             <children>
+                                                <Slider fx:id="highlightsSlider" HBox.hgrow="ALWAYS" />
+                                                <TextField fx:id="highlightsTextField" minWidth="48.0" prefHeight="26.0" prefWidth="48.0" HBox.hgrow="NEVER" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </VBox>
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetRelightAction" text="Reset" HBox.hgrow="NEVER">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fa-undo" />
+                                 </graphic>
+                                 <tooltip>
+                                    <Tooltip text="Reset shadows / highlights" />
+                                 </tooltip>
+                              </Button>
                            </children>
                         </HBox>
                      </children>

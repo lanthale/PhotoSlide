@@ -5,6 +5,7 @@
  */
 package org.photoslide.search;
 
+import org.photoslide.browsermetadata.MetadataResult;
 import fr.dudie.nominatim.model.Address;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -313,9 +314,9 @@ public class SearchIndex {
             m.setMediaType(MediaFile.MediaTypes.NONE);
         }
         try {
-            metadataController.readBasicMetadata(task, m);
+            MetadataResult metadata = metadataController.readMetadata(task, m);
             if (m.getMediaType() != MediaFile.MediaTypes.NONE) {
-                insertMediaFileIntoSearchDB(collectionName, m);
+                insertMediaFileIntoSearchDB(collectionName, m, metadata);
             }
         } catch (Throwable ex) {
             Logger.getLogger(SearchIndex.class.getName()).log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
@@ -323,6 +324,11 @@ public class SearchIndex {
     }
 
     public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m) throws IOException {
+        // no new read: it would replace edits of m with the values in the file
+        insertMediaFileIntoSearchDB(collectionName, m, metadataController.getMetadata(m));
+    }
+
+    public void insertMediaFileIntoSearchDB(String collectionName, MediaFile m, MetadataResult mediaMetadata) throws IOException {
         if (App.getSearchDBConnection() == null) {
             return;
         }
@@ -363,7 +369,7 @@ public class SearchIndex {
             if (m.facesProperty().get() != null) {
                 faces = "'" + m.facesProperty().get() + "'";
             }
-            String metadata = "'" + metadataController.getMetaDataAsString().replace("'", "''") + "'";
+            String metadata = "'" + (mediaMetadata != null ? mediaMetadata.asSearchString() : "").replace("'", "''") + "'";
             Statement stm = App.getSearchDBConnection().createStatement();
             String statementStr = "INSERT INTO MediaFiles (COLLECTIONNAME, NAME, PATHSTORAGE, TITLE, KEYWORDS, CAMERA, RATING, RECORDTIME, CREATIONTIME, PLACES, GPSPOSITION, FACES, METADATA) VALUES(" + collName + "," + name + "," + path + "," + title + "," + keyw + "," + cam + "," + rating + "," + recordTime + "," + creationTime + "," + places + "," + gpspos + "," + faces + "," + metadata + ")";
             stm.execute(statementStr);

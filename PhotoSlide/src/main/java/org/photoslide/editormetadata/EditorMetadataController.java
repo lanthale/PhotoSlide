@@ -5,10 +5,11 @@
  */
 package org.photoslide.editormetadata;
 
-import com.icafe4j.image.meta.MetadataEntry;
+import java.util.List;
+import java.util.ArrayList;
+import javafx.scene.Node;
+import org.photoslide.browsermetadata.MetadataResult;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,7 +30,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -69,7 +69,7 @@ public class EditorMetadataController implements Initializable {
     @FXML
     private ProgressIndicator progressMetaDataIndicator;
     private Task<Boolean> task;
-    private Task<Boolean> taskMetaData;
+    private Task<MetadataResult> taskMetaData;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -120,14 +120,14 @@ public class EditorMetadataController implements Initializable {
                 progressIndicator.setVisible(false);
                 break;
         }
+        final MediaFile file = selectedMediaFile;
         taskMetaData = new Task<>() {
             @Override
-            protected Boolean call() throws Exception {
-                if (selectedMediaFile.getLoadingError() == false) {
-                    metadatacontroller.setActualMediaFile(selectedMediaFile);
-                    metadatacontroller.readBasicMetadata(this, selectedMediaFile);
+            protected MetadataResult call() throws Exception {
+                if (file.getLoadingError() == false) {
+                    return metadatacontroller.readMetadata(this, file);
                 }
-                return true;
+                return null;
             }
 
         };
@@ -135,7 +135,7 @@ public class EditorMetadataController implements Initializable {
             Logger.getLogger(EditorMetadataController.class.getName()).log(Level.SEVERE, "Cannot load metadata in editor ...", t.getSource().getException());
         });
         taskMetaData.setOnSucceeded((t) -> {
-            updateUIWithExtendedMetadata();
+            updateUIWithExtendedMetadata(taskMetaData.getValue());
             progressMetaDataIndicator.setVisible(false);
             FadeTransition ft1 = new FadeTransition(Duration.millis(500), gridPaneMetaInfo);
             ft1.setAutoReverse(false);
@@ -147,83 +147,24 @@ public class EditorMetadataController implements Initializable {
         //executor.submit(task);
     }
 
-    private void updateUIWithExtendedMetadata() {
+    /** All rows at once: adding them one by one lays out the grid for each row. */
+    private void updateUIWithExtendedMetadata(MetadataResult metadata) {
+        if (metadata == null) {
+            return;
+        }
+        List<Node> cells = new ArrayList<>();
         AtomicInteger i = new AtomicInteger(1);
-        Iterator<MetadataEntry> iterator;
-
-        if (metadatacontroller.getRawMetaData() != null) {
-            metadatacontroller.getRawMetaData().entrySet().forEach((e) -> {
-                Label key = new Label(e.getKey());
-                Label value = new Label(e.getValue());
-                key.setStyle("-fx-font-size:8pt;");
-                value.setStyle("-fx-font-size:8pt;");
-                gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
-                gridPaneMetaInfo.addRow(i.get(), key, value);
-                i.addAndGet(1);
-            });
-        }
-        //read jpge exif
-        if (metadatacontroller.getExifdata() != null) {
-            iterator = metadatacontroller.getExifdata().iterator();
-            while (iterator.hasNext()) {
-                if (taskMetaData.isCancelled()) {
-                    return;
-                }
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
-                    gridPaneMetaInfo.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
-        }
-
-        //read iptcdata exif
-        if (metadatacontroller.getIptcdata() != null) {
-            iterator = metadatacontroller.getIptcdata().iterator();
-            while (iterator.hasNext()) {
-                if (taskMetaData.isCancelled()) {
-                    return;
-                }
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
-                    gridPaneMetaInfo.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
-        }
-
-        //read xmpdata
-        if (metadatacontroller.getXmpdata() != null) {
-            iterator = metadatacontroller.getXmpdata().iterator();
-            while (iterator.hasNext()) {
-                if (taskMetaData.isCancelled()) {
-                    return;
-                }
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    gridPaneMetaInfo.getRowConstraints().add(new RowConstraints());
-                    gridPaneMetaInfo.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
-        }
+        metadata.forEachEntry((key, value) -> {
+            Label keyLabel = new Label(key);
+            Label valueLabel = new Label(value);
+            keyLabel.getStyleClass().add("metadata-entry");
+            valueLabel.getStyleClass().add("metadata-entry");
+            GridPane.setConstraints(keyLabel, 0, i.get());
+            GridPane.setConstraints(valueLabel, 1, i.getAndIncrement());
+            cells.add(keyLabel);
+            cells.add(valueLabel);
+        });
+        gridPaneMetaInfo.getChildren().setAll(cells);
     }
 
     /** The thumbnail with the tools, crop and quarter turn of the file. JavaFX thread. */

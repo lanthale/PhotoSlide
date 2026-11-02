@@ -5,6 +5,37 @@
  */
 package org.photoslide.browsermetadata;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.FutureTask;
+import java.util.function.Consumer;
+import java.nio.file.OpenOption;
+import java.nio.charset.StandardCharsets;
+import com.icafe4j.image.meta.jpeg.JpegXMP;
+import com.adobe.internal.xmp.options.SerializeOptions;
+import com.adobe.internal.xmp.options.PropertyOptions;
+import com.adobe.internal.xmp.XMPMetaFactory;
+import com.adobe.internal.xmp.XMPMeta;
+import com.adobe.internal.xmp.XMPException;
+import com.adobe.internal.xmp.XMPConst;
+import java.util.concurrent.CountDownLatch;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.channels.FileChannel;
+import java.nio.ByteBuffer;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import javafx.application.Platform;
+import javafx.util.Duration;
+import javafx.animation.PauseTransition;
+import javafx.scene.Node;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Set;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.avi.AviMetadataReader;
@@ -42,15 +73,11 @@ import fr.dudie.nominatim.model.Address;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -59,7 +86,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -80,7 +106,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -154,20 +179,31 @@ public class MetadataController implements Initializable {
     private ExecutorService executor;
     private MainViewController mainController;
     private LighttableController lightController;
-    private Collection<String> keywordList;
+    // all keywords seen, for the auto completion (read by its background thread)
+    private final Set<String> keywordList = new ConcurrentSkipListSet<>();
     private MediaFile actualMediaFile;
 
-    private Exif exifdata;
-    private IPTC iptcdata;
-    private XMP xmpdata;
-    private List<String> commentsdata;
-    private HashMap<String, String> rawMetaData;
+    // metadata of actualMediaFile, null while it is loading
+    private MetadataResult actualMetadata;
+    // the metadata grid does not show actualMetadata yet: built when it gets visible
+    private boolean metadataGridDirty;
     private GeoCoding geoCoding;
 
-    private Task<Boolean> task;
+    private Task<MetadataResult> task;
     private KeywordChangeListener keywordsChangeListener;
     private CommentsChangeListener commentsChangeListener;
     private CaptionChangeListener captionChangeListener;
+
+    // typing saves after a pause, not the whole file for each key
+    private static final Duration SAVE_DELAY = Duration.millis(600);
+    private final PauseTransition captionSaveDelay = new PauseTransition(SAVE_DELAY);
+    private final PauseTransition commentSaveDelay = new PauseTransition(SAVE_DELAY);
+    // file of the pending save, null if none
+    private MediaFile captionSaveFile;
+    private MediaFile commentSaveFile;
+
+    // last queued save per file: loading the file waits for it
+    private final Map<MediaFile, Future<?>> pendingWrites = new ConcurrentHashMap<>();
 
     private ExecutorService executorParallel;
     private ExecutorService executorFilter;
@@ -233,9 +269,18 @@ public class MetadataController implements Initializable {
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataController").build());
         executorParallel = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setNamePrefix("metaDataControllerParallel").build());
         executorFilter = Executors.newThreadPerTaskExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("metaDataControllerParallel").build());
-        keywordList = FXCollections.observableArrayList();
+        TextFields.bindAutoCompletion(addKeywordTextField, (request) -> {
+            String text = request.getUserText().toLowerCase();
+            return keywordList.stream().filter(k -> k.toLowerCase().contains(text)).toList();
+        });
         anchorKeywordPane.setDisable(true);
         accordionPane.setExpandedPane(keywordsPane);
+        // the grid has a row per metadata entry: built only when it is shown
+        metadataPane.expandedProperty().addListener((o, oldValue, expanded) -> {
+            if (expanded) {
+                buildMetadataGrid();
+            }
+        });
         progressPane.setVisible(false);
         map = new MapView();
         map.setPrefSize(400, 266);
@@ -244,6 +289,8 @@ public class MetadataController implements Initializable {
         keywordsChangeListener = new KeywordChangeListener();
         commentsChangeListener = new CommentsChangeListener();
         captionChangeListener = new CaptionChangeListener();
+        captionSaveDelay.setOnFinished((e) -> flushPendingSaves());
+        commentSaveDelay.setOnFinished((e) -> flushPendingSaves());
         exposureTextField.textProperty().bind(exposureSlider.valueProperty().asString());
         exposureSlider.valueProperty().addListener((o) -> {
             if (updatingFilterSliders || actualMediaFile == null) {
@@ -291,11 +338,14 @@ public class MetadataController implements Initializable {
         if (task != null) {
             task.cancel();
         }
-        task = new Task<>() {
+        Task<MetadataResult> loadTask = new Task<>() {
             @Override
-            protected Boolean call() throws IOException {
+            protected MetadataResult call() {
                 try {
-                    readBasicMetadata(this, file);
+                    if (!awaitPendingWrite(file)) {
+                        return null;
+                    }
+                    return readMetadata(this, file);
                 } catch (IOException e) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot read meta data from file '" + file.getName() + "'!", e);
                 } catch (IllegalArgumentException f) {
@@ -303,63 +353,71 @@ public class MetadataController implements Initializable {
                 return null;
             }
         };
-        task.setOnSucceeded((WorkerStateEvent t) -> {
-            DateTimeFormatter formatter;
-            if (actualMediaFile.getRecordTime() != null) {
-                recordDateField.setText(actualMediaFile.getRecordTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+        task = loadTask;
+        loadTask.setOnSucceeded((WorkerStateEvent t) -> {
+            // another file was selected meanwhile
+            if (task != loadTask || actualMediaFile != file) {
+                return;
             }
-            if (actualMediaFile.getKeywords() != null) {
-                StringTokenizer defaultTokenizer = new StringTokenizer(actualMediaFile.getKeywords(), ";");
-                while (defaultTokenizer.hasMoreTokens()) {
-                    String nextToken = defaultTokenizer.nextToken();
-                    keywordText.getChildren().add(new Tag(nextToken));
-                    keywordList.add(nextToken);
-                }
-                TextFields.bindAutoCompletion(addKeywordTextField, keywordList);
-            }
-            captionTextField.setText(actualMediaFile.titleProperty().get());
-            if (actualMediaFile.commentsProperty().get() != null) {
-                commentText.appendText(actualMediaFile.commentsProperty().get());
+            showMetadata(file, loadTask.getValue());
+        });
+        loadTask.setOnFailed((t) -> {
+            if (task != loadTask) {
+                return;
             }
             anchorKeywordPane.setDisable(false);
-            commentText.textProperty().addListener(commentsChangeListener);
+            progressPane.setVisible(false);
+        });
+        Thread.ofVirtual().start(loadTask);
+        mainController.getTaskProgressView().getTasks().add(loadTask);
+    }
 
-            keywordText.getChildren().addListener(keywordsChangeListener);
-            captionTextField.textProperty().addListener(captionChangeListener);
-
-            if (file.getMediaType() == MediaFile.MediaTypes.VIDEO) {
-                Label key = new Label("File name");
-                Label value = new Label(file.getName());
-                key.setStyle("-fx-font-size:8pt;");
-                value.setStyle("-fx-font-size:8pt;");
-                metaDataGrid.addRow(0, key, value);
-                updateUIWithExtendedMetadata();
-            } else {
-                updateUIWithExtendedMetadata();
-
-                gpsPlace.setText(actualMediaFile.getGpsPosition());
-                if (actualMediaFile.getGpsHeight() != -1) {
-                    gpsHeight.setText("" + actualMediaFile.getGpsHeight() + " m");
-                }
-                if (actualMediaFile.getGpsDateTime() != null) {
-                    gpsDateTime.setText(actualMediaFile.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                }
+    /**
+     * Shows the read metadata of the selected file. JavaFX thread.
+     */
+    private void showMetadata(MediaFile file, MetadataResult metadata) {
+        actualMetadata = metadata != null ? metadata : new MetadataResult();
+        metadataGridDirty = true;
+        if (file.getRecordTime() != null) {
+            recordDateField.setText(file.getRecordTime().format(RECORD_TIME));
+        }
+        if (file.getKeywords() != null) {
+            List<Tag> tags = new ArrayList<>();
+            StringTokenizer defaultTokenizer = new StringTokenizer(file.getKeywords(), ";");
+            while (defaultTokenizer.hasMoreTokens()) {
+                String nextToken = defaultTokenizer.nextToken();
+                tags.add(new Tag(nextToken));
+                keywordList.add(nextToken);
             }
-            progressPane.setVisible(false);
-        });
-        task.setOnFailed((t) -> {
-            anchorKeywordPane.setDisable(false);
-            progressPane.setVisible(false);
-            keywordText.getChildren().removeListener(keywordsChangeListener);
-            captionTextField.textProperty().removeListener(captionChangeListener);
-            commentText.textProperty().removeListener(commentsChangeListener);
-        });
-        Thread.ofVirtual().start(task);
-        //executor.submit(task);
-        mainController.getTaskProgressView().getTasks().add(task);
+            keywordText.getChildren().setAll(tags);
+        }
+        captionTextField.setText(file.titleProperty().get());
+        if (file.commentsProperty().get() != null) {
+            commentText.setText(file.commentsProperty().get());
+        }
+        anchorKeywordPane.setDisable(false);
+        // after filling the fields: filling them must not save the file
+        attachSaveListeners();
+
+        if (file.getMediaType() != MediaFile.MediaTypes.VIDEO) {
+            gpsPlace.setText(file.getGpsPosition());
+            if (file.getGpsHeight() != -1) {
+                gpsHeight.setText("" + file.getGpsHeight() + " m");
+            }
+            if (file.getGpsDateTime() != null) {
+                gpsDateTime.setText(file.getGpsDateTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            }
+        }
+        if (metadataPane.isExpanded()) {
+            buildMetadataGrid();
+        }
+        progressPane.setVisible(false);
     }
 
     private static final DateTimeFormatter EXIF_TIME = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+    private static final DateTimeFormatter RECORD_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+    private static final DateTimeFormatter DE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+    private static final DateTimeFormatter VIDEO_TIME = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
 
     /**
      * Reads only the capture time of a JPEG or HEIF file: "DateTime Digitized"
@@ -470,304 +528,290 @@ public class MetadataController implements Initializable {
         }
     }
 
-    public synchronized void readBasicMetadata(Task actTask, MediaFile file) throws java.io.EOFException, IOException {
-        if (file.isRawImage()) {
-            long startraw = System.currentTimeMillis();
-            ConcurrentHashMap<String, RawDecoderSettings> settings = new ConcurrentHashMap<>();
-            settings.put("Default", new RawDecoderSettings());
-            rawMetaData = new LibrawImage(file.getPathStorage().toString(), settings).getMetaData();
-            String timeStr = rawMetaData.get("Timestamp (EpocheSec)");
-            LocalDateTime ofEpochSecond = LocalDateTime.ofEpochSecond(Long.parseLong(timeStr), 0, ZoneOffset.UTC);
-            double alti = -1;
+    /**
+     * Reads the metadata of the file into the MediaFile (record time, GPS,
+     * camera, keywords, title, comments) and returns all metadata. Not
+     * synchronized and without side effects on this controller: runs in
+     * parallel with the folder loading and the search index.
+     */
+    public MetadataResult readMetadata(Task<?> actTask, MediaFile file) throws IOException {
+        MetadataResult result = new MetadataResult();
+        // isRawImage is also true for HEIF and videos: check those first
+        if (file.isVideoFile()) {
+            readVideoMetadata(file, result);
+        } else if (file.isHEIFImage()) {
+            readHeifMetadata(file, result);
+        } else if (file.isRawImage()) {
+            readRawMetadata(file, result);
+        } else {
+            readImageMetadata(actTask, file, result);
+        }
+        return result;
+    }
+
+    /**
+     * Reads the metadata into the MediaFile only.
+     */
+    public void readBasicMetadata(Task<?> actTask, MediaFile file) throws java.io.EOFException, IOException {
+        readMetadata(actTask, file);
+    }
+
+    private void readRawMetadata(MediaFile file, MetadataResult result) throws IOException {
+        long startraw = System.currentTimeMillis();
+        ConcurrentHashMap<String, RawDecoderSettings> settings = new ConcurrentHashMap<>();
+        settings.put("Default", new RawDecoderSettings());
+        HashMap<String, String> raw = new LibrawImage(file.getPathStorage().toString(), settings).getMetaData();
+        if (raw == null) {
+            return;
+        }
+        result.setRaw(raw);
+        String timeStr = raw.get("Timestamp (EpocheSec)");
+        if (timeStr != null) {
             try {
-                alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
+                file.setRecordTime(LocalDateTime.ofEpochSecond(Long.parseLong(timeStr.trim()), 0, ZoneOffset.UTC));
             } catch (NumberFormatException ex) {
             }
-            final double altitude = alti;
-            if (rawMetaData != null) {
-                if (rawMetaData.get("GPS Position") != null) {
-                    if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                        file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
-                    }
-                    if (altitude != -1) {
-                        if (altitude != 0.0) {
-                            file.setGpsHeight(altitude);
-                        }
-                    }
-                }
+        }
+        String gpsPos = raw.get("GPS Position");
+        if (gpsPos != null) {
+            if (!gpsPos.equalsIgnoreCase("0;0")) {
+                file.setGpsPositionFromDegree(gpsPos);
             }
-            file.setRecordTime(ofEpochSecond);
-            file.setCamera(rawMetaData.get("CameraModel"));
-            long endraw = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time raw: " + (endraw - startraw) + " ms");
-        } else if (file.isHEIFImage()) {
-            long startheif = System.currentTimeMillis();
-            rawMetaData = new LibheifImage(file.getPathStorage().toString()).getMetaData();
-            String timeStr = rawMetaData.get("Date/Time Digitized");
+            double altitude = parseDouble(raw.get("GPS Altitude"));
+            if (altitude != -1 && altitude != 0.0) {
+                file.setGpsHeight(altitude);
+            }
+        }
+        file.setCamera(raw.get("CameraModel"));
+        Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time raw: " + (System.currentTimeMillis() - startraw) + " ms");
+    }
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-            LocalDateTime date = null;
+    private void readHeifMetadata(MediaFile file, MetadataResult result) throws IOException {
+        long startheif = System.currentTimeMillis();
+        HashMap<String, String> raw = new LibheifImage(file.getPathStorage().toString()).getMetaData();
+        if (raw == null) {
+            return;
+        }
+        result.setRaw(raw);
+        String timeStr = raw.get("Date/Time Digitized");
+        LocalDateTime date = null;
+        if (timeStr != null) {
             try {
-                if (timeStr != null) {
-                    date = LocalDateTime.parse(timeStr, formatter);
-                }
+                date = LocalDateTime.parse(timeStr, EXIF_TIME);
             } catch (DateTimeParseException ef) {
             }
-            double alti = -1;
-            try {
-                if (rawMetaData.get("GPS Altitude") != null) {
-                    String altStr = rawMetaData.get("GPS Altitude").substring(0, rawMetaData.get("GPS Altitude").indexOf(" "));
-                    if (altStr.contains(",")) {
-                        altStr = altStr.replace(",", ".");
-                    }
-                    alti = Double.parseDouble(altStr);
-                }
-            } catch (NumberFormatException ex) {
+        }
+        String altRaw = raw.get("GPS Altitude");
+        if (altRaw != null) {
+            int space = altRaw.indexOf(' ');
+            double altitude = parseDouble((space > 0 ? altRaw.substring(0, space) : altRaw).replace(",", "."));
+            if (altitude != -1 && altitude != 0.0) {
+                file.setGpsHeight(altitude);
             }
-            final double altitude = alti;
-            final LocalDateTime recordT = date;
-            if (rawMetaData.get("GPS Longitude") != null) {
-                if (!rawMetaData.get("GPS Longitude").equalsIgnoreCase("0;0")) {
-                    file.setGpsPositionFromDMS(rawMetaData.get("GPS Latitude") + rawMetaData.get("GPS Latitude Ref") + ";" + rawMetaData.get("GPS Longitude") + rawMetaData.get("GPS Longitude Ref"));
-                }
-            }
-            if (altitude != -1) {
-                if (altitude != 0.0) {
-                    file.setGpsHeight(altitude);
-                }
-            }
-
-            file.setRecordTime(recordT);
+        }
+        String lon = raw.get("GPS Longitude");
+        if (lon != null && !lon.equalsIgnoreCase("0;0")) {
+            file.setGpsPositionFromDMS(raw.get("GPS Latitude") + raw.get("GPS Latitude Ref") + ";" + lon + raw.get("GPS Longitude Ref"));
+        }
+        file.setRecordTime(date);
+        if (timeStr != null) {
             file.setGpsDateTime(timeStr);
-            file.setCamera(rawMetaData.get("Model"));
-            long endheif = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + "reading time heif: " + (endheif - startheif) + " ms");
-        } else if (file.isVideoFile()) {
-            long startvideo = System.currentTimeMillis();
-            try {
-                com.drew.metadata.Metadata metadata = null;
-                String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
-                switch (extension.toLowerCase()) {
-                    case "mp4" ->
-                        metadata = Mp4MetadataReader.readMetadata(file.getPathStorage().toFile());
-                    case "mov" ->
-                        metadata = QuickTimeMetadataReader.readMetadata(file.getPathStorage().toFile());
-                    case "webP" ->
-                        metadata = WebpMetadataReader.readMetadata(file.getPathStorage().toFile());
-                    case "avi" ->
-                        metadata = AviMetadataReader.readMetadata(file.getPathStorage().toFile());
+        }
+        file.setCamera(raw.get("Model"));
+        Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time heif: " + (System.currentTimeMillis() - startheif) + " ms");
+    }
+
+    private void readVideoMetadata(MediaFile file, MetadataResult result) throws IOException {
+        long startvideo = System.currentTimeMillis();
+        try {
+            com.drew.metadata.Metadata metadata = null;
+            String extension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
+            switch (extension.toLowerCase()) {
+                case "mp4" ->
+                    metadata = Mp4MetadataReader.readMetadata(file.getPathStorage().toFile());
+                case "mov" ->
+                    metadata = QuickTimeMetadataReader.readMetadata(file.getPathStorage().toFile());
+                case "webp" ->
+                    metadata = WebpMetadataReader.readMetadata(file.getPathStorage().toFile());
+                case "avi" ->
+                    metadata = AviMetadataReader.readMetadata(file.getPathStorage().toFile());
+            }
+            if (metadata == null) {
+                return;
+            }
+            HashMap<String, String> raw = new HashMap<>();
+            for (Directory directory : metadata.getDirectories()) {
+                for (com.drew.metadata.Tag tag : directory.getTags()) {
+                    raw.put(tag.getTagName(), tag.getDescription());
                 }
-                if (metadata != null) {
-                    for (Directory directory : metadata.getDirectories()) {
-                        for (com.drew.metadata.Tag tag : directory.getTags()) {
-                            rawMetaData.put(tag.getTagName(), tag.getDescription());
-                        }
-                    }
-                    String timeStrRaw = rawMetaData.get("Creation Time");
-                    StringTokenizer st = new StringTokenizer(timeStrRaw, " ");
-                    String wday = st.nextToken();
+            }
+            result.setRaw(raw);
+            // e.g. "Tue Aug 01 12:00:00 CEST 2023"
+            String timeStrRaw = raw.get("Creation Time");
+            if (timeStrRaw != null) {
+                StringTokenizer st = new StringTokenizer(timeStrRaw, " ");
+                if (st.countTokens() >= 6) {
+                    st.nextToken();
                     String month = st.nextToken();
                     String day = st.nextToken();
                     String time = st.nextToken();
-                    String zone = st.nextToken();
+                    st.nextToken();
                     String year = st.nextToken();
-                    String timeStr = year + ":" + month + ":" + day + " " + time;
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:LLL:dd HH:mm:ss", Locale.US);
-                    LocalDateTime date = null;
                     try {
-                        if (timeStr != null) {
-                            date = LocalDateTime.parse(timeStr, formatter);
-                        }
+                        file.setRecordTime(LocalDateTime.parse(year + ":" + month + ":" + day + " " + time, VIDEO_TIME));
                     } catch (DateTimeParseException ef) {
                     }
-                    double alti = -1;
-                    try {
-                        alti = Double.parseDouble(rawMetaData.get("GPS Altitude"));
-                    } catch (NumberFormatException ex) {
+                }
+            }
+            String gpsPos = raw.get("GPS Position");
+            if (gpsPos != null) {
+                if (!gpsPos.equalsIgnoreCase("0;0")) {
+                    file.setGpsPositionFromDegree(gpsPos);
+                }
+                double altitude = parseDouble(raw.get("GPS Altitude"));
+                if (altitude != -1 && altitude != 0.0) {
+                    file.setGpsHeight(altitude);
+                }
+            }
+            file.setCamera(raw.get("CameraModel"));
+        } catch (ImageProcessingException ex) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + (System.currentTimeMillis() - startvideo) + " ms");
+    }
+
+    private void readImageMetadata(Task<?> actTask, MediaFile file, MetadataResult result) throws IOException {
+        long startimage = System.currentTimeMillis();
+        Map<MetadataType, Metadata> metadataMap;
+        try {
+            metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
+        } catch (java.lang.IllegalArgumentException | java.io.EOFException e) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, e.getMessage(), e);
+            return;
+        }
+        // few small entries: sequential, the parallel streams cost more than they saved
+        for (Metadata meta : metadataMap.values()) {
+            if (actTask != null && actTask.isCancelled()) {
+                return;
+            }
+            switch (meta.getType()) {
+                case XMP:
+                    result.setXmp((XMP) meta);
+                    break;
+                case COMMENT:
+                    if (meta instanceof Comments comments) {
+                        result.setComments(comments.getComments());
+                        file.setComments(String.join("", comments.getComments()));
                     }
-                    final double altitude = alti;
-                    final LocalDateTime recordT = date;
-                    if (rawMetaData.get("GPS Position") != null) {
-                        if (!rawMetaData.get("GPS Position").equalsIgnoreCase("0;0")) {
-                            file.setGpsPositionFromDegree(rawMetaData.get("GPS Position"));
+                    break;
+                case IPTC:
+                    result.setIptc((IPTC) meta);
+                    for (MetadataEntry item : meta) {
+                        switch (item.getKey()) {
+                            case "Keywords" ->
+                                file.setKeywords(item.getValue());
+                            case "Caption Abstract" ->
+                                file.setTitle(item.getValue());
                         }
-                        if (altitude != -1) {
-                            if (altitude != 0.0) {
-                                file.setGpsHeight(altitude);
+                    }
+                    break;
+                case EXIF:
+                    if (meta instanceof Exif exif) {
+                        result.setExif(exif);
+                    }
+                    readExif(meta, file);
+                    break;
+                default:
+                    break;
+            }
+        }
+        Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "Reading time for metadata complete: " + (System.currentTimeMillis() - startimage) + " ms");
+    }
+
+    private void readExif(Metadata meta, MediaFile file) {
+        for (MetadataEntry item : meta) {
+            Collection<MetadataEntry> entries = item.getMetadataEntries();
+            if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
+                for (MetadataEntry e : entries) {
+                    if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
+                        if (e.getValue().isEmpty()) {
+                            file.setRecordTime(LocalDateTime.now());
+                        } else {
+                            try {
+                                file.setRecordTime(LocalDateTime.parse(e.getValue(), EXIF_TIME));
+                            } catch (DateTimeParseException ex) {
+                                try {
+                                    file.setRecordTime(LocalDateTime.parse(e.getValue(), DE_TIME));
+                                } catch (DateTimeParseException ex2) {
+                                    Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "Cannot parse the capture time " + e.getValue() + " of " + file.getName());
+                                }
                             }
                         }
                     }
-                    file.setRecordTime(recordT);
-                    file.setCamera(rawMetaData.get("CameraModel"));
                 }
-            } catch (ImageProcessingException ex) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            long endvideo = System.currentTimeMillis();
-            Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, "reading time video: " + (endvideo - startvideo) + " ms");
-        } else {
-            long startimage = System.currentTimeMillis();
-            Map<MetadataType, Metadata> metadataMap;
-            try {
-                metadataMap = Metadata.readMetadata(file.getPathStorage().toFile());
-                metadataMap.entrySet().parallelStream().forEach((entry) -> {
-
-                    if (actTask.isCancelled() == false) {
-                        Metadata meta = entry.getValue();
-                        Iterator<MetadataEntry> iterator;
-                        switch (meta.getType()) {
-                            case XMP:
-                                xmpdata = ((XMP) meta);
-                            case COMMENT:
-                                if (meta instanceof Comments) {
-                                    commentsdata = ((Comments) meta).getComments();
-                                    StringBuilder sb = new StringBuilder();
-                                    commentsdata.forEach(comment -> {
-                                        sb.append(comment);
-                                    });
-                                    file.setComments(sb.toString());
-                                }
-                                break;
-                            case IPTC:
-                                iptcdata = ((IPTC) meta);
-                                iterator = meta.iterator();
-                                while (iterator.hasNext()) {
-                                    MetadataEntry item = iterator.next();
-                                    switch (item.getKey()) {
-                                        case "Keywords":
-                                            file.setKeywords(item.getValue());
-                                            break;
-                                        case "Caption Abstract":
-                                            file.setTitle(item.getValue());
-                                            break;
-                                    }
-                                }
-                                break;
-                            case JPG_JFIF:
-                                break;
-                            case EXIF:
-                                if (meta instanceof JpegExif) {
-                                    exifdata = ((JpegExif) meta);
-                                }
-                                if (meta instanceof TiffExif) {
-                                    exifdata = ((TiffExif) meta);
-                                }
-                                iterator = meta.iterator();
-                                while (iterator.hasNext()) {
-                                    MetadataEntry item = iterator.next();
-                                    Collection<MetadataEntry> entries = item.getMetadataEntries();
-                                    if (item.getKey().equalsIgnoreCase("EXIF SubIFD")) {
-                                        entries.parallelStream().forEach((e) -> {
-                                            if (e.getKey().equalsIgnoreCase("DateTime Digitized")) {
-                                                if (!e.getValue().equalsIgnoreCase("")) {
-                                                    LocalDateTime date;
-                                                    DateTimeFormatter formatter;
-                                                    try {
-                                                        formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-                                                        date = LocalDateTime.parse(e.getValue(), formatter);
-                                                    } catch (DateTimeParseException ex) {
-                                                        formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-                                                        date = LocalDateTime.parse(e.getValue(), formatter);
-                                                    }
-                                                    file.setRecordTime(date);
-                                                } else {
-                                                    file.setRecordTime(LocalDateTime.now());
-                                                }
-                                            }
-                                        });
-                                    }
-                                    if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
-                                        final StringBuilder gpsLatRefsb = new StringBuilder();
-                                        final StringBuilder gpsLatsb = new StringBuilder();
-                                        final StringBuilder gpsLongRefsb = new StringBuilder();
-                                        final StringBuilder gpsLongsb = new StringBuilder();
-                                        final StringBuilder gpsTimesb = new StringBuilder();
-                                        final StringBuilder gpsDatesb = new StringBuilder();
-                                        final StringBuilder gpsHeightsb = new StringBuilder();
-                                        entries.stream().parallel().forEach((mediaEntry) -> {
-                                            switch (mediaEntry.getKey()) {
-                                                case "GPS Latitude Ref":
-                                                    gpsLatRefsb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Latitude":
-                                                    gpsLatsb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Longitude Ref":
-                                                    gpsLongRefsb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Longitude":
-                                                    gpsLongsb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Altitude":
-                                                    gpsHeightsb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Time Stamp":
-                                                    gpsTimesb.append(mediaEntry.getValue());
-                                                    break;
-                                                case "GPS Date Stamp":
-                                                    gpsDatesb.append(mediaEntry.getValue());
-                                                    break;
-                                            }
-                                        });
-                                        if (gpsHeightsb.toString() != null) {
-                                            if (gpsHeightsb.toString().length() > 0) {
-                                                String gpsH = gpsHeightsb.toString().substring(0, gpsHeightsb.toString().length() - 1);
-                                                double d = -1;
-                                                try {
-                                                    DecimalFormat df = new DecimalFormat();
-                                                    DecimalFormatSymbols sfs = new DecimalFormatSymbols();
-                                                    sfs.setDecimalSeparator(',');
-                                                    sfs.setMonetaryDecimalSeparator('.');
-                                                    df.setDecimalFormatSymbols(sfs);
-                                                    d = df.parse(gpsH).doubleValue();
-                                                } catch (ParseException ex) {
-                                                    try {
-                                                        DecimalFormat df = new DecimalFormat();
-                                                        DecimalFormatSymbols sfs = new DecimalFormatSymbols();
-                                                        sfs.setDecimalSeparator('.');
-                                                        sfs.setMonetaryDecimalSeparator(',');
-                                                        df.setDecimalFormatSymbols(sfs);
-                                                        d = df.parse(gpsH).doubleValue();
-                                                    } catch (ParseException ex2) {
-                                                        d = -1;
-                                                    }
-                                                }
-                                                file.setGpsHeight(d);
-                                            }
-                                        }
-                                        if (gpsDatesb.toString() != null) {
-                                            String gpsDateStr = gpsDatesb.toString().replace(":", ".");
-                                            String formatTime = formatTime(gpsTimesb.toString());
-                                            file.setGpsDateTime(gpsDateStr + "T" + formatTime);
-                                        }
-                                        file.setGpsPositionFromDMS(gpsLatsb.toString() + gpsLatRefsb.toString() + ";" + gpsLongsb.toString() + gpsLongRefsb.toString());
-                                    }
-                                    if (item.getKey().equalsIgnoreCase("IFD0")) {
-                                        entries.stream().parallel().forEach((mediaEntry) -> {
-                                            if (mediaEntry.getKey().equalsIgnoreCase("Model")) {
-                                                file.setCamera(mediaEntry.getValue());
-                                            }
-                                        });
-                                    }
-                                }
-                                break;
-                            case ICC_PROFILE:
-                                break;
-                            default:
-                                break;
-                        }
-                    } else {
+            } else if (item.getKey().equalsIgnoreCase("GPS SubIFD")) {
+                String latRef = "", lat = "", lonRef = "", lon = "", time = "", date = "", height = "";
+                for (MetadataEntry e : entries) {
+                    switch (e.getKey()) {
+                        case "GPS Latitude Ref" ->
+                            latRef = e.getValue();
+                        case "GPS Latitude" ->
+                            lat = e.getValue();
+                        case "GPS Longitude Ref" ->
+                            lonRef = e.getValue();
+                        case "GPS Longitude" ->
+                            lon = e.getValue();
+                        case "GPS Altitude" ->
+                            height = e.getValue();
+                        case "GPS Time Stamp" ->
+                            time = e.getValue();
+                        case "GPS Date Stamp" ->
+                            date = e.getValue();
                     }
-
-                });
-
-                long endimage = System.currentTimeMillis();
-                String loadTime = "Reading time for metadata complete: " + (endimage - startimage) + " ms";
-                Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, loadTime);
-            } catch (java.lang.IllegalArgumentException | java.io.EOFException e) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.FINE, e.getMessage(), e);
+                }
+                if (!height.isEmpty()) {
+                    // the value ends with the unit "m"
+                    file.setGpsHeight(parseDecimal(height.substring(0, height.length() - 1)));
+                }
+                file.setGpsDateTime(date.replace(":", ".") + "T" + formatTime(time));
+                file.setGpsPositionFromDMS(lat + latRef + ";" + lon + lonRef);
+            } else if (item.getKey().equalsIgnoreCase("IFD0")) {
+                for (MetadataEntry e : entries) {
+                    if (e.getKey().equalsIgnoreCase("Model")) {
+                        file.setCamera(e.getValue());
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * @return the number, -1 if it is null or no number
+     */
+    private static double parseDouble(String value) {
+        if (value == null) {
+            return -1;
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
+
+    /**
+     * Parses a number with a decimal comma (icafe writes e.g. "512,3") or a
+     * decimal point.
+     *
+     * @return the number, -1 if it is no number
+     */
+    private static double parseDecimal(String value) {
+        String s = value.trim();
+        // decimal comma first, as before: "1.234,5" is 1234.5
+        if (s.contains(",")) {
+            s = s.replace(".", "").replace(",", ".");
+        }
+        return parseDouble(s);
     }
 
     private String formatTime(String source) {
@@ -813,93 +857,63 @@ public class MetadataController implements Initializable {
         return finalStr;
     }
 
-    private void updateUIWithExtendedMetadata() {
-        AtomicInteger i = new AtomicInteger(1);
-        Iterator<MetadataEntry> iterator;
-
-        if (rawMetaData != null) {
-            rawMetaData.entrySet().stream().sorted(Map.Entry.<String, String>comparingByKey()).forEach((entry) -> {
-                Label key = new Label(entry.getKey());
-                Label value = new Label(entry.getValue());
-                key.setStyle("-fx-font-size:8pt;");
-                value.setStyle("-fx-font-size:8pt;");
-                metaDataGrid.addRow(i.get(), key, value);
-                i.addAndGet(1);
-            });
+    /**
+     * Fills the metadata grid with actualMetadata, if not done yet. All rows
+     * at once: adding them one by one lays out the grid for each row.
+     */
+    private void buildMetadataGrid() {
+        if (!metadataGridDirty) {
+            return;
         }
-        //read jpge exif
-        if (exifdata != null) {
-            iterator = exifdata.iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    metaDataGrid.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
+        metadataGridDirty = false;
+        List<Node> cells = new ArrayList<>();
+        AtomicInteger row = new AtomicInteger(0);
+        if (actualMediaFile != null && actualMediaFile.getMediaType() == MediaFile.MediaTypes.VIDEO) {
+            addMetadataRow(cells, row.getAndIncrement(), "File name", actualMediaFile.getName());
         }
-
-        //read iptcdata exif
-        if (iptcdata != null) {
-            iterator = iptcdata.iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    metaDataGrid.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
+        if (actualMetadata != null) {
+            actualMetadata.forEachEntry((key, value) -> addMetadataRow(cells, row.getAndIncrement(), key, value));
         }
-
-        //read xmpdata
-        if (xmpdata != null) {
-            iterator = xmpdata.iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    Label key = new Label(e.getKey());
-                    Label value = new Label(e.getValue());
-                    key.setStyle("-fx-font-size:8pt;");
-                    value.setStyle("-fx-font-size:8pt;");
-                    metaDataGrid.addRow(i.get(), key, value);
-                    i.addAndGet(1);
-                });
-            }
-        }
-
+        metaDataGrid.getChildren().setAll(cells);
         metaDataGrid.setDisable(false);
     }
 
+    private static void addMetadataRow(List<Node> cells, int row, String key, String value) {
+        Label keyLabel = new Label(key);
+        Label valueLabel = new Label(value);
+        // style class instead of setStyle: no CSS parsing per label
+        keyLabel.getStyleClass().add("metadata-entry");
+        valueLabel.getStyleClass().add("metadata-entry");
+        GridPane.setConstraints(keyLabel, 0, row);
+        GridPane.setConstraints(valueLabel, 1, row);
+        cells.add(keyLabel);
+        cells.add(valueLabel);
+    }
+
+    private void attachSaveListeners() {
+        // remove first: a listener added twice saves twice
+        detachSaveListeners();
+        keywordText.getChildren().addListener(keywordsChangeListener);
+        captionTextField.textProperty().addListener(captionChangeListener);
+        commentText.textProperty().addListener(commentsChangeListener);
+    }
+
+    private void detachSaveListeners() {
+        flushPendingSaves();
+        keywordText.getChildren().removeListener(keywordsChangeListener);
+        captionTextField.textProperty().removeListener(captionChangeListener);
+        commentText.textProperty().removeListener(commentsChangeListener);
+    }
+
     public void resetGUI() {
+        // before clearing the fields: clearing them would save the file
+        detachSaveListeners();
         metaDataGrid.getChildren().clear();
         metaDataGrid.setDisable(true);
         keywordText.getChildren().clear();
-        if (!keywordText.getChildren().isEmpty()) {
-            keywordText.getChildren().removeListener(keywordsChangeListener);
-            captionTextField.textProperty().removeListener(captionChangeListener);
-            commentText.textProperty().removeListener(commentsChangeListener);
-        }
-        keywordsChangeListener = new KeywordChangeListener();
-        commentsChangeListener = new CommentsChangeListener();
-        captionChangeListener = new CaptionChangeListener();
 
-        exifdata = null;
-        iptcdata = null;
-        xmpdata = null;
-        commentsdata = null;
-        rawMetaData = null;
-        geoCoding = null;
+        actualMetadata = null;
+        metadataGridDirty = false;
 
         gpsDateTime.clear();
         gpsHeight.clear();
@@ -924,15 +938,24 @@ public class MetadataController implements Initializable {
         }
     }
 
-    public void exportBasicMetadata(MediaFile mf, String exportFilePath, boolean overwriteGPS) throws FileNotFoundException, IOException {
-        if (exportFilePath.contains(".png")) {
+    /**
+     * @param metadata the metadata of mf, from readMetadata
+     */
+    public void exportBasicMetadata(MediaFile mf, MetadataResult metadata, String exportFilePath, boolean overwriteGPS) throws IOException {
+        if (isPng(exportFilePath)) {
             return;
         }
-        FileInputStream fin = new FileInputStream(exportFilePath);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        if (iptcdata == null) {
-            iptcdata = new IPTC();
+        // all inserts in memory, one write
+        Path path = Path.of(exportFilePath);
+        byte[] data = insertBasicMetadata(Files.readAllBytes(path), mf, metadata, exportFilePath, overwriteGPS);
+        writeAtomically(path, data);
+    }
+
+    private byte[] insertBasicMetadata(byte[] data, MediaFile mf, MetadataResult metadata, String exportFilePath, boolean overwriteGPS) throws IOException {
+        if (metadata.getIptc() == null) {
+            metadata.setIptc(new IPTC());
         }
+        IPTC iptcdata = metadata.getIptc();
         Map<IPTCTag, List<IPTCDataSet>> dataSets = iptcdata.getDataSets();
         List<IPTCDataSet> keywordListLocal = dataSets.get(IPTCApplicationTag.KEY_WORDS);
         if (keywordListLocal == null) {
@@ -940,7 +963,6 @@ public class MetadataController implements Initializable {
             dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
         }
         keywordListLocal.clear();
-
         String mfKeyw = mf.getKeywords();
         if (mfKeyw == null) {
             mfKeyw = "";
@@ -949,239 +971,334 @@ public class MetadataController implements Initializable {
         while (defaultTokenizer.hasMoreTokens()) {
             keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
         }
-        // an empty list writes an empty IPTC block to a TIFF, and icafe then fails on the next insert
-        if (!keywordListLocal.isEmpty()) {
-            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.KEY_WORDS), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
-        }
-        fin.close();
-        bout.close();
-        fin = new FileInputStream(exportFilePath);
-        bout = new ByteArrayOutputStream();
+        // one insert for all data sets; never empty (writer): an empty IPTC
+        // block in a TIFF makes icafe fail on the next insert
+        List<IPTCDataSet> iptcs = new ArrayList<>(keywordListLocal);
         if (mf.titleProperty().get() != null) {
-            if (iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME) != null) {
-                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME).add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
-            } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
-            }
-            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.OBJECT_NAME), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
+            iptcs.addAll(replaceDataSet(iptcdata, IPTCApplicationTag.OBJECT_NAME, mf.titleProperty().get()));
+            iptcs.addAll(replaceDataSet(iptcdata, IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
         }
-        fin.close();
-        bout.close();
-        fin = new FileInputStream(exportFilePath);
-        bout = new ByteArrayOutputStream();
-        if (mf.titleProperty().get() != null) {
-            if (iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT) != null) {
-                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT).add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
-            } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, mf.titleProperty().get()));
-            }
-            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CAPTION_ABSTRACT), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
+        iptcs.addAll(replaceDataSet(iptcdata, IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
+        if (overwriteGPS) {
+            iptcs.addAll(replaceDataSet(iptcdata, IPTCApplicationTag.CITY, mf.placeProperty().get()));
+            iptcs.addAll(replaceDataSet(iptcdata, IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
         }
-        fin.close();
-        bout.close();
-        fin = new FileInputStream(exportFilePath);
-        bout = new ByteArrayOutputStream();
-        if (iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR) != null) {
-            iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR).clear();
-            iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR).add(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
-        } else {
-            iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.WRITER_EDITOR, "Photoslide " + new Utility().getAppVersion() + " http://www.photoslide.org"));
-        }
-        Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.WRITER_EDITOR), true);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-            bout.writeTo(outputStream);
-        }
-        fin.close();
-        bout.close();
+        data = transform(data, (in, out) -> Metadata.insertIPTC(in, out, iptcs, true));
 
-        fin = new FileInputStream(exportFilePath);
-        bout = new ByteArrayOutputStream();
+        List<String> commentsdata = metadata.getComments();
         if (commentsdata != null) {
-            Metadata.insertComments(fin, bout, commentsdata);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
+            data = transform(data, (in, out) -> Metadata.insertComments(in, out, commentsdata));
         }
-        fin.close();
-        bout.close();
-
-        if (overwriteGPS == true) {
-            //write GPS INfo
-            fin = new FileInputStream(exportFilePath);
-            bout = new ByteArrayOutputStream();
-            Exif exportExif;
-            if (exportFilePath.contains(".jpg")) {
-                exportExif = new JpegExif();
-            } else {
-                exportExif = new TiffExif();
-            }
+        if (overwriteGPS) {
+            Exif exportExif = isJpeg(exportFilePath) ? new JpegExif() : new TiffExif();
             exportExif.addGPSField(GPSTag.GPS_LATITUDE, FieldType.RATIONAL, mf.getGpsLatPosAsRational());
             exportExif.addGPSField(GPSTag.GPS_LATITUDE_REF, FieldType.ASCII, mf.getGpsLatPosRef());
             exportExif.addGPSField(GPSTag.GPS_LONGITUDE, FieldType.RATIONAL, mf.getGpsLonPosAsRational());
             exportExif.addGPSField(GPSTag.GPS_LONGITUDE_REF, FieldType.ASCII, mf.getGpsLonPosRef());
             exportExif.addGPSField(GPSTag.GPS_ALTITUDE, FieldType.RATIONAL, mf.getGpsHeightAsRational());
-            Metadata.insertExif(fin, bout, exportExif);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
+            data = transform(data, (in, out) -> Metadata.insertExif(in, out, exportExif));
+        }
+        return data;
+    }
+
+    /**
+     * Sets the value as the only one of the tag.
+     *
+     * @return the data sets of the tag
+     */
+    private static List<IPTCDataSet> replaceDataSet(IPTC iptc, IPTCApplicationTag tag, String value) {
+        List<IPTCDataSet> list = iptc.getDataSet(tag);
+        if (list != null) {
+            list.clear();
+            list.add(new IPTCDataSet(tag, value));
+        } else {
+            iptc.addDataSet(new IPTCDataSet(tag, value));
+            list = iptc.getDataSet(tag);
+        }
+        return list;
+    }
+
+    /**
+     * @param metadata the metadata of mf, from readMetadata
+     */
+    public void exportCompleteMetdata(MediaFile mf, MetadataResult metadata, String exportFilePath, String extension, boolean overwriteGPS) throws IOException {
+        if (isPng(exportFilePath)) {
+            return;
+        }
+        Path path = Path.of(exportFilePath);
+        byte[] data = insertBasicMetadata(Files.readAllBytes(path), mf, metadata, exportFilePath, overwriteGPS);
+        Exif exifdata = metadata.getExif();
+        if (exifdata != null) {
+            String ext = extension.toLowerCase();
+            Exif exportExif = ext.contains("jpg") || ext.contains("jpeg") ? new JpegExif() : new TiffExif();
+            exportExif.setExifIFD(exifdata.getExifIFD());
+            exportExif.setGPSIFD(exifdata.getGPSIFD());
+            if (!isTiff(exportFilePath)) {
+                exportExif.setImageIFD(exifdata.getImageIFD());
             }
-            fin.close();
-            bout.close();
-            fin = new FileInputStream(exportFilePath);
-            bout = new ByteArrayOutputStream();
-            if (iptcdata.getDataSet(IPTCApplicationTag.CITY) != null) {
-                iptcdata.getDataSet(IPTCApplicationTag.CITY).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.CITY).add(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placeProperty().get()));
+            data = transform(data, (in, out) -> Metadata.insertExif(in, out, exportExif));
+        }
+        XMP xmpdata = metadata.getXmp();
+        if (xmpdata != null && !isJpeg(exportFilePath)) {
+            data = transform(data, (in, out) -> Metadata.insertXMP(in, out, xmpdata));
+        }
+        writeAtomically(path, data);
+    }
+
+    @FunctionalInterface
+    private interface MetadataInsert {
+
+        void insert(InputStream in, OutputStream out) throws IOException;
+    }
+
+    /**
+     * @return the image data with the metadata inserted, in memory
+     */
+    private static byte[] transform(byte[] data, MetadataInsert insert) throws IOException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream(data.length + 64 * 1024);
+        insert.insert(new ByteArrayInputStream(data), bout);
+        return bout.toByteArray();
+    }
+
+    /**
+     * Replaces the file with the data. Written to a temporary file next to it
+     * first: an interrupted write (crash, network share gone, disk full)
+     * leaves the original intact. The creation time (the lighttable sorts by
+     * it), permissions and extended attributes (e.g. Finder tags) of the
+     * original are kept.
+     */
+    static void writeAtomically(Path target, byte[] data) throws IOException {
+        Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
+        boolean keepTmp = false;
+        try {
+            if (!Files.exists(target)) {
+                writeAndSync(tmp, data, true);
+                Files.move(tmp, target);
+                return;
+            }
+            FileTime created = Files.readAttributes(target, BasicFileAttributes.class).creationTime();
+            // a copy with all attributes (on macOS also Finder tags, which the
+            // Java attribute views do not see); on APFS a clone without copying data
+            Files.copy(target, tmp, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+            writeAndSync(tmp, data, false);
+            if (setCreationTime(tmp, created)) {
+                try {
+                    Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                } catch (AtomicMoveNotSupportedException ex) {
+                    Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+                }
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.CITY, mf.placeProperty().get()));
+                // the file system cannot set the creation time: overwrite the
+                // original in place, which keeps it; until that succeeded the
+                // temporary file stays as a complete copy
+                keepTmp = true;
+                writeAndSync(target, data, false);
+                keepTmp = false;
             }
-            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.CITY), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
-            fin.close();
-            bout.close();
-            fin = new FileInputStream(exportFilePath);
-            bout = new ByteArrayOutputStream();
-            if (iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION) != null) {
-                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).clear();
-                iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION).add(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
+        } finally {
+            if (keepTmp) {
+                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Writing {0} failed, the new content is in {1}", new Object[]{target, tmp});
             } else {
-                iptcdata.addDataSet(new IPTCDataSet(IPTCApplicationTag.SUB_LOCATION, mf.placeProperty().get()));
+                Files.deleteIfExists(tmp);
             }
-            Metadata.insertIPTC(fin, bout, iptcdata.getDataSet(IPTCApplicationTag.SUB_LOCATION), true);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
-            }
-            fin.close();
-            bout.close();
         }
     }
 
-    public void exportCompleteMetdata(MediaFile mf, String exportFilePath, String extension, boolean overwriteGPS) throws IOException {
-        if (exportFilePath.contains(".png")) {
-            return;
-        }
-        exportBasicMetadata(mf, exportFilePath, overwriteGPS);
-        FileInputStream fin = new FileInputStream(exportFilePath);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        Exif exportExif;
-        if (extension.contains("jpg")) {
-            exportExif = new JpegExif();
-        } else {
-            exportExif = new TiffExif();
-        }
-        exportExif.setExifIFD(exifdata.getExifIFD());
-
-        exportExif.setGPSIFD(exifdata.getGPSIFD());
-
-        if (!exportFilePath.contains(".tif")) {
-            exportExif.setImageIFD(exifdata.getImageIFD());
-        }
-        Metadata.insertExif(fin, bout, exportExif);
-        try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-            bout.writeTo(outputStream);
-        }
-        fin.close();
-        bout.close();
-        if (!exportFilePath.contains(".jpg")) {
-            fin = new FileInputStream(exportFilePath);
-            bout = new ByteArrayOutputStream();
-            Metadata.insertXMP(fin, bout, xmpdata);
-            try (OutputStream outputStream = new FileOutputStream(exportFilePath)) {
-                bout.writeTo(outputStream);
+    private static void writeAndSync(Path path, byte[] data, boolean create) throws IOException {
+        OpenOption[] options = create
+                ? new OpenOption[]{StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE}
+                : new OpenOption[]{StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
+        try (FileChannel ch = FileChannel.open(path, options)) {
+            ByteBuffer buf = ByteBuffer.wrap(data);
+            while (buf.hasRemaining()) {
+                ch.write(buf);
             }
-            fin.close();
-            bout.close();
+            ch.force(true);
         }
     }
 
     /**
-     * Save the newly selected GPS info stored in MediaFile class to the media
-     * file
-     *
-     * @throws FileNotFoundException if the actual mediafile cannot be accessed
-     * @throws IOException if the actual mediafile cannot be accessed
+     * @return true if the file has the creation time now
      */
-    private void updateGPSDataForActualMediaFile() throws FileNotFoundException, IOException {
-        ByteArrayOutputStream bout;
-        try (FileInputStream fin = new FileInputStream(actualMediaFile.getPathStorage().toString())) {
-            bout = new ByteArrayOutputStream();
-            Exif exportExif;
-            if (actualMediaFile.getPathStorage().toString().contains(".jpg")) {
-                exportExif = new JpegExif();
-            } else {
-                exportExif = new TiffExif();
-            }
-            exportExif.addGPSField(GPSTag.GPS_LATITUDE, FieldType.RATIONAL, actualMediaFile.getGpsLatPosAsRational());
-            exportExif.addGPSField(GPSTag.GPS_LATITUDE_REF, FieldType.ASCII, actualMediaFile.getGpsLatPosRef());
-            exportExif.addGPSField(GPSTag.GPS_LONGITUDE, FieldType.RATIONAL, actualMediaFile.getGpsLonPosAsRational());
-            exportExif.addGPSField(GPSTag.GPS_LONGITUDE_REF, FieldType.ASCII, actualMediaFile.getGpsLonPosRef());
-            exportExif.addGPSField(GPSTag.GPS_ALTITUDE, FieldType.ASCII, actualMediaFile.getGpsHeight());
-            Metadata.insertExif(fin, bout, exportExif, true);
-            try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toString())) {
-                bout.writeTo(outputStream);
-            }
+    private static boolean setCreationTime(Path path, FileTime created) {
+        try {
+            Files.getFileAttributeView(path, BasicFileAttributeView.class).setTimes(null, null, created);
+            FileTime now = Files.readAttributes(path, BasicFileAttributes.class).creationTime();
+            return now.to(TimeUnit.SECONDS) == created.to(TimeUnit.SECONDS);
+        } catch (IOException | UnsupportedOperationException ex) {
+            return false;
         }
-        bout.close();
     }
 
-    private void saveComments() {
+    /**
+     * Writes title, description and keywords into the XMP embedded in the
+     * JPEG: Lightroom and others prefer it to IPTC. The other XMP properties
+     * (also an extended XMP) are kept.
+     */
+    static byte[] updateEmbeddedXmp(byte[] data, String title, String description, String keywords) throws IOException {
+        XMP old = (XMP) Metadata.readMetadata(new ByteArrayInputStream(data)).get(MetadataType.XMP);
+        String xml;
+        try {
+            XMPMeta meta = old != null && old.getData() != null
+                    ? XMPMetaFactory.parseFromBuffer(old.getData())
+                    : XMPMetaFactory.create();
+            putXmpText(meta, "title", title);
+            putXmpText(meta, "description", description);
+            meta.deleteProperty(XMPConst.NS_DC, "subject");
+            if (keywords != null) {
+                StringTokenizer t = new StringTokenizer(keywords, ";");
+                while (t.hasMoreTokens()) {
+                    String k = t.nextToken().trim();
+                    if (!k.isEmpty()) {
+                        meta.appendArrayItem(XMPConst.NS_DC, "subject", new PropertyOptions().setArray(true), k, null);
+                    }
+                }
+            }
+            // compact: the main XMP of a JPEG must fit into one 64 KB segment
+            xml = XMPMetaFactory.serializeToString(meta, new SerializeOptions().setUseCompactFormat(true).setPadding(0));
+        } catch (XMPException ex) {
+            throw new IOException("Cannot update the XMP", ex);
+        }
+        XMP xmp = old != null && old.hasExtendedXmp()
+                ? new JpegXMP(xml, new String(old.getExtendedXmpData(), StandardCharsets.UTF_8))
+                : new JpegXMP(xml);
+        return transform(data, (in, out) -> Metadata.insertXMP(in, out, xmp));
+    }
+
+    private static void putXmpText(XMPMeta meta, String name, String value) throws XMPException {
+        if (value == null || value.isEmpty()) {
+            meta.deleteProperty(XMPConst.NS_DC, name);
+        } else {
+            meta.setLocalizedText(XMPConst.NS_DC, name, "", XMPConst.X_DEFAULT, value);
+        }
+    }
+
+    private static boolean isJpeg(String path) {
+        String p = path.toLowerCase();
+        return p.endsWith(".jpg") || p.endsWith(".jpeg");
+    }
+
+    private static boolean isTiff(String path) {
+        String p = path.toLowerCase();
+        return p.endsWith(".tif") || p.endsWith(".tiff");
+    }
+
+    private static boolean isPng(String path) {
+        return path.toLowerCase().endsWith(".png");
+    }
+
+    /**
+     * Saves the GPS position stored in the MediaFile: into the XMP sidecar
+     * for RAW, HEIF and videos, else into the EXIF of the file.
+     *
+     * @throws IOException if the file cannot be accessed
+     */
+    private void saveGPSData(MediaFile file) throws IOException {
+        if (file.isRawImage()) {
+            // never write into the RAW itself
+            file.saveEdits();
+            return;
+        }
+        Exif exportExif = isJpeg(file.getName()) ? new JpegExif() : new TiffExif();
+        exportExif.addGPSField(GPSTag.GPS_LATITUDE, FieldType.RATIONAL, file.getGpsLatPosAsRational());
+        exportExif.addGPSField(GPSTag.GPS_LATITUDE_REF, FieldType.ASCII, file.getGpsLatPosRef());
+        exportExif.addGPSField(GPSTag.GPS_LONGITUDE, FieldType.RATIONAL, file.getGpsLonPosAsRational());
+        exportExif.addGPSField(GPSTag.GPS_LONGITUDE_REF, FieldType.ASCII, file.getGpsLonPosRef());
+        exportExif.addGPSField(GPSTag.GPS_ALTITUDE, FieldType.RATIONAL, file.getGpsHeightAsRational());
+        Path path = file.getPathStorage();
+        writeAtomically(path, transform(Files.readAllBytes(path), (in, out) -> Metadata.insertExif(in, out, exportExif, true)));
+    }
+
+    /**
+     * Saves the comment: into the XMP sidecar for RAW, HEIF and videos, else
+     * into the file. JavaFX thread.
+     */
+    private void saveComments(MediaFile file) {
+        // read on the JavaFX thread: the task may run after another file was selected
+        final String comment = commentText.getText();
+        // also for RAW: saveEdits writes it from the MediaFile
+        file.setComments(comment);
+        final String title = file.getTitle().get();
+        final String keywords = file.getKeywords();
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         progressLabel.setText("Saving comments...");
         Task<Boolean> taskSaveComments = new Task<>() {
             @Override
-            protected Boolean call() throws IOException {
-                //saveImageEdits();
-                if (actualMediaFile.isRawImage()) {
-                    actualMediaFile.saveEdits();
+            protected Boolean call() {
+                if (file.isRawImage()) {
+                    file.saveEdits();
                     return true;
                 }
-                FileInputStream fin;
-                ByteArrayOutputStream bout = null;
                 try {
-                    bout = new ByteArrayOutputStream();
-                    fin = new FileInputStream(actualMediaFile.getPathStorage().toFile());
-
-                    Metadata.insertComment(fin, bout, commentText.getText());
-
-                    try (OutputStream outputStream = new FileOutputStream(actualMediaFile.getPathStorage().toFile())) {
-                        bout.writeTo(outputStream);
+                    Path path = file.getPathStorage();
+                    byte[] data = transform(Files.readAllBytes(path), (in, out) -> Metadata.insertComment(in, out, comment));
+                    if (isJpeg(file.getName())) {
+                        data = updateEmbeddedXmp(data, title, comment, keywords);
                     }
-                    fin.close();
+                    writeAtomically(path, data);
                 } catch (IOException ex) {
-                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-                } finally {
-                    try {
-                        if (bout != null) {
-                            bout.close();
-                        }
-                    } catch (IOException ex) {
-                        Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the comment of " + file.getPathStorage(), ex);
                 }
                 return null;
             }
         };
         taskSaveComments.setOnScheduled((t) -> {
-            progressPane.setVisible(false);
+            hideSaveProgress();
         });
         taskSaveComments.setOnFailed((t) -> {
-            progressPane.setVisible(true);
+            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the comment of " + file.getPathStorage(), t.getSource().getException());
+            hideSaveProgress();
         });
-        executor.submit(taskSaveComments);
+        submitWrite(file, taskSaveComments);
         mainController.getTaskProgressView().getTasks().add(taskSaveComments);
+    }
+
+    /**
+     * Queues a save of the file. All saves run one after the other in the
+     * order queued.
+     */
+    private void submitWrite(MediaFile file, Runnable write) {
+        FutureTask<Void> future = new FutureTask<>(write, null) {
+            @Override
+            protected void done() {
+                pendingWrites.remove(file, this);
+            }
+        };
+        pendingWrites.put(file, future);
+        executor.execute(future);
+    }
+
+    /**
+     * Waits until the saves of the file queued so far are written: reading it
+     * earlier shows (and puts into the MediaFile) the old values.
+     *
+     * @return false if interrupted (the loading was cancelled)
+     */
+    private boolean awaitPendingWrite(MediaFile file) {
+        Future<?> write = pendingWrites.get(file);
+        if (write == null) {
+            return true;
+        }
+        try {
+            write.get();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (ExecutionException | CancellationException ex) {
+            // logged by the save, the file is read as it is
+        }
+        return true;
+    }
+
+    /**
+     * Hides the progress of a save, unless the metadata of the selected file
+     * are still loading (same progress pane). JavaFX thread.
+     */
+    private void hideSaveProgress() {
+        if (task == null || task.isDone()) {
+            progressPane.setVisible(false);
+        }
     }
 
     private String getKeywordsAsString(FlowPane kewordPane) {
@@ -1198,10 +1315,23 @@ public class MetadataController implements Initializable {
     }
 
     /**
-     * Saves the keywords to the file
-     *
+     * Saves the keywords and the title to the file. JavaFX thread.
      */
     private void saveKeywordsTitle(MediaFile file) {
+        // read on the JavaFX thread: the task may run after another file was selected
+        final String title = captionTextField.getText() == null ? "" : captionTextField.getText();
+        final String keywords = getKeywordsAsString(keywordText);
+        // also for RAW: saveEdits writes them from the MediaFile
+        file.setKeywords(keywords);
+        file.setTitle(title);
+        final String description = file.getComments().get();
+        if (actualMetadata == null) {
+            actualMetadata = new MetadataResult();
+        }
+        if (actualMetadata.getIptc() == null) {
+            actualMetadata.setIptc(new IPTC());
+        }
+        final IPTC iptc = actualMetadata.getIptc();
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         progressLabel.setText("Saving keywords...");
@@ -1209,114 +1339,86 @@ public class MetadataController implements Initializable {
             @Override
             protected Boolean call() throws Exception {
                 if (this.isCancelled() == false) {
-                    String title = captionTextField.getText();
-                    if (title == null) {
-                        title = "";
-                    }
-                    updateKeywordsTitle(file, title, getKeywordsAsString(keywordText));
+                    updateKeywordsTitle(file, iptc, title, keywords, description);
                 }
                 return null;
             }
         };
         taskKeywordsTitle.setOnSucceeded((t) -> {
-            progressPane.setVisible(false);
-            lightController.getTitleLabel().textProperty().unbind();
-            lightController.getTitleLabel().setText(captionTextField.getText());
+            hideSaveProgress();
         });
         taskKeywordsTitle.setOnFailed((t) -> {
-            progressPane.setVisible(true);
+            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the keywords of " + file.getPathStorage(), t.getSource().getException());
+            hideSaveProgress();
         });
-        executor.submit(taskKeywordsTitle);
+        submitWrite(file, taskKeywordsTitle);
         mainController.getTaskProgressView().getTasks().add(taskKeywordsTitle);
     }
 
     /**
-     * Saves the keywords to the file
+     * Saves the keywords and the title to the file: into the XMP sidecar for
+     * RAW, HEIF and videos (from the MediaFile, which must have the values
+     * already), else into the IPTC of the file.
      *
-     * @param givenMediaFile if null is specified the actual selected mediafile
-     * will be used (var actualMediaFile)
+     * @param iptcdata the IPTC metadata of the file, gets the new values
+     * @param description the comment, for the XMP embedded in a JPEG
      */
-    private void updateKeywordsTitle(MediaFile file, String title, String keywords) throws Exception {
+    private void updateKeywordsTitle(MediaFile file, IPTC iptcdata, String title, String keywords, String description) {
+        if (file.isRawImage()) {
+            file.saveEdits();
+            return;
+        }
         if (title == null) {
             title = "";
         }
         if (keywords == null) {
             keywords = "";
         }
-        FileInputStream fin;
-        ByteArrayOutputStream bout = null;
-        final String keysw = keywords;
-        final String titlew = title;
-        if (file.isRawImage()) {
-            file.setKeywords(keysw);
-            file.setTitle(titlew);
-            file.saveEdits();
+        Map<IPTCTag, List<IPTCDataSet>> dataSets = iptcdata.getDataSets();
+        List<IPTCDataSet> keywordListLocal = dataSets.get(IPTCApplicationTag.KEY_WORDS);
+        if (keywordListLocal == null) {
+            keywordListLocal = new ArrayList<>();
+            dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
+        }
+        keywordListLocal.clear();
+        StringTokenizer defaultTokenizer = new StringTokenizer(keywords, ";");
+        while (defaultTokenizer.hasMoreTokens()) {
+            keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
+        }
+        replaceDataSet(iptcdata, IPTCApplicationTag.OBJECT_NAME, title);
+        replaceDataSet(iptcdata, IPTCApplicationTag.CAPTION_ABSTRACT, title);
+
+        List<IPTCDataSet> iptcs = new ArrayList<>();
+        dataSets.values().forEach(iptcs::addAll);
+        try {
+            Path path = file.getPathStorage();
+            byte[] data = transform(Files.readAllBytes(path), (in, out) -> Metadata.insertIPTC(in, out, iptcs, false));
+            if (isJpeg(file.getName())) {
+                data = updateEmbeddedXmp(data, title, description, keywords);
+            }
+            writeAtomically(path, data);
+        } catch (IOException ex) {
+            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the keywords of " + file.getPathStorage(), ex);
+        }
+    }
+
+    /**
+     * Runs on the JavaFX thread and waits for it.
+     */
+    private static void runOnFxThread(Runnable r) throws InterruptedException {
+        if (Platform.isFxApplicationThread()) {
+            r.run();
             return;
         }
-        try {
-            bout = new ByteArrayOutputStream();
-
-            fin = new FileInputStream(file.getPathStorage().toFile());
-
-            if (iptcdata == null) {
-                iptcdata = new IPTC();
-            }
-            Map<IPTCTag, List<IPTCDataSet>> dataSets = iptcdata.getDataSets();
-            List<IPTCDataSet> keywordListLocal = dataSets.get(IPTCApplicationTag.KEY_WORDS);
-            if (keywordListLocal == null) {
-                keywordListLocal = new ArrayList<>();
-                dataSets.put(IPTCApplicationTag.KEY_WORDS, keywordListLocal);
-            }
-            keywordListLocal.clear();
-
-            StringTokenizer defaultTokenizer = new StringTokenizer(keywords, ";");
-            while (defaultTokenizer.hasMoreTokens()) {
-                keywordListLocal.add(new IPTCDataSet(IPTCApplicationTag.KEY_WORDS, defaultTokenizer.nextToken()));
-            }
-            List<IPTCDataSet> objNameList = dataSets.get(IPTCApplicationTag.OBJECT_NAME);
-            List<IPTCDataSet> captionList = dataSets.get(IPTCApplicationTag.CAPTION_ABSTRACT);
-            if (captionList == null) {
-                captionList = new ArrayList<>();
-                dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);
-            }
-            if (objNameList != null) {
-                objNameList.clear();
-            } else {
-                objNameList = new ArrayList<>();
-                dataSets.put(IPTCApplicationTag.OBJECT_NAME, objNameList);
-            }
-            objNameList.add(new IPTCDataSet(IPTCApplicationTag.OBJECT_NAME, title));
-            if (captionList != null) {
-                captionList.clear();
-            } else {
-                captionList = new ArrayList<>();
-                dataSets.put(IPTCApplicationTag.CAPTION_ABSTRACT, captionList);
-            }
-            captionList.add(new IPTCDataSet(IPTCApplicationTag.CAPTION_ABSTRACT, title));
-
-            List<IPTCDataSet> iptcs = new ArrayList<>();
-            dataSets.entrySet().forEach((t) -> {
-                List<IPTCDataSet> tagValues = t.getValue();
-                tagValues.forEach(tagValue -> {
-                    iptcs.add(tagValue);
-                });
-            });
-            Metadata.insertIPTC(fin, bout, iptcs, false);
-            try (OutputStream outputStream = new FileOutputStream(file.getPathStorage().toFile())) {
-                bout.writeTo(outputStream);
-            }
-            fin.close();
-        } catch (IOException ex) {
-            Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
+        CountDownLatch done = new CountDownLatch(1);
+        Platform.runLater(() -> {
             try {
-                if (bout != null) {
-                    bout.close();
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+                r.run();
+            } finally {
+                done.countDown();
             }
-        }
+        });
+        done.await();
     }
 
     @FXML
@@ -1348,7 +1450,8 @@ public class MetadataController implements Initializable {
         keywordsToAllText.setPadding(new Insets(5, 5, 5, 5));
         scrollpane.setFitToWidth(true);
         scrollpane.setContent(keywordsToAllText);
-        keywordsToAllText.getChildren().addAll(keywordText.getChildren());
+        // copies: moving the tags would remove them from keywordText and save the file without keywords
+        keywordText.getChildren().forEach((tag) -> keywordsToAllText.getChildren().add(new Tag(((Tag) tag).getText())));
         content.addRow(1, keywordLabel, scrollpane, new Pane());
         TextField addKeywordToAllField = new TextField();
         addKeywordToAllField.setPrefWidth(300);
@@ -1391,6 +1494,8 @@ public class MetadataController implements Initializable {
             mainController.getStatusLabelLeft().setText("Setting metadata");
             mainController.getStatusLabelLeft().setVisible(true);
 
+            final String allTitle = titleText.getText();
+            final String allKeywords = getKeywordsAsString(keywordsToAllText);
             Task<Boolean> taskApplyToAll = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -1403,11 +1508,22 @@ public class MetadataController implements Initializable {
                             updateProgress(i + 1, mediaList.size());
                             updateMessage("" + (i + 1) + "/" + mediaList.size());
                             if (actFile.isRawImage()) {
+                                // saveEdits writes the values of the MediaFile
+                                runOnFxThread(() -> {
+                                    actFile.setKeywords(allKeywords);
+                                    actFile.setTitle(allTitle);
+                                });
                                 actFile.saveEdits();
                             } else {
                                 if (actFile.getMediaType() == MediaTypes.IMAGE) {
-                                    readBasicMetadata(this, actFile);
-                                    updateKeywordsTitle(actFile, titleText.getText(), getKeywordsAsString(keywordsToAllText));
+                                    MetadataResult metadata = readMetadata(this, actFile);
+                                    // after the read: it sets the old values (later on the JavaFX thread)
+                                    runOnFxThread(() -> {
+                                        actFile.setKeywords(allKeywords);
+                                        actFile.setTitle(allTitle);
+                                    });
+                                    IPTC iptc = metadata.getIptc() != null ? metadata.getIptc() : new IPTC();
+                                    updateKeywordsTitle(actFile, iptc, allTitle, allKeywords, actFile.getComments().get());
                                 }
                             }
                             i++;
@@ -1531,7 +1647,8 @@ public class MetadataController implements Initializable {
         map.setCenter(c);
         MarkerLayer markerPos = new MarkerLayer();
         markerPos.addFlag(c);
-        map.addLayer(markerPos);        
+        map.addLayer(markerPos);
+        popOver.setOnHidden((e) -> map.removeLayer(markerPos));
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
@@ -1563,10 +1680,13 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void changeGPSPosAction(ActionEvent event) {
-        if (actualMediaFile.getGpsPosition() == null || actualMediaFile.getGpsPosition().equalsIgnoreCase(";")) {
+        if (actualMediaFile == null) {
             return;
         }
         Utility util = new Utility();
+        // the position chosen on the map or by the search, null if none yet
+        final MapPoint[] chosen = new MapPoint[1];
+        MarkerLayer markerPos = new MarkerLayer();
         PopOver popOver = new PopOver();
         popOver.setArrowLocation(PopOver.ArrowLocation.TOP_RIGHT);
         popOver.setTitle("Change GPS position/altitude");
@@ -1589,7 +1709,12 @@ public class MetadataController implements Initializable {
         searchButton.setGraphic(new FontIcon("ti-search:16"));
         searchButton.setId("toolbutton");
         searchButton.setOnAction((t) -> {
-            searchButtonAction(searchField);
+            searchButtonAction(searchField, (point) -> {
+                chosen[0] = point;
+                map.setCenter(point);
+                markerPos.removeAllPoints();
+                markerPos.addFlag(point);
+            });
         });
         searchField.setOnKeyPressed((p) -> {
             event.consume();
@@ -1597,18 +1722,53 @@ public class MetadataController implements Initializable {
         Button saveButton = new Button();
         saveButton.setGraphic(new FontIcon("ti-save:20"));
         saveButton.setId("toolbutton");
+        CustomTextField heightField = new CustomTextField();
+        if (actualMediaFile.getGpsHeight() != -1) {
+            heightField.setText("" + actualMediaFile.getGpsHeight());
+        }
         saveButton.setOnAction((q) -> {
-            try {
-                updateGPSDataForActualMediaFile();
-            } catch (IOException ex) {
-                Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
+            final MediaFile file = actualMediaFile;
+            String heightStr = heightField.getText() == null ? "" : heightField.getText().replace("m", "").replace(",", ".").trim();
+            double height = -1;
+            if (!heightStr.isEmpty()) {
+                try {
+                    height = Double.parseDouble(heightStr);
+                } catch (NumberFormatException ex) {
+                    showGPSMessage(util, message, "Invalid height: " + heightField.getText());
+                    return;
+                }
             }
+            if (chosen[0] == null && !file.hasGpsPosition()) {
+                showGPSMessage(util, message, "Choose a position on the map or search a place.");
+                return;
+            }
+            // into the MediaFile first: saveGPSData and the XMP sidecar write its values
+            if (chosen[0] != null) {
+                file.setGpsPositionFromDegree(chosen[0].getLatitude() + ";" + chosen[0].getLongitude());
+                if (searchField.getText() != null && !searchField.getText().isBlank()) {
+                    file.placeProperty().set(searchField.getText());
+                }
+            }
+            file.setGpsHeight(height);
+            gpsPlace.setText(file.getGpsPosition());
+            if (file.getGpsHeight() != -1) {
+                gpsHeight.setText("" + file.getGpsHeight() + " m");
+            }
+            // not on the JavaFX thread: rewrites the whole file
+            submitWrite(file, () -> {
+                try {
+                    saveGPSData(file);
+                    Platform.runLater(() -> showGPSMessage(util, message, "GPS position saved."));
+                } catch (IOException ex) {
+                    Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the GPS position of " + file.getPathStorage(), ex);
+                    Platform.runLater(() -> showGPSMessage(util, message, "Error on saving the GPS position!"));
+                }
+            });
         });
         hb.getChildren().add(new Label("Place:"));
         hb.getChildren().add(searchField);
         hb.getChildren().add(searchButton);
-        hb.getChildren().add(new Label("Heigth:"));
-        CustomTextField heightField = new CustomTextField();
+        hb.getChildren().add(new Label("Height:"));
         heightField.setPrefWidth(80);
         heightField.setMinWidth(80);
         hb.getChildren().add(heightField);
@@ -1618,14 +1778,22 @@ public class MetadataController implements Initializable {
         hbSaveBox.getChildren().add(saveButton);
         vb.getChildren().add(hbSaveBox);
         vb.getChildren().add(hb);
-        map.setZoom(19);
-        double lat = actualMediaFile.getGpsLatPosAsDouble();
-        double lon = actualMediaFile.getGpsLonPosAsDouble();
-        MapPoint c = new MapPoint(lat, lon);
-        map.setCenter(c);
-        MarkerLayer markerPos = new MarkerLayer();
-        markerPos.addFlag(c);
+        if (actualMediaFile.hasGpsPosition()) {
+            MapPoint c = new MapPoint(actualMediaFile.getGpsLatPosAsDouble(), actualMediaFile.getGpsLonPosAsDouble());
+            map.setZoom(19);
+            map.setCenter(c);
+            markerPos.addFlag(c);
+        } else {
+            // no position yet: the whole world, to choose one
+            map.setZoom(2);
+            map.setCenter(new MapPoint(30, 0));
+        }
         map.addLayer(markerPos);
+        // the map is shared: without this, markers of earlier files stay on it
+        popOver.setOnHidden((e) -> {
+            map.removeLayer(markerPos);
+            map.setOnMouseClicked(null);
+        });
         map.setEffect(new ColorAdjust(0, -0.5, 0, 0));
         vb.getChildren().add(map);
         vb.getChildren().add(message);
@@ -1634,6 +1802,7 @@ public class MetadataController implements Initializable {
         map.setOnMouseClicked((t) -> {
             t.getPickResult();
             final MapPoint newPosition = map.getMapPosition(t.getSceneX(), t.getSceneY());
+            chosen[0] = newPosition;
             markerPos.removeAllPoints();
             markerPos.addFlag(newPosition);
             Task<Address> taskFind = new Task<>() {
@@ -1649,7 +1818,18 @@ public class MetadataController implements Initializable {
         });
     }
 
-    private void searchButtonAction(CustomTextField customField) {
+    private void showGPSMessage(Utility util, Label message, String text) {
+        message.setText(text);
+        message.setVisible(true);
+        message.setManaged(true);
+        util.hideNodeAfterTime(message, 3, false);
+    }
+
+    /**
+     * @param onSelected called with the position of the place the user
+     * selected from the found ones
+     */
+    private void searchButtonAction(CustomTextField customField, Consumer<MapPoint> onSelected) {
         String name = customField.getText();
 
         Task<ObservableList<String>> task = new Task<>() {
@@ -1678,12 +1858,9 @@ public class MetadataController implements Initializable {
                 if (index == -1) {
                     index = 0;
                 }
-                geoCoding.setLastSearchGPSResult(geoCoding.getLastSearchResult().get(index));
-                MapPoint c = new MapPoint(geoCoding.getLastSearchResult().get(index).getLatitude(), geoCoding.getLastSearchResult().get(index).getLongitude());
-                map.setCenter(c);
-                MarkerLayer marker = new MarkerLayer();
-                marker.addFlag(c);
-                map.addLayer(marker);
+                Address found = geoCoding.getLastSearchResult().get(index);
+                geoCoding.setLastSearchGPSResult(found);
+                onSelected.accept(new MapPoint(found.getLatitude(), found.getLongitude()));
 
             });
         });
@@ -1731,6 +1908,9 @@ public class MetadataController implements Initializable {
 
         @Override
         public void onChanged(Change change) {
+            // saves the caption too
+            captionSaveFile = null;
+            captionSaveDelay.stop();
             saveKeywordsTitle(actualMediaFile);
         }
 
@@ -1740,7 +1920,8 @@ public class MetadataController implements Initializable {
 
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
-            saveComments();
+            commentSaveFile = actualMediaFile;
+            commentSaveDelay.playFromStart();
         }
 
     }
@@ -1749,13 +1930,29 @@ public class MetadataController implements Initializable {
 
         @Override
         public void changed(ObservableValue<? extends String> ov, String t, String t1) {
-            saveKeywordsTitle(actualMediaFile);
+            captionSaveFile = actualMediaFile;
+            captionSaveDelay.playFromStart();
         }
 
     }
 
-    public void setActualMediaFile(MediaFile actualMediaFile) {
-        this.actualMediaFile = actualMediaFile;
+    /**
+     * Saves the caption and the comment typed in the last SAVE_DELAY now:
+     * before the fields are cleared or another file is shown. JavaFX thread.
+     */
+    private void flushPendingSaves() {
+        if (captionSaveFile != null) {
+            MediaFile file = captionSaveFile;
+            captionSaveFile = null;
+            captionSaveDelay.stop();
+            saveKeywordsTitle(file);
+        }
+        if (commentSaveFile != null) {
+            MediaFile file = commentSaveFile;
+            commentSaveFile = null;
+            commentSaveDelay.stop();
+            saveComments(file);
+        }
     }
 
     public TextField getRecordDateField() {
@@ -1764,9 +1961,7 @@ public class MetadataController implements Initializable {
 
     public void cancelTasks() {
         if (task != null) {
-            keywordText.getChildren().removeListener(keywordsChangeListener);
-            captionTextField.textProperty().removeListener(captionChangeListener);
-            commentText.textProperty().removeListener(commentsChangeListener);
+            detachSaveListeners();
             progressPane.setVisible(false);
             task.cancel();
         }
@@ -1776,67 +1971,12 @@ public class MetadataController implements Initializable {
         return exposureSlider;
     }
 
-    public Exif getExifdata() {
-        return exifdata;
-    }
-
-    public IPTC getIptcdata() {
-        return iptcdata;
-    }
-
-    public XMP getXmpdata() {
-        return xmpdata;
-    }
-
-    public List<String> getCommentsdata() {
-        return commentsdata;
-    }
-
     /**
-     * Method of getting all metadata as a string for the search database
-     *
-     * @return String with all meta key/value pairs in format key:value<newline>
+     * @return the metadata shown for the file, null if it is not the selected
+     * file or still loading
      */
-    public String getMetaDataAsString() {
-        StringBuilder sb = new StringBuilder();
-        Iterator<MetadataEntry> iterator;
-
-        //read jpge exif
-        if (this.getExifdata() != null) {
-            iterator = this.getExifdata().iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");
-                });
-            }
-        }
-
-        //read iptcdata exif
-        if (this.getIptcdata() != null) {
-            iterator = this.getIptcdata().iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {
-                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");
-                });
-            }
-        }
-
-        //read xmpdata
-        /*if (this.getXmpdata() != null) {
-            iterator = this.getXmpdata().iterator();
-            while (iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                Collection<MetadataEntry> entries = item.getMetadataEntries();
-                entries.forEach(e -> {                    
-                    sb.append(e.getKey()).append(":").append(e.getValue()).append(";");                    
-                });
-            }
-        }*/
-        return sb.toString();
+    public MetadataResult getMetadata(MediaFile file) {
+        return file == actualMediaFile ? actualMetadata : null;
     }
 
     public Slider getGainSlider() {
@@ -1847,16 +1987,24 @@ public class MetadataController implements Initializable {
         return biasSlider;
     }
 
-    public HashMap<String, String> getRawMetaData() {
-        return rawMetaData;
-    }
-
     public void Shutdown() {
         if (task != null) {
             task.cancel();
         }
+        if (Platform.isFxApplicationThread()) {
+            flushPendingSaves();
+        }
         if (executor != null) {
-            executor.shutdownNow();
+            // queued saves are written, not dropped
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException ex) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
         if (executorParallel != null) {
             executorParallel.shutdownNow();

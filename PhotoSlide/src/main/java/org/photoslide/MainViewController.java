@@ -1,5 +1,6 @@
 package org.photoslide;
 
+import org.photoslide.browsermetadata.MetadataResult;
 import animatefx.animation.Bounce;
 import org.photoslide.browsercollections.CollectionsController;
 import org.photoslide.datamodel.MediaFile;
@@ -543,7 +544,7 @@ public class MainViewController implements Initializable {
                                 writer.write(fromFXImage, fo);
                                 fo.close();
                                 if (diag.getController().getExportAllMetaData().isSelected()) {
-                                    metadataPaneController.readBasicMetadata(this, mediaItem);
+                                    MetadataResult metadata = metadataPaneController.readMetadata(this, mediaItem);
                                     if (diag.getController().getReplaceTitleBox().isSelected()) {
                                         mediaItem.setTitle(diag.getController().getTitle());
                                     }
@@ -557,10 +558,10 @@ public class MainViewController implements Initializable {
                                         mediaItem.setGpsPositionFromDegree(diag.getController().getSelectedGPSPos());
                                         mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
                                     }
-                                    metadataPaneController.exportCompleteMetdata(mediaItem, outFileStr, imageType.getExtension(), diag.getController().getReplaceGPSCheckBox().isSelected());
+                                    metadataPaneController.exportCompleteMetdata(mediaItem, metadata, outFileStr, imageType.getExtension(), diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }
                                 if (diag.getController().getExportBasicMetadataBox().isSelected()) {
-                                    metadataPaneController.readBasicMetadata(this, mediaItem);
+                                    MetadataResult metadata = metadataPaneController.readMetadata(this, mediaItem);
                                     if (diag.getController().getReplaceTitleBox().isSelected()) {
                                         Platform.runLater(() -> {
                                             mediaItem.setTitle(diag.getController().getTitle());
@@ -580,7 +581,7 @@ public class MainViewController implements Initializable {
                                             mediaItem.placeProperty().setValue(diag.getController().getFoundPlaceName());
                                         });
                                     }
-                                    metadataPaneController.exportBasicMetadata(mediaItem, outFileStr, diag.getController().getReplaceGPSCheckBox().isSelected());
+                                    metadataPaneController.exportBasicMetadata(mediaItem, metadata, outFileStr, diag.getController().getReplaceGPSCheckBox().isSelected());
                                 }
                             } catch (FileNotFoundException ex) {
                                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);

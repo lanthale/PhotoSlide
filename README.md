@@ -61,14 +61,18 @@ On OSX 11.x open the app and afterwards goto system settings - general tab in th
 - Cut/copy/paste in the collections module so that you can have your actully working collection locally and the rest on the NAS
 - Stacking of photos
 - Full text search using a H2 database (will be created automatically in the background)
-- Implemented multithreading for media loading (depends on the operating system - try to create threads as much as possible from the OS)
-- First implementation of an edit view (actually only an exposure filter is added)
+- Implemented multithreading for media loading (depends on the operating system - try to create threads as much as possible from the os)
+- Full raw workflow including profiles per camera
+- Full color aware and edit is done in 16 bit ProPhoto color profile
+- Viewing is in sRGB
+- All filters from Lightzone are now available starting with v2.0
 - Support for GPS information in meta data of image files
 - Printing support inclusive borderless printing (experimental)
 - Bookmark files independend where found
 - Export/clipboard bookmarked files
 - Software update: Check for new version of photoslide and download/install it if user wants it
 - View of GPS position information on a OSM map
+- Fulltext search
 
 
 ## Missing features

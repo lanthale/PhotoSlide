@@ -237,10 +237,11 @@
                               <Insets bottom="10.0" top="10.0" />
                            </padding>
                         </Separator>
-                        <MenuButton id="tooltoggle-button" mnemonicParsing="false" prefHeight="45.0" text="..." HBox.hgrow="NEVER">
+                        <MenuButton id="tooltoggle-button" fx:id="moreModulesButton" mnemonicParsing="false" prefHeight="45.0" text="..." HBox.hgrow="NEVER">
                           <items>
-                            <MenuItem mnemonicParsing="false" style="-fx-font-size: 24px;" text="Map" />
-                            <MenuItem mnemonicParsing="false" style="-fx-font-size: 24;" text="Compositions" />
+                            <MenuItem fx:id="mapMenuItem" mnemonicParsing="false" onAction="#mapMenuAction" style="-fx-font-size: 24px;" text="Map" />
+                            <MenuItem fx:id="compositionMenuItem" mnemonicParsing="false" onAction="#compositionMenuAction" style="-fx-font-size: 24px;" text="Compositions" />
+                            <MenuItem fx:id="slideshowMenuItem" mnemonicParsing="false" onAction="#slideshowMenuAction" style="-fx-font-size: 24px;" text="Slideshow" />
                           </items>
                            <font>
                               <Font size="24.0" />
@@ -299,22 +300,22 @@
                 </ToolBar>
             </children>
         </HBox>
-        <SplitPane dividerPositions="0.4, 0.6" minHeight="200.0" minWidth="200.0" prefWidth="1280.0" VBox.vgrow="ALWAYS">
-            <items>
-                <StackPane fx:id="leftPane" maxWidth="1.7976931348623157E308" minWidth="50.0">
-                    <fx:include fx:id="collectionsPane" maxWidth="1.7976931348623157E308" minWidth="50.0" source="BrowserCollections.fxml" />
-                    <fx:include fx:id="editorMetaDataPane" maxWidth="1.7976931348623157E308" minWidth="50.0" source="EditorMetaData.fxml" />
-                </StackPane> 
-                <StackPane fx:id="middlePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0">           
-                    <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="BrowserLighttable.fxml" />
-                    <fx:include fx:id="editorMediaViewPane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="EditorMediaView.fxml" />
-                </StackPane>
-                <StackPane fx:id="rightPane" minWidth="50.0">
-                    <fx:include fx:id="metadataPane" minWidth="50.0" source="BrowserMetadata.fxml" />
-                    <fx:include fx:id="editorToolsPane" minWidth="50.0" source="EditorTools.fxml" />
-                </StackPane>
-            </items>
-        </SplitPane>
+        <!-- the editor and the other modules are loaded on first use (MainViewController) -->
+        <StackPane fx:id="contentPane" VBox.vgrow="ALWAYS">
+            <SplitPane fx:id="splitPane" dividerPositions="0.4, 0.6" minHeight="200.0" minWidth="200.0" prefWidth="1280.0">
+                <items>
+                    <StackPane fx:id="leftPane" maxWidth="1.7976931348623157E308" minWidth="50.0">
+                        <fx:include fx:id="collectionsPane" maxWidth="1.7976931348623157E308" minWidth="50.0" source="BrowserCollections.fxml" />
+                    </StackPane>
+                    <StackPane fx:id="middlePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0">
+                        <fx:include fx:id="lighttablePane" maxWidth="1.7976931348623157E308" minWidth="800.0" prefWidth="850.0" source="BrowserLighttable.fxml" />
+                    </StackPane>
+                    <StackPane fx:id="rightPane" minWidth="50.0">
+                        <fx:include fx:id="metadataPane" minWidth="50.0" source="BrowserMetadata.fxml" />
+                    </StackPane>
+                </items>
+            </SplitPane>
+        </StackPane>
         
         <HBox id="HBox" alignment="CENTER_LEFT" maxHeight="26.0" minHeight="26.0" prefHeight="26.0" prefWidth="1280.0" spacing="5.0" style="-fx-background-color: rgb(80, 80, 80)rgb(80, 80, 80);" VBox.vgrow="NEVER">
             <children>

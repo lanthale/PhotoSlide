@@ -83,6 +83,11 @@
     -fx-text-fill: orange;
 }
 
+/* the "..." MenuButton draws its text with an inner label (selected while a module is shown) */
+#tooltoggle-button:selected > .label {
+    -fx-text-fill: orange;
+}
+
 #toolbutton:hover, #menuButton:hover{
     -fx-background-color: transparent, rgba(0,0,0,.1), rgba(0,0,0,.1), transparent;
 }

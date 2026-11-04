@@ -38,8 +38,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -75,6 +78,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.css.PseudoClass;
+import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -87,9 +92,11 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
@@ -98,6 +105,7 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -115,6 +123,9 @@ import org.controlsfx.control.TaskProgressView;
 import org.h2.fulltext.FullText;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.photoslide.bookmarksboard.BMBIcon;
+import org.photoslide.composition.CompositionViewController;
+import org.photoslide.map.MapViewController;
+import org.photoslide.slideshow.SlideshowViewController;
 import org.photoslide.bookmarksboard.BookmarkBoardController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFileLoader;
@@ -123,6 +134,8 @@ import org.photoslide.editormetadata.EditorMetadataController;
 import org.photoslide.editortools.EditorToolsController;
 import org.photoslide.editpipeline.EditHistory;
 import org.photoslide.editpipeline.EditPipeline;
+import org.photoslide.imageops.Styles;
+import org.photoslide.imageops.ToolRegistry;
 import org.photoslide.print.PrintDialog;
 import org.photoslide.search.SearchToolsController;
 import org.photoslide.search.SearchToolsDialog;
@@ -141,17 +154,51 @@ public class MainViewController implements Initializable {
     @FXML
     private StackPane rightPane;
     @FXML
-    private AnchorPane collectionsPane;
+    private StackPane contentPane;
     @FXML
-    private AnchorPane editorMetaDataPane;
+    private SplitPane splitPane;
+    @FXML
+    private MenuButton moreModulesButton;
+    @FXML
+    private MenuItem mapMenuItem;
+    @FXML
+    private MenuItem compositionMenuItem;
+    @FXML
+    private MenuItem slideshowMenuItem;
+    @FXML
+    private AnchorPane collectionsPane;
     @FXML
     private AnchorPane lighttablePane;
     @FXML
-    private AnchorPane editorMediaViewPane;
-    @FXML
     private AnchorPane metadataPane;
-    @FXML
+    // the editor is loaded on first use, see ensureEditorLoaded()
+    private AnchorPane editorMetaDataPane;
+    private AnchorPane editorMediaViewPane;
     private AnchorPane editorToolsPane;
+    // what is loaded in the background right now, see loadInBackground()
+    private final Set<String> loading = new HashSet<>();
+
+    /**
+     * A full-width module: its name, its FXML and the classes initialized in
+     * the background before it is loaded the first time (its controller and
+     * whatever has expensive static initialization).
+     */
+    private record ModuleSpec(String name, String fxml, List<Class<?>> classes) {
+    }
+
+    private static final ModuleSpec MAP_MODULE = new ModuleSpec("map", "MapView.fxml",
+            List.of(MapViewController.class));
+    private static final ModuleSpec COMPOSITION_MODULE = new ModuleSpec("compositions", "CompositionView.fxml",
+            List.of(CompositionViewController.class));
+    private static final ModuleSpec SLIDESHOW_MODULE = new ModuleSpec("slideshow", "SlideshowView.fxml",
+            List.of(SlideshowViewController.class));
+
+    // full-width modules by FXML name, loaded on first use
+    private final Map<String, Node> moduleViews = new HashMap<>();
+    private final Map<String, ViewModule> moduleControllers = new HashMap<>();
+    // the module chosen last (null = browser/editor): shown when its loading finishes
+    private ModuleSpec requestedModule;
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     @FXML
     private StackPane progressPane;
@@ -232,11 +279,8 @@ public class MainViewController implements Initializable {
     private LighttableController lighttablePaneController;
     @FXML
     private MetadataController metadataPaneController;
-    @FXML
     private EditorMetadataController editorMetaDataPaneController;
-    @FXML
     private EditorMediaViewController editorMediaViewPaneController;
-    @FXML
     private EditorToolsController editorToolsPaneController;
     @FXML
     private BookmarkBoardController bookmarksController;
@@ -245,9 +289,6 @@ public class MainViewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        editorMetaDataPane.setVisible(false);
-        editorMediaViewPane.setVisible(false);
-        editorToolsPane.setVisible(false);
         executor = Executors.newSingleThreadExecutor();
         executorParallelScheduled = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("mainviewControllerParallelScheduled").build());
         executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("mainviewControllerParallel").build());
@@ -304,17 +345,26 @@ public class MainViewController implements Initializable {
         browseButton.setToggleGroup(group);
         editButton.setToggleGroup(group);
         browseButton.setSelected(true);
+        // a click on the selected Browse/Edit button keeps it selected (and does nothing)
+        for (ToggleButton b : List.of(browseButton, editButton)) {
+            b.addEventFilter(MouseEvent.MOUSE_PRESSED, m -> {
+                if (b.isSelected()) {
+                    m.consume();
+                }
+            });
+        }
+        // same for the keyboard; only a full-width module moves the selection to "..."
+        group.selectedToggleProperty().addListener((o, old, now) -> {
+            if (now == null && old != null && requestedModule == null) {
+                old.setSelected(true);
+            }
+        });
         collectionsPaneController.injectMainController(this);
         lighttablePaneController.injectMainController(this);
         metadataPaneController.injectMainController(this);
         metadataPaneController.injectLightController(lighttablePaneController);
         collectionsPaneController.injectLighttableController(lighttablePaneController);
         lighttablePaneController.injectMetaDataController(metadataPaneController);
-        editorMetaDataPaneController.injectMetaDataController(metadataPaneController);
-        editorMediaViewPaneController.injectMainController(this);
-        editorMediaViewPaneController.injectLightController(lighttablePaneController);
-        editorMediaViewPaneController.injectEditorMetaDataController(editorMetaDataPaneController);
-        editorMediaViewPaneController.injectEditorToolsController(editorToolsPaneController);
         statusLabelLeft.setVisible(false);
         statusLabelRight.setVisible(false);
         progressPane.setVisible(false);
@@ -329,6 +379,194 @@ public class MainViewController implements Initializable {
                 swUpdater.checkForSoftwareUpdates();
             }
         });
+    }
+
+    /** Loads the FXML (hidden) on top of the target pane. */
+    private FXMLLoader loadInto(StackPane target, String fxml) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/" + fxml));
+        Parent view = loader.load();
+        view.setVisible(false);
+        target.getChildren().add(view);
+        return loader;
+    }
+
+    private boolean isEditorShowing() {
+        return editorMediaViewPane != null && editorMediaViewPane.isVisible();
+    }
+
+    /** The editor panes are loaded when the editor is opened the first time. */
+    private boolean ensureEditorLoaded() {
+        if (editorMediaViewPane != null) {
+            return true;
+        }
+        try {
+            FXMLLoader metaLoader = loadInto(leftPane, "EditorMetaData.fxml");
+            editorMetaDataPane = metaLoader.getRoot();
+            FXMLLoader mediaLoader = loadInto(middlePane, "EditorMediaView.fxml");
+            editorMediaViewPane = mediaLoader.getRoot();
+            FXMLLoader toolsLoader = loadInto(rightPane, "EditorTools.fxml");
+            editorToolsPane = toolsLoader.getRoot();
+            // the sizes the fx:include in MainView.fxml used to set
+            editorMetaDataPane.setMinWidth(50);
+            editorMetaDataPane.setMaxWidth(Double.MAX_VALUE);
+            editorMediaViewPane.setMinWidth(800);
+            editorMediaViewPane.setPrefWidth(850);
+            editorMediaViewPane.setMaxWidth(Double.MAX_VALUE);
+            editorToolsPane.setMinWidth(50);
+            editorMetaDataPaneController = metaLoader.getController();
+            editorMediaViewPaneController = mediaLoader.getController();
+            editorToolsPaneController = toolsLoader.getController();
+            editorMetaDataPaneController.injectMetaDataController(metadataPaneController);
+            editorMediaViewPaneController.injectMainController(this);
+            editorMediaViewPaneController.injectLightController(lighttablePaneController);
+            editorMediaViewPaneController.injectEditorMetaDataController(editorMetaDataPaneController);
+            editorMediaViewPaneController.injectEditorToolsController(editorToolsPaneController);
+            return true;
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Cannot load the editor", ex);
+            leftPane.getChildren().remove(editorMetaDataPane);
+            middlePane.getChildren().remove(editorMediaViewPane);
+            rightPane.getChildren().remove(editorToolsPane);
+            editorMetaDataPane = null;
+            editorMediaViewPane = null;
+            editorToolsPane = null;
+            return false;
+        }
+    }
+
+    /**
+     * First use of a module or the editor: the classes are initialized in the
+     * background, so the UI does not hang (wait cursor and status text
+     * meanwhile); then whenReady loads the FXMLs on the JavaFX thread.
+     */
+    private void loadInBackground(String name, List<Class<?>> classes, Runnable whenReady) {
+        if (!loading.add(name)) {
+            return;
+        }
+        Scene scene = browseButton.getScene();
+        scene.setCursor(Cursor.WAIT);
+        String loadingText = "Loading " + name + "...";
+        statusLabelLeft.textProperty().unbind();
+        statusLabelLeft.setText(loadingText);
+        statusLabelLeft.setVisible(true);
+        Thread.ofVirtual().start(() -> {
+            initializeClasses(classes);
+            Platform.runLater(() -> {
+                loading.remove(name);
+                if (loading.isEmpty()) {
+                    scene.setCursor(Cursor.DEFAULT);
+                }
+                if (loadingText.equals(statusLabelLeft.getText())) {
+                    statusLabelLeft.setVisible(false);
+                }
+                whenReady.run();
+            });
+        });
+    }
+
+    private static void initializeClasses(List<Class<?>> classes) {
+        ClassLoader cl = MainViewController.class.getClassLoader();
+        for (Class<?> c : classes) {
+            try {
+                Class.forName(c.getName(), true, cl);
+            } catch (ClassNotFoundException | LinkageError ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.WARNING, "Cannot initialize " + c.getName(), ex);
+            }
+        }
+    }
+
+    /** Shows a full-width module instead of the browser/editor panes, loading it on first use. */
+    private void showModule(ModuleSpec spec) {
+        requestedModule = spec;
+        // the "..." button stands for the module: it is the selected one now
+        group.selectToggle(null);
+        moreModulesButton.pseudoClassStateChanged(SELECTED, true);
+        markActiveModule(spec);
+        if (moduleViews.containsKey(spec.fxml())) {
+            displayModule(spec);
+            return;
+        }
+        loadInBackground(spec.name(), spec.classes(), () -> {
+            if (!moduleViews.containsKey(spec.fxml()) && !loadModule(spec)) {
+                if (requestedModule == spec) {
+                    // stay in the browser/editor that is still shown
+                    hideModules();
+                    (isEditorShowing() ? editButton : browseButton).setSelected(true);
+                }
+                return;
+            }
+            // not when another view was chosen meanwhile
+            if (requestedModule == spec) {
+                displayModule(spec);
+            }
+        });
+    }
+
+    private boolean loadModule(ModuleSpec spec) {
+        try {
+            FXMLLoader loader = loadInto(contentPane, spec.fxml());
+            ViewModule module = loader.getController();
+            module.injectMainController(this);
+            moduleViews.put(spec.fxml(), loader.getRoot());
+            moduleControllers.put(spec.fxml(), module);
+            return true;
+        } catch (IOException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Cannot load " + spec.fxml(), ex);
+            return false;
+        }
+    }
+
+    private void displayModule(ModuleSpec spec) {
+        Node shown = moduleViews.get(spec.fxml());
+        moduleViews.values().stream().filter(v -> v != shown).forEach(v -> v.setVisible(false));
+        splitPane.setVisible(false);
+        shown.setOpacity(0);
+        shown.setVisible(true);
+        moduleControllers.get(spec.fxml()).activate();
+        FadeTransition ft = new FadeTransition(Duration.millis(250), shown);
+        ft.setFromValue(0.0);
+        ft.setToValue(1.0);
+        ft.play();
+    }
+
+    /** An orange check mark at the menu item of the active module (null = none). */
+    private void markActiveModule(ModuleSpec active) {
+        Map<ModuleSpec, MenuItem> items = Map.of(MAP_MODULE, mapMenuItem,
+                COMPOSITION_MODULE, compositionMenuItem, SLIDESHOW_MODULE, slideshowMenuItem);
+        items.forEach((spec, item) -> {
+            if (spec == active) {
+                FontIcon check = new FontIcon("fa-check");
+                check.setIconColor(Paint.valueOf("orange"));
+                check.setIconSize(20);
+                item.setGraphic(check);
+            } else {
+                item.setGraphic(null);
+            }
+        });
+    }
+
+    /** Back from a full-width module to the browser/editor panes. */
+    private void hideModules() {
+        requestedModule = null;
+        moreModulesButton.pseudoClassStateChanged(SELECTED, false);
+        markActiveModule(null);
+        moduleViews.values().forEach(v -> v.setVisible(false));
+        splitPane.setVisible(true);
+    }
+
+    @FXML
+    private void mapMenuAction(ActionEvent event) {
+        showModule(MAP_MODULE);
+    }
+
+    @FXML
+    private void compositionMenuAction(ActionEvent event) {
+        showModule(COMPOSITION_MODULE);
+    }
+
+    @FXML
+    private void slideshowMenuAction(ActionEvent event) {
+        showModule(SLIDESHOW_MODULE);
     }
 
     public void handleMenuDisable(boolean disabled) {
@@ -384,9 +622,12 @@ public class MainViewController implements Initializable {
         collectionsPaneController.Shutdown();
         lighttablePaneController.Shutdown();
         metadataPaneController.Shutdown();
-        editorMetaDataPaneController.shutdown();
-        editorMediaViewPaneController.shutdown();
-        editorToolsPaneController.shutdown();
+        if (editorToolsPaneController != null) {
+            editorMetaDataPaneController.shutdown();
+            editorMediaViewPaneController.shutdown();
+            editorToolsPaneController.shutdown();
+        }
+        moduleControllers.values().forEach(ViewModule::shutdown);
         executor.shutdownNow();
         executorParallel.shutdownNow();
         executorParallelScheduled.shutdownNow();
@@ -790,7 +1031,7 @@ public class MainViewController implements Initializable {
 
     /** The file undo and redo act on: the photo in the editor, else the last changed one in the lighttable. */
     private MediaFile historyTarget() {
-        return editorMediaViewPane.isVisible() ? editorMediaViewPaneController.historyTarget()
+        return isEditorShowing() ? editorMediaViewPaneController.historyTarget()
                 : lighttablePaneController.historyTarget();
     }
 
@@ -832,7 +1073,7 @@ public class MainViewController implements Initializable {
         TextInputControl text = focusedTextInput();
         if (text != null) {
             text.undo();
-        } else if (editorMediaViewPane.isVisible()) {
+        } else if (isEditorShowing()) {
             editorMediaViewPaneController.undo();
         } else {
             lighttablePaneController.undoAction();
@@ -844,7 +1085,7 @@ public class MainViewController implements Initializable {
         TextInputControl text = focusedTextInput();
         if (text != null) {
             text.redo();
-        } else if (editorMediaViewPane.isVisible()) {
+        } else if (isEditorShowing()) {
             editorMediaViewPaneController.redo();
         } else {
             lighttablePaneController.redoAction();
@@ -917,6 +1158,11 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void browseButtonAction(ActionEvent event) {
+        hideModules();
+        if (!isEditorShowing()) {
+            // the browser panes are already shown
+            return;
+        }
         editorMetaDataPaneController.resetUI();
         editorMediaViewPaneController.resetUI();
         editorToolsPaneController.resetUI();
@@ -975,10 +1221,40 @@ public class MainViewController implements Initializable {
         rotate.setCycleCount(1);
         rotate.setDuration(Duration.millis(1000));
 
+        hideModules();
         if (collectionsPaneController.getSelectedPath() == null) {
             browseButton.setSelected(true);
             return;
         }
+        if (editorMediaViewPane == null) {
+            loadInBackground("editor", editorClasses(), () -> {
+                boolean loaded = ensureEditorLoaded();
+                if (!editButton.isSelected()) {
+                    // switched to another view meanwhile
+                    return;
+                }
+                if (loaded) {
+                    openEditor();
+                } else {
+                    browseButton.setSelected(true);
+                }
+            });
+            return;
+        }
+        openEditor();
+    }
+
+    /** The editor's controllers and the classes with big lookup tables (filters, histogram, styles). */
+    private static List<Class<?>> editorClasses() {
+        List<Class<?>> classes = new ArrayList<>(List.of(EditorMediaViewController.class,
+                EditorToolsController.class, EditorMetadataController.class,
+                org.photoslide.editortools.Histogram.class, org.photoslide.editortools.ToolStackView.class,
+                org.photoslide.editortools.StylesView.class, Styles.class));
+        ToolRegistry.tools().forEach(t -> classes.add(t.type()));
+        return classes;
+    }
+
+    private void openEditor() {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
         if (selectedMediaItem == null) {
             try {

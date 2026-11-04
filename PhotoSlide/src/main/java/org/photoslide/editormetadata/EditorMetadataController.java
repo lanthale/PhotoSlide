@@ -121,7 +121,10 @@ public class EditorMetadataController implements Initializable {
                 break;
         }
         final MediaFile file = selectedMediaFile;
-        taskMetaData = new Task<>() {
+        if (taskMetaData != null) {
+            taskMetaData.cancel();
+        }
+        Task<MetadataResult> metaTask = new Task<>() {
             @Override
             protected MetadataResult call() throws Exception {
                 if (file.getLoadingError() == false) {
@@ -131,25 +134,46 @@ public class EditorMetadataController implements Initializable {
             }
 
         };
-        taskMetaData.setOnFailed((t) -> {
-            Logger.getLogger(EditorMetadataController.class.getName()).log(Level.SEVERE, "Cannot load metadata in editor ...", t.getSource().getException());
+        taskMetaData = metaTask;
+        metaTask.setOnFailed((t) -> {
+            Logger.getLogger(EditorMetadataController.class.getName()).log(Level.WARNING, "Cannot load metadata in editor ...", t.getSource().getException());
+            if (file == selectedMediaFile) {
+                showMetadata(null);
+            }
         });
-        taskMetaData.setOnSucceeded((t) -> {
-            updateUIWithExtendedMetadata(taskMetaData.getValue());
-            progressMetaDataIndicator.setVisible(false);
-            FadeTransition ft1 = new FadeTransition(Duration.millis(500), gridPaneMetaInfo);
-            ft1.setAutoReverse(false);
-            ft1.setFromValue(0.0);
-            ft1.setToValue(1.0);
-            ft1.play();
+        metaTask.setOnCancelled((t) -> {
+            if (file == selectedMediaFile) {
+                progressMetaDataIndicator.setVisible(false);
+            }
         });
-        executor.submit(taskMetaData);
+        metaTask.setOnSucceeded((t) -> {
+            // a task of the file shown before must not show its metadata
+            if (file == selectedMediaFile) {
+                showMetadata(metaTask.getValue());
+            }
+        });
+        executor.submit(metaTask);
         //executor.submit(task);
+    }
+
+    /** The metadata (null = none or not readable) instead of the progress indicator. */
+    private void showMetadata(MetadataResult metadata) {
+        updateUIWithExtendedMetadata(metadata);
+        progressMetaDataIndicator.setVisible(false);
+        FadeTransition ft1 = new FadeTransition(Duration.millis(500), gridPaneMetaInfo);
+        ft1.setAutoReverse(false);
+        ft1.setFromValue(0.0);
+        ft1.setToValue(1.0);
+        ft1.play();
     }
 
     /** All rows at once: adding them one by one lays out the grid for each row. */
     private void updateUIWithExtendedMetadata(MetadataResult metadata) {
         if (metadata == null) {
+            Label none = new Label("No metadata available");
+            none.getStyleClass().add("metadata-entry");
+            GridPane.setConstraints(none, 0, 1, 2, 1);
+            gridPaneMetaInfo.getChildren().setAll(none);
             return;
         }
         List<Node> cells = new ArrayList<>();

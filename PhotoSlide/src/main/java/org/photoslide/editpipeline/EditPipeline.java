@@ -409,9 +409,17 @@ public final class EditPipeline {
      * redraw, nothing is saved.
      */
     public static void editsReloaded(MediaFile file) {
+        editsReloaded(file, "Changed by another program");
+    }
+
+    /**
+     * Like editsReloaded(file); label names the step in the history of the
+     * file (e.g. "Remove all edits").
+     */
+    public static void editsReloaded(MediaFile file, String label) {
         EditHistory history = EditHistory.peek(file);
         if (history != null) {
-            history.labelNext("Changed by another program");
+            history.labelNext(label);
             history.record(file);
         }
         for (Consumer<MediaFile> l : FILTER_LISTENERS) {

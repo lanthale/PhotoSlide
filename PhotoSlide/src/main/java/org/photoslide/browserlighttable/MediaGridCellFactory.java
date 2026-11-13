@@ -121,8 +121,11 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         xMouse = new AtomicInteger(0);
         yMouse = new AtomicInteger(0);
         lightController.getOptionPane().setOnMouseDragged((t) -> {
-            if (lightController.getImageView().getViewport() == null) {
-                lightController.getImageView().setViewport(new Rectangle2D(0, 0, lightController.getImageView().getImage().getWidth(), lightController.getImageView().getImage().getHeight()));
+            // panning only moves a zoomed image: without a viewport the whole image
+            // is shown. A click that moves the mouse a little is also a drag, it must
+            // not set a viewport (taken from a thumbnail it zooms to a pixel corner)
+            if (lightController.getImageView().getViewport() == null || lightController.getImageView().getImage() == null) {
+                return;
             }
             Rectangle2D viewport = lightController.getImageView().getViewport();
             double x = viewport.getMinX();
@@ -496,7 +499,8 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         lightController.getImageProgress().setProgress(0);
         lightController.getPreview().show(selectedMediaItem);
 
-        lightController.getImageView().setViewport(selectedCell.getItem().getCropView());
+        // crop in pixels of the original; the preview scales it to the shown image
+        lightController.getPreview().setViewport(selectedCell.getItem().getCropView());
 
         if (selectedCell.getItem().getCropView() != null) {
             resetCrop.setVisible(true);

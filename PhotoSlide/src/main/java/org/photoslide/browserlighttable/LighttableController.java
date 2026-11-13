@@ -48,6 +48,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
@@ -114,6 +115,8 @@ public class LighttableController implements Initializable {
     private Predicate<MediaFile> loadPredicate;
     private ObservableList<String> sortOptions;
     private GridView<MediaFile> imageGrid;
+    /** Slides the photos into a new stack and out of a dissolved one. */
+    private StackAnimator stackAnimator;
     private final KeyCombination keyCombinationMetaC = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
     private final KeyCombination keyCombinationMetaA = new KeyCodeCombination(KeyCode.A, KeyCombination.SHORTCUT_DOWN);
     private Preferences pref;
@@ -237,6 +240,21 @@ public class LighttableController implements Initializable {
         filenameLabel.setText("");
         mediaQTYLabel.setText("");
         ratingControl.setRating(0);
+        // the stars only show the rating (bound to the selected file): a click
+        // opens the same rating popup as the Rate button. The option pane lies
+        // over the whole image (swipe, zoom, drag) and gets the clicks, so the
+        // click is taken from the stack pane while it passes down to it.
+        stackPane.addEventFilter(MouseEvent.MOUSE_CLICKED, (t) -> {
+            if (t.getButton() == MouseButton.PRIMARY && isOverRatingControl(t)
+                    && factory != null && factory.getSelectedCell() != null
+                    && factory.getSelectedCell().getItem() != null) {
+                t.consume();
+                rateAction();
+            }
+        });
+        stackPane.addEventFilter(MouseEvent.MOUSE_MOVED, (t) -> {
+            stackPane.setCursor(isOverRatingControl(t) ? javafx.scene.Cursor.HAND : null);
+        });
         sortOptions = FXCollections.observableArrayList("Filename", "Capture time", "File creation time");
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
@@ -328,6 +346,7 @@ public class LighttableController implements Initializable {
         double defaultCellWidth = imageGrid.getCellWidth();
         double defaultCellHight = imageGrid.getCellHeight();
         factory = new MediaGridCellFactory(this, imageGrid, util, metadataController);
+        stackAnimator = new StackAnimator(imageGridPane, imageGrid, factory);
 
         if (imageGridPane.getChildren().indexOf(imageGrid) == -1) {
             imageGridPane.getChildren().add(imageGrid);
@@ -353,6 +372,10 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setText("");
             //sort media List
             mainController.getStatusLabelRight().setText("Sorting media list...");
+            if (repairOrphanedStacks()) {
+                // stack fields are not in the list's extractor: filter again
+                filteredMediaList.setPredicate(standardFilter().and(filterDeleted(showDeletedButton.isSelected())));
+            }
             setDefaultSorting();
             mainController.getStatusLabelRight().setText("Sorting media list...finished.");
             factory.setListFilesActive(false);
@@ -494,6 +517,62 @@ public class LighttableController implements Initializable {
                 transition.play();
             }
         });*/
+    }
+
+    /**
+     * Repairs stacks that cannot be shown: the lighttable shows a stack by its
+     * photo at position 1, so a stack without one hides all its photos (e.g.
+     * after the first photo lost its stack). The photos are numbered again
+     * from 1 in their order; a stack with a single photo, or a photo without
+     * stack name, is dissolved. Changed files are saved in the background.
+     * JavaFX thread, after the folder was loaded.
+     *
+     * @return true if a file was changed
+     */
+    private boolean repairOrphanedStacks() {
+        java.util.Map<String, List<MediaFile>> stacks = new java.util.HashMap<>();
+        List<MediaFile> changed = new ArrayList<>();
+        synchronized (fullMediaList) {
+            for (MediaFile m : fullMediaList) {
+                if (!m.isStacked()) {
+                    continue;
+                }
+                if (m.getStackName().isBlank()) {
+                    unstack(m);
+                    changed.add(m);
+                } else {
+                    stacks.computeIfAbsent(m.getStackName(), k -> new ArrayList<>()).add(m);
+                }
+            }
+        }
+        for (List<MediaFile> stack : stacks.values()) {
+            if (stack.size() == 1) {
+                unstack(stack.get(0));
+                changed.add(stack.get(0));
+                continue;
+            }
+            if (stack.stream().anyMatch(m -> m.getStackPos() == 1)) {
+                continue;
+            }
+            stack.sort(java.util.Comparator.comparingInt(MediaFile::getStackPos)
+                    .thenComparing(MediaFile::getName));
+            for (int i = 0; i < stack.size(); i++) {
+                stack.get(i).setStackPos(i + 1);
+            }
+            changed.addAll(stack);
+        }
+        for (MediaFile m : changed) {
+            Logger.getLogger(LighttableController.class.getName()).log(Level.INFO,
+                    "Repaired stack of {0}: stacked={1}, pos={2}", new Object[]{m.getName(), m.isStacked(), m.getStackPos()});
+            executorParallel.submit(m::saveEdits);
+        }
+        return !changed.isEmpty();
+    }
+
+    private static void unstack(MediaFile m) {
+        m.setStacked(false);
+        m.setStackName(null);
+        m.setStackPos(-1);
     }
 
     public void setDefaultSorting() {
@@ -656,6 +735,15 @@ public class LighttableController implements Initializable {
         popOver.show(rateButton);
     }
 
+    /** True if the mouse is over the shown, enabled rating stars (scale and translation included). */
+    private boolean isOverRatingControl(MouseEvent t) {
+        if (!ratingControl.isVisible() || !infoPane.isVisible() || ratingControl.isDisabled()) {
+            return false;
+        }
+        Point2D local = ratingControl.sceneToLocal(t.getSceneX(), t.getSceneY());
+        return local != null && ratingControl.getLayoutBounds().contains(local);
+    }
+
     @FXML
     private void deleteButtonAction(ActionEvent event) {
         deleteAction();
@@ -778,30 +866,42 @@ public class LighttableController implements Initializable {
 
     @FXML
     private void stackButtonAction(ActionEvent event) {
+        if (stackAnimator != null && stackAnimator.isRunning()) {
+            return;
+        }
         if (stackButton.getText().equalsIgnoreCase("stack")) {
-            String fileName = ((MediaFile) factory.getSelectionModel().getSelection().iterator().next()).getPathStorage().toFile().getName();
-            String stackName = fileName.substring(0, fileName.lastIndexOf("."));
-            AtomicInteger i = new AtomicInteger(0);
-            Iterator<MediaFile> iterator = factory.getSelectionModel().getSelection().iterator();
-            while (iterator.hasNext()) {
-                MediaFile mediaF = (MediaFile) iterator.next();
-                ((MediaFile) mediaF).setStacked(true);
-                ((MediaFile) mediaF).setStackName(stackName);
-                ((MediaFile) mediaF).setStackPos(i.addAndGet(1));
-                savingMediaFileEdits(((MediaFile) mediaF));
+            List<MediaFile> members = new ArrayList<>(factory.getSelectionModel().getSelection());
+            if (members.isEmpty()) {
+                return;
             }
-            filteredMediaList.setPredicate(standardFilter());
-        } else {
-            String stackname = factory.getSelectedMediaItem().getStackName();
-            FilteredList<MediaFile> stackList = fullMediaList.filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackname));
-            stackList.forEach((mediaFile) -> {
-                mediaFile.setStackPos(-1);
-                mediaFile.setStackName(null);
-                mediaFile.setStacked(false);
-                savingMediaFileEdits(mediaFile);
+            String fileName = members.get(0).getPathStorage().toFile().getName();
+            String stackName = fileName.substring(0, fileName.lastIndexOf("."));
+            // the photos slide into the first one, then the stack is made
+            stackAnimator.collapse(members.get(0), members, () -> {
+                AtomicInteger i = new AtomicInteger(0);
+                for (MediaFile mediaF : members) {
+                    mediaF.setStacked(true);
+                    mediaF.setStackName(stackName);
+                    mediaF.setStackPos(i.addAndGet(1));
+                    savingMediaFileEdits(mediaF);
+                }
+                filteredMediaList.setPredicate(standardFilter());
             });
-            filteredMediaList.setPredicate(standardFilter());
-            stackButton.setText("Stack");
+        } else {
+            MediaFile top = factory.getSelectedMediaItem();
+            String stackname = top.getStackName();
+            List<MediaFile> stackList = new ArrayList<>(fullMediaList.filtered(mFile -> mFile.getStackName().equalsIgnoreCase(stackname)));
+            // the stack is dissolved, then the photos slide out to their places
+            stackAnimator.expand(top, stackList, () -> {
+                stackList.forEach((mediaFile) -> {
+                    mediaFile.setStackPos(-1);
+                    mediaFile.setStackName(null);
+                    mediaFile.setStacked(false);
+                    savingMediaFileEdits(mediaFile);
+                });
+                filteredMediaList.setPredicate(standardFilter());
+                stackButton.setText("Stack");
+            });
         }
     }
 
@@ -954,11 +1054,8 @@ public class LighttableController implements Initializable {
             m.reloadEdits();
             EditPipeline.editsReloaded(m);
             if (factory != null && factory.getSelectedMediaItem() == m && !isCropping()) {
-                // the crop is in pixels of the original, the view may show a preview
-                Rectangle2D crop = m.getCropView();
-                double sc = preview.getDisplayScale();
-                imageView.setViewport(crop == null ? null : new Rectangle2D(crop.getMinX() * sc,
-                        crop.getMinY() * sc, crop.getWidth() * sc, crop.getHeight() * sc));
+                // the crop is in pixels of the original; the preview scales it to the shown image
+                preview.setViewport(m.getCropView());
             }
         });
         sidecarWatcher.start();

@@ -6,6 +6,8 @@
 package org.photoslide.datamodel;
 
 import java.io.File;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  *
@@ -15,13 +17,16 @@ public class FileTypes {
 
     private static final String imageTypes = "jpg,jfif,tif,tiff,jpeg,png,psd,cr2,nef,raf,dng,x3f,heic,webp";
     private static final String videoTypes = "mp4,mov";
+    // exact endings: a substring test of the list would also accept e.g. "if" or "pg"
+    private static final Set<String> VALID_TYPES = Set.of((imageTypes + "," + videoTypes).split(","));
 
     /**
      *
      * @param fileName Name of the file to check as String
      * @return true if the name ends with a valid type else false
      */
-    public synchronized static boolean isValidType(String fileName) {
+    // not synchronized: called for every file by all loading threads
+    public static boolean isValidType(String fileName) {
         int lastIndexOf = fileName.lastIndexOf('.');
         String fileEndingStr = "";
         if (lastIndexOf != -1) {
@@ -29,7 +34,7 @@ public class FileTypes {
         } else {
             return false;
         }
-        boolean isValid = (imageTypes + "," + videoTypes).toUpperCase().contains(fileEndingStr.toUpperCase());
+        boolean isValid = VALID_TYPES.contains(fileEndingStr.toLowerCase(Locale.ROOT));
         if (isValid == true) {
             if (fileName.startsWith(".")) {
                 isValid = false;

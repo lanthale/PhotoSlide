@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -291,6 +292,29 @@ public class MediaFile implements Serializable {
             }
         } else {
             // no sidecar: the file has no edits (values e.g. from an old cache are dropped)
+            resetEdits();
+        }
+    }
+
+    /**
+     * Like {@link #readEdits()}, but with the names of the edit files of the
+     * folder from one directory listing: a file without sidecar or legacy edit
+     * file needs no access to the file system (on a network share each check
+     * takes milliseconds).
+     *
+     * @param editFileNames lower case names of the .xmp/.edit files in the folder
+     */
+    public void readEdits(Set<String> editFileNames) {
+        String name = getPathStorage().getFileName().toString();
+        int dot = name.lastIndexOf('.');
+        String base = (dot > 0 ? name.substring(0, dot) : name).toLowerCase();
+        // lower case: on a case insensitive file system IMG.XMP belongs to IMG.jpg,
+        // on a case sensitive one a wrong match only reads the file system as before
+        if (editFileNames.contains(base + ".xmp")
+                || editFileNames.contains(base + ".edit")
+                || editFileNames.contains("ω_" + base + ".edit")) {
+            readEdits();
+        } else {
             resetEdits();
         }
     }
@@ -692,6 +716,12 @@ public class MediaFile implements Serializable {
      */
     private void readFileTimes() throws IOException {
         BasicFileAttributes attr = Files.readAttributes(Path.of(pathStorage), BasicFileAttributes.class);
+        creationTime = attr.creationTime();
+        lastModifyTime = attr.lastModifiedTime();
+    }
+
+    /** Sets creation and modification time from attributes already read, e.g. by the directory listing. */
+    public void setFileTimes(BasicFileAttributes attr) {
         creationTime = attr.creationTime();
         lastModifyTime = attr.lastModifiedTime();
     }
@@ -1138,9 +1168,15 @@ public class MediaFile implements Serializable {
 
     /**
      * Removes all edits: the XMP sidecar (and a former .edit file) is
-     * deleted and everything stored there is reset.
+     * deleted and everything stored there is reset. The stack the file
+     * belongs to is not an edit and stays (else the other photos of the stack
+     * would stay hidden behind a stack that no longer has a first photo); it
+     * is written into a new sidecar.
      */
     public void removeAllEdits() {
+        boolean wasStacked = stacked.get();
+        String oldStackName = stackName.get();
+        int oldStackPos = stackPos.get();
         try {
             XmpSidecar.delete(this);
             Files.deleteIfExists(getLegacyEditFilePath());
@@ -1149,6 +1185,12 @@ public class MediaFile implements Serializable {
         }
         resetEdits();
         faces.set("");
+        if (wasStacked) {
+            stacked.set(true);
+            stackName.set(oldStackName);
+            stackPos.set(oldStackPos);
+            saveEdits();
+        }
     }
 
     /**

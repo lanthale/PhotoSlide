@@ -9,7 +9,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
@@ -18,31 +17,40 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.control.Label;
+import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.Utility;
 import org.photoslide.browsercollections.FilenameComparator;
 
@@ -59,16 +67,16 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final MetadataController metadataController;
     private final MediaGridCellFactory factory;
     private final ObservableList<MediaFile> fullMediaList;
-    private final MediaFileLoader fileLoader;
-    // own pool for the parallel loading: the common pool stays free, and its
-    // daemon threads are bounded and do not keep the JVM alive on exit
-    private final ForkJoinPool loadingPool;
-    private final int loadingLimit;
-    private List<MediaFile> cacheList;
-    private List<Thread> loadingThreads;
+    // the work per file blocks on the file system (few small reads), it is
+    // not CPU bound: 4 threads also on a dual core, at most 8 so that a
+    // network share or a hard disk is not flooded with requests.
+    // Platform threads on purpose: file I/O pins virtual threads, the JDK
+    // would add carrier threads and the number of requests would be unbounded.
+    private static final int LOADING_THREADS = Math.clamp(Runtime.getRuntime().availableProcessors(), 4, 8);
+    // own pool: the common pool stays free, daemon threads do not keep the JVM alive on exit
+    private final ExecutorService loadingPool;
+    private final List<MediaFile> cacheList;
     private boolean loadedFromCache;
-    private final LighttableController lightcontroller;
-    private List<Path> dummyfileList;    
     // paths in cacheList, so the loading loop never searches a list
     private final Set<Path> cachedPaths;
     // sort keys are computed here so the FX thread only compares
@@ -81,9 +89,20 @@ public class MediaLoadingTask extends Task<MediaFile> {
     private final AtomicBoolean flushScheduled;
     private volatile long lastFlush;
 
+    /**
+     * Result of the one directory listing of the folder: on a network share
+     * every access takes milliseconds, so the folder is listed once and the
+     * file attributes and the edit files found there are used for all files.
+     *
+     * @param media valid media files, sorted by file name
+     * @param attributes attributes of the media files from the listing
+     * @param editFileNames lower case names of the .xmp and .edit files
+     */
+    private record FolderScan(List<Path> media, Map<Path, BasicFileAttributes> attributes, Set<String> editFileNames) {
+    }
+
     public MediaLoadingTask(ObservableList<MediaFile> fullMediaList, MediaGridCellFactory factory, Path sPath, MainViewController mainControllerParam, Label mediaQTYLabelParam, String sortParm, MetadataController metaControllerParam, LighttableController lightcontroller) {
-        selectedPath = sPath;        
-        fileLoader = new MediaFileLoader();
+        selectedPath = sPath;
         mediaQTYLabel = mediaQTYLabelParam;
         mainController = mainControllerParam;
         sort = sortParm;
@@ -95,80 +114,39 @@ public class MediaLoadingTask extends Task<MediaFile> {
         pendingAdds = new ConcurrentLinkedQueue<>();
         flushScheduled = new AtomicBoolean(false);
         lastFlush = 0;
-        dummyfileList = new ArrayList<>();
-        loadingThreads = new ArrayList<>();
         loadedFromCache = false;
-        this.lightcontroller = lightcontroller;
         sortKeys = lightcontroller.getFilenameComparator();
-        loadingPool = new ForkJoinPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
-        if (Utility.nativeMemorySize > 4194500) {
-            loadingLimit = 75;
-        } else {
-            loadingLimit = 100;
-        }
+        loadingPool = Executors.newFixedThreadPool(LOADING_THREADS,
+                new ThreadFactoryBuilder().setNamePrefix("mediaLoading").setDaemon(true).build());
     }
 
     @Override
     protected MediaFile call() throws Exception {
         final long qty;
         try {
+            updateTitle("Reading folder...");
+            FolderScan scan = scanFolder();
+            if (this.isCancelled()) {
+                return null;
+            }
+            qty = scan.media().size();
+            updateTitle("Reading folder...finished");
 
             updateTitle("Reading cache...");
             File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
-            restoreCacheFromDisk(inPath);
+            restoreCacheFromDisk(inPath, scan);
+            if (this.isCancelled()) {
+                return null;
+            }
             updateTitle("Reading cache...finished");
 
-            updateTitle("Counting mediafiles...");
-
-            try (Stream<Path> fileListCount = Files.list(selectedPath)) {
-                qty = fileListCount.filter((t5) -> FileTypes.isValidType(t5.getFileName().toString())).count();
-            }
-            updateTitle("Counting mediafiles...finished");
-                        
-            
             updateTitle("Preparing mediafile list...");
-
-            Stream<Path> fileList = Files.list(selectedPath).filter((t) -> {
-                return FileTypes.isValidType(t.getFileName().toString());
-            }).sorted(new FilenameComparator());
-
-            Stream<Path> finalFileList;
-            if (cacheList.isEmpty() == true) {
-                finalFileList = fileList;
-            } else {
-                Stream<Path> diffFileList = fileList
-                        .filter(element -> !cachedPaths.contains(element));
-                //list of edit files                
-                long start = System.currentTimeMillis();
-
-                //edit file list
-                dummyfileList = Files.list(selectedPath).filter((t) -> {
-                    String n = t.getFileName().toString();
-                    return n.startsWith("Ω") || n.toLowerCase().endsWith(".xmp");
-                }).sorted(new FilenameComparator()).collect(Collectors.toList());
-                Stream<Path> editFileList = cacheList.stream().filter((t) -> {
-                    boolean retVal = false;
-                    if (t != null) {
-                        if (!t.getFilterList().isEmpty()) {
-                            retVal = true;
-                        }
-                        if (dummyfileList.contains(Path.of(FileTypes.convertEditNameToFilename(t.getPathStorage().toString())))) {
-                            retVal = true;
-                        }
-                    }
-                    return retVal;
-                }).map(MediaFile::getPathStorage);
-                finalFileList = diffFileList;//Stream.concat(diffFileList, editFileList);
-                long end = System.currentTimeMillis();
-                loadedFromCache = true;
-                Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Calculating difference between cache and disk took " + (end - start) / 1000 + "s");
-            }
-
-            if (qty < cacheList.size()) {
-                Stream<Path> fileListNew = Files.list(selectedPath).filter((t) -> {
-                    return FileTypes.isValidType(t.getFileName().toString());
-                }).sorted(new FilenameComparator());
-                finalFileList = fileListNew;
+            List<Path> toLoad;
+            if (cacheList.isEmpty()) {
+                toLoad = scan.media();
+            } else if (qty < cacheList.size()) {
+                // files were deleted since the cache was written: load everything again
+                toLoad = scan.media();
                 loadedFromCache = false;
                 cacheList.clear();
                 cachedPaths.clear();
@@ -177,6 +155,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 });
                 File outpath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
                 outpath.delete();
+            } else {
+                toLoad = scan.media().stream().filter(p -> !cachedPaths.contains(p)).toList();
+                loadedFromCache = true;
             }
             updateTitle("Preparing mediafile list...finished");
             if (qty == 0) {
@@ -200,40 +181,24 @@ public class MediaLoadingTask extends Task<MediaFile> {
             long starttime = System.currentTimeMillis();
 
             AtomicInteger iatom = new AtomicInteger(1);
-            List<Path> finalCacheList = finalFileList.toList();
-
-            ForkJoinTask<?> loading = loadingPool.submit(() -> finalCacheList.parallelStream().forEach((fileItem) -> {
-                if (this.isCancelled()) {
-                    return;
-                }
-                if (this.isCancelled() == false) {
-                    if (Files.isDirectory(fileItem) == false) {
-                        if (FileTypes.isValidType(fileItem.toString())) {
-                            MediaFile m = new MediaFile();
-                            m.setName(fileItem.getFileName().toString());
-                            m.setPathStorage(fileItem);
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
-
-                            if (cachedPaths.contains(fileItem) == false) {
-                                try {
-                                    loadItem(fileItem, m, null);
-                                    updateValue(m);
-                                    if (cachedPaths.add(fileItem)) {
-                                        cacheList.add(m);
-                                    }
-                                } catch (IOException ex) {
-                                    m.setMediaType(MediaFile.MediaTypes.NONE);
-                                }
-                            } else {
-                                m.readEdits();
-                                updateValue(m);
-                                if (cachedPaths.add(fileItem)) {
-                                    cacheList.add(m);
-                                } else {
-                                    cacheList.set(cacheList.indexOf(m), m);
-                                }
-                            }
+            try {
+                processInOrder(toLoad, (fileItem) -> {
+                    MediaFile m = new MediaFile();
+                    m.setName(fileItem.getFileName().toString());
+                    m.setPathStorage(fileItem);
+                    m.setMediaType(MediaFile.MediaTypes.IMAGE);
+                    BasicFileAttributes attr = scan.attributes().get(fileItem);
+                    if (attr != null) {
+                        m.setFileTimes(attr);
+                    }
+                    try {
+                        loadItem(fileItem, m, scan.editFileNames());
+                        updateValue(m);
+                        if (cachedPaths.add(fileItem)) {
+                            cacheList.add(m);
                         }
+                    } catch (IOException ex) {
+                        m.setMediaType(MediaFile.MediaTypes.NONE);
                     }
                     if (loadedFromCache == false) {
                         updateTitle("Loading..." + iatom.get() + " / " + qty);
@@ -242,11 +207,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         updateTitle("Checking cache..." + iatom.get() + "/" + cacheList.size());
                         updateMessage("Checking cache..." + iatom.get() + "/" + cacheList.size());
                     }
-                    iatom.addAndGet(1);
-                }
-            }));
-            try {
-                loading.get();
+                    iatom.incrementAndGet();
+                });
             } catch (InterruptedException | ExecutionException ex) {
                 // cancel() interrupts this thread
                 if (this.isCancelled()) {
@@ -258,9 +220,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 return null;
             }
             long endtime = System.currentTimeMillis();
-            fileList.close();
             updateMessage("Finished MediaLoading Task.");
-            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
+            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in ms: " + (endtime - starttime) + " " + selectedPath);
             updateMessage("Sorting media list...");
         } catch (IOException ex) {
             Platform.runLater(() -> {
@@ -271,8 +232,72 @@ public class MediaLoadingTask extends Task<MediaFile> {
         return null;
     }
 
-    private void restoreCacheFromDisk(File inPath) {        
-        //restore cache   
+    /**
+     * Lists the folder once. Under Windows the attributes come with the
+     * listing, elsewhere it is one access per file (instead of one for the
+     * times plus three for the edit files of every media file).
+     */
+    private FolderScan scanFolder() throws IOException {
+        List<Path> media = new ArrayList<>();
+        Map<Path, BasicFileAttributes> attributes = new HashMap<>();
+        Set<String> editFileNames = new HashSet<>();
+        Files.walkFileTree(selectedPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
+                if (isCancelled()) {
+                    return FileVisitResult.TERMINATE;
+                }
+                String name = file.getFileName().toString();
+                String lower = name.toLowerCase();
+                if (lower.endsWith(".xmp") || lower.endsWith(".edit")) {
+                    editFileNames.add(lower);
+                } else if (!attr.isDirectory() && FileTypes.isValidType(name)) {
+                    media.add(file);
+                    // a link has the times of the link, not of the file: read them later
+                    if (!attr.isSymbolicLink()) {
+                        attributes.put(file, attr);
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        media.sort(new FilenameComparator());
+        return new FolderScan(media, attributes, editFileNames);
+    }
+
+    /**
+     * Runs the action for all items with the loading threads, in the order of
+     * the list: the files are sorted like the grid, so the first rows are
+     * filled first (a parallel stream splits the list into chunks and fills
+     * the grid at several places at once).
+     */
+    private <T> void processInOrder(List<T> items, Consumer<T> action) throws InterruptedException, ExecutionException {
+        AtomicInteger next = new AtomicInteger();
+        int workers = Math.min(LOADING_THREADS, items.size());
+        List<Future<?>> running = new ArrayList<>(workers);
+        for (int w = 0; w < workers; w++) {
+            running.add(loadingPool.submit(() -> {
+                int i;
+                while (!isCancelled() && (i = next.getAndIncrement()) < items.size()) {
+                    action.accept(items.get(i));
+                }
+            }));
+        }
+        for (Future<?> f : running) {
+            f.get();
+        }
+    }
+
+    private void restoreCacheFromDisk(File inPath, FolderScan scan) {
+        if (!inPath.exists()) {
+            return;
+        }
+        //restore cache
         FileInputStream fileInputStream;
         try {
             fileInputStream = new FileInputStream(inPath);
@@ -280,20 +305,32 @@ public class MediaLoadingTask extends Task<MediaFile> {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 e2 = (List<MediaFile>) objectInputStream.readObject();
                 // the cache is only written after loading a folder: the edits
-                // made since then are in the XMP sidecars, which are the reference
-                e2.parallelStream().forEach(MediaFile::readEdits);
-                //List<MediaFile> collect = e2.parallelStream().filter((t) -> Files.exists(t.getPathStorage()) == true).collect(Collectors.toList());                
-                cacheList.addAll(e2);                
+                // made since then are in the XMP sidecars, which are the reference;
+                // only files with an edit file in the listing are read
+                processInOrder(e2, (m) -> {
+                    m.readEdits(scan.editFileNames());
+                    BasicFileAttributes attr = scan.attributes().get(m.getPathStorage());
+                    if (attr != null) {
+                        m.setFileTimes(attr);
+                    }
+                });
+                if (this.isCancelled()) {
+                    return;
+                }
+                cacheList.addAll(e2);
                 e2.forEach((m) -> {
                     cachedPaths.add(m.getPathStorage());
                     sortKeys.prepare(m);
                 });
                 Platform.runLater(() -> {
-                    fullMediaList.addAll(e2);                    
+                    fullMediaList.addAll(e2);
                     factory.setListFilesActive(false);
                 });
             }
-        } catch (IOException | ClassNotFoundException | ClassCastException | NullPointerException ex) {
+        } catch (InterruptedException ex) {
+            // cancelled while reading the edits
+            Thread.currentThread().interrupt();
+        } catch (IOException | ClassNotFoundException | ClassCastException | NullPointerException | ExecutionException ex) {
             inPath.delete();
         }
     }
@@ -352,18 +389,16 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
     }
 
-    public void loadItem(Path fileItem, MediaFile m, Thread th) throws IOException {
+    private void loadItem(Path fileItem, MediaFile m, Set<String> editFileNames) throws IOException {
         if (this.isCancelled()) {
             return;
         }
-        m.readEdits();
+        m.readEdits(editFileNames);
         if (this.isCancelled()) {
             return;
         }
+        // no file access if the times came with the folder listing
         m.getCreationTime();
-        if (this.isCancelled()) {
-            return;
-        }
         if (mainController.isMediaFileBookmarked(m)) {
             m.setBookmarked(true);
         }
@@ -372,12 +407,6 @@ public class MediaLoadingTask extends Task<MediaFile> {
         }
         if (FileTypes.isValidVideo(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.VIDEO);
-            if (this.isCancelled()) {
-                return;
-            }
-            if (this.isCancelled()) {
-                return;
-            }
         } else if (FileTypes.isValidImage(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.IMAGE);
             if (sort.equalsIgnoreCase("Capture time")) {
@@ -391,17 +420,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            if (this.isCancelled()) {
-                return;
-            }
-            if (this.isCancelled()) {
-                return;
-            }
         } else {
             m.setMediaType(MediaFile.MediaTypes.NONE);
-        }
-        if (th != null) {
-            loadingThreads.remove(th);
         }
     }
 

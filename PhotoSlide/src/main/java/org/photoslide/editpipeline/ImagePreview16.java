@@ -101,7 +101,9 @@ public final class ImagePreview16 {
         });
         // zoom, scroll and crop code set the viewport in pixels of the shown image
         view.viewportProperty().addListener((o, oldValue, newValue) -> {
-            if (!settingViewport) {
+            // only for the image rendered here: a thumbnail shown meanwhile has
+            // another, unknown scale and would give a viewport of a tiny corner
+            if (!settingViewport && shownImage != null && view.getImage() == shownImage) {
                 fullViewport = newValue == null ? null : scale(newValue, 1 / currentScale());
             }
         });

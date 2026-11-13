@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -98,8 +99,7 @@ public class MediaFileLoader {
                     taskList.remove(newMediaItem.getName());
                 });
                 if (taskList.get(newMediaItem.getName()) == null) {
-                    taskList.put(newMediaItem.getName(), task);
-                    executorParallel.submit(task);
+                    submit(newMediaItem.getName(), task);
                 }
             }
         }
@@ -137,10 +137,26 @@ public class MediaFileLoader {
                     taskList.remove(fileItem.getName());
                 });
                 if (taskList.get(fileItem.getName()) == null) {
-                    taskList.put(fileItem.getName(), task);
-                    executorParallel.submit(task);
+                    submit(fileItem.getName(), task);
                 }
             }
+        }
+    }
+
+    /**
+     * Starts the request. After shutdown() (folder closed, app quits) grid cells
+     * may still ask for thumbnails from runLater calls already queued: ignored.
+     */
+    private void submit(String name, Task task) {
+        if (executorParallel.isShutdown()) {
+            return;
+        }
+        taskList.put(name, task);
+        try {
+            executorParallel.submit(task);
+        } catch (RejectedExecutionException ex) {
+            // shut down between the check and the submit
+            taskList.remove(name);
         }
     }
 

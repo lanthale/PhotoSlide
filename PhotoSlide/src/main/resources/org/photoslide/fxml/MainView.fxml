@@ -213,9 +213,9 @@
         </MenuBar>
         <HBox>
             <children>
-                <ToolBar prefHeight="70.0" prefWidth="300.0" HBox.hgrow="NEVER">
+                <ToolBar minWidth="-Infinity" prefHeight="70.0" HBox.hgrow="NEVER">
                     <items>
-                        <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="280.0">
+                        <HBox alignment="CENTER" minWidth="-Infinity" prefHeight="45.0">
                             <children>
                                 <ToggleButton id="tooltoggle-button" fx:id="browseButton" minWidth="120.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" text="%mainView.browse" HBox.hgrow="NEVER">
                                     <font>

@@ -234,6 +234,7 @@ public final class XmpSidecar {
         m.setPropertyBoolean(NS_PHOTOSLIDE, "Stacked", f.isStacked());
         putString(m, NS_PHOTOSLIDE, "StackName", f.getStackName());
         m.setPropertyInteger(NS_PHOTOSLIDE, "StackPos", f.getStackPos());
+        XmpFaceRegions.put(m, f, NS_PHOTOSLIDE);
 
         m.deleteProperty(NS_PHOTOSLIDE, "Filters");
         List<ImageFilter> filters = new ArrayList<>(f.getFilterList());
@@ -385,6 +386,7 @@ public final class XmpSidecar {
         if (stackPos != null) {
             f.setStackPos(stackPos);
         }
+        XmpFaceRegions.get(m, f, NS_PHOTOSLIDE);
 
         int filters = m.countArrayItems(NS_PHOTOSLIDE, "Filters");
         List<ImageFilter> list = new ArrayList<>();

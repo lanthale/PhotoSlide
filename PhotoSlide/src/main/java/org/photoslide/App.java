@@ -68,7 +68,8 @@ public class App extends Application {
     private static final HashMap<String, LocalDate> SEARCHINDEXFINISHEDMAP = new HashMap<>();
     private static boolean MAXIMIZED = true;
     // 3: metadata without icafe4j number lists
-    private static final int SEARCHDB_VERSION = 3;
+    // 4: faces (FACES, FACE_EMBEDDINGS), rebuilt from the MWG regions in the XMP sidecars
+    private static final int SEARCHDB_VERSION = 4;
     /** Characters that separate the words of the full text index. */
     public static final String SEARCH_WHITESPACE_CHARS = " ;-:/.,\\";
     private static final String NODE_NAME = "PhotoSlide";
@@ -278,7 +279,16 @@ public class App extends Application {
      * schema version (it is only a cache of the media files).
      */
     public static void prepareSearchDB(Connection con) throws SQLException {
-        if (searchDBVersion(con) == SEARCHDB_VERSION) {
+        int version = searchDBVersion(con);
+        if (version == SEARCHDB_VERSION) {
+            return;
+        }
+        if (version == 3) {
+            // only the face tables are new: no rebuild (it would also resolve all places again)
+            try (Statement stat = con.createStatement()) {
+                createFaceTables(stat);
+                stat.execute("UPDATE SCHEMAINFO SET version=" + SEARCHDB_VERSION);
+            }
             return;
         }
         try (Statement stat = con.createStatement()) {
@@ -288,6 +298,8 @@ public class App extends Application {
                 // no full text index yet
             }
             stat.execute("DROP TABLE IF EXISTS MEDIAFILES");
+            stat.execute("DROP TABLE IF EXISTS FACES");
+            stat.execute("DROP TABLE IF EXISTS FACE_EMBEDDINGS");
             stat.execute("DROP TABLE IF EXISTS SCHEMAINFO");
             stat.execute("DROP ALIAS IF EXISTS FT_INIT");
             FullText.init(con);
@@ -314,8 +326,32 @@ public class App extends Application {
             stat.execute("CREATE INDEX MEDIAFILES_COLLECTION ON MEDIAFILES(collectionname)");
             // only text columns: every indexed column costs words in FT.WORDS and FT.MAP on each insert
             FullText.createIndex(con, "PUBLIC", "MEDIAFILES", "PATHSTORAGE,TITLE,KEYWORDS,CAMERA,PLACES,FACES,METADATA");
+            createFaceTables(stat);
             stat.execute("CREATE TABLE SCHEMAINFO(version INTEGER)");
             stat.execute("INSERT INTO SCHEMAINFO VALUES(" + SEARCHDB_VERSION + ")");
+        }
+    }
+
+    /** Faces and their feature vectors (version 4). */
+    private static void createFaceTables(Statement stat) throws SQLException {
+        {
+            stat.execute("DROP TABLE IF EXISTS FACES");
+            stat.execute("DROP TABLE IF EXISTS FACE_EMBEDDINGS");
+            // the faces of each file as in its XMP sidecar (normalized to the decoded source)
+            stat.execute("CREATE TABLE FACES("
+                    + "pathStorage VARCHAR(1000) NOT NULL,"
+                    + "idx INTEGER NOT NULL,"
+                    + "name VARCHAR(255),"
+                    + "confirmed BOOLEAN NOT NULL,"
+                    + "x DOUBLE, y DOUBLE, w DOUBLE, h DOUBLE,"
+                    + "PRIMARY KEY(pathStorage, idx))");
+            stat.execute("CREATE INDEX FACES_NAME ON FACES(name)");
+            // feature vectors of faces (only here, they can be computed again from photo and region)
+            stat.execute("CREATE TABLE FACE_EMBEDDINGS("
+                    + "pathStorage VARCHAR(1000) NOT NULL,"
+                    + "x DOUBLE, y DOUBLE, w DOUBLE, h DOUBLE,"
+                    + "embedding VARBINARY(2048) NOT NULL)");
+            stat.execute("CREATE INDEX FACE_EMBEDDINGS_PATH ON FACE_EMBEDDINGS(pathStorage)");
         }
     }
 

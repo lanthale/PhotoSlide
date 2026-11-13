@@ -42,7 +42,10 @@ import org.photoslide.App;
 import org.photoslide.MainViewController;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browsermetadata.GeoCoding;
+import org.photoslide.datamodel.FaceRegion;
 import org.photoslide.datamodel.FileTypes;
+import org.photoslide.faces.FaceService;
+import org.photoslide.faces.FaceStore;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.datamodel.XmpSidecar;
 import org.photoslide.browsermetadata.MetadataController;
@@ -216,6 +219,8 @@ public class SearchIndex {
         }
         if (!terminated && !task.isCancelled()) {
             requestPlaces(collectionName);
+            // embeddings of named faces, e.g. after the database was built again from the XMP files
+            FaceService.get().learnMissingEmbeddings();
         }
     }
 
@@ -261,6 +266,7 @@ public class SearchIndex {
                 }
                 delete.setString(1, path);
                 delete.addBatch();
+                FaceStore.deleteFile(con, path);
                 if (++pending >= COMMIT_ROWS) {
                     delete.executeBatch();
                     pending = 0;
@@ -301,6 +307,7 @@ public class SearchIndex {
         }
         setValues(merge, collectionName, m, metadata, modified, attrs.size());
         merge.addBatch();
+        FaceStore.writeFaces(merge.getConnection(), path, m.getFaceRegions());
         return true;
     }
 
@@ -355,6 +362,7 @@ public class SearchIndex {
         int rating = m.getRatingProperty().getValue();
         String places = m.placeProperty().get();
         String faces = m.facesProperty().get();
+        List<FaceRegion> faceRegions = m.getFaceRegions();
         Path sidecar = XmpSidecar.sidecarPath(m);
         try {
             executor.submit(() -> {
@@ -373,6 +381,8 @@ public class SearchIndex {
                         stm.setString(7, path);
                         stm.executeUpdate();
                     }
+                    // also for files of collections without search: the names teach the recognition
+                    FaceStore.writeFaces(connection(), path, faceRegions);
                 } catch (IOException | SQLException ex) {
                     LOG.log(Level.WARNING, "Cannot update search index of " + path, ex);
                 }
@@ -488,6 +498,7 @@ public class SearchIndex {
         });
         executor.submit(() -> {
             try (PreparedStatement stm = connection().prepareStatement("DELETE FROM MEDIAFILES WHERE COLLECTIONNAME=?")) {
+                FaceStore.deleteCollection(connection(), colname);
                 stm.setString(1, colname);
                 stm.executeUpdate();
             } catch (SQLException ex) {
@@ -553,6 +564,7 @@ public class SearchIndex {
                     stm.setInt(5, oldRoot.length());
                     stm.setString(6, oldRoot);
                     int moved = stm.executeUpdate();
+                    FaceStore.relocate(con, oldRoot, newRoot);
                     con.commit();
                     LOG.log(Level.INFO, "Search index: {0} files relocated from {1} to {2}", new Object[]{moved, oldRoot, newRoot});
                 } catch (SQLException ex) {
@@ -566,6 +578,7 @@ public class SearchIndex {
                 // collection, the scan below indexes the new location
                 LOG.log(Level.WARNING, "Cannot relocate search index of " + oldRoot + ", it is indexed again", ex);
                 try (PreparedStatement stm = connection().prepareStatement("DELETE FROM MEDIAFILES WHERE COLLECTIONNAME=?")) {
+                    FaceStore.deleteCollection(connection(), oldRoot);
                     stm.setString(1, oldRoot);
                     stm.executeUpdate();
                 } catch (SQLException e) {

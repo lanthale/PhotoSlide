@@ -151,16 +151,12 @@
                               <Tooltip text="%browserLighttable.pressXForBookmakrUnBookmark" />
                            </tooltip>
                         </Button>
-                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#faceRecognitationAction" text="%browserLighttable.faces">
+                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#faceRecognitionAction" text="%browserLighttable.faces">
                            <graphic>
                               <FontIcon iconLiteral="fa-street-view" iconSize="17" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="%browserLighttable.showDeletedItems">
-                                 <graphic>
-                                    <Button mnemonicParsing="false" text="Button" />
-                                 </graphic>
-                              </Tooltip>
+                              <Tooltip text="%browserLighttable.facesTooltip" />
                            </tooltip>
                            <font>
                               <Font size="11.0" />

@@ -7,6 +7,10 @@ package org.photoslide.browserlighttable;
 
 
 import org.photoslide.I18n;
+import org.photoslide.datamodel.FaceRegion;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.editpipeline.EditHistory;
@@ -166,6 +170,17 @@ public class LighttableController implements Initializable {
     private HBox cropBar;
     private ComboBox<String> cropAspect;
     private MediaFile croppedFile;
+    /** Faces of the shown photo (Faces button). */
+    private org.photoslide.editormedia.FaceOverlay faceOverlay;
+    private HBox faceBar;
+    private Label faceStatus;
+    private ToggleButton faceAddButton;
+    private ToggleButton faceOnlyUnknownButton;
+    /** The photo whose faces are shown, null = face mode off. */
+    private MediaFile facesFile;
+    /** Writes the sidecars after face changes, one after another. */
+    private final java.util.concurrent.ExecutorService faceSaver = java.util.concurrent.Executors.newSingleThreadExecutor(
+            Thread.ofPlatform().name("faceSaver").daemon().factory());
     /** File of the last history step made here; undo and redo act on it (null = the selected file). */
     private MediaFile historyFile;
     @FXML
@@ -232,7 +247,18 @@ public class LighttableController implements Initializable {
         preview.setOnFailed((ex) -> imageProgress.setVisible(false));
         cropOverlay = new CropRotateOverlay(imageView, preview);
         cropBar = createCropBar();
-        stackPane.getChildren().addAll(cropOverlay, cropBar);
+        faceOverlay = new org.photoslide.editormedia.FaceOverlay(imageView, preview);
+        faceOverlay.setOnChange(this::facesChanged);
+        faceOverlay.setOnAdd(this::faceAdded);
+        faceOverlay.setOnAddingEnded(() -> faceAddButton.setSelected(false));
+        faceBar = createFaceBar();
+        stackPane.getChildren().addAll(cropOverlay, cropBar, faceOverlay, faceBar);
+        // another photo is shown while the faces are on: show its faces
+        imageView.imageProperty().addListener((o, oldImage, newImage) -> {
+            if (facesFile != null && preview.getFile() != facesFile) {
+                showFaces();
+            }
+        });
         mediaView.fitWidthProperty().bind(stackPane.widthProperty());
         mediaView.fitHeightProperty().bind(stackPane.heightProperty());
         mediaView.setVisible(false);
@@ -935,6 +961,10 @@ public class LighttableController implements Initializable {
             return;
         }
         EditHistory.of(item);
+        if (facesFile != null) {
+            facesButton.setSelected(false);
+            stopFaces();
+        }
         croppedFile = item;
         infoPane.setDisable(true);
         optionPane.setDisable(true);
@@ -1543,26 +1573,185 @@ public class LighttableController implements Initializable {
     }
 
     @FXML
-    private void faceRecognitationAction(ActionEvent event) {
-        /*HaarCascadeDetector detector = new HaarCascadeDetector(100);
-        List<DetectedFace> faces = null;
-        MediaManager media = DefaultMediaManager.INSTANCE;
-        String fileName = "file.jpg";
+    private void faceRecognitionAction(ActionEvent event) {
+        if (facesButton.isSelected()) {
+            startFaces();
+        } else {
+            stopFaces();
+        }
+    }
 
-        BufferedImage img = null;
+    /** Face mode: frames and names over the shown photo; waits for or starts the model download. */
+    private void startFaces() {
+        if (isCropping()) {
+            cancelCrop();
+        }
+        MediaFile item = preview.getFile();
+        if (item == null || item.getMediaType() != MediaFile.MediaTypes.IMAGE) {
+            facesButton.setSelected(false);
+            return;
+        }
+        org.photoslide.faces.FaceService service = org.photoslide.faces.FaceService.get();
+        if (service.modelsAvailable()) {
+            showFaces();
+            return;
+        }
+        // normally downloaded in the background after the start; else (offline then) now,
+        // or wait for the running download
+        facesButton.setDisable(true);
+        imageProgress.progressProperty().unbind();
+        imageProgress.setProgress(0);
+        imageProgress.setVisible(true);
+        service.downloadModels(p -> Platform.runLater(() -> imageProgress.setProgress(p)))
+                .whenComplete((v, ex) -> Platform.runLater(() -> {
+            imageProgress.setVisible(false);
+            facesButton.setDisable(false);
+            if (ex != null) {
+                facesButton.setSelected(false);
+                Alert error = new Alert(Alert.AlertType.ERROR, I18n.t("faces.downloadFailed", rootMessage(ex)), ButtonType.OK);
+                error.initOwner(stackPane.getScene().getWindow());
+                error.show();
+            } else if (facesButton.isSelected()) {
+                showFaces();
+            }
+        }));
+    }
 
-        faces = detector.detectFaces(ImageUtilities.createFImage(img));
-        System.out.println("detect faces size = " + faces.size());
-        Quadrilateral_F64 location = new Quadrilateral_F64();
-        for (DetectedFace f : faces) {
-            System.out.println("bounds: " + f.getBounds());
-            location = new Quadrilateral_F64(
-                    f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY(),
-                    f.getBounds().getTopLeft().getX(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight(),
-                    f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY(),
-                    f.getBounds().getTopLeft().getX() + f.getBounds().getWidth(), f.getBounds().getTopLeft().getY() + f.getBounds().getHeight());
-            break;
-        }*/
+    /** Shows the faces of the photo in the preview and searches the ones not known yet. */
+    private void showFaces() {
+        faceOverlay.commitEditing();                 // a name being typed belongs to the previous photo
+        MediaFile item = preview.getFile();
+        if (item == null || item.getMediaType() != MediaFile.MediaTypes.IMAGE) {
+            facesFile = null;
+            faceOverlay.clear();
+            faceBar.setVisible(false);
+            return;
+        }
+        facesFile = item;
+        faceAddButton.setSelected(false);
+        faceOverlay.setVisible(true);
+        faceOverlay.setFaces(item.getFaceRegions());
+        faceBar.setVisible(true);
+        faceStatus.setText(I18n.t("faces.searching"));
+        org.photoslide.faces.FaceService service = org.photoslide.faces.FaceService.get();
+        service.names().thenAccept(names -> Platform.runLater(() -> faceOverlay.setNames(names)));
+        service.analyze(item).whenComplete((faces, ex) -> Platform.runLater(() -> {
+            if (facesFile != item) {
+                return;
+            }
+            if (ex != null) {
+                Logger.getLogger(LighttableController.class.getName()).log(Level.WARNING, "Face recognition failed", ex);
+                faceStatus.setText(I18n.t("faces.failed", rootMessage(ex)));
+                return;
+            }
+            // names typed meanwhile win over the result
+            List<FaceRegion> shown = faceOverlay.getFaces();
+            List<FaceRegion> merged = new ArrayList<>();
+            for (FaceRegion f : faces) {
+                FaceRegion typed = shown.stream().filter(s -> s.x() == f.x() && s.y() == f.y()
+                        && s.w() == f.w() && s.h() == f.h()).findFirst().orElse(null);
+                merged.add(typed != null && typed.confirmed() ? typed : f);
+            }
+            faceOverlay.setFaces(merged);
+            boolean scanned = item.isFacesScanned();
+            item.setFaceRegions(merged);
+            item.setFacesScanned(true);
+            if (!scanned) {
+                saveFaces(item);                      // found faces and the scan are kept in the sidecar
+            }
+            updateFaceStatus();
+        }));
+    }
+
+    private void stopFaces() {
+        faceOverlay.commitEditing();
+        facesFile = null;
+        faceOverlay.clear();
+        faceOverlay.setVisible(false);
+        faceBar.setVisible(false);
+        imageView.requestFocus();
+    }
+
+    /** The user named, confirmed or removed a face. */
+    private void facesChanged(List<FaceRegion> faces) {
+        MediaFile item = facesFile;
+        if (item == null) {
+            return;
+        }
+        item.setFaceRegions(faces);
+        item.setFacesScanned(true);
+        saveFaces(item);
+        java.util.TreeSet<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        org.photoslide.faces.FaceService.get().names().thenAccept(known -> {
+            names.addAll(known);
+            faces.stream().filter(f -> f.confirmed() && !f.isUnknown()).forEach(f -> names.add(f.name()));
+            Platform.runLater(() -> faceOverlay.setNames(names));
+        });
+        updateFaceStatus();
+    }
+
+    /** The user drew a frame: ask the recognition who it is. */
+    private void faceAdded(FaceRegion face) {
+        MediaFile item = facesFile;
+        if (item == null) {
+            return;
+        }
+        org.photoslide.faces.FaceService.get().suggest(item, face).whenComplete((name, ex) -> Platform.runLater(() -> {
+            if (facesFile != item || name == null) {
+                return;
+            }
+            List<FaceRegion> faces = new ArrayList<>(faceOverlay.getFaces());
+            int i = faces.indexOf(face);
+            if (i >= 0) {
+                faces.set(i, face.withName(name, false));
+                faceOverlay.setFaces(faces);
+                item.setFaceRegions(faces);
+                updateFaceStatus();
+            }
+        }));
+    }
+
+    private void saveFaces(MediaFile item) {
+        faceSaver.submit(item::saveEdits);
+    }
+
+    private void updateFaceStatus() {
+        List<FaceRegion> faces = faceOverlay.getFaces();
+        long unknown = faces.stream().filter(f -> !f.confirmed()).count();
+        faceStatus.setText(I18n.t("faces.status", faces.size(), unknown));
+    }
+
+    private static String rootMessage(Throwable ex) {
+        Throwable t = ex;
+        while (t.getCause() != null) {
+            t = t.getCause();
+        }
+        return t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
+    }
+
+    /** Status, add and filter over the photo while the faces are shown. */
+    private HBox createFaceBar() {
+        faceStatus = new Label();
+        faceStatus.setStyle("-fx-text-fill: white;");
+        faceAddButton = new ToggleButton(I18n.t("faces.add"), new FontIcon("fa-plus"));
+        faceAddButton.setTooltip(new javafx.scene.control.Tooltip(I18n.t("faces.addTip")));
+        faceAddButton.setOnAction(e -> faceOverlay.setAdding(faceAddButton.isSelected()));
+        faceOnlyUnknownButton = new ToggleButton(I18n.t("faces.onlyUnknown"), new FontIcon("fa-question"));
+        faceOnlyUnknownButton.setOnAction(e -> faceOverlay.setOnlyUnknown(faceOnlyUnknownButton.isSelected()));
+        Button done = new Button(I18n.t("common.done"), new FontIcon("fa-check"));
+        done.setOnAction(e -> {
+            facesButton.setSelected(false);
+            stopFaces();
+        });
+        HBox bar = new HBox(8, faceStatus, faceAddButton, faceOnlyUnknownButton, done);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(6, 10, 6, 10));
+        bar.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        bar.setStyle("-fx-background-color: rgba(40,40,40,0.85); -fx-background-radius: 6;");
+        StackPane.setAlignment(bar, Pos.TOP_CENTER);
+        StackPane.setMargin(bar, new Insets(8));
+        bar.setVisible(false);
+        return bar;
     }
 
 }

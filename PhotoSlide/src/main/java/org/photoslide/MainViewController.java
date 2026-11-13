@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -316,6 +317,8 @@ public class MainViewController implements Initializable {
             }
         });
         taskProgressView.setPrefSize(300, 200);
+        // after the start, so it does not slow down loading the first folder
+        executorParallelScheduled.schedule(() -> Platform.runLater(this::downloadFaceModels), 20, TimeUnit.SECONDS);
         String OS = System.getProperty("os.name").toUpperCase();
         if (OS.contains("MAC")) {
             Platform.runLater(() -> {
@@ -1655,6 +1658,39 @@ public class MainViewController implements Initializable {
 
     public TaskProgressView getTaskProgressView() {
         return taskProgressView;
+    }
+
+    /**
+     * Downloads the models of the face recognition in the background if they
+     * are missing, shown in the task list. Without internet it fails quietly;
+     * the Faces button tries again.
+     */
+    private void downloadFaceModels() {
+        org.photoslide.faces.FaceService service = org.photoslide.faces.FaceService.get();
+        if (service.modelsAvailable() || service.isDownloading()) {
+            return;
+        }
+        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                updateTitle(I18n.t("faces.title"));
+                updateMessage(I18n.t("faces.downloading"));
+                try {
+                    service.downloadModels(p -> updateProgress(p, 1)).join();
+                } catch (java.util.concurrent.CompletionException ex) {
+                    throw ex.getCause() instanceof Exception e ? e : ex;
+                }
+                return null;
+            }
+        };
+        task.setOnScheduled(e -> taskProgressView.getTasks().add(task));
+        task.setOnSucceeded(e -> taskProgressView.getTasks().remove(task));
+        task.setOnFailed(e -> {
+            taskProgressView.getTasks().remove(task);
+            Logger.getLogger(MainViewController.class.getName()).log(Level.INFO,
+                    "Face recognition models not downloaded: {0}", task.getException().getMessage());
+        });
+        Thread.ofPlatform().name("faceModelDownloadTask").daemon().start(task);
     }
 
     @FXML

@@ -83,6 +83,9 @@ public class MediaFile implements Serializable {
     private SimpleIntegerProperty rating;
     private SimpleStringProperty place;
     private SimpleStringProperty faces;
+    /** Faces of the photo (from the XMP sidecar, MWG regions); "faces" holds their names. */
+    private volatile java.util.List<FaceRegion> faceRegions = java.util.List.of();
+    private volatile boolean facesScanned;
     private Rectangle2D cropView;
     /** Flip and straighten, applied after the tools (see Geometry). */
     private Geometry geometry;
@@ -349,6 +352,8 @@ public class MediaFile implements Serializable {
         comments.set(null);
         keywords.set(null);
         place.set(null);
+        setFaceRegions(null);
+        facesScanned = false;
         gpsPosition = null;
         gpsHeight = -1;
         gpsDateTime = null;
@@ -1142,6 +1147,37 @@ public class MediaFile implements Serializable {
                 this.faces.set(faces);
             });
         }
+    }
+
+    /** The faces found or named in this photo (immutable, never null). */
+    public java.util.List<FaceRegion> getFaceRegions() {
+        return faceRegions;
+    }
+
+    /**
+     * Sets the faces and the searchable names in {@link #facesProperty()}
+     * ("; " separated, each confirmed name once; suggestions are not
+     * searchable). Sets the property directly like the sidecar reader, so the
+     * search index sees it right away.
+     */
+    public void setFaceRegions(java.util.List<FaceRegion> regions) {
+        faceRegions = regions == null ? java.util.List.of() : java.util.List.copyOf(regions);
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+        for (FaceRegion r : faceRegions) {
+            if (r.confirmed() && !r.isUnknown()) {
+                names.add(r.name());
+            }
+        }
+        faces.set(names.isEmpty() ? null : String.join("; ", names));
+    }
+
+    /** true = the face detection already ran on this photo (also if it found nothing). */
+    public boolean isFacesScanned() {
+        return facesScanned;
+    }
+
+    public void setFacesScanned(boolean facesScanned) {
+        this.facesScanned = facesScanned;
     }
 
     public SimpleStringProperty getTitle() {

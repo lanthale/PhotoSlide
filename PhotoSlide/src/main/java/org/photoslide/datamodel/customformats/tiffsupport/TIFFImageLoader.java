@@ -7,14 +7,17 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Objects;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
+import javax.imageio.stream.FileCacheImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
@@ -53,8 +56,10 @@ public class TIFFImageLoader extends ImageLoaderImpl {
         }
 
         BufferedImage image;
-        // Memory-Cache statt Platten-Cache, lokal und ohne globales ImageIO.setUseCache(false)
-        try (ImageInputStream iis = new MemoryCacheImageInputStream(input)) {
+        // kleine Dateien im Speicher, große über einen Platten-Cache: der Reader springt
+        // zu den IFDs am Dateiende, ein Memory-Cache hielte dann die ganze Datei im Heap
+        // (eine 472 MB TIFF führt bei 1 GB Heap zum OutOfMemoryError)
+        try (ImageInputStream iis = openCached(input)) {
             image = readScaled(iis, width, height, preserveAspectRatio, smooth);
         } catch (IOException | RuntimeException ex) {
             throw new IOException("Fehler beim Lesen von TIFF: " + ex, ex);
@@ -67,13 +72,83 @@ public class TIFFImageLoader extends ImageLoaderImpl {
                 image.getWidth() * BYTES_PER_PIXEL, 1.0f, null);
     }
 
-    private static BufferedImage readScaled(ImageInputStream iis, double reqW, double reqH,
-            boolean keepRatio, boolean smooth) throws IOException {
+    /**
+     * Lädt ein verkleinertes TIFF direkt aus der Datei (wahlfreier Zugriff).
+     * Für Thumbnails statt {@code new Image(url, w, h, ...)}: JavaFX liest über
+     * einen markierten BufferedInputStream, der jedes gelesene Byte puffert,
+     * weil die IFDs oft am Dateiende liegen, also die ganze Datei (eine
+     * 472 MB TIFF ergibt bei 1 GB Heap einen OutOfMemoryError).
+     *
+     * @return das Bild, höchstens maxW x maxH, Seitenverhältnis bleibt
+     */
+    public static javafx.scene.image.Image loadScaled(java.nio.file.Path file, double maxW, double maxH) throws IOException {
+        BufferedImage image;
+        try (ImageInputStream iis = ImageIO.createImageInputStream(file.toFile())) {
+            if (iis == null) {
+                throw new IOException("Cannot open " + file);
+            }
+            image = readScaled(iis, maxW, maxH, true, true);
+        }
+        int w = image.getWidth();
+        int h = image.getHeight();
+        int[] argb = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+        javafx.scene.image.WritableImage fx = new javafx.scene.image.WritableImage(w, h);
+        fx.getPixelWriter().setPixels(0, 0, w, h, javafx.scene.image.PixelFormat.getIntArgbInstance(), argb, 0, w);
+        return fx;
+    }
+
+    /** Bis zu dieser Größe wird die Datei im Speicher gehalten. */
+    private static final int MEMORY_CACHE_LIMIT = 32 * 1024 * 1024;
+
+    /**
+     * Liest höchstens MEMORY_CACHE_LIMIT Bytes in den Speicher. Ist die Datei
+     * damit vollständig, wird sie aus dem Speicher gelesen, sonst über eine
+     * temporäre Datei (FileCacheImageInputStream), die beim Schließen gelöscht wird.
+     */
+    private static ImageInputStream openCached(InputStream in) throws IOException {
+        byte[] head = in.readNBytes(MEMORY_CACHE_LIMIT);
+        if (head.length < MEMORY_CACHE_LIMIT) {
+            return new MemoryCacheImageInputStream(new ByteArrayInputStream(head));
+        }
+        InputStream rest = new SequenceInputStream(new ByteArrayInputStream(head), in);
+        return new FileCacheImageInputStream(rest, null);
+    }
+
+    /**
+     * Wählt einen echten TIFF-Reader. Der RAW-Reader (librawimageio) meldet sich
+     * ebenfalls für TIFF (viele RAW-Formate sind TIFF-basiert) und steht oft an
+     * erster Stelle, ignoriert aber das Subsampling: für ein Thumbnail würde das
+     * volle Bild decodiert (bei 1 GB Heap und mehreren Thumbnails OutOfMemoryError).
+     */
+    public static ImageReader selectReader(ImageInputStream iis) throws IOException {
         Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
-        if (!readers.hasNext()) {
+        ImageReader first = null;
+        ImageReader tiff = null;
+        while (readers.hasNext()) {
+            ImageReader r = readers.next();
+            if (tiff == null && r.getClass().getName().toLowerCase().contains("tiff")) {
+                tiff = r;
+            } else if (first == null) {
+                first = r;
+            } else {
+                r.dispose();
+            }
+        }
+        if (tiff != null) {
+            if (first != null) {
+                first.dispose();
+            }
+            return tiff;
+        }
+        if (first == null) {
             throw new IOException("Kein ImageIO-Reader für TIFF gefunden");
         }
-        ImageReader reader = readers.next();
+        return first;
+    }
+
+    private static BufferedImage readScaled(ImageInputStream iis, double reqW, double reqH,
+            boolean keepRatio, boolean smooth) throws IOException {
+        ImageReader reader = selectReader(iis);
         try {
             // wahlfreier Zugriff nötig (TIFF-IFDs liegen oft am Dateiende)
             reader.setInput(iis, false, false);

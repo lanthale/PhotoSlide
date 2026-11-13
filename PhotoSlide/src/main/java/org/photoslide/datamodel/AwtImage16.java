@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.function.DoubleConsumer;
 import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
+import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoader;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.event.IIOReadProgressListener;
@@ -44,11 +45,10 @@ public final class AwtImage16 {
             if (in == null) {
                 return null;
             }
-            Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
-            if (!readers.hasNext()) {
+            ImageReader reader = reader(in);
+            if (reader == null) {
                 return null;
             }
-            ImageReader reader = readers.next();
             try {
                 reader.setInput(in, true, true);
                 ImageTypeSpecifier type = reader.getRawImageType(0);
@@ -66,6 +66,62 @@ public final class AwtImage16 {
                 reader.dispose();
             }
         }
+    }
+
+    /**
+     * Reads an 8 bit image (e.g. TIFF) directly from the file. JavaFX would
+     * read it through a buffered stream that keeps every byte read, i.e. the
+     * whole file (a 472 MB TIFF gives an OutOfMemoryError with 1 GB heap).
+     *
+     * @return the image, or null if ImageIO cannot read the file
+     */
+    public static Image16 read8(Path path, DoubleConsumer progress) throws IOException {
+        try (ImageInputStream in = ImageIO.createImageInputStream(path.toFile())) {
+            if (in == null) {
+                return null;
+            }
+            ImageReader reader = reader(in);
+            if (reader == null) {
+                return null;
+            }
+            try {
+                reader.setInput(in, true, true);
+                reader.addIIOReadProgressListener(new ProgressAdapter(progress));
+                return convert8(reader.read(0));
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
+
+    /**
+     * A TIFF reader if there is one: the RAW reader also claims TIFF files
+     * (many RAW formats are TIFF based) and is often listed first.
+     */
+    private static ImageReader reader(ImageInputStream in) throws IOException {
+        try {
+            return TIFFImageLoader.selectReader(in);
+        } catch (IOException ex) {
+            return null;            // no reader at all
+        }
+    }
+
+    /** 8 bit, any colour model (getRGB also resolves palettes), alpha ignored. */
+    private static Image16 convert8(BufferedImage img) {
+        final int w = img.getWidth();
+        final int h = img.getHeight();
+        final Image16 out = Image16.blank(w, h, true);
+        final short[] d = out.data();
+        IntStream.range(0, h).parallel().forEach(y -> {
+            int[] px = img.getRGB(0, y, w, 1, null, 0, w);
+            int o = y * w * Image16.CHANNELS;
+            for (int x = 0; x < w; x++, o += 3) {
+                int c = px[x];
+                FxImage16.toWorking(DECODE[((c >> 16) & 0xFF) * 257], DECODE[((c >> 8) & 0xFF) * 257],
+                        DECODE[(c & 0xFF) * 257], d, o);
+            }
+        });
+        return out;
     }
 
     private static Image16 convert(BufferedImage img) {

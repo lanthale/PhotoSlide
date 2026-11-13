@@ -258,13 +258,6 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     }
 
     public void handleGridCellSelection(Event t) throws MalformedURLException {
-        if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
-            String name = ((MediaGridCell) t.getSource()).getItem().getName();
-            setStdGUIState();
-            lightController.getFilenameLabel().setVisible(true);
-            lightController.getFilenameLabel().setText(name);
-            return;
-        }
         if (t.getTarget().getClass().equals(StackPane.class)) {
             Node target = Utility.pick((StackPane) t.getTarget(), ((MouseEvent) t).getSceneX(), ((MouseEvent) t).getSceneY());
             if (target != null && target.getClass().equals(FontIcon.class)) {
@@ -288,6 +281,12 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                     }
                 }
             }
+        }
+        if (((MediaGridCell) t.getSource()).getItem().getMediaType() == MediaTypes.NONE) {
+            // after the stack icon: a stack whose front photo cannot be loaded can
+            // still be opened, and unstacked/deleted with the selected file
+            selectUnloadableFile((MediaGridCell) t.getSource());
+            return;
         }
         if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
             lightController.getStackButton().setText("Unstack");
@@ -555,6 +554,37 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         }
         Rectangle2D cropView = new Rectangle2D(x, y, width, height);
         lightController.getImageView().setViewport(cropView);
+    }
+
+    /**
+     * Selects a file that cannot be shown (format not supported, loading
+     * failed): nothing to view or edit, but it can be stacked or unstacked,
+     * copied and deleted like any other file.
+     */
+    private void selectUnloadableFile(MediaGridCell cell) {
+        MediaFile item = cell.getItem();
+        if (imageLoaded) {
+            cancleImageTask();
+            imageLoaded = false;
+        }
+        lightController.getImageView().setImage(null);
+        lightController.getImageView().setViewport(null);
+        lightController.getTitleLabel().setVisible(false);
+        lightController.getCameraLabel().setVisible(false);
+        lightController.getRatingControl().setVisible(false);
+        selectedMediaItem = item;
+        selectedCell = cell;
+        lightController.mediaFileSelected(item);
+        setStdGUIState();
+        lightController.getStackButton().setText(item.isStacked() ? "Unstack" : "Stack");
+        if (selectionModel.selectionCount() <= 1) {
+            lightController.getRotateLeftButton().setDisable(true);
+            lightController.getRotateRightButton().setDisable(true);
+            lightController.getCropButton().setDisable(true);
+            lightController.getRateButton().setDisable(true);
+        }
+        lightController.getFilenameLabel().setVisible(true);
+        lightController.getFilenameLabel().setText(item.getName());
     }
 
     public void setStdGUIState() {

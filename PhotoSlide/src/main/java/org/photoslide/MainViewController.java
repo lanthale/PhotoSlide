@@ -1277,6 +1277,10 @@ public class MainViewController implements Initializable {
                                     lighttablePaneController.getImageGrid().getCellHeight()) + 300;
                             // RAW: same decoder, profile and base look as the editor
                             Image img = EditPipeline.loadRawThumbnail(m, size);
+                            if (img == null && org.photoslide.datamodel.MediaFileLoader.isTiff(m)) {
+                                // random access: a JavaFX stream would buffer the whole TIFF file
+                                img = org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoader.loadScaled(m.getPathStorage(), size, size);
+                            }
                             if (img == null) {
                                 img = new Image(m.getPathStorage().toUri().toURL().toString(), size, size, true, false, false);
                             }

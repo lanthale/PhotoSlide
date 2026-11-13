@@ -25,6 +25,8 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.photoslide.ThreadFactoryBuilder;
+import org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoader;
+import java.io.IOException;
 import org.photoslide.Utility;
 import org.photoslide.browserlighttable.MediaLoadingTask;
 
@@ -54,6 +56,12 @@ public class MediaFileLoader {
         taskList = new ConcurrentHashMap<>();
     }
 
+    /** TIFF files are read with random access instead of through a JavaFX stream. */
+    public static boolean isTiff(MediaFile m) {
+        String n = m.getName().toLowerCase();
+        return n.endsWith(".tif") || n.endsWith(".tiff");
+    }
+
     /** Longest side of the thumbnails in the grids. */
     private static final int THUMBNAIL_SIZE = 200;
 
@@ -79,9 +87,31 @@ public class MediaFileLoader {
                 }
                 // loaded in this thread, not in the background: JavaFX would load the
                 // thumbnails of all visible cells at once and this pool would not limit them
-                Image image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), 200, 200, true, false, false);
+                final Image image;
+                final boolean error;
+                Throwable cause = null;
+                if (isTiff(newMediaItem)) {
+                    // read from the file, not through JavaFX: its stream buffers the whole file
+                    Image tiff = null;
+                    try {
+                        tiff = TIFFImageLoader.loadScaled(newMediaItem.getPathStorage(), THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+                    } catch (IOException | RuntimeException ex) {
+                        cause = ex;
+                    }
+                    image = tiff;
+                    error = tiff == null;
+                } else {
+                    image = new Image(newMediaItem.getPathStorage().toUri().toURL().toString(), THUMBNAIL_SIZE, THUMBNAIL_SIZE, true, false, false);
+                    error = image.isError();
+                    cause = image.getException();
+                }
                 taskList.remove(newMediaItem.getName());
-                final boolean error = image.isError();
+                if (error && !this.isCancelled()) {
+                    Logger.getLogger(MediaFileLoader.class.getName()).log(Level.WARNING,
+                            "Cannot load the thumbnail of " + newMediaItem.getPathStorage()
+                            + (newMediaItem.isRawImage() ? " (RAW not decoded by LibRaw, JavaFX fallback)" : ""),
+                            cause);
+                }
                 javafx.application.Platform.runLater(() -> {
                     newMediaItem.setImage(image);
                     newMediaItem.setLoadingError(error);
@@ -94,6 +124,11 @@ public class MediaFileLoader {
             if (newMediaItem.getImage() == null) {
                 newMediaItem.setImage(task.getValue());
                 task.setOnFailed((t) -> {
+                    Throwable ex = task.getException();
+                    // interrupted by the shutdown when the folder is changed: no error
+                    boolean interrupted = ex instanceof java.nio.channels.ClosedByInterruptException || ex instanceof InterruptedException;
+                    Logger.getLogger(MediaFileLoader.class.getName()).log(interrupted ? Level.FINE : Level.WARNING,
+                            "Cannot load the thumbnail of " + newMediaItem.getPathStorage(), ex);
                     newMediaItem.setLoading(false);
                     newMediaItem.setMediaType(MediaFile.MediaTypes.NONE);
                     taskList.remove(newMediaItem.getName());

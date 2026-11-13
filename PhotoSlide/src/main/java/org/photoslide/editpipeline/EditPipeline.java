@@ -116,6 +116,13 @@ public final class EditPipeline {
             if (deep != null) {
                 return deep;
             }
+            if (!lower.endsWith(".png")) {
+                // 8 bit TIFF from the file: JavaFX would buffer the whole file
+                Image16 tiff = AwtImage16.read8(path, progress);
+                if (tiff != null) {
+                    return tiff;
+                }
+            }
         }
         Image img = loadFxImage(file.getImageUrl().toString(), progress);
         if (img.isError()) {

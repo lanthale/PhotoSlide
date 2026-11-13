@@ -311,6 +311,10 @@ public class LighttableController implements Initializable {
         }
         if (factory != null) {
             factory.cancleTask();
+            // a new factory with its own thumbnail pool is made below: without
+            // shutdown the old pool's threads stay, and RAW decodes still running
+            // there (native, not interruptible) compete with the new folder for memory
+            factory.shutdown();
         }
         titleLabel.setVisible(false);
         filenameLabel.setVisible(false);
@@ -319,6 +323,12 @@ public class LighttableController implements Initializable {
         zoomSlider.setDisable(false);
         imageView.setImage(null);
         mediaView.setMediaPlayer(null);
+        // the preview dropped the image it was loading (cancleTask): neither
+        // onShown nor onFailed comes, which would hide the progress
+        imageProgress.progressProperty().unbind();
+        imageProgress.setProgress(0);
+        imageProgress.setVisible(false);
+        playIcon.setVisible(false);
         metadataController.resetGUI();
         mainController.getStatusLabelRight().setVisible(true);
         selectedPath = sPath;

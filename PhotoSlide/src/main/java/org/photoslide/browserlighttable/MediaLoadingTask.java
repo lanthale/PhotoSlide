@@ -5,6 +5,8 @@
  */
 package org.photoslide.browserlighttable;
 
+
+import org.photoslide.I18n;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -124,23 +126,23 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected MediaFile call() throws Exception {
         final long qty;
         try {
-            updateTitle("Reading folder...");
+            updateTitle(I18n.t("loading.readingFolder"));
             FolderScan scan = scanFolder();
             if (this.isCancelled()) {
                 return null;
             }
             qty = scan.media().size();
-            updateTitle("Reading folder...finished");
+            updateTitle(I18n.t("loading.readingFolderFinished"));
 
-            updateTitle("Reading cache...");
+            updateTitle(I18n.t("loading.readingCache"));
             File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
             restoreCacheFromDisk(inPath, scan);
             if (this.isCancelled()) {
                 return null;
             }
-            updateTitle("Reading cache...finished");
+            updateTitle(I18n.t("loading.readingCacheFinished"));
 
-            updateTitle("Preparing mediafile list...");
+            updateTitle(I18n.t("loading.preparing"));
             List<Path> toLoad;
             if (cacheList.isEmpty()) {
                 toLoad = scan.media();
@@ -159,23 +161,23 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 toLoad = scan.media().stream().filter(p -> !cachedPaths.contains(p)).toList();
                 loadedFromCache = true;
             }
-            updateTitle("Preparing mediafile list...finished");
+            updateTitle(I18n.t("loading.preparingFinished"));
             if (qty == 0) {
-                updateTitle("0 mediafiles found.");
+                updateTitle(I18n.t("loading.noneFound"));
                 Platform.runLater(() -> {
                     mainController.getProgressPane().setVisible(false);
                     mainController.getStatusLabelLeft().setVisible(false);
-                    mediaQTYLabel.setText(qty + " media files.");
+                    mediaQTYLabel.setText(I18n.t("lighttable.mediaQty", qty));
                 });
                 return null;
             } else {
                 Platform.runLater(() -> {
                     mainController.getProgressPane().setVisible(true);
                     mainController.getStatusLabelLeft().setVisible(true);
-                    mediaQTYLabel.setText(qty + " media files");
+                    mediaQTYLabel.setText(I18n.t("lighttable.mediaQty", qty));
                     mainController.getStatusLabelRight().setVisible(true);
                 });
-                updateTitle(qty + " files found - Loading...");
+                updateTitle(I18n.t("lighttable.filesFoundLoading", qty));
             }
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Starting collecting..." + selectedPath);
             long starttime = System.currentTimeMillis();
@@ -201,11 +203,11 @@ public class MediaLoadingTask extends Task<MediaFile> {
                         m.setMediaType(MediaFile.MediaTypes.NONE);
                     }
                     if (loadedFromCache == false) {
-                        updateTitle("Loading..." + iatom.get() + " / " + qty);
+                        updateTitle(I18n.t("loading.progress", iatom.get(), qty));
                         updateMessage(iatom.get() + " / " + qty);
                     } else {
-                        updateTitle("Checking cache..." + iatom.get() + "/" + cacheList.size());
-                        updateMessage("Checking cache..." + iatom.get() + "/" + cacheList.size());
+                        updateTitle(I18n.t("loading.checkingCache", iatom.get(), cacheList.size()));
+                        updateMessage(I18n.t("loading.checkingCache", iatom.get(), cacheList.size()));
                     }
                     iatom.incrementAndGet();
                 });
@@ -220,9 +222,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 return null;
             }
             long endtime = System.currentTimeMillis();
-            updateMessage("Finished MediaLoading Task.");
+            updateMessage(I18n.t("lighttable.loadingFinished"));
             Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in ms: " + (endtime - starttime) + " " + selectedPath);
-            updateMessage("Sorting media list...");
+            updateMessage(I18n.t("lighttable.sorting"));
         } catch (IOException ex) {
             Platform.runLater(() -> {
                 new Utility().hideNodeAfterTime(mainController.getStatusLabelRight(), 2, true);
@@ -346,8 +348,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
         Task<Void> safeDiskTask = new Task() {
             @Override
             protected Object call() throws Exception {
-                updateMessage("Prepare saving cache...finished.");
-                updateMessage("Saving cache...");                
+                updateMessage(I18n.t("loading.prepareSaveCacheFinished"));
+                updateMessage(I18n.t("loading.savingCache"));                
                 //save cache to disk
                 long start = System.currentTimeMillis();
 
@@ -355,13 +357,13 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 try {
                     fileOutputStream = new FileOutputStream(outpath, false);
                     try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new BufferedOutputStream(fileOutputStream))) {
-                        updateMessage("Save cache...Writing to disk");
+                        updateMessage(I18n.t("loading.saveCacheWriting"));
                         // show progress during writing wiht filteredOutputStream                         
                         final List<MediaFile> finalCache = Collections.synchronizedList(cacheList);
                         objectOutputStream.writeObject(finalCache);
                         objectOutputStream.flush();
                     }
-                    updateMessage("Save cache...finished");
+                    updateMessage(I18n.t("loading.saveCacheFinished"));
                 } catch (IOException | NullPointerException ex) {
                     outpath.deleteOnExit();
                     Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.SEVERE, null, ex);
@@ -383,7 +385,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
         });
         // still bound to the loading task when called later, e.g. after the capture time sort
         mainController.getStatusLabelRight().textProperty().unbind();
-        mainController.getStatusLabelRight().setText("Prepare saving cache.....Checking directory");
+        mainController.getStatusLabelRight().setText(I18n.t("loading.prepareSaveCacheChecking"));
         mainController.getStatusLabelRight().textProperty().bind(safeDiskTask.messageProperty());
         Thread.ofVirtual().start(safeDiskTask);
 
@@ -409,7 +411,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             m.setMediaType(MediaFile.MediaTypes.VIDEO);
         } else if (FileTypes.isValidImage(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-            if (sort.equalsIgnoreCase("Capture time")) {
+            if (sort.equalsIgnoreCase(I18n.t("lighttable.sort.captureTime"))) {
                 try {
                     if (MetadataController.readsCaptureTime(m)) {
                         m.setRecordTime(MetadataController.readCaptureTime(m));

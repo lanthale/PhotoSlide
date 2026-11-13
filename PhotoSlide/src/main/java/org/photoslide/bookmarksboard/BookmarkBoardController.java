@@ -5,6 +5,8 @@
  */
 package org.photoslide.bookmarksboard;
 
+
+import org.photoslide.I18n;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -134,7 +136,7 @@ public class BookmarkBoardController implements Initializable {
         }
         progressIndicator.setVisible(true);
         statusLabel.setVisible(true);
-        statusLabel.setText("Retrieving Mediafiles...");
+        statusLabel.setText(I18n.t("bmb.retrieving"));
         if (task != null) {
             task.shutdown();
         }
@@ -161,7 +163,7 @@ public class BookmarkBoardController implements Initializable {
     }
 
     public void copyAction() {
-        statusLabel.setText("Copy " + fullMediaList.size() + " files to clipboard...");
+        statusLabel.setText(I18n.t("bmb.copy", fullMediaList.size()));
         final Clipboard clipboard = Clipboard.getSystemClipboard();
         final ClipboardContent content = new ClipboardContent();
         List<File> filesForClipboard = new ArrayList<>();
@@ -171,17 +173,17 @@ public class BookmarkBoardController implements Initializable {
         });
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
-        statusLabel.setText("Copy " + fullMediaList.size() + " files to clipboard...finished");
+        statusLabel.setText(I18n.t("bmb.copyFinished", fullMediaList.size()));
         util.hideNodeAfterTime(statusLabel, 3, true);
     }
 
     @FXML
     private void exportAction(ActionEvent event) {
         popover.hide(Duration.millis(500));
-        statusLabel.setText("Start export " + fullMediaList.size() + " files to filesystem...");
+        statusLabel.setText(I18n.t("bmb.exportStart", fullMediaList.size()));
         String initDir = System.getProperty("user.dir").toUpperCase();
-        mainViewController.exportData("Export bookmarks", initDir, sortedMediaList);
-        statusLabel.setText("Export " + fullMediaList.size() + " files...finished");
+        mainViewController.exportData(I18n.t("bmb.exportTitle"), initDir, sortedMediaList);
+        statusLabel.setText(I18n.t("bmb.exportFinished", fullMediaList.size()));
         util.hideNodeAfterTime(statusLabel, 3, true);
     }
 

@@ -26,7 +26,7 @@ public class SearchToolsDialog extends Alert {
     public SearchToolsDialog(AlertType at) {
         super(at);
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/SearchToolsDialog.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/SearchToolsDialog.fxml"), org.photoslide.I18n.bundle());
             Parent root = (Parent) fxmlLoader.load();
             controller = fxmlLoader.<SearchToolsController>getController();            
             getDialogPane().setContent(root);             

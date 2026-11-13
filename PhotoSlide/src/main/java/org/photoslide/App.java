@@ -87,7 +87,7 @@ public class App extends Application {
         notifyPreloader(new ProgressNotification(0.2));
 
         notifyPreloader(new ProgressNotification(0.3));
-        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainView.fxml"));
+        fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/MainView.fxml"), org.photoslide.I18n.bundle());
         notifyPreloader(new ProgressNotification(0.4));
         root = (Parent) fxmlLoader.load();
         notifyPreloader(new ProgressNotification(0.5));

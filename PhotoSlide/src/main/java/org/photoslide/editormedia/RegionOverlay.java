@@ -1,5 +1,7 @@
 package org.photoslide.editormedia;
 
+
+import org.photoslide.I18n;
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -466,7 +468,7 @@ public final class RegionOverlay extends Pane {
             }
         }
         if (selection.inverted() && !selection.isEmpty()) {
-            Text t = new Text(labelX(m), labelY(m) + 20, "selection inverted");
+            Text t = new Text(labelX(m), labelY(m) + 20, I18n.t("overlay.inverted"));
             t.setFill(OUTLINE);
             t.setMouseTransparent(true);
             getChildren().add(t);
@@ -491,7 +493,7 @@ public final class RegionOverlay extends Pane {
                 }
             }
             if (r.inverted() && !r.isEmpty()) {
-                Text t = new Text(labelX(m), labelY(m) + 38, shown.displayName() + ": outside of the outlines");
+                Text t = new Text(labelX(m), labelY(m) + 38, I18n.t("overlay.outside", shown.displayName()));
                 t.setFill(TOOL_AREA);
                 t.setMouseTransparent(true);
                 getChildren().add(t);

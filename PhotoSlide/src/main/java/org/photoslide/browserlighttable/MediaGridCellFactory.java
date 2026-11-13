@@ -5,6 +5,8 @@
  */
 package org.photoslide.browserlighttable;
 
+
+import org.photoslide.I18n;
 import org.photoslide.datamodel.GridCellSelectionModel;
 import org.photoslide.datamodel.MediaGridCell;
 import org.photoslide.datamodel.MediaFile;
@@ -168,7 +170,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getInfoPane().setDisable(false);
             lightController.getPreview().setViewport(null);
             selectedMediaItem.setCropView(null);
-            EditPipeline.filtersChanged(selectedMediaItem, "Reset crop");     // saves, thumbnails, history
+            EditPipeline.filtersChanged(selectedMediaItem, I18n.t("history.resetCrop"));     // saves, thumbnails, history
             lightController.getImageStackPane().getChildren().clear();
             lightController.getImageStackPane().getChildren().add(lightController.getImageView());
             lightController.getOptionPane().getChildren().clear();
@@ -289,9 +291,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             return;
         }
         if (((MediaGridCell) t.getSource()).getItem().isStacked()) {
-            lightController.getStackButton().setText("Unstack");
+            lightController.getStackButton().setText(I18n.t("lighttable.unstack"));
         } else {
-            lightController.getStackButton().setText("Stack");
+            lightController.getStackButton().setText(I18n.t("browserLighttable.stack"));
         }
         setStdGUIState();
         if (selectionModel.selectionCount() > 1) {
@@ -321,7 +323,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         selectedCell = (MediaGridCell) t.getSource();
         lightController.mediaFileSelected(selectedMediaItem);
         if (selectedMediaItem.isDeleted() == true) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Restore MediaFile " + selectedMediaItem.getName() + " ?", ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("lighttable.restoreQuestion", selectedMediaItem.getName()), ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
 
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
@@ -332,7 +334,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
                 selectedMediaItem.setDeleted(false);
-                lightController.recordStep(selectedMediaItem, "Restore");
+                lightController.recordStep(selectedMediaItem, I18n.t("history.restore"));
                 executor.submit(() -> {
                     selectedMediaItem.saveEdits();
                 });
@@ -382,7 +384,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
                         FontIcon filmIcon = new FontIcon("fa-file-movie-o:300");
                         filmIcon.setOpacity(0.3);
                         FontIcon controlIcon = new FontIcon("fa-minus-circle:150");
-                        Label lb = new Label("Filtype not supported!");
+                        Label lb = new Label(I18n.t("lighttable.fileTypeNotSupported"));
                         lb.setStyle("-fx-font-size: 20px;");
                         lightController.getPlayIcon().setVisible(false);
                         lightController.getImageView().setVisible(false);
@@ -512,9 +514,9 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
 
     private void updateGUIAccordingSelection() {
         if (selectedMediaItem.isBookmarked()) {
-            lightController.getBookmarkButton().setText("Unbookmark");
+            lightController.getBookmarkButton().setText(I18n.t("lighttable.unbookmark"));
         } else {
-            lightController.getBookmarkButton().setText("Bookmark");
+            lightController.getBookmarkButton().setText(I18n.t("browserLighttable.bookmark"));
         }
     }
 
@@ -576,7 +578,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         selectedCell = cell;
         lightController.mediaFileSelected(item);
         setStdGUIState();
-        lightController.getStackButton().setText(item.isStacked() ? "Unstack" : "Stack");
+        lightController.getStackButton().setText(item.isStacked() ? I18n.t("lighttable.unstack") : I18n.t("browserLighttable.stack"));
         if (selectionModel.selectionCount() <= 1) {
             lightController.getRotateLeftButton().setDisable(true);
             lightController.getRotateRightButton().setDisable(true);
@@ -747,7 +749,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         popOver.setCloseButtonEnabled(true);
         popOver.setAutoFix(true);
         popOver.setHeaderAlwaysVisible(true);
-        popOver.setTitle("Stack view and ordering via drag and drop");
+        popOver.setTitle(I18n.t("lighttable.stackView"));
         HBox hb = new HBox();
         hb.setSpacing(5);
         hb.setAlignment(Pos.CENTER);
@@ -755,7 +757,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Button setFrontImageButton = new Button();
         FontIcon setFrontImageIcon = new FontIcon("ti-check-box:20");
         setFrontImageButton.setId("toolbutton");
-        setFrontImageButton.setTooltip(new Tooltip("To the Top"));
+        setFrontImageButton.setTooltip(new Tooltip(I18n.t("lighttable.toTop")));
         setFrontImageButton.setGraphic(setFrontImageIcon);
         setFrontImageButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         setFrontImageButton.setOnAction((t) -> {
@@ -764,7 +766,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Button orderOneDownButton = new Button();
         FontIcon orderOneDownIcon = new FontIcon("ti-arrow-down:20");
         orderOneDownButton.setId("toolbutton");
-        orderOneDownButton.setTooltip(new Tooltip("One down"));
+        orderOneDownButton.setTooltip(new Tooltip(I18n.t("lighttable.oneDown")));
         orderOneDownButton.setGraphic(orderOneDownIcon);
         orderOneDownButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderOneDownButton.setOnAction((t) -> {
@@ -773,7 +775,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Button orderOneUpButton = new Button();
         FontIcon orderOneUpIcon = new FontIcon("ti-arrow-up:20");
         orderOneUpButton.setId("toolbutton");
-        orderOneUpButton.setTooltip(new Tooltip("One up"));
+        orderOneUpButton.setTooltip(new Tooltip(I18n.t("lighttable.oneUp")));
         orderOneUpButton.setGraphic(orderOneUpIcon);
         orderOneUpButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderOneUpButton.setOnAction((t) -> {
@@ -782,7 +784,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         Button orderToTheButtomButton = new Button();
         FontIcon orderToTheButtomIcon = new FontIcon("ti-angle-double-down:20");
         orderToTheButtomButton.setId("toolbutton");
-        orderToTheButtomButton.setTooltip(new Tooltip("To the buttom"));
+        orderToTheButtomButton.setTooltip(new Tooltip(I18n.t("lighttable.toBottom")));
         orderToTheButtomButton.setGraphic(orderToTheButtomIcon);
         orderToTheButtomButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         orderToTheButtomButton.setOnAction((t) -> {

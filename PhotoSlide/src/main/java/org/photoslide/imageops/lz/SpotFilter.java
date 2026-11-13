@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.imageops.ParamSpec;
 
@@ -15,7 +17,7 @@ public class SpotFilter extends CloneFilter {
     public static final String NAME = "SpotFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("radius", "Spot size (new spots)", 0, 3f, 300f, 20f, 1f));
+            ParamSpec.slider("radius", I18n.t("tool.param.spotSize"), 0, 3f, 300f, 20f, 1f));
 
     public SpotFilter() {
         super(NAME);
@@ -23,7 +25,7 @@ public class SpotFilter extends CloneFilter {
 
     @Override
     public String displayName() {
-        return "Spot";
+        return I18n.t("tool.spot");
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -26,10 +28,10 @@ public class FilmGrainFilter extends AbstractImageFilter {
     private static final OpenSimplexNoise NOISE = new OpenSimplexNoise();
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("size", "Grain size", 0, 1f, 3f, 1f, 0.1f),
-            ParamSpec.slider("sharpness", "Sharpness", 1, 0f, 1f, 0.5f, 0.1f),
-            ParamSpec.slider("color", "Color", 2, 0f, 1f, 0f, 0.1f),
-            ParamSpec.slider("intensity", "Intensity", 3, 0.1f, 1f, 0.5f, 0.1f));
+            ParamSpec.slider("size", I18n.t("tool.param.grainSize"), 0, 1f, 3f, 1f, 0.1f),
+            ParamSpec.slider("sharpness", I18n.t("tool.param.sharpness"), 1, 0f, 1f, 0.5f, 0.1f),
+            ParamSpec.slider("color", I18n.t("tool.param.color"), 2, 0f, 1f, 0f, 0.1f),
+            ParamSpec.slider("intensity", I18n.t("tool.param.intensity"), 3, 0.1f, 1f, 0.5f, 0.1f));
 
     public FilmGrainFilter() {
         super(NAME);
@@ -37,7 +39,7 @@ public class FilmGrainFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Film Grain";
+        return I18n.t("tool.filmGrain");
     }
 
     @Override

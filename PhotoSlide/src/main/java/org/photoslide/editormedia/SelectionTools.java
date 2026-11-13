@@ -1,5 +1,7 @@
 package org.photoslide.editormedia;
 
+
+import org.photoslide.I18n;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +40,7 @@ final class SelectionTools {
     private ColorSelection colors = ColorSelection.NONE;
     private float feather = 40;
 
-    private final ToggleButton invert = new ToggleButton("Invert");
+    private final ToggleButton invert = new ToggleButton(I18n.t("sel.invert"));
     private final Button clear;
     private final Rectangle swatch = new Rectangle(12, 12);
     private final Label info = new Label();
@@ -58,14 +60,14 @@ final class SelectionTools {
             changed();
         });
 
-        Button lasso = tool("Lasso", "fa-pencil",
-                "Hold the mouse button and draw around the area (or click points and double click to close); Esc cancels");
+        Button lasso = tool(I18n.t("sel.lasso"), "fa-pencil",
+                I18n.t("sel.lassoTip"));
         lasso.setOnAction(e -> overlay.requestOutline(pts -> add(new Contour(pts, feather, true, Double.NaN, Double.NaN))));
-        Button rect = tool("Rectangle", "fa-square-o", "Hold the mouse button and drag the rectangle");
+        Button rect = tool(I18n.t("sel.rectangle"), "fa-square-o", I18n.t("sel.rectangleTip"));
         rect.setOnAction(e -> overlay.requestBox(false, box -> addBox(box, false)));
-        Button ellipse = tool("Ellipse", "fa-circle-thin", "Hold the mouse button and drag the ellipse");
+        Button ellipse = tool(I18n.t("sel.ellipse"), "fa-circle-thin", I18n.t("sel.ellipseTip"));
         ellipse.setOnAction(e -> overlay.requestBox(true, box -> addBox(box, true)));
-        Button pick = tool("Color", "fa-eyedropper", "Select by colour: click a colour in the image");
+        Button pick = tool(I18n.t("sel.color"), "fa-eyedropper", I18n.t("sel.colorTip"));
         pick.setOnAction(e -> overlay.requestPoint(p -> {
             double[] rgb = colorAt.apply(p);
             if (rgb != null) {
@@ -77,14 +79,14 @@ final class SelectionTools {
         invert.setContentDisplay(javafx.scene.control.ContentDisplay.TOP);
         invert.setGraphic(new FontIcon("fa-adjust"));
         invert.setFont(new Font(11));
-        invert.setTooltip(new Tooltip("Apply to everything outside the selection"));
+        invert.setTooltip(new Tooltip(I18n.t("sel.invertTip")));
         invert.setOnAction(e -> {
             region = region.withInverted(invert.isSelected());
             colors = new ColorSelection(colors.hueEnabled(), colors.hueCenter(), colors.hueRange(), colors.hueFeather(),
                     colors.lumEnabled(), colors.lumLower(), colors.lumUpper(), colors.lumFeather(), invert.isSelected());
             changed();
         });
-        clear = tool("Clear", "fa-times", "Clear the selection: new tools act on the whole image");
+        clear = tool(I18n.t("sel.clear"), "fa-times", I18n.t("sel.clearTip"));
         clear.setOnAction(e -> clear());
 
         Slider soft = new Slider(0, 300, feather);
@@ -103,7 +105,7 @@ final class SelectionTools {
                 changed();
             }
         });
-        soft.setTooltip(new Tooltip("Soft edge of the selection"));
+        soft.setTooltip(new Tooltip(I18n.t("sel.softTip")));
         VBox softBox = new VBox(0, soft, softLabel);
         softBox.setAlignment(Pos.CENTER);
 
@@ -134,7 +136,7 @@ final class SelectionTools {
         Button select = new Button(null, icon);
         select.setId("toolbutton");
         select.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
-        select.setTooltip(new Tooltip("Selection tools: lasso, rectangle, ellipse, colour, invert, soft edge"));
+        select.setTooltip(new Tooltip(I18n.t("sel.selectTip")));
         select.setFocusTraversable(false);
         select.setOnAction(e -> {
             if (menu.isShowing()) {
@@ -163,7 +165,7 @@ final class SelectionTools {
     }
 
     private String featherText() {
-        return String.format(Locale.ROOT, "Soft edge %.0f px", feather);
+        return I18n.t("sel.softEdgePx", feather);
     }
 
     /** Adds a dragged rectangle or ellipse ({x0, y0, x1, y1}, pixels of the original). */
@@ -217,16 +219,16 @@ final class SelectionTools {
         }
         StringBuilder sb = new StringBuilder();
         if (!any) {
-            sb.append("No selection: tools act on the whole image");
+            sb.append(I18n.t("sel.none"));
         } else {
             if (!region.isEmpty()) {
-                sb.append(region.contours().size()).append(" area(s)");
+                sb.append(region.contours().size()).append(I18n.t("tools.areas"));
             }
             if (colors.isActive()) {
-                sb.append(sb.length() > 0 ? " + " : "").append("color");
+                sb.append(sb.length() > 0 ? " + " : "").append(I18n.t("tools.color"));
             }
             if (invert.isSelected()) {
-                sb.append(", inverted");
+                sb.append(I18n.t("tools.inverted"));
             }
         }
         info.setText(sb.toString());

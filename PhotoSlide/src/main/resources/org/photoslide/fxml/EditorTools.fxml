@@ -14,7 +14,7 @@
    <children>
       <TabPane fx:id="diagramTabs" layoutX="14.0" layoutY="14.0" prefHeight="156.0" prefWidth="231.0" scaleX="0.9" scaleY="0.9" tabClosingPolicy="UNAVAILABLE" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <tabs>
-            <Tab text="Histogramm">
+            <Tab text="%editorTools.histogramm">
               <content>
                 <AnchorPane fx:id="histoAnchorPane" minHeight="0.0" minWidth="0.0" prefHeight="102.0" prefWidth="231.0">
                      <children>
@@ -27,8 +27,8 @@
                      </children></AnchorPane>
               </content>
             </Tab>
-            <Tab fx:id="maskTab" text="Color Mask" />
-            <Tab fx:id="samplerTab" text="Sampler" />
+            <Tab fx:id="maskTab" text="%editorTools.colorMask" />
+            <Tab fx:id="samplerTab" text="%editorTools.sampler" />
          </tabs>
       </TabPane>
       <VBox fx:id="titlePaneBox" spacing="6.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="175.0">

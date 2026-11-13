@@ -1,5 +1,7 @@
 package org.photoslide.editortools;
 
+
+import org.photoslide.I18n;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
@@ -54,7 +56,7 @@ public final class HistoryView {
                 }
             }
         });
-        pane.setText("History");
+        pane.setText(I18n.t("history.title"));
         pane.setGraphic(new FontIcon("fa-history"));
         pane.setContent(list);
         pane.setAnimated(false);

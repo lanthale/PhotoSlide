@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.LutFilter16;
@@ -26,8 +28,8 @@ public class ZonesFilter extends AbstractImageFilter {
     private static final int ORDER = 3;
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.zones("zones", "Zones", 0, ZONES),
-            ParamSpec.choice("mode", "Apply to", ZONES, 0, List.of("Luminosity", "RGB")));
+            ParamSpec.zones("zones", I18n.t("tool.zones"), 0, ZONES),
+            ParamSpec.choice("mode", I18n.t("tool.param.applyTo"), ZONES, 0, List.of(I18n.t("tool.param.luminosity"), "RGB")));
 
     public ZonesFilter() {
         super(NAME);
@@ -35,7 +37,7 @@ public class ZonesFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Zones";
+        return I18n.t("tool.zones");
     }
 
     @Override

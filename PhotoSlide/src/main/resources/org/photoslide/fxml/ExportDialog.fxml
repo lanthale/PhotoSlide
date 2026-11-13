@@ -22,9 +22,9 @@
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="399.0" prefWidth="911.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.ExportDialogController">
    <children>
-      <Label layoutX="84.0" layoutY="71.0" text="Filesequence" />
+      <Label layoutX="84.0" layoutY="71.0" text="%exportDialog.filesequence" />
       <ComboBox fx:id="fileSequenceCombo" layoutX="164.0" layoutY="66.0" prefHeight="27.0" prefWidth="149.0" />
-      <Label layoutX="67.0" layoutY="143.0" text="Output directory" />
+      <Label layoutX="67.0" layoutY="143.0" text="%exportDialog.outputDirectory" />
       <TextField fx:id="outputDirText" editable="false" layoutX="164.0" layoutY="139.0">
          <tooltip>
             <Tooltip fx:id="outputDirToolTip" text="Empty Tooltip" />
@@ -35,10 +35,10 @@
          </graphic>
       </Button>
       <TextField fx:id="filenamePrefixText" layoutX="164.0" layoutY="101.0" />
-      <Label layoutX="77.0" layoutY="106.0" text="Filenameprefix" />
-      <Label layoutX="334.0" layoutY="106.0" text="Example:" />
+      <Label layoutX="77.0" layoutY="106.0" text="%exportDialog.filenameprefix" />
+      <Label layoutX="334.0" layoutY="106.0" text="%exportDialog.example" />
       <Label fx:id="exampleLabel" layoutX="392.0" layoutY="106.0" prefHeight="17.0" prefWidth="112.0" text="wildeben_1.jpg" textFill="#a8a4a4" textOverrun="CENTER_ELLIPSIS" />
-      <Label layoutX="102.0" layoutY="36.0" text="Fileformat" />
+      <Label layoutX="102.0" layoutY="36.0" text="%exportDialog.fileformat" />
       <ComboBox fx:id="fileFormatCombo" layoutX="164.0" layoutY="31.0" prefHeight="27.0" prefWidth="149.0" />
       <GridPane hgap="10.0" layoutX="81.0" layoutY="265.0">
         <columnConstraints>
@@ -51,14 +51,14 @@
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <CheckBox fx:id="exportBasicMetadataBox" mnemonicParsing="false" selected="true" text="Export basic metadata" />
-            <CheckBox fx:id="exportAllMetaData" mnemonicParsing="false" text="Export complete meta data" GridPane.rowIndex="1" />
-            <CheckBox fx:id="exportSelectedBox" mnemonicParsing="false" selected="true" text="Export only selected" GridPane.columnIndex="1" />
-            <CheckBox fx:id="exportDeletedFileBox" mnemonicParsing="false" text="Export deleted files as well" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <CheckBox fx:id="overwriteFilesBox" mnemonicParsing="false" text="Overwrite existing files" GridPane.rowIndex="2" />
+            <CheckBox fx:id="exportBasicMetadataBox" mnemonicParsing="false" selected="true" text="%exportDialog.exportBasicMetadata" />
+            <CheckBox fx:id="exportAllMetaData" mnemonicParsing="false" text="%exportDialog.exportCompleteMetaData" GridPane.rowIndex="1" />
+            <CheckBox fx:id="exportSelectedBox" mnemonicParsing="false" selected="true" text="%exportDialog.exportOnlySelected" GridPane.columnIndex="1" />
+            <CheckBox fx:id="exportDeletedFileBox" mnemonicParsing="false" text="%exportDialog.exportDeletedFilesAsWell" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <CheckBox fx:id="overwriteFilesBox" mnemonicParsing="false" text="%exportDialog.overwriteExistingFiles" GridPane.rowIndex="2" />
          </children>
       </GridPane>
-      <Label layoutX="117.0" layoutY="178.0" text="Quality" />
+      <Label layoutX="117.0" layoutY="178.0" text="%exportDialog.quality" />
       <HBox alignment="CENTER_LEFT" layoutX="164.0" layoutY="173.0" spacing="5.0">
          <children>
             <Slider fx:id="qualitySlider" blockIncrement="1.0" majorTickUnit="1.0" min="40.0" minorTickCount="0" prefHeight="16.0" prefWidth="161.0" snapToTicks="true" value="96.0">
@@ -72,7 +72,7 @@
       <Label fx:id="errorLabelDirectory" layoutX="367.0" layoutY="143.0" text="Label" textFill="#ff0101" visible="false" />
       <VBox layoutX="523.0" layoutY="77.0" prefHeight="115.0" prefWidth="350.0" spacing="2.0">
          <children>
-            <CheckBox fx:id="replaceKeywordChoiceBox" mnemonicParsing="false" text="Replace keywords during export" />
+            <CheckBox fx:id="replaceKeywordChoiceBox" mnemonicParsing="false" text="%exportDialog.replaceKeywordsDuringExport" />
             <ScrollPane fitToWidth="true" minViewportHeight="40.0" minViewportWidth="100.0" prefViewportWidth="230.0" prefWidth="350.0">
                <content>
                   <FlowPane fx:id="keywordText" disable="true" hgap="5.0" prefHeight="50.0" prefWidth="348.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
@@ -84,7 +84,7 @@
             </ScrollPane>
             <HBox spacing="5.0">
                <children>
-                  <TextField fx:id="addKeywordTextField" disable="true" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="Add Keywords..." HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="addKeywordTextField" disable="true" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="%exportDialog.addKeywords" HBox.hgrow="ALWAYS" />
                   <Button fx:id="plusButton" mnemonicParsing="false" onAction="#plusButtonAction">
                      <graphic>
                         <FontIcon iconLiteral="ti-plus" />
@@ -96,11 +96,11 @@
       </VBox>
       <HBox alignment="CENTER_LEFT" layoutX="523.0" layoutY="32.0" prefHeight="25.0" prefWidth="350.0" spacing="10.0">
          <children>
-            <CheckBox fx:id="replaceTitleBox" mnemonicParsing="false" text="Replace Title during export" />
+            <CheckBox fx:id="replaceTitleBox" mnemonicParsing="false" text="%exportDialog.replaceTitleDuringExport" />
             <TextField fx:id="titleTextBox" disable="true" HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
-      <CheckBox fx:id="replaceGPSCheckBox" layoutX="523.0" layoutY="218.0" mnemonicParsing="false" text="Replace GPS information" />
+      <CheckBox fx:id="replaceGPSCheckBox" layoutX="523.0" layoutY="218.0" mnemonicParsing="false" text="%exportDialog.replaceGpsInformation" />
       <VBox fx:id="mapSelectionPane" disable="true" layoutX="523.0" layoutY="242.0" prefHeight="156.0" prefWidth="350.0" spacing="5.0">
          <children>
             <HBox alignment="CENTER_LEFT" prefHeight="25.0" prefWidth="302.0" spacing="5.0">
@@ -111,14 +111,14 @@
                         <FontIcon iconLiteral="ti-search" />
                      </graphic>
                   </Button>
-                  <Label text="Height" />
+                  <Label text="%exportDialog.height" />
                   <CustomTextField fx:id="heightTextField" prefHeight="25.0" prefWidth="95.0" />
                </children>
             </HBox>
             <MapView fx:id="mapView" zoom="19.0" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
-      <Label layoutX="117.0" layoutY="213.0" text="Sorting" />
+      <Label layoutX="117.0" layoutY="213.0" text="%exportDialog.sorting" />
       <ComboBox fx:id="sortComboBox" layoutX="164.0" layoutY="209.0" prefWidth="150.0" />
    </children>
 </AnchorPane>

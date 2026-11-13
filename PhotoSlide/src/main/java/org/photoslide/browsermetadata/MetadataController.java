@@ -5,6 +5,8 @@
  */
 package org.photoslide.browsermetadata;
 
+
+import org.photoslide.I18n;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
@@ -379,7 +381,7 @@ public class MetadataController implements Initializable {
         resetGUI();
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         progressPane.setVisible(true);
-        progressLabel.setText("Loading metadata...");
+        progressLabel.setText(I18n.t("meta.loading"));
         if (task != null) {
             task.cancel();
         }
@@ -914,7 +916,7 @@ public class MetadataController implements Initializable {
         List<Node> cells = new ArrayList<>();
         AtomicInteger row = new AtomicInteger(0);
         if (actualMediaFile != null && actualMediaFile.getMediaType() == MediaFile.MediaTypes.VIDEO) {
-            addMetadataRow(cells, row.getAndIncrement(), "File name", actualMediaFile.getName());
+            addMetadataRow(cells, row.getAndIncrement(), I18n.t("meta.fileName"), actualMediaFile.getName());
         }
         if (actualMetadata != null) {
             actualMetadata.forEachEntry((key, value) -> addMetadataRow(cells, row.getAndIncrement(), key, value));
@@ -1270,7 +1272,7 @@ public class MetadataController implements Initializable {
         final String keywords = file.getKeywords();
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-        progressLabel.setText("Saving comments...");
+        progressLabel.setText(I18n.t("meta.savingComments"));
         Task<Boolean> taskSaveComments = new Task<>() {
             @Override
             protected Boolean call() {
@@ -1382,7 +1384,7 @@ public class MetadataController implements Initializable {
         final IPTC iptc = actualMetadata.getIptc();
         progressPane.setVisible(true);
         progressIndicator.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-        progressLabel.setText("Saving keywords...");
+        progressLabel.setText(I18n.t("meta.savingKeywords"));
         Task<Boolean> taskKeywordsTitle = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
@@ -1471,9 +1473,9 @@ public class MetadataController implements Initializable {
 
     @FXML
     private void applyKeywordsToAllAction(ActionEvent event) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Apply Caption/Title and keywords to all mediafiles in event\n" + this.actualMediaFile.getPathStorage(), ButtonType.CANCEL, ButtonType.OK);
-        alert.setTitle("Confirmation");
-        alert.setHeaderText("Apply Caption/Title/keywords to all mediafiles");
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("meta.applyAllQuestion", this.actualMediaFile.getPathStorage()), ButtonType.CANCEL, ButtonType.OK);
+        alert.setTitle(I18n.t("common.confirmation"));
+        alert.setHeaderText(I18n.t("meta.applyAllHeader"));
         FontIcon ft = new FontIcon("ti-pencil-alt:50");
         alert.setGraphic(ft);
         DialogPane dialogPane = alert.getDialogPane();
@@ -1482,12 +1484,12 @@ public class MetadataController implements Initializable {
         content.setAlignment(Pos.CENTER_RIGHT);
         content.setHgap(5);
         content.setVgap(5);
-        Label title = new Label("Title/Caption");
+        Label title = new Label(I18n.t("meta.titleCaption"));
         TextField titleText = new TextField(captionTextField.getText());
         titleText.setPrefWidth(300);
         HBox.setHgrow(titleText, Priority.ALWAYS);
         content.addRow(0, title, titleText, new Pane());
-        Label keywordLabel = new Label("Keywords");
+        Label keywordLabel = new Label(I18n.t("browserMetadata.keywords"));
         ScrollPane scrollpane = new ScrollPane();
         scrollpane.setPrefSize(300, 150);
         HBox.setHgrow(scrollpane, Priority.NEVER);
@@ -1504,7 +1506,7 @@ public class MetadataController implements Initializable {
         TextField addKeywordToAllField = new TextField();
         addKeywordToAllField.setPrefWidth(300);
         HBox.setHgrow(addKeywordToAllField, Priority.ALWAYS);
-        addKeywordToAllField.setPromptText("Add keywords...");
+        addKeywordToAllField.setPromptText(I18n.t("browserMetadata.addKeywords"));
         addKeywordToAllField.setOnKeyPressed((t) -> {
             if (t.getCode().equals(KeyCode.ENTER)) {
                 keywordsToAllText.getChildren().add(new Tag(addKeywordToAllField.getText()));
@@ -1538,8 +1540,8 @@ public class MetadataController implements Initializable {
             resetGUI();
             mainController.getProgressPane().setVisible(true);
             mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
-            mainController.getProgressbarLabel().setText("Setting metadata...");
-            mainController.getStatusLabelLeft().setText("Setting metadata");
+            mainController.getProgressbarLabel().setText(I18n.t("meta.settingMetadata"));
+            mainController.getStatusLabelLeft().setText(I18n.t("meta.settingMetadataShort"));
             mainController.getStatusLabelLeft().setVisible(true);
 
             final String allTitle = titleText.getText();
@@ -1638,7 +1640,7 @@ public class MetadataController implements Initializable {
         vb.setSpacing(5);
         HBox hb = new HBox();
         hb.setSpacing(5);
-        Button saveAs = new Button("Save map to image");
+        Button saveAs = new Button(I18n.t("meta.saveMap"));
         saveAs.setOnAction((t) -> {
             WritableImage image = map.snapshot(new SnapshotParameters(), null);
             executorParallel.submit(() -> {
@@ -1659,20 +1661,20 @@ public class MetadataController implements Initializable {
                     fo.close();
                     message.setVisible(true);
                     message.setManaged(true);
-                    message.setText("Save successfully!");
+                    message.setText(I18n.t("meta.saveOk"));
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-                    message.setText("Error on saving image!");
+                    message.setText(I18n.t("meta.saveError"));
                 } catch (Exception ex) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, null, ex);
-                    message.setText("Error on saving image!");
+                    message.setText(I18n.t("meta.saveError"));
                 }
                 util.hideNodeAfterTime(message, 3, false);
             });
         });
         saveAs.setId("toolbutton");
         saveAs.setGraphic(new FontIcon("ti-save:16"));
-        Button clipboardButton = new Button("Copy GPS position to clipboard");
+        Button clipboardButton = new Button(I18n.t("meta.copyGps"));
         clipboardButton.setOnAction((t) -> {
             final Clipboard clipboard = Clipboard.getSystemClipboard();
             final ClipboardContent content = new ClipboardContent();
@@ -1680,7 +1682,7 @@ public class MetadataController implements Initializable {
             clipboard.setContent(content);
             message.setVisible(true);
             message.setManaged(true);
-            message.setText("Copied GPS position to clipboard.");
+            message.setText(I18n.t("meta.copiedGps"));
             util.hideNodeAfterTime(message, 3, false);
         });
         clipboardButton.setId("toolbutton");
@@ -1737,7 +1739,7 @@ public class MetadataController implements Initializable {
         MarkerLayer markerPos = new MarkerLayer();
         PopOver popOver = new PopOver();
         popOver.setArrowLocation(PopOver.ArrowLocation.TOP_RIGHT);
-        popOver.setTitle("Change GPS position/altitude");
+        popOver.setTitle(I18n.t("meta.changeGps"));
         popOver.setAnimated(true);
         popOver.setHeaderAlwaysVisible(true);
         Label message = new Label("");
@@ -1782,12 +1784,12 @@ public class MetadataController implements Initializable {
                 try {
                     height = Double.parseDouble(heightStr);
                 } catch (NumberFormatException ex) {
-                    showGPSMessage(util, message, "Invalid height: " + heightField.getText());
+                    showGPSMessage(util, message, I18n.t("meta.invalidHeight", heightField.getText()));
                     return;
                 }
             }
             if (chosen[0] == null && !file.hasGpsPosition()) {
-                showGPSMessage(util, message, "Choose a position on the map or search a place.");
+                showGPSMessage(util, message, I18n.t("meta.choosePosition"));
                 return;
             }
             // into the MediaFile first: saveGPSData and the XMP sidecar write its values
@@ -1806,17 +1808,17 @@ public class MetadataController implements Initializable {
             submitWrite(file, () -> {
                 try {
                     saveGPSData(file);
-                    Platform.runLater(() -> showGPSMessage(util, message, "GPS position saved."));
+                    Platform.runLater(() -> showGPSMessage(util, message, I18n.t("meta.gpsSaved")));
                 } catch (IOException ex) {
                     Logger.getLogger(MetadataController.class.getName()).log(Level.SEVERE, "Cannot save the GPS position of " + file.getPathStorage(), ex);
-                    Platform.runLater(() -> showGPSMessage(util, message, "Error on saving the GPS position!"));
+                    Platform.runLater(() -> showGPSMessage(util, message, I18n.t("meta.gpsSaveError")));
                 }
             });
         });
-        hb.getChildren().add(new Label("Place:"));
+        hb.getChildren().add(new Label(I18n.t("meta.place")));
         hb.getChildren().add(searchField);
         hb.getChildren().add(searchButton);
-        hb.getChildren().add(new Label("Height:"));
+        hb.getChildren().add(new Label(I18n.t("meta.height")));
         heightField.setPrefWidth(80);
         heightField.setMinWidth(80);
         hb.getChildren().add(heightField);

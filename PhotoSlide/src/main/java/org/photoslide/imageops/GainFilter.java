@@ -1,5 +1,7 @@
 package org.photoslide.imageops;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.RenderContext;
@@ -20,8 +22,8 @@ public class GainFilter extends AbstractImageFilter {
     private static final double PIVOT = perceptual(0.18);
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("gain", "Contrast", 0, 0f, 1f, 0.5f, 0.01f),
-            ParamSpec.slider("bias", "Brightness", 1, 0f, 1f, 0.5f, 0.01f));
+            ParamSpec.slider("gain", I18n.t("tool.param.contrast"), 0, 0f, 1f, 0.5f, 0.01f),
+            ParamSpec.slider("bias", I18n.t("tool.param.brightness"), 1, 0f, 1f, 0.5f, 0.01f));
 
     public GainFilter() {
         super(NAME);
@@ -29,7 +31,7 @@ public class GainFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Contrast / Brightness";
+        return I18n.t("tool.gain");
     }
 
     @Override

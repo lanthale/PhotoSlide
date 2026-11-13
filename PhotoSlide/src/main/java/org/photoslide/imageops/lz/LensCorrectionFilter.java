@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -27,10 +29,10 @@ public class LensCorrectionFilter extends AbstractImageFilter {
     private static final float TCA_SCALE = 1e-3f;
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("k1", "Distortion (main)", 0, -50f, 50f, 0f, 1f),
-            ParamSpec.slider("k2", "Distortion (edge)", 1, -50f, 50f, 0f, 1f),
-            ParamSpec.slider("tcaRed", "Color fringe red", 2, -5f, 5f, 0f, 0.1f),
-            ParamSpec.slider("tcaBlue", "Color fringe blue", 3, -5f, 5f, 0f, 0.1f));
+            ParamSpec.slider("k1", I18n.t("tool.param.distortionMain"), 0, -50f, 50f, 0f, 1f),
+            ParamSpec.slider("k2", I18n.t("tool.param.distortionEdge"), 1, -50f, 50f, 0f, 1f),
+            ParamSpec.slider("tcaRed", I18n.t("tool.param.fringeRed"), 2, -5f, 5f, 0f, 0.1f),
+            ParamSpec.slider("tcaBlue", I18n.t("tool.param.fringeBlue"), 3, -5f, 5f, 0f, 0.1f));
 
     public LensCorrectionFilter() {
         super(NAME);
@@ -38,7 +40,7 @@ public class LensCorrectionFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Lens Correction";
+        return I18n.t("tool.lensCorrection");
     }
 
     @Override

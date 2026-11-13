@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -25,7 +27,7 @@ public class RedEyeFilter extends AbstractImageFilter {
     public static final String NAME = "RedEyeFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("tolerance", "Tolerance", 0, 0.5f, 1.5f, 1f, 0.05f));
+            ParamSpec.slider("tolerance", I18n.t("tool.param.tolerance"), 0, 0.5f, 1.5f, 1f, 0.05f));
 
     private static final short[] POW = new short[65536];
 
@@ -41,7 +43,7 @@ public class RedEyeFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Red Eyes";
+        return I18n.t("tool.redEyes");
     }
 
     @Override

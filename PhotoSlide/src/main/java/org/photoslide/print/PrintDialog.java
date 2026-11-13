@@ -35,7 +35,7 @@ public class PrintDialog extends Alert {
 
     private void initDialog() {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/PrintDialog.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/PrintDialog.fxml"), org.photoslide.I18n.bundle());
             Parent root = (Parent) fxmlLoader.load();
             controller = fxmlLoader.<PrintController>getController();            
             getDialogPane().setContent(root);

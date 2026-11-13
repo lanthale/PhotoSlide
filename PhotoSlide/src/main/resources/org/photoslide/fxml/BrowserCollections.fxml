@@ -15,7 +15,7 @@
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsercollections.CollectionsController">
     <children>
-        <Label layoutX="16.0" layoutY="14.0" text="Photo store" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
+        <Label layoutX="16.0" layoutY="14.0" text="%browserCollections.photoStore" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
             <font>
                 <Font size="24.0" />
             </font>
@@ -27,7 +27,7 @@
                   <FontIcon iconLiteral="ti-plus" />
                </graphic>
                <tooltip>
-                  <Tooltip text="Creates a new event (directory)" />
+                  <Tooltip text="%browserCollections.createsANewEventDirectory" />
                </tooltip>
                 </Button>
             <Button id="toolbutton" fx:id="refreshButton" mnemonicParsing="false" onAction="#refreshMenuAction">
@@ -35,12 +35,12 @@
                   <FontIcon iconLiteral="ti-loop" />
                </graphic>
                <tooltip>
-                  <Tooltip text="Refreshes the directory tree" />
+                  <Tooltip text="%browserCollections.refreshesTheDirectoryTree" />
                </tooltip>
             </Button>
             <MenuButton fx:id="menuButton" mnemonicParsing="false">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#createEventAction" text="Create a new event">
+                <MenuItem mnemonicParsing="false" onAction="#createEventAction" text="%browserCollections.createANewEvent">
                      <graphic>
                         <StackedFontIcon>
                            <children>
@@ -50,33 +50,33 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#renameEventAction" text="Rename event" visible="false">
+                  <MenuItem mnemonicParsing="false" onAction="#renameEventAction" text="%browserCollections.renameEvent" visible="false">
                      <graphic>
                         <FontIcon iconLiteral="fa-edit" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#cutEventAction" text="Cut event">
+                  <MenuItem mnemonicParsing="false" onAction="#cutEventAction" text="%browserCollections.cutEvent">
                      <graphic>
                         <FontIcon iconLiteral="ti-cut" />
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#copyEventAction" text="Copy event">
+                  <MenuItem mnemonicParsing="false" onAction="#copyEventAction" text="%browserCollections.copyEvent">
                      <graphic>
                         <FontIcon iconLiteral="ti-files" />
                      </graphic></MenuItem>
-                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteEventAction" text="Paste event">
+                  <MenuItem fx:id="pasteMenu" disable="true" mnemonicParsing="false" onAction="#pasteEventAction" text="%browserCollections.pasteEvent">
                      <graphic>
                         <FontIcon iconLiteral="ti-stamp" />
                      </graphic>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteEventAction" text="Delete event">
+                  <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteEventAction" text="%browserCollections.deleteEvent">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" />
                      </graphic>
                   </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#addCollectionAction" text="Add collection">
+                  <MenuItem mnemonicParsing="false" onAction="#addCollectionAction" text="%browserCollections.addCollection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_LEFT">
                            <children>
@@ -86,7 +86,7 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#relocateCollectionAction" text="Relocate collection">
+                  <MenuItem mnemonicParsing="false" onAction="#relocateCollectionAction" text="%browserCollections.relocateCollection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_RIGHT">
                            <children>
@@ -96,7 +96,7 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
-                  <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="Remove collection">
+                  <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="%browserCollections.removeCollection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_RIGHT">
                            <children>

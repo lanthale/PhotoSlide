@@ -1,5 +1,7 @@
 package org.photoslide.editpipeline;
 
+
+import org.photoslide.I18n;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.lang.Rational;
 import com.drew.metadata.Directory;
@@ -41,15 +43,15 @@ public record RawLook(double exposure, boolean useDngBaseline, ToneCurve curve, 
 
     /** Contrast curve on the sRGB encoded values (S-curve), mixed with the identity. */
     public enum ToneCurve {
-        LINEAR("Linear (no curve)", 0),
-        MEDIUM("Medium contrast", 0.35),
-        STRONG("Strong contrast", 0.7);
+        LINEAR("rawlook.linear", 0),
+        MEDIUM("rawlook.medium", 0.35),
+        STRONG("rawlook.strong", 0.7);
 
         private final String label;
         private final double strength;
 
         ToneCurve(String label, double strength) {
-            this.label = label;
+            this.label = I18n.t(label);
             this.strength = strength;
         }
 

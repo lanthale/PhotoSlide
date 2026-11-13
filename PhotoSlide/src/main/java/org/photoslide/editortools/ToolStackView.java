@@ -1,5 +1,7 @@
 package org.photoslide.editortools;
 
+
+import org.photoslide.I18n;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -83,7 +85,7 @@ public final class ToolStackView {
     }
 
     private final VBox box = new VBox(4);
-    private final MenuButton addButton = new MenuButton("Add tool");
+    private final MenuButton addButton = new MenuButton(I18n.t("tools.addTool"));
     private final DropperHost dropperHost;
     private MediaFile file;
 
@@ -169,7 +171,7 @@ public final class ToolStackView {
             box.getChildren().add(pane(f, list));
         }
         if (list.isEmpty()) {
-            Label hint = new Label(file == null ? "" : "No tools yet. Add one with \"Add tool\".");
+            Label hint = new Label(file == null ? "" : I18n.t("tools.noTools"));
             hint.setWrapText(true);
             hint.setTextFill(Color.web("#9f9f9f"));
             box.getChildren().add(hint);
@@ -183,7 +185,7 @@ public final class ToolStackView {
             content.getChildren().add(control(f, p));
         }
         if (f instanceof Pickable pickable) {
-            Button dropper = new Button("Pick", new FontIcon("fa-eyedropper"));
+            Button dropper = new Button(I18n.t("tools.pick"), new FontIcon("fa-eyedropper"));
             dropper.setTooltip(new Tooltip(pickable.pickLabel()));
             dropper.setOnAction(e -> dropperHost.requestPoint(p -> {
                 double[] rgb = dropperHost.sampleBelow(f, p);
@@ -204,7 +206,7 @@ public final class ToolStackView {
 
         CheckBox active = new CheckBox();
         active.setSelected(f.isActive());
-        active.setTooltip(new Tooltip("On / off"));
+        active.setTooltip(new Tooltip(I18n.t("tools.onOff")));
         active.setOnAction(e -> {
             f.setActive(active.isSelected());
             changed();
@@ -213,27 +215,27 @@ public final class ToolStackView {
         javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         int index = list.indexOf(f);
-        Button up = iconButton("fa-arrow-up", "Apply earlier");
+        Button up = iconButton("fa-arrow-up", I18n.t("tools.applyEarlier"));
         up.setDisable(index == 0);
         up.setOnAction(e -> {
             list.remove(f);
             list.add(index - 1, f);
             structureChanged(list);
         });
-        Button down = iconButton("fa-arrow-down", "Apply later");
+        Button down = iconButton("fa-arrow-down", I18n.t("tools.applyLater"));
         down.setDisable(index == list.size() - 1);
         down.setOnAction(e -> {
             list.remove(f);
             list.add(index + 1, f);
             structureChanged(list);
         });
-        Button reset = iconButton("fa-undo", "Reset settings");
+        Button reset = iconButton("fa-undo", I18n.t("tools.resetSettings"));
         reset.setOnAction(e -> {
             f.reset();
             rebuild();
             changed();
         });
-        Button delete = iconButton("fa-trash", "Remove tool");
+        Button delete = iconButton("fa-trash", I18n.t("tools.removeTool"));
         delete.setOnAction(e -> {
             file.getFilterList().remove(f);
             list.remove(f);
@@ -263,31 +265,31 @@ public final class ToolStackView {
     private Node areaControls(AbstractImageFilter f) {
         Region region = f.getRegion();
         ColorSelection cs = f.getColorSelection();
-        StringBuilder text = new StringBuilder("Acts on: ");
+        StringBuilder text = new StringBuilder(I18n.t("tools.actsOn"));
         if (region.isEmpty() && !cs.isActive()) {
-            text.append("whole image");
+            text.append(I18n.t("tools.wholeImageLower"));
         } else {
             if (!region.isEmpty()) {
-                text.append(region.contours().size()).append(" area(s)");
+                text.append(region.contours().size()).append(I18n.t("tools.areas"));
             }
             if (cs.isActive()) {
-                text.append(region.isEmpty() ? "" : " + ").append("color");
+                text.append(region.isEmpty() ? "" : " + ").append(I18n.t("tools.color"));
             }
             if (region.inverted() || cs.inverted()) {
-                text.append(", inverted");
+                text.append(I18n.t("tools.inverted"));
             }
         }
         Label label = new Label(text.toString());
         label.setTextFill(Color.web("#9f9f9f"));
         label.setOnMouseClicked(e -> dropperHost.showRegion(f));
-        Button use = new Button("Use selection", new FontIcon("fa-crop"));
-        use.setTooltip(new Tooltip("Apply this tool to the current selection of the toolbar"));
+        Button use = new Button(I18n.t("tools.useSelection"), new FontIcon("fa-crop"));
+        use.setTooltip(new Tooltip(I18n.t("tools.useSelectionTip")));
         use.setOnAction(e -> {
             f.setRegion(dropperHost.selectedRegion());
             f.setColorSelection(dropperHost.selectedColors());
             regionChanged(f);
         });
-        Button whole = new Button("Whole image", new FontIcon("fa-expand"));
+        Button whole = new Button(I18n.t("tools.wholeImage"), new FontIcon("fa-expand"));
         whole.setDisable(region.isEmpty() && !cs.isActive());
         whole.setOnAction(e -> {
             f.setRegion(Region.EMPTY);
@@ -303,9 +305,9 @@ public final class ToolStackView {
         Region region = f.getRegion();
         VBox box = new VBox(6);
         boolean spot = f instanceof SpotFilter;
-        Button add = new Button(spot ? "Add spot" : "Add clone area", new FontIcon("fa-plus-circle"));
-        add.setTooltip(new Tooltip(spot ? "Click on the spot, or drag from its centre to set the size"
-                : "Hold the mouse button and draw around the area to cover, then click the source"));
+        Button add = new Button(spot ? I18n.t("tools.addSpot") : I18n.t("tools.addClone"), new FontIcon("fa-plus-circle"));
+        add.setTooltip(new Tooltip(spot ? I18n.t("tools.addSpotTip")
+                : I18n.t("tools.addCloneTip")));
         add.setOnAction(e -> {
             dropperHost.showRegion(f);
             if (spot) {
@@ -328,14 +330,14 @@ public final class ToolStackView {
                 });
             }
         });
-        Button source = new Button("Move source", new FontIcon("fa-crosshairs"));
-        source.setTooltip(new Tooltip("Click where the last area should be copied from"));
+        Button source = new Button(I18n.t("tools.moveSource"), new FontIcon("fa-crosshairs"));
+        source.setTooltip(new Tooltip(I18n.t("tools.moveSourceTip")));
         source.setDisable(region.isEmpty());
         source.setOnAction(e -> {
             dropperHost.showRegion(f);
             dropperHost.requestPoint(src -> setLastSource(f, src));
         });
-        Button undo = new Button("Remove last", new FontIcon("fa-undo"));
+        Button undo = new Button(I18n.t("tools.removeLast"), new FontIcon("fa-undo"));
         undo.setDisable(region.isEmpty());
         undo.setOnAction(e -> {
             List<Contour> l = new ArrayList<>(f.getRegion().contours());
@@ -343,7 +345,7 @@ public final class ToolStackView {
             f.setRegion(f.getRegion().withContours(l));
             regionChanged(f);
         });
-        Label count = new Label(region.contours().size() + (spot ? " spot(s)" : " area(s)"));
+        Label count = new Label(region.contours().size() + (spot ? I18n.t("tools.spots") : I18n.t("tools.areas")));
         count.setTextFill(Color.web("#9f9f9f"));
         box.getChildren().addAll(new HBox(4, add, source), new HBox(4, undo, count));
         if (!spot) {
@@ -380,7 +382,7 @@ public final class ToolStackView {
             }
         });
         HBox.setHgrow(feather, Priority.ALWAYS);
-        return new VBox(0, new Label("Soft edge"), new HBox(4, feather, v));
+        return new VBox(0, new Label(I18n.t("tools.softEdge")), new HBox(4, feather, v));
     }
 
     private void regionChanged(AbstractImageFilter f) {
@@ -415,7 +417,7 @@ public final class ToolStackView {
             f.setBlendMode(mode.getValue());
             changed();
         });
-        VBox layer = new VBox(2, new Label("Opacity / Mode"), new HBox(4, opacity, value), mode);
+        VBox layer = new VBox(2, new Label(I18n.t("tools.opacityMode")), new HBox(4, opacity, value), mode);
         layer.setPadding(new Insets(4, 0, 0, 0));
         return layer;
     }
@@ -482,7 +484,7 @@ public final class ToolStackView {
                 if (v[p.index()] < 0) {
                     swatch.setFill(Color.TRANSPARENT);
                     swatch.setStroke(Color.GRAY);
-                    text.setText("not picked yet");
+                    text.setText(I18n.t("tools.notPicked"));
                 } else {
                     double[] s = WorkingSpace.multiply(WorkingSpace.WORKING_TO_SRGB,
                             new double[]{v[p.index()], v[p.index() + 1], v[p.index() + 2]});
@@ -502,7 +504,7 @@ public final class ToolStackView {
                     }
                     changed();
                 });
-                Label hint = new Label("Drag a zone up or down, double click to release it");
+                Label hint = new Label(I18n.t("tools.zonesHint"));
                 hint.setWrapText(true);
                 hint.setTextFill(Color.web("#9f9f9f"));
                 return new VBox(2, zm, hint);

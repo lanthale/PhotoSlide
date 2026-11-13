@@ -9,7 +9,7 @@
     <children>
         <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
-                <Label text="Map - coming soon" textFill="#9f9f9f">
+                <Label text="%mapView.mapComingSoon" textFill="#9f9f9f">
                     <font>
                         <Font size="24.0" />
                     </font>

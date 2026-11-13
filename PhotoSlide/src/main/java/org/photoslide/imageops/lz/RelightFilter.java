@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -25,11 +27,11 @@ public class RelightFilter extends AbstractImageFilter {
     public static final String NAME = "RelightFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("shadows", "Shadows", 0, 0f, 10f, 3f, 0.05f),
-            ParamSpec.slider("highlights", "Highlights", 1, 0f, 1f, 0.2f, 0.05f),
-            ParamSpec.slider("detail", "Detail", 2, 0f, 10f, 1.5f, 0.05f),
-            ParamSpec.slider("depth", "Depth", 3, 8f, 64f, 64f, 0.5f),
-            ParamSpec.slider("fuzz", "Fuzz", 4, 0.1f, 1f, 0.1f, 0.05f));
+            ParamSpec.slider("shadows", I18n.t("browserMetadata.shadows"), 0, 0f, 10f, 3f, 0.05f),
+            ParamSpec.slider("highlights", I18n.t("browserMetadata.highlights"), 1, 0f, 1f, 0.2f, 0.05f),
+            ParamSpec.slider("detail", I18n.t("tool.param.detail"), 2, 0f, 10f, 1.5f, 0.05f),
+            ParamSpec.slider("depth", I18n.t("tool.param.depth"), 3, 8f, 64f, 64f, 0.5f),
+            ParamSpec.slider("fuzz", I18n.t("tool.param.fuzz"), 4, 0.1f, 1f, 0.1f, 0.05f));
 
     /** Edge profile of the bilateral filter (log like, with a toe for the shadows). */
     private static final float[] PROFILE = new float[65536];
@@ -47,7 +49,7 @@ public class RelightFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Relight";
+        return I18n.t("tool.relight");
     }
 
     @Override

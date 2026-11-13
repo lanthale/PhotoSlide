@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.Image16;
@@ -21,10 +23,10 @@ public class HueSaturationFilter extends AbstractImageFilter {
     public static final String NAME = "HueSaturationFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("hue", "Hue", 0, -180f, 180f, 0f, 1f),
-            ParamSpec.slider("saturation", "Saturation", 1, -100f, 100f, 0f, 1f),
-            ParamSpec.slider("vibrance", "Vibrance", 2, -100f, 100f, 0f, 1f),
-            ParamSpec.slider("luminosity", "Luminosity", 3, -100f, 100f, 0f, 1f));
+            ParamSpec.slider("hue", I18n.t("tool.param.hue"), 0, -180f, 180f, 0f, 1f),
+            ParamSpec.slider("saturation", I18n.t("browserMetadata.saturation"), 1, -100f, 100f, 0f, 1f),
+            ParamSpec.slider("vibrance", I18n.t("browserMetadata.vibrance"), 2, -100f, 100f, 0f, 1f),
+            ParamSpec.slider("luminosity", I18n.t("tool.param.luminosity"), 3, -100f, 100f, 0f, 1f));
 
     public HueSaturationFilter() {
         super(NAME);
@@ -32,7 +34,7 @@ public class HueSaturationFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Hue / Saturation";
+        return I18n.t("tool.hueSaturation");
     }
 
     @Override

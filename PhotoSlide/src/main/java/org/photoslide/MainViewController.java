@@ -297,7 +297,7 @@ public class MainViewController implements Initializable {
         taskPopOver.setAnimated(true);
         taskPopOver.setArrowLocation(PopOver.ArrowLocation.BOTTOM_LEFT);
         taskPopOver.setDetachable(false);
-        taskPopOver.setTitle("Taskmanager");
+        taskPopOver.setTitle(I18n.t("main.taskmanager"));
         taskPopOver.setHeaderAlwaysVisible(true);
         taskPopOver.setFadeInDuration(new Duration(100));
         taskPopOver.setContentNode(taskProgressView);
@@ -383,7 +383,7 @@ public class MainViewController implements Initializable {
 
     /** Loads the FXML (hidden) on top of the target pane. */
     private FXMLLoader loadInto(StackPane target, String fxml) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/" + fxml));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/" + fxml), I18n.bundle());
         Parent view = loader.load();
         view.setVisible(false);
         target.getChildren().add(view);
@@ -445,7 +445,7 @@ public class MainViewController implements Initializable {
         }
         Scene scene = browseButton.getScene();
         scene.setCursor(Cursor.WAIT);
-        String loadingText = "Loading " + name + "...";
+        String loadingText = I18n.t("main.loadingModule", name);
         statusLabelLeft.textProperty().unbind();
         statusLabelLeft.setText(loadingText);
         statusLabelLeft.setVisible(true);
@@ -636,7 +636,7 @@ public class MainViewController implements Initializable {
     @FXML
     private void exportAction(ActionEvent event) {
         if ((lighttablePaneController.getFactory() == null) || (lighttablePaneController.getFactory().getSelectedCell() == null)) {
-            Alert alert = new Alert(AlertType.ERROR, "Select a MediaFile to export!", ButtonType.OK);
+            Alert alert = new Alert(AlertType.ERROR, I18n.t("main.selectMediaToExport"), ButtonType.OK);
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             alert.setResizable(false);
@@ -653,8 +653,8 @@ public class MainViewController implements Initializable {
     public boolean exportData(String titel, String initOutDir, SortedList<MediaFile> mediaListToExport) {
         ExportDialog diag = new ExportDialog(Alert.AlertType.CONFIRMATION);
         diag.setGraphic(new FontIcon("ti-export:30"));
-        diag.setTitle("Export media files...");
-        diag.setHeaderText("Export media files...");
+        diag.setTitle(I18n.t("main.exportMediaFiles"));
+        diag.setHeaderText(I18n.t("main.exportMediaFiles"));
 
         diag.getController().setTitel(titel);
         if (initOutDir != null) {
@@ -669,13 +669,13 @@ public class MainViewController implements Initializable {
             bc.play();
             progressPane.setVisible(true);
             progressbar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
-            progressbarLabel.setText("Exporting files...");
-            statusLabelLeft.setText("Exporting");
+            progressbarLabel.setText(I18n.t("main.exportingFiles"));
+            statusLabelLeft.setText(I18n.t("main.exporting"));
             statusLabelLeft.setVisible(true);
             Task<Boolean> task = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
-                    updateTitle("Exporting mediafiles...");
+                    updateTitle(I18n.t("main.exportingMediafiles"));
                     String outputDir = diag.getController().getOutputDir();
                     List<MediaFile> exportList = new ArrayList<>();
                     if (diag.getController().getExportSelectedBox().isSelected() == true) {
@@ -692,10 +692,10 @@ public class MainViewController implements Initializable {
                         }
                     }
                     //sort
-                    if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase("Record time based")) {
+                    if (diag.getController().getSortComboBox().getSelectionModel().getSelectedItem().equalsIgnoreCase(I18n.t("export.sort.recordTime"))) {
                         int total = exportList.size();
                         metadataPaneController.readRecordTimes(this, exportList, (n) -> {
-                            updateMessage("Export: Read record time " + n + "/" + total);
+                            updateMessage(I18n.t("main.exportReadRecordTime", n, total));
                         });
                         if (this.isCancelled()) {
                             return false;
@@ -707,7 +707,7 @@ public class MainViewController implements Initializable {
                     for (MediaFile mediaItem : exportList) {
                         if (this.isCancelled() == false) {
                             updateProgress(i + 1, exportList.size());
-                            updateMessage("Exporting " + (i + 1) + "/" + exportList.size());
+                            updateMessage(I18n.t("main.exportingProgress", i + 1, exportList.size()));
                             try {
                                 String fileFormat = diag.getController().getFileFormat();
                                 ImageType imageType = ImageType.JPG;
@@ -852,8 +852,8 @@ public class MainViewController implements Initializable {
                 progressbarLabel.textProperty().unbind();
                 progressPane.setVisible(false);
                 statusLabelLeft.setVisible(false);
-                Alert errorDiag = new Alert(AlertType.ERROR, "Error during export", ButtonType.OK);
-                errorDiag.setContentText("During export the following error occured\n" + t.getSource().getException().getMessage());
+                Alert errorDiag = new Alert(AlertType.ERROR, I18n.t("main.exportError"), ButtonType.OK);
+                errorDiag.setContentText(I18n.t("main.exportErrorDetail", t.getSource().getException().getMessage()));
                 errorDiag.setResizable(false);
                 Utility.centerChildWindowOnStage((Stage) errorDiag.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
                 errorDiag.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
@@ -892,7 +892,7 @@ public class MainViewController implements Initializable {
     @FXML
     private void preferencesMenuAction(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/RawSettingsLab.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/RawSettingsLab.fxml"), org.photoslide.I18n.bundle());
             Parent root = loader.load();
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/org/photoslide/css/MainView.css").toExternalForm());
@@ -901,7 +901,7 @@ public class MainViewController implements Initializable {
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             stage.initOwner(progressPane.getScene().getWindow());
             stage.getIcons().add(dialogIcon);
-            stage.setTitle("RAW Decoder Settings");
+            stage.setTitle(I18n.t("main.rawDecoderSettings"));
             stage.setScene(scene);
             stage.show();
         } catch (IOException ex) {
@@ -920,7 +920,7 @@ public class MainViewController implements Initializable {
     private void aboutMenuAction(ActionEvent event) {
         Utility util = new Utility();
         String appVersion = util.getAppVersion();
-        Alert alert = new Alert(AlertType.NONE, "About", ButtonType.OK);
+        Alert alert = new Alert(AlertType.NONE, I18n.t("main.about"), ButtonType.OK);
         alert.initStyle(StageStyle.UNDECORATED);
         HBox hb = new HBox();
         hb.setAlignment(Pos.TOP_LEFT);
@@ -938,21 +938,21 @@ public class MainViewController implements Initializable {
         txtHeader.setTextAlignment(TextAlignment.LEFT);
         txtHeader.setTextOrigin(VPos.CENTER);
         vbText.getChildren().add(txtHeader);
-        vbText.getChildren().add(aboutLine("Thanks to the opensource community:"));
+        vbText.getChildren().add(aboutLine(I18n.t("main.about.thanks")));
         // name, what it does in PhotoSlide, project page (opened in the browser)
         String[][] credits = {
-            {"OpenJFX", "for this great GUI toolkit", "https://openjfx.io"},
-            {"Gluon", "for support of OpenJFX and binaries including mobile support", "https://gluonhq.com"},
-            {"ControlsFX", "for very nice components", "https://controlsfx.github.io"},
-            {"iCafe", "for the image codecs and metadata implementation", "https://github.com/dragon66/icafe"},
-            {"Ikonli", "for nice icons", "https://kordamp.org/ikonli/"},
-            {"Gluon Maps", "for map support", "https://github.com/gluonhq/maps"},
-            {"TwelveMonkeys", "for additional image format support", "https://github.com/haraldk/TwelveMonkeys"},
-            {"LibRaw", "for support of raw image formats", "https://www.libraw.org"},
-            {"libheif", "for support of HEIF images", "https://github.com/strukturag/libheif"},
-            {"LightZone", "for the editing tools (BSD-3-Clause)", "https://github.com/ktgw0316/LightZone"},
-            {"JH Labs filters", "for image math helpers (Apache 2.0)", "http://www.jhlabs.com/ip/filters/"},
-            {"Geocalc", "for GPS calculations (BSD-3-Clause)", "https://github.com/grumlimited/geocalc"}};
+            {"OpenJFX", I18n.t("main.about.openjfx"), "https://openjfx.io"},
+            {"Gluon", I18n.t("main.about.gluon"), "https://gluonhq.com"},
+            {"ControlsFX", I18n.t("main.about.controlsfx"), "https://controlsfx.github.io"},
+            {"iCafe", I18n.t("main.about.icafe"), "https://github.com/dragon66/icafe"},
+            {"Ikonli", I18n.t("main.about.ikonli"), "https://kordamp.org/ikonli/"},
+            {"Gluon Maps", I18n.t("main.about.gluonmaps"), "https://github.com/gluonhq/maps"},
+            {"TwelveMonkeys", I18n.t("main.about.twelvemonkeys"), "https://github.com/haraldk/TwelveMonkeys"},
+            {"LibRaw", I18n.t("main.about.libraw"), "https://www.libraw.org"},
+            {"libheif", I18n.t("main.about.libheif"), "https://github.com/strukturag/libheif"},
+            {"LightZone", I18n.t("main.about.lightzone"), "https://github.com/ktgw0316/LightZone"},
+            {"JH Labs filters", I18n.t("main.about.jhlabs"), "http://www.jhlabs.com/ip/filters/"},
+            {"Geocalc", I18n.t("main.about.geocalc"), "https://github.com/grumlimited/geocalc"}};
         for (String[] c : credits) {
             Hyperlink link = new Hyperlink(c[0]);
             link.setStyle("-fx-text-fill: #9ecbff; -fx-font-size:10pt; -fx-padding: 0; -fx-border-width: 0;");
@@ -962,8 +962,8 @@ public class MainViewController implements Initializable {
             row.setAlignment(Pos.CENTER_LEFT);
             vbText.getChildren().add(row);
         }
-        vbText.getChildren().add(aboutLine("\nLicense: GPL v3\n(c) lanthale 2022"));
-        Hyperlink notices = new Hyperlink("Licenses and third-party notices");
+        vbText.getChildren().add(aboutLine(I18n.t("main.about.license")));
+        Hyperlink notices = new Hyperlink(I18n.t("main.licenses"));
         notices.setStyle("-fx-text-fill: #9ecbff; -fx-font-size:10pt; -fx-padding: 4 0 0 0; -fx-border-width: 0;");
         notices.setOnAction(e -> showThirdPartyNotices(alert.getDialogPane().getScene().getWindow()));
         vbText.getChildren().add(notices);
@@ -1016,13 +1016,13 @@ public class MainViewController implements Initializable {
                 Logger.getLogger(MainViewController.class.getName()).log(Level.WARNING, "Cannot read " + name, ex);
             }
         }
-        TextArea area = new TextArea(text.length() == 0 ? "The licence files are missing in this build." : text.toString());
+        TextArea area = new TextArea(text.length() == 0 ? I18n.t("main.licensesMissing") : text.toString());
         area.setEditable(false);
         area.setWrapText(false);
         area.setPrefSize(820, 600);
         area.setStyle("-fx-font-family: monospace;");
         Alert dialog = new Alert(AlertType.NONE, "", ButtonType.CLOSE);
-        dialog.setTitle("Licenses and third-party notices");
+        dialog.setTitle(I18n.t("main.licenses"));
         dialog.getDialogPane().setContent(area);
         dialog.setResizable(true);
         dialog.initOwner(owner);
@@ -1045,8 +1045,8 @@ public class MainViewController implements Initializable {
     private void editMenuShowing(Event event) {
         TextInputControl text = focusedTextInput();
         if (text != null) {
-            undoMenu.setText("Undo");
-            redoMenu.setText("Redo");
+            undoMenu.setText(I18n.t("mainView.undo"));
+            redoMenu.setText(I18n.t("mainView.redo"));
             undoMenu.setDisable(!text.isUndoable());
             redoMenu.setDisable(!text.isRedoable());
             return;
@@ -1055,8 +1055,8 @@ public class MainViewController implements Initializable {
         EditHistory history = f == null ? null : EditHistory.peek(f);
         String undoLabel = history == null ? null : history.undoLabel();
         String redoLabel = history == null ? null : history.redoLabel();
-        undoMenu.setText(undoLabel == null ? "Undo" : "Undo " + undoLabel);
-        redoMenu.setText(redoLabel == null ? "Redo" : "Redo " + redoLabel);
+        undoMenu.setText(undoLabel == null ? I18n.t("mainView.undo") : I18n.t("main.undoWith", undoLabel));
+        redoMenu.setText(redoLabel == null ? I18n.t("mainView.redo") : I18n.t("main.redoWith", redoLabel));
         undoMenu.setDisable(undoLabel == null);
         redoMenu.setDisable(redoLabel == null);
     }
@@ -1398,7 +1398,7 @@ public class MainViewController implements Initializable {
     private void resetFTSearchIndex(ActionEvent event) {
         Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
         alert = Utility.setDefaultButton(alert, ButtonType.NO);
-        alert.setHeaderText("Do you want to reset the search index ?");
+        alert.setHeaderText(I18n.t("main.resetSearchIndexQuestion"));
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
@@ -1423,7 +1423,7 @@ public class MainViewController implements Initializable {
             final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("SearchMediaFilesDB.*"));
             Arrays.asList(files).stream().forEach(File::delete);
             Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
-            msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the search index.");
+            msg.setHeaderText(I18n.t("main.resetSearchIndexDone"));
             msg.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
             msg.setResizable(false);
@@ -1438,8 +1438,8 @@ public class MainViewController implements Initializable {
     private void printMediaAction(ActionEvent event) {
         printDialog = new PrintDialog(Alert.AlertType.INFORMATION, "", ButtonType.OK, ButtonType.CANCEL);
         printDialog.setGraphic(new FontIcon("ti-printer:40"));
-        printDialog.setTitle("Print dialog");
-        printDialog.setHeaderText("Print settings");
+        printDialog.setTitle(I18n.t("main.printDialog"));
+        printDialog.setHeaderText(I18n.t("main.printSettings"));
         printDialog.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         printDialog.setResizable(true);
@@ -1515,11 +1515,11 @@ public class MainViewController implements Initializable {
         if (m.isBookmarked()) {
             bookmarks.remove(m.getName());
             m.setBookmarked(false);
-            lighttablePaneController.getBookmarkButton().setText("Bookmark");
+            lighttablePaneController.getBookmarkButton().setText(I18n.t("browserLighttable.bookmark"));
         } else {
             bookmarks.setProperty(m.getName(), m.getPathStorage().toString());
             m.setBookmarked(true);
-            lighttablePaneController.getBookmarkButton().setText("Unbookmark");
+            lighttablePaneController.getBookmarkButton().setText(I18n.t("lighttable.unbookmark"));
         }
         bmbIcon.setCounter(bookmarks.size());
     }
@@ -1572,10 +1572,10 @@ public class MainViewController implements Initializable {
         popOver.setAnimated(true);
         popOver.setCloseButtonEnabled(true);
         popOver.setAutoHide(true);
-        popOver.setTitle("Bookmarks Board");
+        popOver.setTitle(I18n.t("main.bookmarksBoard"));
         popOver.setHeaderAlwaysVisible(true);
 
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/BookmarkBoard.fxml"), org.photoslide.I18n.bundle());
         Parent root;
         try {
             root = (Parent) fxmlLoader.load();
@@ -1618,7 +1618,7 @@ public class MainViewController implements Initializable {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
         selectedMediaItem.removeAllEdits();
         // all views (editor tools, sliders, previews) show the unedited file; only the stack is kept
-        EditPipeline.editsReloaded(selectedMediaItem, "Remove all edits");
+        EditPipeline.editsReloaded(selectedMediaItem, I18n.t("history.removeAllEdits"));
         selectedMediaItem.thumbnailChanged();
         int indexOf = lighttablePaneController.getFullMediaList().indexOf(selectedMediaItem);
         if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
@@ -1695,7 +1695,7 @@ public class MainViewController implements Initializable {
             Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
         }
         Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
-        msg.setHeaderText("Reset successfully!\nPlease restart the application to build up again the cache.");
+        msg.setHeaderText(I18n.t("main.resetCacheDone"));
         msg.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         msg.setResizable(false);

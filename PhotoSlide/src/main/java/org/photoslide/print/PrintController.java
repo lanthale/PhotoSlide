@@ -5,6 +5,8 @@
  */
 package org.photoslide.print;
 
+
+import org.photoslide.I18n;
 import java.net.URL;
 import java.util.ArrayList;
 import javafx.concurrent.Task;
@@ -251,7 +253,7 @@ public class PrintController implements Initializable {
     public void print(Label jobStatus, Set<MediaFile> allPrintItems) {
 
         jobStatus.textProperty().unbind();
-        jobStatus.setText("Creating print job...");
+        jobStatus.setText(I18n.t("print.creating"));
 
         // Create a printer job for the default printer
         PrinterJob job = PrinterJob.createPrinterJob(selectedPrinter);
@@ -276,13 +278,13 @@ public class PrintController implements Initializable {
             if (printing) {
                 job.endJob();
                 jobStatus.textProperty().unbind();
-                jobStatus.setText("Finished.");
+                jobStatus.setText(I18n.t("print.finished"));
             } else {
 
             }
         } else {
             // Write Error Message
-            jobStatus.setText("Not possible to create print job!");
+            jobStatus.setText(I18n.t("print.failed"));
         }
     }
 

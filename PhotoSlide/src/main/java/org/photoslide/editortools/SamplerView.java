@@ -1,5 +1,7 @@
 package org.photoslide.editortools;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -44,9 +46,9 @@ public final class SamplerView {
         values.setHgap(6);
         values.setVgap(2);
         values.addRow(0, label("RGB"), rgb);
-        values.addRow(1, label("Luminosity"), luminosity);
-        values.addRow(2, label("Zone"), zone);
-        values.addRow(3, label("Position"), position);
+        values.addRow(1, label(I18n.t("tool.param.luminosity")), luminosity);
+        values.addRow(2, label(I18n.t("sampler.zone")), zone);
+        values.addRow(3, label(I18n.t("sampler.position")), position);
         box.getChildren().addAll(swatch, values);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(8));
@@ -68,7 +70,7 @@ public final class SamplerView {
         rgb.setText("–");
         luminosity.setText("–");
         zone.setText("–");
-        position.setText("move the mouse over the photo");
+        position.setText(I18n.t("sampler.moveMouse"));
     }
 
     /**

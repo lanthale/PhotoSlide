@@ -88,13 +88,13 @@ public class Utility {
 
     public void showError(Node centerNode, String text, Throwable e) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error dialog");
+        alert.setTitle(I18n.t("util.errorDialog"));
         alert.setHeaderText(text);
         //alert.setContentText(text);        
 
         VBox dialogPaneContent = new VBox();
 
-        Label label = new Label("Stack Trace:");
+        Label label = new Label(I18n.t("util.stackTrace"));
 
         String stackTrace = Arrays.toString(e.getStackTrace());
         TextArea textArea = new TextArea();

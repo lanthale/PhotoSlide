@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.RenderContext;
@@ -20,7 +22,7 @@ public class WhitePointFilter extends AbstractImageFilter implements Pickable {
     public static final String NAME = "WhitePointFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.pick("neutral", "Neutral colour", 0));
+            ParamSpec.pick("neutral", I18n.t("tool.param.neutralColor"), 0));
 
     public WhitePointFilter() {
         super(NAME);
@@ -28,7 +30,7 @@ public class WhitePointFilter extends AbstractImageFilter implements Pickable {
 
     @Override
     public String displayName() {
-        return "Color Cast";
+        return I18n.t("tool.colorCast");
     }
 
     @Override
@@ -50,7 +52,7 @@ public class WhitePointFilter extends AbstractImageFilter implements Pickable {
 
     @Override
     public String pickLabel() {
-        return "Pick something that should be neutral grey";
+        return I18n.t("tool.pickNeutralGrey");
     }
 
     @Override

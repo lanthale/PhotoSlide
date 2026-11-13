@@ -110,11 +110,11 @@ public class SoftwareUpdater {
                         }
                         PauseTransition pause = new PauseTransition(Duration.seconds(6));
                         pause.setOnFinished((k) -> {
-                            Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, "Newer version of software available", ButtonType.YES, ButtonType.NO);
-                            confirmDiaglog.setHeaderText("Newer version of Photoslide available");
+                            Alert confirmDiaglog = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("update.available"), ButtonType.YES, ButtonType.NO);
+                            confirmDiaglog.setHeaderText(I18n.t("update.availableHeader"));
                             confirmDiaglog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
-                            confirmDiaglog.setContentText("Version: " + newversion + " is ready for download.\nDo you want to start the downlod and installation ?");
-                            confirmDiaglog.setTitle("Downloadmanager");
+                            confirmDiaglog.setContentText(I18n.t("update.question", newversion));
+                            confirmDiaglog.setTitle(I18n.t("update.downloadManager"));
                             DialogPane dialogPane = confirmDiaglog.getDialogPane();
                             dialogPane.getStylesheets().add(
                                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
@@ -204,10 +204,10 @@ public class SoftwareUpdater {
     }
 
     private void downloadUpdate(String nextAppVersion) {
-        Alert downloadDialog = new Alert(Alert.AlertType.INFORMATION, "Download software", ButtonType.CANCEL);
-        downloadDialog.setHeaderText("Downloading new Photoslide " + nextAppVersion + " software");
+        Alert downloadDialog = new Alert(Alert.AlertType.INFORMATION, I18n.t("update.download"), ButtonType.CANCEL);
+        downloadDialog.setHeaderText(I18n.t("update.downloading", nextAppVersion));
         downloadDialog.setGraphic(new FontIcon("ti-dropbox-alt:40"));
-        downloadDialog.setTitle("Downloadmanager");
+        downloadDialog.setTitle(I18n.t("update.downloadManager"));
         ProgressBar pgr = new ProgressBar();
         downloadDialog.getDialogPane().setContent(pgr);
         DialogPane dialogPane = downloadDialog.getDialogPane();
@@ -289,7 +289,7 @@ public class SoftwareUpdater {
                             .getName()).log(Level.SEVERE, "Failed to download file", t.getSource().getException());
                     downloadDialog.close();
                     Alert error = new Alert(Alert.AlertType.ERROR, "", ButtonType.OK);
-                    error.setHeaderText("Download of Photoslide " + nextAppVersion + " failed.\nPlease download it from github.com/lanthale/PhotoSlide/releases");
+                    error.setHeaderText(I18n.t("update.failed", nextAppVersion));
                     error.getDialogPane().getStylesheets().add(
                             getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
                     error.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));

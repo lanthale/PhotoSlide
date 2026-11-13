@@ -25,9 +25,9 @@
     <children>
         <MenuBar fx:id="menuBar" VBox.vgrow="NEVER">
             <menus>
-                <Menu mnemonicParsing="false" text="File">
+                <Menu mnemonicParsing="false" text="%mainView.file">
                     <items>
-                        <MenuItem fx:id="openMenu" mnemonicParsing="false" onAction="#openMenuAction" text="Open collection (directory with mediafiles)…">
+                        <MenuItem fx:id="openMenu" mnemonicParsing="false" onAction="#openMenuAction" text="%mainView.openCollectionDirectoryWithMediafiles">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -35,12 +35,12 @@
                                 <FontIcon iconLiteral="fa-folder-open-o" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Remove collection">
+                        <MenuItem mnemonicParsing="false" text="%mainView.removeCollection">
                             <graphic>
                                 <FontIcon iconLiteral="fa-folder-o" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="Quit PhotoSlide">
+                        <MenuItem fx:id="quitMenu" mnemonicParsing="false" onAction="#quitMenuAction" text="%mainView.quitPhotoslide">
                             <graphic>
                                 <FontIcon iconLiteral="ti-power-off" />
                             </graphic>
@@ -50,9 +50,9 @@
                         </MenuItem>
                     </items>
                 </Menu>
-                <Menu fx:id="editMenu" mnemonicParsing="false" onShowing="#editMenuShowing" onHidden="#editMenuHidden" text="Edit">
+                <Menu fx:id="editMenu" mnemonicParsing="false" onShowing="#editMenuShowing" onHidden="#editMenuHidden" text="%mainView.edit">
                     <items>
-                        <MenuItem fx:id="undoMenu" mnemonicParsing="false" onAction="#undoMenuAction" text="Undo">
+                        <MenuItem fx:id="undoMenu" mnemonicParsing="false" onAction="#undoMenuAction" text="%mainView.undo">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -60,7 +60,7 @@
                                 <FontIcon iconLiteral="fa-undo" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="redoMenu" mnemonicParsing="false" onAction="#redoMenuAction" text="Redo">
+                        <MenuItem fx:id="redoMenu" mnemonicParsing="false" onAction="#redoMenuAction" text="%mainView.redo">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                             </accelerator>
@@ -69,30 +69,30 @@
                             </graphic>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" text="Cut">
+                        <MenuItem mnemonicParsing="false" text="%mainView.cut">
                             <graphic>
                                 <FontIcon iconLiteral="fa-cut" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Copy">
+                        <MenuItem mnemonicParsing="false" text="%mainView.copy">
                             <graphic>
                                 <FontIcon iconLiteral="fa-copy" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Paste">
+                        <MenuItem mnemonicParsing="false" text="%mainView.paste">
                             <graphic>
                                 <FontIcon iconLiteral="fa-paste" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" text="Delete">
+                        <MenuItem mnemonicParsing="false" text="%mainView.delete">
                             <graphic>
                                 <FontIcon iconLiteral="fa-trash" />
                             </graphic>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#selectAllAction" text="Select All" />
-                        <MenuItem mnemonicParsing="false" onAction="#deSelectAllAction" text="Unselect All" />
-                        <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="Search">
+                        <MenuItem mnemonicParsing="false" onAction="#selectAllAction" text="%mainView.selectAll" />
+                        <MenuItem mnemonicParsing="false" onAction="#deSelectAllAction" text="%mainView.unselectAll" />
+                        <MenuItem mnemonicParsing="false" onAction="#searchMenuAction" text="%mainView.search">
                             <graphic>
                                 <FontIcon iconLiteral="ti-search" />
                             </graphic>
@@ -101,9 +101,9 @@
                             </accelerator>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="Reset full text search index" />
-                  <MenuItem mnemonicParsing="false" onAction="#resetMediaCache" text="Reset media cache" />
-                        <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="Preferences…">
+                        <MenuItem mnemonicParsing="false" onAction="#resetFTSearchIndex" text="%mainView.resetFullTextSearchIndex" />
+                  <MenuItem mnemonicParsing="false" onAction="#resetMediaCache" text="%mainView.resetMediaCache" />
+                        <MenuItem fx:id="preferencesMenu" mnemonicParsing="false" onAction="#preferencesMenuAction" text="%mainView.preferences">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -113,9 +113,9 @@
                         </MenuItem>
                     </items>
                 </Menu>
-                <Menu mnemonicParsing="false" text="MediaFile">
+                <Menu mnemonicParsing="false" text="%mainView.mediafile">
                     <items>
-                        <MenuItem fx:id="rotateMenuLeft" mnemonicParsing="false" onAction="#rotateMenuLeftAction" text="Rotate mediafile left">
+                        <MenuItem fx:id="rotateMenuLeft" mnemonicParsing="false" onAction="#rotateMenuLeftAction" text="%mainView.rotateMediafileLeft">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="L" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -123,7 +123,7 @@
                                 <FontIcon iconLiteral="fa-rotate-left" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="rotateMenuRight" mnemonicParsing="false" onAction="#rotateMenuRightAction" text="Rotate mediafile right">
+                        <MenuItem fx:id="rotateMenuRight" mnemonicParsing="false" onAction="#rotateMenuRightAction" text="%mainView.rotateMediafileRight">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -131,7 +131,7 @@
                                 <FontIcon iconLiteral="fa-rotate-right" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="cropMenu" mnemonicParsing="false" onAction="#cropMenuAction" text="Crop media file">
+                        <MenuItem fx:id="cropMenu" mnemonicParsing="false" onAction="#cropMenuAction" text="%mainView.cropMediaFile">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                             </accelerator>
@@ -139,7 +139,7 @@
                                 <FontIcon iconLiteral="fa-crop" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="rateMenu" mnemonicParsing="false" onAction="#rateMenuAction" text="Rate mediafile">
+                        <MenuItem fx:id="rateMenu" mnemonicParsing="false" onAction="#rateMenuAction" text="%mainView.rateMediafile">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="R" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                             </accelerator>
@@ -147,7 +147,7 @@
                                 <FontIcon iconLiteral="fa-star" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="bookmarkMenu" disable="true" mnemonicParsing="false" onAction="#bookmarkMenuAction" text="Un-/Bookmark">
+                        <MenuItem fx:id="bookmarkMenu" disable="true" mnemonicParsing="false" onAction="#bookmarkMenuAction" text="%mainView.unBookmark">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="X" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                             </accelerator>
@@ -155,7 +155,7 @@
                                 <FontIcon iconLiteral="fa-trash" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="Mark mediafile deleted">
+                        <MenuItem fx:id="deleteMenu" mnemonicParsing="false" onAction="#deleteMenuAction" text="%mainView.markMediafileDeleted">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -164,7 +164,7 @@
                             </graphic>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="copyMediaMenu" mnemonicParsing="false" onAction="#copyMediaMenuAction" text="Copy mediafile">
+                        <MenuItem fx:id="copyMediaMenu" mnemonicParsing="false" onAction="#copyMediaMenuAction" text="%mainView.copyMediafile">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -172,7 +172,7 @@
                                 <FontIcon iconLiteral="fa-copy" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="pasteMediaMenu" mnemonicParsing="false" onAction="#pastMediaMenuAction" text="Paste mediafile">
+                        <MenuItem fx:id="pasteMediaMenu" mnemonicParsing="false" onAction="#pastMediaMenuAction" text="%mainView.pasteMediafile">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="V" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -181,8 +181,8 @@
                             </graphic>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#showMediaStackAction" text="Show media stack" />
-                        <MenuItem fx:id="stackMenu" mnemonicParsing="false" onAction="#stackMenuAction" text="Stack media files">
+                  <MenuItem mnemonicParsing="false" onAction="#showMediaStackAction" text="%mainView.showMediaStack" />
+                        <MenuItem fx:id="stackMenu" mnemonicParsing="false" onAction="#stackMenuAction" text="%mainView.stackMediaFiles">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                             </accelerator>
@@ -190,23 +190,23 @@
                                 <FontIcon iconLiteral="fa-stack-overflow" />
                             </graphic>
                         </MenuItem>
-                        <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="Unstack media files">
+                        <MenuItem fx:id="unstackMenu" mnemonicParsing="false" onAction="#unstackMenuAction" text="%mainView.unstackMediaFiles">
                             <accelerator>
                                 <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                             </accelerator>
                         </MenuItem>
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem mnemonicParsing="false" onAction="#wipeAllMediaFileEdits" text="Wipe all edits" />
+                  <MenuItem mnemonicParsing="false" onAction="#wipeAllMediaFileEdits" text="%mainView.wipeAllEdits" />
                     </items>
                 </Menu>
-            <Menu fx:id="windowMenu" mnemonicParsing="false" text="Window">
+            <Menu fx:id="windowMenu" mnemonicParsing="false" text="%mainView.window">
               <items>
-                <MenuItem mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="Show background process list" />
+                <MenuItem mnemonicParsing="false" onAction="#showBackgroundProcessListMenu" text="%mainView.showBackgroundProcessList" />
               </items>
             </Menu>
-                <Menu mnemonicParsing="false" text="Help">
+                <Menu mnemonicParsing="false" text="%mainView.help">
                     <items>
-                        <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="About PhotoSlide" />
+                        <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="%mainView.aboutPhotoslide" />
                     </items>
                 </Menu>
             </menus>
@@ -217,7 +217,7 @@
                     <items>
                         <HBox alignment="CENTER" minWidth="230.0" prefHeight="45.0" prefWidth="280.0">
                             <children>
-                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" minWidth="120.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" prefWidth="120.0" text="Browse" HBox.hgrow="NEVER">
+                                <ToggleButton id="tooltoggle-button" fx:id="browseButton" minWidth="120.0" mnemonicParsing="false" onAction="#browseButtonAction" prefHeight="45.0" text="%mainView.browse" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
@@ -227,7 +227,7 @@
                                         <Insets bottom="10.0" top="10.0" />
                                     </padding>
                                 </Separator>
-                                <ToggleButton id="tooltoggle-button" fx:id="editButton" minWidth="120.0" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" prefWidth="120.0" text="Edit" HBox.hgrow="NEVER">
+                                <ToggleButton id="tooltoggle-button" fx:id="editButton" minWidth="120.0" mnemonicParsing="false" onAction="#editButtonAction" prefHeight="45.0" text="%mainView.edit" HBox.hgrow="NEVER">
                                     <font>
                                         <Font size="24.0" />
                                     </font>
@@ -239,9 +239,9 @@
                         </Separator>
                         <MenuButton id="tooltoggle-button" fx:id="moreModulesButton" mnemonicParsing="false" prefHeight="45.0" text="..." HBox.hgrow="NEVER">
                           <items>
-                            <MenuItem fx:id="mapMenuItem" mnemonicParsing="false" onAction="#mapMenuAction" style="-fx-font-size: 24px;" text="Map" />
-                            <MenuItem fx:id="compositionMenuItem" mnemonicParsing="false" onAction="#compositionMenuAction" style="-fx-font-size: 24px;" text="Compositions" />
-                            <MenuItem fx:id="slideshowMenuItem" mnemonicParsing="false" onAction="#slideshowMenuAction" style="-fx-font-size: 24px;" text="Slideshow" />
+                            <MenuItem fx:id="mapMenuItem" mnemonicParsing="false" onAction="#mapMenuAction" style="-fx-font-size: 24px;" text="%mainView.map" />
+                            <MenuItem fx:id="compositionMenuItem" mnemonicParsing="false" onAction="#compositionMenuAction" style="-fx-font-size: 24px;" text="%mainView.compositions" />
+                            <MenuItem fx:id="slideshowMenuItem" mnemonicParsing="false" onAction="#slideshowMenuAction" style="-fx-font-size: 24px;" text="%mainView.slideshow" />
                           </items>
                            <font>
                               <Font size="24.0" />
@@ -257,27 +257,27 @@
                 <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS" />
                 <ToolBar prefHeight="70.0" HBox.hgrow="ALWAYS">
                     <items>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="Export">
+                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#exportAction" text="%mainView.export">
                             <graphic>
                                 <FontIcon iconLiteral="ti-export" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="Share">
+                        <Button id="toolbutton" contentDisplay="TOP" disable="true" mnemonicParsing="false" text="%mainView.share">
                             <graphic>
                                 <FontIcon iconLiteral="ti-share" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#printMediaAction" text="Print">
+                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" onAction="#printMediaAction" text="%mainView.print">
                             <graphic>
                                 <FontIcon iconLiteral="ti-printer" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="bookmarksBoardButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarksButtonAction" text="Bookmarks">
+                        <Button id="toolbutton" fx:id="bookmarksBoardButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarksButtonAction" text="%mainView.bookmarks">
                             <graphic>
                                 <FontIcon iconLiteral="ti-bookmark" iconSize="24" />
                             </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="Search">
+                        <Button id="toolbutton" fx:id="searchButton" alignment="CENTER" contentDisplay="TOP" mnemonicParsing="false" onAction="#searchButtonAction" text="%mainView.search">
                             <graphic>
                                 <FontIcon iconLiteral="ti-search" iconSize="24" />
                             </graphic>
@@ -286,7 +286,7 @@
                 </ToolBar>
                 <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="70.0" HBox.hgrow="ALWAYS">
                     <items>
-                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" prefWidth="62.0" text="Help">
+                        <Button id="toolbutton" contentDisplay="TOP" mnemonicParsing="false" prefWidth="62.0" text="%mainView.help">
                             <graphic>
                                 <FontIcon iconLiteral="ti-help" iconSize="24" />
                             </graphic>

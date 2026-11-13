@@ -1,5 +1,7 @@
 package org.photoslide.editpipeline;
 
+
+import org.photoslide.I18n;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -416,7 +418,7 @@ public final class EditPipeline {
      * redraw, nothing is saved.
      */
     public static void editsReloaded(MediaFile file) {
-        editsReloaded(file, "Changed by another program");
+        editsReloaded(file, I18n.t("history.changedExternally"));
     }
 
     /**
@@ -473,7 +475,7 @@ public final class EditPipeline {
      */
     public static void turn(MediaFile file, double degrees) {
         file.setRotationAngle(normalizedAngle(file.getRotationAngleProperty().get() + degrees));
-        filtersChanged(file, degrees < 0 ? "Rotate left" : "Rotate right");
+        filtersChanged(file, degrees < 0 ? I18n.t("history.rotateLeft") : I18n.t("history.rotateRight"));
     }
 
     /** The angle in 0..359 (sidecars of older versions hold -360..360). */

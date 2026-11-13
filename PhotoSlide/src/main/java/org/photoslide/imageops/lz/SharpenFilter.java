@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -56,9 +58,9 @@ public class SharpenFilter extends AbstractImageFilter {
     }
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("amount", "Amount", 0, 1f, 500f, 100f, 1f),
-            ParamSpec.slider("radius", "Radius", 1, 0.1f, 500f, 1f, 0.1f),
-            ParamSpec.slider("threshold", "Threshold", 2, 0f, 100f, 20f, 1f));
+            ParamSpec.slider("amount", I18n.t("tool.param.amount"), 0, 1f, 500f, 100f, 1f),
+            ParamSpec.slider("radius", I18n.t("tool.param.radius"), 1, 0.1f, 500f, 1f, 0.1f),
+            ParamSpec.slider("threshold", I18n.t("tool.param.threshold"), 2, 0f, 100f, 20f, 1f));
 
     public SharpenFilter() {
         super(NAME);
@@ -66,7 +68,7 @@ public class SharpenFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Sharpen";
+        return I18n.t("tool.sharpen");
     }
 
     @Override

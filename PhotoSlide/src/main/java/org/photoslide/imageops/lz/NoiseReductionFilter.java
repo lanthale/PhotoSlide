@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.RenderContext;
@@ -24,8 +26,8 @@ public class NoiseReductionFilter extends AbstractImageFilter {
     private static final double CHROMA_RANGE = 0.02;
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("color", "Color noise", 0, 0f, 20f, 2f, 0.1f),
-            ParamSpec.slider("grain", "Grain noise", 1, 0f, 20f, 0f, 0.1f));
+            ParamSpec.slider("color", I18n.t("tool.param.colorNoise"), 0, 0f, 20f, 2f, 0.1f),
+            ParamSpec.slider("grain", I18n.t("tool.param.grainNoise"), 1, 0f, 20f, 0f, 0.1f));
 
     public NoiseReductionFilter() {
         super(NAME);
@@ -33,7 +35,7 @@ public class NoiseReductionFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Noise Reduction";
+        return I18n.t("tool.noiseReduction");
     }
 
     @Override

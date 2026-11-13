@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.Image16;
@@ -21,8 +23,8 @@ public class WhiteBalanceFilter extends AbstractImageFilter implements Pickable 
     public static final String NAME = "WhiteBalanceFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("temperature", "Temperature (K)", 0, 1000f, 40000f, ColorScience.REF_T, 10f),
-            ParamSpec.slider("tint", "Tint", 1, -20f, 20f, 0f, 0.1f));
+            ParamSpec.slider("temperature", I18n.t("browserMetadata.temperatureK"), 0, 1000f, 40000f, ColorScience.REF_T, 10f),
+            ParamSpec.slider("tint", I18n.t("browserMetadata.tint"), 1, -20f, 20f, 0f, 0.1f));
 
     public WhiteBalanceFilter() {
         super(NAME);
@@ -30,7 +32,7 @@ public class WhiteBalanceFilter extends AbstractImageFilter implements Pickable 
 
     @Override
     public String displayName() {
-        return "White Balance";
+        return I18n.t("tool.whiteBalance");
     }
 
     @Override
@@ -88,7 +90,7 @@ public class WhiteBalanceFilter extends AbstractImageFilter implements Pickable 
 
     @Override
     public String pickLabel() {
-        return "Pick something that should be neutral grey";
+        return I18n.t("tool.pickNeutralGrey");
     }
 
     @Override

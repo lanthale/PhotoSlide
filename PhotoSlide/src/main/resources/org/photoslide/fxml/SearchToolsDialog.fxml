@@ -25,7 +25,7 @@
             <HBox alignment="CENTER_LEFT" minHeight="45.0" prefHeight="45.0" spacing="5.0" VBox.vgrow="NEVER">
                <children>
                   <FontIcon fx:id="sIcon" iconLiteral="ti-search" iconSize="40" />
-                  <CustomTextField id="searchtext-field" fx:id="searchTextField" prefHeight="50.0" prefWidth="382.0" promptText="Mediafile search" HBox.hgrow="ALWAYS">
+                  <CustomTextField id="searchtext-field" fx:id="searchTextField" prefHeight="50.0" prefWidth="382.0" promptText="%searchToolsDialog.mediafileSearch" HBox.hgrow="ALWAYS">
                      <font>
                         <Font size="24.0" />
                      </font></CustomTextField>
@@ -40,7 +40,7 @@
                               <FontIcon iconLiteral="ti-link" iconSize="18" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Jump to collection of the media file" />
+                              <Tooltip text="%searchToolsDialog.jumpToCollectionOfTheMedia" />
                            </tooltip>
                         </Button>
                         <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#copyFilePathToClipboardAction" text="Button">
@@ -48,7 +48,7 @@
                               <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Copy file path to clipboard" />
+                              <Tooltip text="%searchToolsDialog.copyFilePathToClipboard" />
                            </tooltip>
                         </Button>
                         <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#bookmarkMediaFileAction" text="Button">
@@ -56,7 +56,7 @@
                               <FontIcon iconLiteral="ti-bookmark" iconSize="18" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Bookmark selected file" />
+                              <Tooltip text="%searchToolsDialog.bookmarkSelectedFile" />
                            </tooltip>
                         </Button>
                         <Slider fx:id="mediaZoomSlider" scaleX="0.7" scaleY="0.7" HBox.hgrow="NEVER">
@@ -66,7 +66,7 @@
                         </Slider>
                         <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" HBox.hgrow="ALWAYS">
                            <children>
-                              <Label fx:id="searchLabel" text="Populating results...">
+                              <Label fx:id="searchLabel" text="%searchToolsDialog.populatingResults">
                                  <font>
                                     <Font size="8.0" />
                                  </font>

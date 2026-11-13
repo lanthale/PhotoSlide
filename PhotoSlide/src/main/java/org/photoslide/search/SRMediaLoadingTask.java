@@ -5,6 +5,8 @@
  */
 package org.photoslide.search;
 
+
+import org.photoslide.I18n;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +59,7 @@ public class SRMediaLoadingTask extends Task<MediaFile> {
 
     @Override
     protected MediaFile call() throws Exception {
-        updateTitle("Searching...");
+        updateTitle(I18n.t("search.searching"));
         Connection con = App.getSearchDBConnection();
         if (con == null) {
             throw new IOException("Nothing found!");

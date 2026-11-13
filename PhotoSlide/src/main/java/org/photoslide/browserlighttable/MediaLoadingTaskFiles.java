@@ -5,6 +5,8 @@
  */
 package org.photoslide.browserlighttable;
 
+
+import org.photoslide.I18n;
 import java.io.File;
 import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.MainViewController;
@@ -73,11 +75,11 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
         final long qty;
         List<MediaFile> content = new ArrayList<>();
 
-        updateTitle("Reading mediafiles...");
+        updateTitle(I18n.t("loading.readingMediafiles"));
         qty = fileArray.size();
         if (qty == 0) {
             Platform.runLater(() -> {
-                mediaQTYLabel.setText(qty + " media files.");
+                mediaQTYLabel.setText(I18n.t("lighttable.mediaQty", qty));
                 mainController.getProgressPane().setVisible(false);
                 mainController.getStatusLabelLeft().setVisible(false);
             });
@@ -86,8 +88,8 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
             Platform.runLater(() -> {
                 mainController.getStatusLabelLeft().setVisible(true);
                 mainController.getProgressPane().setVisible(true);
-                mainController.getProgressbarLabel().setText(qty + " files found - Loading...");
-                mediaQTYLabel.setText(qty + " media files");
+                mainController.getProgressbarLabel().setText(I18n.t("lighttable.filesFoundLoading", qty));
+                mediaQTYLabel.setText(I18n.t("lighttable.mediaQty", qty));
                 mainController.getStatusLabelRight().setVisible(true);
             });
         }
@@ -144,14 +146,12 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
         long endtime = System.currentTimeMillis();
         Logger.getLogger(LighttableController.class.getName()).log(Level.INFO, "Collect Time in s: " + (endtime - starttime) / 1000 + " " + selectedPath);
 
-        switch (sort) {
-            case "filename":
+        if (sort.equalsIgnoreCase(I18n.t("lighttable.sort.filename"))) {
                 Comparator<MediaFile> comparing2 = Comparator.comparing((MediaFile t) -> {
                     return t.getName();
                 });
                 content.sort(comparing2);
-                break;
-            case "File creation time":
+        } else if (sort.equalsIgnoreCase(I18n.t("lighttable.sort.creationTime"))) {
                 Comparator<MediaFile> comparing = Comparator.comparing((MediaFile t) -> {
                     try {
                         return t.getCreationTime();
@@ -161,8 +161,6 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
                     return null;
                 });
                 content.sort(comparing);
-                break;
-
         }
         return null;
     }
@@ -196,7 +194,7 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
             }
         } else if (FileTypes.isValidImage(fileItem.toString())) {
             m.setMediaType(MediaFile.MediaTypes.IMAGE);
-            if (sort.equalsIgnoreCase("Capture time")) {
+            if (sort.equalsIgnoreCase(I18n.t("lighttable.sort.captureTime"))) {
                 try {
                     metadataController.readBasicMetadata(this, m);
                 } catch (IOException ex) {

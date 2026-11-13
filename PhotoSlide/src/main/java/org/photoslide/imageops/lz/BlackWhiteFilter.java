@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Filter16;
@@ -22,8 +24,8 @@ public class BlackWhiteFilter extends AbstractImageFilter {
     public static final String NAME = "BlackWhiteFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.color("filter", "Filter colour", 0, 1f, 1f, 1f),
-            ParamSpec.slider("strength", "Strength", 3, 0f, 10f, 1f, 0.5f));
+            ParamSpec.color("filter", I18n.t("tool.param.filterColor"), 0, 1f, 1f, 1f),
+            ParamSpec.slider("strength", I18n.t("tool.param.strength"), 3, 0f, 10f, 1f, 0.5f));
 
     public BlackWhiteFilter() {
         super(NAME);
@@ -31,7 +33,7 @@ public class BlackWhiteFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Black and White";
+        return I18n.t("tool.blackWhite");
     }
 
     @Override
@@ -80,7 +82,7 @@ public class BlackWhiteFilter extends AbstractImageFilter {
 
             @Override
             public String name() {
-                return "Black and White";
+                return I18n.t("tool.blackWhite");
             }
         };
     }

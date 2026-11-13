@@ -5,6 +5,8 @@
  */
 package org.photoslide.browsercollections;
 
+
+import org.photoslide.I18n;
 import org.photoslide.search.SearchIndex;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
@@ -281,7 +283,7 @@ public class CollectionsController implements Initializable {
                     createTree(t, parent);
                 } catch (IOException ex) {
                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                    util.showError(this.accordionPane, "Cannot create directory tree!", ex);
+                    util.showError(this.accordionPane, I18n.t("coll.cannotCreateTree"), ex);
                 }
 
             });
@@ -294,7 +296,7 @@ public class CollectionsController implements Initializable {
             ProgressIndicator waitPrgMain = new ProgressIndicator();
             waitPrgMain.setPrefSize(15, 15);
             TreeItem<PathItem> node = new TreeItem(new PathItem(root_file));
-            TreeItem placeholder = new TreeItem(new PathItem(Paths.get("Please wait...")));
+            TreeItem placeholder = new TreeItem(new PathItem(Paths.get(I18n.t("coll.pleaseWait"))));
 
             Platform.runLater(() -> {
                 parent.getChildren().add(node);
@@ -419,7 +421,7 @@ public class CollectionsController implements Initializable {
     private boolean createSearchIndex(String p) {
         Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
         alert = Utility.setDefaultButton(alert, ButtonType.YES);
-        alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
+        alert.setHeaderText(I18n.t("coll.includeInSearchIndex", p));
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);
@@ -583,7 +585,7 @@ public class CollectionsController implements Initializable {
             }
         } catch (IOException ex) {
             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-            util.showError(this.accordionPane, "Cannot create directory tree", ex);
+            util.showError(this.accordionPane, I18n.t("coll.cannotCreateTree"), ex);
         }
     }
 
@@ -639,7 +641,7 @@ public class CollectionsController implements Initializable {
             }
         } else {
             Alert alert = new Alert(AlertType.ERROR);
-            alert.setHeaderText("Please expand one pane to delete it!");
+            alert.setHeaderText(I18n.t("coll.expandToDelete"));
 
             alert.getDialogPane().getStylesheets().add(
                     getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
@@ -660,7 +662,7 @@ public class CollectionsController implements Initializable {
     private void relocateCollectionAction(ActionEvent event) {
         TitledPane expandedPane = accordionPane.getExpandedPane();
         if (expandedPane == null) {
-            showCollectionAlert(AlertType.ERROR, "Please expand one pane to relocate it!");
+            showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandToRelocate"));
             return;
         }
         String oldRoot = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
@@ -669,7 +671,7 @@ public class CollectionsController implements Initializable {
             return;
         }
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("New location of " + oldRoot);
+        directoryChooser.setTitle(I18n.t("coll.newLocationOf", oldRoot));
         File initial = Path.of(oldRoot).getParent() == null ? null : Path.of(oldRoot).getParent().toFile();
         if (initial == null || initial.isDirectory() == false) {
             initial = new File(System.getProperty("user.home"));
@@ -687,18 +689,18 @@ public class CollectionsController implements Initializable {
         for (String root : collectionRoots()) {
             Path rootPath = Path.of(root);
             if (!rootPath.equals(Path.of(oldRoot)) && (newPath.startsWith(rootPath) || rootPath.startsWith(newPath))) {
-                showCollectionAlert(AlertType.ERROR, "'" + newRoot + "' is already part of the collection\n'" + root + "'.");
+                showCollectionAlert(AlertType.ERROR, I18n.t("coll.alreadyPartOf", newRoot, root));
                 return;
             }
         }
         String indexKey = getPrefKeyForRemoving(oldRoot, "INDEX");
-        String question = "Relocate the collection\n'" + oldRoot + "'\nto\n'" + newRoot + "'?";
+        String question = I18n.t("coll.relocateQuestion", oldRoot, newRoot);
         if (indexKey != null) {
             int[] check = searchIndexProcess.checkRelocation(oldRoot, newRoot, 20);
             if (check[1] > 0) {
-                question += "\n\n" + check[0] + " of " + check[1] + " checked files found at the new location.";
+                question += I18n.t("coll.relocateFound", check[0], check[1]);
                 if (check[0] == 0) {
-                    question += "\nThe files may not have been moved there.";
+                    question += I18n.t("coll.relocateNotMoved");
                 }
             }
         }
@@ -787,7 +789,7 @@ public class CollectionsController implements Initializable {
         ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
         if (selectedItems.isEmpty()) {
             Alert alert = new Alert(AlertType.ERROR);
-            alert.setTitle("Error");
+            alert.setTitle(I18n.t("common.error"));
             alert.setHeaderText(null);
             StackedFontIcon st = new StackedFontIcon();
             FontIcon f1 = new FontIcon("ti-layout-width-full");
@@ -813,15 +815,15 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void createEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected("Please select an element in tree first to create a child collection!")) {
+        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCreate"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
         ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
         TreeItem<PathItem> parent = selectedItems.get(0);
         TextInputDialog alert = new TextInputDialog();
-        alert.setTitle("Create event");
-        alert.setHeaderText("Create event (directory)");
+        alert.setTitle(I18n.t("coll.createEvent"));
+        alert.setHeaderText(I18n.t("coll.createEventHeader"));
         StackedFontIcon stackIcon = new StackedFontIcon();
         FontIcon fileIcon = new FontIcon("ti-file");
         fileIcon.setIconSize(50);
@@ -830,7 +832,7 @@ public class CollectionsController implements Initializable {
         stackIcon.getChildren().add(fileIcon);
         stackIcon.getChildren().add(plusIcon);
         alert.setGraphic(stackIcon);
-        alert.setContentText("Please enter the name:");
+        alert.setContentText(I18n.t("coll.enterName"));
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
@@ -851,7 +853,7 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void cutEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected("Please select an element in the tree to be cut!")) {
+        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCut"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -862,13 +864,13 @@ public class CollectionsController implements Initializable {
         pasteMenu.setDisable(false);
         treeView.getSelectionModel().clearSelection();
         mainController.getStatusLabelLeft().setVisible(true);
-        mainController.getStatusLabelLeft().setText("Cut collection " + clipboardPath.getFileName().toString());
+        mainController.getStatusLabelLeft().setText(I18n.t("coll.cutCollection", clipboardPath.getFileName().toString()));
         util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     @FXML
     private void copyEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected("Please select an element in the tree to be copied!")) {
+        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCopy"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -879,13 +881,13 @@ public class CollectionsController implements Initializable {
         pasteMenu.setDisable(false);
         treeView.getSelectionModel().clearSelection();
         mainController.getStatusLabelLeft().setVisible(true);
-        mainController.getStatusLabelLeft().setText("Copy collection " + clipboardPath.getFileName().toString());
+        mainController.getStatusLabelLeft().setText(I18n.t("coll.copyCollection", clipboardPath.getFileName().toString()));
         util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     @FXML
     private void deleteEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected("Please select an element in the tree to be deleted!")) {
+        if (checkIfElementInTreeSelected(I18n.t("coll.selectToDelete"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -894,12 +896,12 @@ public class CollectionsController implements Initializable {
         clipboardPath = item.getValue().getFilePath();
         System.out.println("clipboardPath " + clipboardPath);
 
-        Alert alert = new Alert(AlertType.CONFIRMATION, "Delete event", ButtonType.CANCEL, ButtonType.OK);
+        Alert alert = new Alert(AlertType.CONFIRMATION, I18n.t("coll.deleteEvent"), ButtonType.CANCEL, ButtonType.OK);
         alert.setGraphic(new FontIcon("ti-trash:40"));
 //alert.setHeaderText("Delete '" + clipboardPath + "' ?");
         //alert.setContentText("Delete '" + clipboardPath + "' ?");   
-        alert.setHeaderText("Delete event");
-        Text text = new Text("Delete '" + clipboardPath + "' ?");
+        alert.setHeaderText(I18n.t("coll.deleteEvent"));
+        Text text = new Text(I18n.t("coll.deleteQuestion", clipboardPath));
         text.setWrappingWidth(400);
         text.setFill(Color.WHITE);
         FlowPane pane = new FlowPane(text);
@@ -916,7 +918,7 @@ public class CollectionsController implements Initializable {
             deleteMenu.setDisable(true);
             mainController.getProgressPane().setVisible(true);
             mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
-            mainController.getStatusLabelLeft().setText("Delete collection");
+            mainController.getStatusLabelLeft().setText(I18n.t("coll.deleteCollection"));
             mainController.getProgressbarLabel().setText("...");
             Task<Boolean> taskDelete = new Task<>() {
                 @Override
@@ -926,7 +928,7 @@ public class CollectionsController implements Initializable {
                             .map(Path::toFile)
                             .forEach((t) -> {
                                 Platform.runLater(() -> {
-                                    mainController.getProgressbarLabel().setText("Delete " + t.getName());
+                                    mainController.getProgressbarLabel().setText(I18n.t("coll.deleteItem", t.getName()));
                                 });
                                 t.delete();
                             });
@@ -946,7 +948,7 @@ public class CollectionsController implements Initializable {
             });
             taskDelete.setOnFailed((t) -> {
                 treeView.getSelectionModel().clearSelection();
-                util.showError(this.accordionPane, "Cannot delete collection", t.getSource().getException());
+                util.showError(this.accordionPane, I18n.t("coll.cannotDelete"), t.getSource().getException());
                 mainController.getProgressbar().progressProperty().unbind();
                 mainController.getProgressbarLabel().textProperty().unbind();
                 mainController.getProgressPane().setVisible(false);
@@ -969,11 +971,11 @@ public class CollectionsController implements Initializable {
         Path targetPath = item.getValue().getFilePath();
         mainController.getProgressPane().setVisible(true);
         mainController.getProgressbar().setProgress(ProgressBar.INDETERMINATE_PROGRESS);
-        mainController.getStatusLabelLeft().setText("Paste collection");
+        mainController.getStatusLabelLeft().setText(I18n.t("coll.pasteCollection"));
         if (clipboardMode == ClipboardMode.CUT) {
-            mainController.getProgressbarLabel().setText("Moving files...");
+            mainController.getProgressbarLabel().setText(I18n.t("coll.movingFiles"));
         } else {
-            mainController.getProgressbarLabel().setText("Copying files...");
+            mainController.getProgressbarLabel().setText(I18n.t("coll.copyingFiles"));
         }
         mainController.getStatusLabelLeft().setVisible(true);
         Task<Boolean> taskPaste = new Task<>() {
@@ -1009,7 +1011,7 @@ public class CollectionsController implements Initializable {
         });
         taskPaste.setOnFailed((t) -> {
             treeView.getSelectionModel().clearSelection();
-            util.showError(this.accordionPane, "Cannot cut/copy collection", t.getSource().getException());
+            util.showError(this.accordionPane, I18n.t("coll.cannotCutCopy"), t.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressPane().setVisible(false);
@@ -1037,12 +1039,12 @@ public class CollectionsController implements Initializable {
                     throws IOException {
                 if (mode == ClipboardMode.COPY) {
                     Platform.runLater(() -> {
-                        mainController.getProgressbarLabel().setText("Copy " + file.toFile().getName());
+                        mainController.getProgressbarLabel().setText(I18n.t("coll.copyItem", file.toFile().getName()));
                     });
                     Files.copy(file, target.resolve(source.relativize(file)), options);
                 } else {
                     Platform.runLater(() -> {
-                        mainController.getProgressbarLabel().setText("Move " + file.toFile().getName());
+                        mainController.getProgressbarLabel().setText(I18n.t("coll.moveItem", file.toFile().getName()));
                     });
                     Files.move(file, target.resolve(source.relativize(file)), options);
                 }
@@ -1060,9 +1062,9 @@ public class CollectionsController implements Initializable {
     }
 
     private void ShowEmptyHelp() {
-        Alert alert = new Alert(AlertType.CONFIRMATION, "No Collection are defined.\nDo you want to add the storage of you mediafiles now ?", ButtonType.NO, ButtonType.YES);
-        alert.setHeaderText("Add collections");
-        alert.setTitle("Collection alert");
+        Alert alert = new Alert(AlertType.CONFIRMATION, I18n.t("coll.noCollections"), ButtonType.NO, ButtonType.YES);
+        alert.setHeaderText(I18n.t("coll.addCollections"));
+        alert.setTitle(I18n.t("coll.collectionAlert"));
         FontIcon ft = new FontIcon("ti-agenda:50");
         alert.setGraphic(ft);
         alert.getDialogPane().getStylesheets().add(
@@ -1129,9 +1131,9 @@ public class CollectionsController implements Initializable {
         Dragboard db = t.getDragboard();
         boolean success = false;
         if (db.hasFiles()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Select the target for the files", ButtonType.CANCEL, ButtonType.OK);
-            alert.setTitle("Select the target for the files to be imported/copied");
-            alert.setHeaderText("This function copy's files/folder\n from the source to the destination folder\nselected. If a folder is dropped a yyyymmdd will \nbe added to the target folder name.");
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("coll.importTarget"), ButtonType.CANCEL, ButtonType.OK);
+            alert.setTitle(I18n.t("coll.importTargetTitle"));
+            alert.setHeaderText(I18n.t("coll.importHeader"));
             FontIcon ft = new FontIcon("ti-import:50");
             alert.setGraphic(ft);
             DialogPane dialogPane = alert.getDialogPane();
@@ -1140,14 +1142,14 @@ public class CollectionsController implements Initializable {
             content.setAlignment(Pos.CENTER_RIGHT);
             content.setHgap(5);
             content.setVgap(5);
-            Label cbLabel = new Label("Select collection");
+            Label cbLabel = new Label(I18n.t("coll.selectCollection"));
             ComboBox<String> cb = new ComboBox<>();
             cb.setPrefWidth(200);
             accordionPane.getPanes().forEach((pan) -> {
                 cb.getItems().add(pan.getText());
             });
             content.addRow(0, cbLabel, cb);
-            Label cbRootLabel = new Label("Select event");
+            Label cbRootLabel = new Label(I18n.t("coll.selectEvent"));
             ComboBox<String> cbRootFolder = new ComboBox<>();
             cbRootFolder.setPrefWidth(200);
             content.addRow(1, cbRootLabel, cbRootFolder);
@@ -1190,11 +1192,11 @@ public class CollectionsController implements Initializable {
                     @Override
                     protected Boolean call() throws Exception {
                         String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
-                        updateTitle("Copy mediafiles to " + Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString());
+                        updateTitle(I18n.t("coll.copyMediafilesTo", Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString()));
                         AtomicInteger iatom = new AtomicInteger(1);
                         if (dropFile.isDirectory()) {
                             Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
-                            updateMessage("Copy to target dir...");
+                            updateMessage(I18n.t("coll.copyToTarget"));
                             Files.createDirectory(targetPath);
                             String src = dropFile.getAbsolutePath();
                             String dest = targetPath.toString();
@@ -1215,7 +1217,7 @@ public class CollectionsController implements Initializable {
                             Files.createDirectory(Path.of(targetDir));
                             fileItem.forEach((t) -> {
                                 try {
-                                    updateMessage("Copy " + t.getName());
+                                    updateMessage(I18n.t("coll.copyItem", t.getName()));
                                     Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
                                     updateMessage(iatom.get() + " / " + count.get());
                                     iatom.addAndGet(1);
@@ -1230,11 +1232,11 @@ public class CollectionsController implements Initializable {
                 task.setOnScheduled((tk) -> {
                     mainController.getStatusLabelLeft().setVisible(true);
                     mainController.getProgressPane().setVisible(true);
-                    mainController.getProgressbarLabel().setText(count + " files found - Loading...");
+                    mainController.getProgressbarLabel().setText(I18n.t("lighttable.filesFoundLoading", count));
                     mainController.getStatusLabelRight().setVisible(true);
                 });
                 task.setOnFailed((fail) -> {
-                    Alert alertError = new Alert(AlertType.ERROR, "Error during import of media files", ButtonType.OK);
+                    Alert alertError = new Alert(AlertType.ERROR, I18n.t("coll.importError"), ButtonType.OK);
                     alertError.getDialogPane().getStylesheets().add(
                             getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
                     alertError.setResizable(false);
@@ -1269,7 +1271,7 @@ public class CollectionsController implements Initializable {
     private void renameEventAction(ActionEvent event) {
         /*Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
         alert = Utility.setDefaultButton(alert, ButtonType.YES);
-        alert.setHeaderText("Do you want to include \n'" + p + "'\n to the search index (if no fulltextsearch is not available for that collection)?");
+        alert.setHeaderText(I18n.t("coll.includeInSearchIndex", p));
         alert.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         alert.setResizable(false);

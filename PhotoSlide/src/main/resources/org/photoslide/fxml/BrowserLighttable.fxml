@@ -27,7 +27,7 @@
 
 <AnchorPane maxWidth="-Infinity" minWidth="-Infinity" prefWidth="646.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browserlighttable.LighttableController">
    <children>
-      <Label layoutX="92.0" layoutY="64.0" text="Lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
+      <Label layoutX="92.0" layoutY="64.0" text="%browserLighttable.lighttable" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
             <Font size="24.0" />
          </font>
@@ -71,7 +71,7 @@
                <children>
                   <ToolBar fx:id="detailToolbar" disable="true" VBox.vgrow="ALWAYS">
                      <items>
-                        <Button id="toolbutton" fx:id="rotateLeftButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateLeftButtonAction" text="Rotate Left">
+                        <Button id="toolbutton" fx:id="rotateLeftButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateLeftButtonAction" text="%browserLighttable.rotateLeft">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -79,7 +79,7 @@
                               <FontIcon iconLiteral="fa-rotate-left" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="rotateRightButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateRightButtonAction" text="Rotate Right">
+                        <Button id="toolbutton" fx:id="rotateRightButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rotateRightButtonAction" text="%browserLighttable.rotateRight">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -87,7 +87,7 @@
                               <FontIcon iconLiteral="fa-rotate-right" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="cropButton" contentDisplay="TOP" layoutX="159.0" layoutY="10.0" mnemonicParsing="false" onAction="#cropButtonAction" text="Crop">
+                        <Button id="toolbutton" fx:id="cropButton" contentDisplay="TOP" layoutX="159.0" layoutY="10.0" mnemonicParsing="false" onAction="#cropButtonAction" text="%browserLighttable.crop">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -95,7 +95,7 @@
                               <FontIcon iconLiteral="fa-crop" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="rateButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rateButtonAction" text="Rate">
+                        <Button id="toolbutton" fx:id="rateButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#rateButtonAction" text="%browserLighttable.rate">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -103,7 +103,7 @@
                               <FontIcon iconLiteral="fa-star" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="deleteButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#deleteButtonAction" text="Delete">
+                        <Button id="toolbutton" fx:id="deleteButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#deleteButtonAction" text="%browserLighttable.delete">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -111,11 +111,11 @@
                               <FontIcon iconLiteral="fa-trash" iconSize="17" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Backspace or Delete key for mark as deleted" />
+                              <Tooltip text="%browserLighttable.backspaceOrDeleteKeyForMark" />
                            </tooltip>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="18.0" />
-                        <Button id="toolbutton" fx:id="copyButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#copyButtonAction" text="Copy">
+                        <Button id="toolbutton" fx:id="copyButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#copyButtonAction" text="%browserLighttable.copy">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -123,7 +123,7 @@
                               <FontIcon iconLiteral="fa-copy" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="pasteButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#pasteButtonAction" text="Paste">
+                        <Button id="toolbutton" fx:id="pasteButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#pasteButtonAction" text="%browserLighttable.paste">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -131,7 +131,7 @@
                               <FontIcon iconLiteral="fa-paste" iconSize="17" />
                            </graphic>
                         </Button>
-                        <Button id="toolbutton" fx:id="stackButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#stackButtonAction" text="Stack">
+                        <Button id="toolbutton" fx:id="stackButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#stackButtonAction" text="%browserLighttable.stack">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -140,7 +140,7 @@
                            </graphic>
                         </Button>
                         <Pane prefHeight="30.0" prefWidth="60.0" />
-                        <Button id="toolbutton" fx:id="bookmarkButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarkButtonAction" text="Bookmark">
+                        <Button id="toolbutton" fx:id="bookmarkButton" contentDisplay="TOP" mnemonicParsing="false" onAction="#bookmarkButtonAction" text="%browserLighttable.bookmark">
                            <font>
                               <Font size="11.0" />
                            </font>
@@ -148,15 +148,15 @@
                               <FontIcon iconLiteral="fa-bookmark" iconSize="17" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Press 'x' for bookmakr/un-bookmark" />
+                              <Tooltip text="%browserLighttable.pressXForBookmakrUnBookmark" />
                            </tooltip>
                         </Button>
-                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#faceRecognitationAction" text="Faces">
+                        <ToggleButton id="tooltoggle-button" fx:id="facesButton" contentDisplay="TOP" disable="true" mnemonicParsing="false" onAction="#faceRecognitationAction" text="%browserLighttable.faces">
                            <graphic>
                               <FontIcon iconLiteral="fa-street-view" iconSize="17" />
                            </graphic>
                            <tooltip>
-                              <Tooltip text="Show deleted items">
+                              <Tooltip text="%browserLighttable.showDeletedItems">
                                  <graphic>
                                     <Button mnemonicParsing="false" text="Button" />
                                  </graphic>
@@ -175,7 +175,7 @@
                           <items>
                               <Slider fx:id="zoomSlider" minorTickCount="5" scaleX="0.7" scaleY="0.7">
                                  <tooltip>
-                                    <Tooltip text="Zoom slider" />
+                                    <Tooltip text="%browserLighttable.zoomSlider" />
                                  </tooltip>
                               </Slider>
                               <HBox alignment="CENTER_LEFT" prefHeight="15.0" prefWidth="250.0" spacing="5.0">
@@ -195,7 +195,7 @@
                                     <FontIcon iconLiteral="fa-trash-o" iconSize="14" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Show deleted items" />
+                                    <Tooltip text="%browserLighttable.showDeletedItems" />
                                  </tooltip>
                               </ToggleButton>
                               <MenuButton id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" popupSide="TOP" prefHeight="14.0" text="MenuButton">
@@ -283,9 +283,9 @@
       </SplitPane>
       <HBox alignment="CENTER_RIGHT" pickOnBounds="false" spacing="8.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <children>
-            <Button id="toolbutton" fx:id="reloadButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#reloadImageAction" text="Reload">
+            <Button id="toolbutton" fx:id="reloadButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#reloadImageAction" text="%browserLighttable.reload">
                <tooltip>
-                  <Tooltip text="Reload the image from disk (e.g. after changing the RAW settings)" />
+                  <Tooltip text="%browserLighttable.reloadTheImageFromDiskE" />
                </tooltip>
                <graphic>
                   <FontIcon iconLiteral="fa-refresh" iconSize="14" />

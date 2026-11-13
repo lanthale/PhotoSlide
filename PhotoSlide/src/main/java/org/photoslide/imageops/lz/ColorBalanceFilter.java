@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Filter16;
@@ -23,8 +25,8 @@ public class ColorBalanceFilter extends AbstractImageFilter implements Pickable 
     public static final String NAME = "ColorBalanceFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.color("color", "Color", 0, 0.5f, 0.5f, 0.5f),
-            ParamSpec.slider("midpoint", "Midpoint", 3, 0.01f, 1f, 0.18f, 0.01f));
+            ParamSpec.color("color", I18n.t("tool.param.color"), 0, 0.5f, 0.5f, 0.5f),
+            ParamSpec.slider("midpoint", I18n.t("tool.param.midpoint"), 3, 0.01f, 1f, 0.18f, 0.01f));
 
     public ColorBalanceFilter() {
         super(NAME);
@@ -32,7 +34,7 @@ public class ColorBalanceFilter extends AbstractImageFilter implements Pickable 
 
     @Override
     public String displayName() {
-        return "Color Balance";
+        return I18n.t("tool.colorBalance");
     }
 
     @Override
@@ -52,7 +54,7 @@ public class ColorBalanceFilter extends AbstractImageFilter implements Pickable 
 
     @Override
     public String pickLabel() {
-        return "Pick a colour to neutralise";
+        return I18n.t("tool.pickNeutralise");
     }
 
     @Override

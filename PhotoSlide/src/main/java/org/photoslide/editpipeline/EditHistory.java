@@ -1,5 +1,7 @@
 package org.photoslide.editpipeline;
 
+
+import org.photoslide.I18n;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -76,9 +78,9 @@ public final class EditHistory {
     private EditHistory(MediaFile f) {
         State opened = State.of(f);
         State original = State.original(opened);
-        entries.add(new Entry("Original", original, 0));
+        entries.add(new Entry(I18n.t("history.original"), original, 0));
         if (!opened.equals(original)) {
-            entries.add(new Entry("Opened with edits", opened, 0));
+            entries.add(new Entry(I18n.t("history.openedWithEdits"), opened, 0));
         }
         fixed = entries.size();
         current.set(entries.size() - 1);
@@ -206,33 +208,33 @@ public final class EditHistory {
     /** Short text for the change from a to b, as LightZone shows it in the history. */
     static String describe(State a, State b) {
         if (a.deleted() != b.deleted()) {
-            return b.deleted() ? "Delete" : "Restore";
+            return b.deleted() ? I18n.t("history.delete") : I18n.t("history.restore");
         }
         if (a.rating() != b.rating()) {
-            return b.rating() == 0 ? "Remove rating" : "Rating " + b.rating() + (b.rating() == 1 ? " star" : " stars");
+            return b.rating() == 0 ? I18n.t("history.removeRating") : I18n.t(b.rating() == 1 ? "history.ratingOne" : "history.rating", b.rating());
         }
         if (!Objects.equals(a.crop(), b.crop())) {
-            return b.crop() == null ? "Reset crop" : "Crop";
+            return b.crop() == null ? I18n.t("history.resetCrop") : I18n.t("history.crop");
         }
         if (a.rotation() != b.rotation()) {
-            return "Rotate";
+            return I18n.t("history.rotate");
         }
         if (!a.geometry().equals(b.geometry())) {
             if (a.geometry().flipH() != b.geometry().flipH() || a.geometry().flipV() != b.geometry().flipV()) {
-                return "Flip";
+                return I18n.t("history.flip");
             }
-            return "Straighten";
+            return I18n.t("history.straighten");
         }
         List<ImageFilter> fa = a.filters();
         List<ImageFilter> fb = b.filters();
         if (fb.size() == fa.size() + 1) {
-            return "Add " + displayName(missing(fb, fa));
+            return I18n.t("history.add", displayName(missing(fb, fa)));
         }
         if (fa.size() == fb.size() + 1) {
-            return "Remove " + displayName(missing(fa, fb));
+            return I18n.t("history.remove", displayName(missing(fa, fb)));
         }
         if (fa.size() != fb.size()) {
-            return "Change tools";
+            return I18n.t("history.changeTools");
         }
         ImageFilter changedA = null;
         ImageFilter changedB = null;
@@ -245,7 +247,7 @@ public final class EditHistory {
             }
         }
         if (changes != 1) {
-            return "Reorder tools";
+            return I18n.t("history.reorderTools");
         }
         return describe(changedA, changedB);
     }
@@ -253,23 +255,23 @@ public final class EditHistory {
     private static String describe(ImageFilter a, ImageFilter b) {
         String name = displayName(b);
         if (!a.getName().equals(b.getName())) {
-            return "Reorder tools";
+            return I18n.t("history.reorderTools");
         }
         if (a.isActive() != b.isActive()) {
-            return name + (b.isActive() ? " on" : " off");
+            return I18n.t(b.isActive() ? "history.toolOn" : "history.toolOff", name);
         }
         if (a.getOpacity() != b.getOpacity()) {
-            return name + ": Opacity";
+            return I18n.t("history.toolOpacity", name);
         }
         if (a.getBlendMode() != b.getBlendMode()) {
-            return name + ": Mode";
+            return I18n.t("history.toolMode", name);
         }
         if (a instanceof AbstractImageFilter x && b instanceof AbstractImageFilter y) {
             if (!x.getRegion().equals(y.getRegion())) {
-                return name + ": Area";
+                return I18n.t("history.toolArea", name);
             }
             if (!x.getColorSelection().equals(y.getColorSelection())) {
-                return name + ": Color selection";
+                return I18n.t("history.toolColorSelection", name);
             }
             float[] va = x.getValues();
             float[] vb = y.getValues();

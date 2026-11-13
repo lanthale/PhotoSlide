@@ -1,5 +1,7 @@
 package org.photoslide.preferences;
 
+
+import org.photoslide.I18n;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -70,11 +72,11 @@ public class RawSettingsLabController implements Initializable {
     private static final Logger LOG = Logger.getLogger(RawSettingsLabController.class.getName());
     // Nur Werte, die RawDecoderToNativeTranslator tatsaechlich verarbeitet:
     // user_qual: 0=linear, 1=VNG, 2=PPG, 3=AHD, 4=DCB, 11=DHT, 12=mod. AHD
-    private static final List<String> QUALITY_VALUES = List.of("Linear (0)", "VNG (1)", "PPG (2)",
-            "AHD (3)", "DCB (4)", "DHT (11)", "Modified AHD (12)");
+    private static final List<String> QUALITY_VALUES = List.of(I18n.t("raw.q.linear"), "VNG (1)", "PPG (2)",
+            "AHD (3)", "DCB (4)", "DHT (11)", I18n.t("raw.q.modifiedAhd"));
     // output_color: 0=raw, 1=sRGB, 2=Adobe, 3=Wide, 4=ProPhoto, 5=XYZ, 6=ACES
     // fbdd_noiserd: 0=off, 1..3 (LibRaw)
-    private static final List<String> NOISE_VALUES = List.of("Off (0)", "FBDD light (1)", "FBDD strong (2)", "FBDD strongest (3)");
+    private static final List<String> NOISE_VALUES = List.of(I18n.t("raw.nr.off"), I18n.t("raw.nr.light"), I18n.t("raw.nr.strong"), I18n.t("raw.nr.strongest"));
 
     @FXML private Label fileLabel;
     @FXML private Label cameraLabel;
@@ -98,8 +100,8 @@ public class RawSettingsLabController implements Initializable {
     @FXML private VBox rawLabRoot;
     @FXML private StackPane generalPane;
 
-    private static final String TREE_RAW = "RAW Developer Settings";
-    private static final String TREE_GENERAL = "General";
+    private static final String TREE_RAW = I18n.t("raw.treeRaw");
+    private static final String TREE_GENERAL = I18n.t("rawSettingsLab.general");
 
     private final RawDecoderSettingsFx model = new RawDecoderSettingsFx();
     private final javafx.beans.property.SimpleStringProperty cameraKey
@@ -145,7 +147,7 @@ public class RawSettingsLabController implements Initializable {
         } finally {
             applyingProfile = false;
         }
-        statusLabel.setText("Profile '" + key + "' loaded");
+        statusLabel.setText(I18n.t("raw.profileLoaded", key));
         // Das geladene Bild gehoert zu genau einem Kamera-Profil. Klick auf ein
         // anderes Profil => Bild gehoert nicht mehr dazu: verwerfen statt
         // es mit fremden Settings weiter anzuzeigen.
@@ -166,7 +168,7 @@ public class RawSettingsLabController implements Initializable {
     private void clearSampleImage() {
         sampleFile = null;
         cameraKey.set(null);
-        fileLabel.setText("No image loaded");
+        fileLabel.setText(I18n.t("rawSettingsLab.noImageLoaded"));
         cameraLabel.setText("—");
         referenceView.setImage(null);
         previewView.setImage(null);
@@ -231,7 +233,7 @@ public class RawSettingsLabController implements Initializable {
         // Aenderungen ueber die selectedProperty abonnieren.
         zoomSwitch.selectedProperty().addListener((obs, wasSelected, isSelected)
                 -> zoomToggleAction());
-        applyButton.disableProperty().bind(cameraKey.isNull().or(fileLabel.textProperty().isEqualTo("No image loaded")));
+        applyButton.disableProperty().bind(cameraKey.isNull().or(fileLabel.textProperty().isEqualTo(I18n.t("rawSettingsLab.noImageLoaded"))));
         resetButton.disableProperty().bind(cameraKey.isNull());
         saveButton.disableProperty().bind(profileList.getSelectionModel().selectedItemProperty().isNull());
     }
@@ -242,7 +244,7 @@ public class RawSettingsLabController implements Initializable {
 
     /** Baut den Kategorien-Baum: neue Kategorie = 1 Zeile + Case im Listener. */
     private void buildTree() {
-        TreeItem<String> root = new TreeItem<>("Settings"); // unsichtbar (showRoot=false)
+        TreeItem<String> root = new TreeItem<>(I18n.t("raw.settings")); // unsichtbar (showRoot=false)
         root.setExpanded(true);
         root.getChildren().addAll(
                 new TreeItem<>(TREE_GENERAL),   // Default-Tab: General (leer)
@@ -273,7 +275,7 @@ public class RawSettingsLabController implements Initializable {
     // ------------------------------------------------------------------
 
     private void buildSettingsPanel() {
-        CheckBox cameraWb = new CheckBox("Use camera white balance");
+        CheckBox cameraWb = new CheckBox(I18n.t("raw.cameraWb"));
         // Translator: nur "CAMERA" (case-insensitive) schaltet use_camera_wb=1;
         // eigene Multiplikatoren (user_mul) schalten Kamera-/Auto-WB ab.
         cameraWb.selectedProperty().addListener((obs, o, n)
@@ -282,110 +284,106 @@ public class RawSettingsLabController implements Initializable {
                 -> cameraWb.setSelected("CAMERA".equalsIgnoreCase(n)));
 
         // DCB-Optionen greifen nur bei Interpolation quality 4 (DCB)
-        HBox dcbIterRow = (HBox) spinner("DCB iterations, -1=LibRaw default (dcb_iterations)",
+        HBox dcbIterRow = (HBox) spinner(I18n.t("raw.dcbIterations"),
                 -1, 10, -1, model.dcbIterationsProperty());
-        CheckBox dcbEnhance = new CheckBox("DCB enhance (dcb_enhance_fl)");
+        CheckBox dcbEnhance = new CheckBox(I18n.t("raw.dcbEnhance"));
         dcbEnhance.selectedProperty().bindBidirectional(model.dcbEnhanceFlProperty());
         javafx.beans.binding.BooleanExpression notDcb = model.rawQualityProperty().isEqualTo(4).not();
         dcbIterRow.disableProperty().bind(notDcb);
         dcbEnhance.disableProperty().bind(notDcb);
 
         settingsBox.getChildren().addAll(
-                settingsCard("Base look (editor and lighttable, like Lightroom's camera defaults)",
-                        slider("Base exposure in stops (added to the DNG BaselineExposure)", -2.0, 3.0, model.baseExposureProperty()),
-                        check("Use the BaselineExposure of DNG files", model.useDngBaselineProperty()),
-                        check("Brighten Sigma X3F files by their ISO (LibRaw leaves the Foveon ISO gain out)",
+                settingsCard(I18n.t("raw.card.baseLook"),
+                        slider(I18n.t("raw.baseExposure"), -2.0, 3.0, model.baseExposureProperty()),
+                        check(I18n.t("raw.useDngBaseline"), model.useDngBaselineProperty()),
+                        check(I18n.t("raw.isoGain"),
                                 model.isoGainProperty()),
-                        choice("Tone curve", TONE_CURVES, model.toneCurveProperty(), TONE_CURVES::indexOf)),
-                settingsCard("Colour calibration (ColorChecker 24, like the colour matrix of a camera profile)",
-                        check("Use the colour matrix of this profile", model.useColorMatrixProperty()),
+                        choice(I18n.t("raw.toneCurve"), TONE_CURVES, model.toneCurveProperty(), TONE_CURVES::indexOf)),
+                settingsCard(I18n.t("raw.card.colorCalibration"),
+                        check(I18n.t("raw.useColorMatrix"), model.useColorMatrixProperty()),
                         calibrationRow(),
-                        check("Use the colour shading correction (colour towards the edges)", model.useShadingProperty()),
-                        slider("Strength of the colour shading correction (1 = as calibrated)", 0.0, 1.5,
+                        check(I18n.t("raw.useShading"), model.useShadingProperty()),
+                        slider(I18n.t("raw.shadingStrength"), 0.0, 1.5,
                                 model.shadingStrengthProperty()),
                         shadingRow()),
-                settingsCard("Demosaicing",
-                        choice("Interpolation quality (user_qual)", QUALITY_VALUES, model.rawQualityProperty(),
+                settingsCard(I18n.t("raw.card.demosaicing"),
+                        choice(I18n.t("raw.quality"), QUALITY_VALUES, model.rawQualityProperty(),
                                 v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
-                        check("Half size output (fast preview, also halves the editing resolution)", model.halfSizeOutputProperty()),
-                        check("Interpolate RGB as 4 colors (four_color_rgb)", model.interpolate4ColorsProperty()),
-                        check("Green matching (green_matching)", model.greenMatchingProperty()),
+                        check(I18n.t("raw.halfSize"), model.halfSizeOutputProperty()),
+                        check(I18n.t("raw.fourColor"), model.interpolate4ColorsProperty()),
+                        check(I18n.t("raw.greenMatching"), model.greenMatchingProperty()),
                         dcbIterRow,
                         dcbEnhance,
-                        spinner("Median filter passes (med_passes)", 0, 10, 0, model.medianFilterPassesProperty())),
+                        spinner(I18n.t("raw.medPasses"), 0, 10, 0, model.medianFilterPassesProperty())),
                         // 16-Bit bewusst ausgeblendet: Editor und Leuchttisch dekodieren immer
                         // ueber readPixelData16, die 8-Bit-Wege erzwingen 8 Bit. Das Flag wirkt
                         // daher nirgends. Modell/JSON bleibt.
                         // check("16-bit output (output_bps)", model.sixteenBitsImageProperty())),
-                settingsCard("White balance & color",
+                settingsCard(I18n.t("raw.card.whiteBalance"),
                         cameraWb,
-                        check("Auto white balance (use_auto_wb)", model.autoWhitebalanceProperty()),
-                        check("Custom WB multipliers — disables camera/auto WB (user_mul)",
+                        check(I18n.t("raw.autoWb"), model.autoWhitebalanceProperty()),
+                        check(I18n.t("raw.userMul"),
                                 model.useUserMultipliersProperty()),
-                        slider("WB multiplier R", 0.0, 4.0, model.userMulRProperty()),
-                        slider("WB multiplier G1", 0.0, 4.0, model.userMulG1Property()),
-                        slider("WB multiplier B", 0.0, 4.0, model.userMulBProperty()),
-                        slider("WB multiplier G2", 0.0, 4.0, model.userMulG2Property()),
-                        check("Greybox for auto WB (greybox)", model.useGreyBoxProperty()),
-                        spinner("Greybox X", 0, 100000, 0, model.greyBoxXProperty()),
-                        spinner("Greybox Y", 0, 100000, 0, model.greyBoxYProperty()),
-                        spinner("Greybox width", 0, 100000, 0, model.greyBoxWProperty()),
-                        spinner("Greybox height", 0, 100000, 0, model.greyBoxHProperty()),
-                        choice("Camera matrix: -1 untouched, 0 off, 1 default, 3 always (use_camera_matrix)",
-                                List.of("Untouched (-1)", "Off (0)", "Default (1)", "Always (3)"),
+                        slider(I18n.t("raw.mulR"), 0.0, 4.0, model.userMulRProperty()),
+                        slider(I18n.t("raw.mulG1"), 0.0, 4.0, model.userMulG1Property()),
+                        slider(I18n.t("raw.mulB"), 0.0, 4.0, model.userMulBProperty()),
+                        slider(I18n.t("raw.mulG2"), 0.0, 4.0, model.userMulG2Property()),
+                        check(I18n.t("raw.greybox"), model.useGreyBoxProperty()),
+                        spinner(I18n.t("raw.greyboxX"), 0, 100000, 0, model.greyBoxXProperty()),
+                        spinner(I18n.t("raw.greyboxY"), 0, 100000, 0, model.greyBoxYProperty()),
+                        spinner(I18n.t("raw.greyboxW"), 0, 100000, 0, model.greyBoxWProperty()),
+                        spinner(I18n.t("raw.greyboxH"), 0, 100000, 0, model.greyBoxHProperty()),
+                        choice(I18n.t("raw.cameraMatrix"),
+                                List.of(I18n.t("raw.cm.untouched"), I18n.t("raw.nr.off"), I18n.t("raw.cm.default"), I18n.t("raw.cm.always")),
                                 model.useCameraMatrixProperty(),
                                 v -> Integer.parseInt(v.replaceAll("[^\\-0-9]", ""))),
-                        spinner("Saturation level, -1=dcraw default (user_sat)",
+                        spinner(I18n.t("raw.userSat"),
                                 -1, 20000, -1, model.saturationProperty())),
-                settingsCard("Highlights & black levels",
-                        spinner("Highlight mode 0 clip,1 unclip,2 blend,3-9 rebuild,0=legacy switch (highlight)",
+                settingsCard(I18n.t("raw.card.highlights"),
+                        spinner(I18n.t("raw.highlightMode"),
                                 0, 9, 0, model.unclipColorsProperty()),
-                        check("Fix colors in highlights — legacy (highlight 1)", model.fixColorsHighlightsProperty()),
-                        slider("Auto maximum adjust threshold (adjust_maximum_thr)", 0.0, 1.0, model.adjustMaximumThresholdProperty()),
-                        check("Enable black point (user_black)", model.enableBlackPointProperty()),
-                        spinner("Black point", 0, 4096, 0, model.blackPointProperty()),
-                        check("Black level per channel (user_cblack)", model.useChannelBlackProperty()),
-                        spinner("Channel black R", 0, 4096, 0, model.channelBlack0Property()),
-                        spinner("Channel black G1", 0, 4096, 0, model.channelBlack1Property()),
-                        spinner("Channel black B", 0, 4096, 0, model.channelBlack2Property()),
-                        spinner("Channel black G2", 0, 4096, 0, model.channelBlack3Property())),
-                settingsCard("Noise reduction",
-                        choice("FBDD noise reduction (fbdd_noiserd)", NOISE_VALUES, model.noiseReductionProperty(),
+                        check(I18n.t("raw.fixHighlights"), model.fixColorsHighlightsProperty()),
+                        slider(I18n.t("raw.adjustMax"), 0.0, 1.0, model.adjustMaximumThresholdProperty()),
+                        check(I18n.t("raw.enableBlack"), model.enableBlackPointProperty()),
+                        spinner(I18n.t("raw.blackPoint"), 0, 4096, 0, model.blackPointProperty()),
+                        check(I18n.t("raw.channelBlack"), model.useChannelBlackProperty()),
+                        spinner(I18n.t("raw.cblackR"), 0, 4096, 0, model.channelBlack0Property()),
+                        spinner(I18n.t("raw.cblackG1"), 0, 4096, 0, model.channelBlack1Property()),
+                        spinner(I18n.t("raw.cblackB"), 0, 4096, 0, model.channelBlack2Property()),
+                        spinner(I18n.t("raw.cblackG2"), 0, 4096, 0, model.channelBlack3Property())),
+                settingsCard(I18n.t("tool.noiseReduction"),
+                        choice(I18n.t("raw.fbdd"), NOISE_VALUES, model.noiseReductionProperty(),
                                 v -> Integer.parseInt(v.replaceAll("\\D+", ""))),
-                        spinner("Wavelet denoise threshold, 0=off (threshold)", 0, 1000, 0, model.nrThresholdProperty())),
-                settingsCard("Chromatic aberration",
-                        slider("CA scale red, 1.0=off (aber)", 0.5, 2.0, model.aberRedProperty()),
-                        slider("CA scale blue, 1.0=off (aber)", 0.5, 2.0, model.aberBlueProperty())),
-                settingsCard("Geometry / frames",
-                        choice("Orientation: -1 from file, 0 none, 3=180°, 5=90° CCW, 6=90° CW (user_flip)",
-                                List.of("From file (-1)", "None (0)", "180 degrees (3)", "90 CCW (5)", "90 CW (6)"),
+                        spinner(I18n.t("raw.wavelet"), 0, 1000, 0, model.nrThresholdProperty())),
+                settingsCard(I18n.t("raw.card.aberration"),
+                        slider(I18n.t("raw.caRed"), 0.5, 2.0, model.aberRedProperty()),
+                        slider(I18n.t("raw.caBlue"), 0.5, 2.0, model.aberBlueProperty())),
+                settingsCard(I18n.t("raw.card.geometry"),
+                        choice(I18n.t("raw.orientation"),
+                                List.of(I18n.t("raw.or.file"), I18n.t("raw.or.none"), I18n.t("raw.or.180"), I18n.t("raw.or.ccw"), I18n.t("raw.or.cw")),
                                 model.userFlipProperty(),
                                 v -> Integer.parseInt(v.replaceAll("[^\\-0-9]", ""))),
-                        check("Do not stretch/rotate pixels (use_fuji_rotate=0)", model.dontStretchPixelsProperty()),
-                        spinner("Shot select, multi-shot files (shot_select)", 0, 10, 0, model.shotSelectProperty())),
-                settingsCard("Correction files & special cases (files need absolute paths)",
-                        textField("Bad pixels file (bad_pixels)", model.badPixelsPathProperty()),
-                        textField("Dark frame file (dark_frame)", model.darkFramePathProperty()),
-                        doubleField("Coolscan NEF gamma, 1.0=LibRaw default (coolscan_nef_gamma)", model.coolScanNEFGammaProperty()),
-                        intField("Processing options bit mask, 0=none, e.g. 0x200 (rawparams.options)", model.rawProcessingOptionsProperty())),
-                settingsCard("Advanced (overlaps with the base look, use with care)",
-                        hint("These LibRaw settings still work, but the base look and the colour calibration above"
-                                + " do the same job and fit the editor better."),
-                        check("Exposure correction (exp_correc)", model.enableExposureCorrectionProperty()),
-                        slider("Exposure shift (exp_shift)", 0.25, 8.0, model.exposureShiftProperty()),
-                        slider("Highlight preservation (exp_preser)", 0.0, 1.0, model.expoCorrectionHighlightProperty()),
-                        hint("Added to the base exposure: both together easily make the photo too bright."
-                                + " Prefer \"Base exposure\"."),
-                        textField("Camera color profile, ICC (camera_profile)", model.cameraProfilePathProperty()),
-                        hint("LibRaw then converts to sRGB instead of the ProPhoto working space, so colours may be wrong."
-                                + " Prefer the colour calibration. Not available on Windows."),
-                        check("Crop box (cropbox)", model.useCropBoxProperty()),
-                        spinner("Crop X", 0, 100000, 0, model.cropBoxXProperty()),
-                        spinner("Crop Y", 0, 100000, 0, model.cropBoxYProperty()),
-                        spinner("Crop width", 0, 100000, 0, model.cropBoxWProperty()),
-                        spinner("Crop height", 0, 100000, 0, model.cropBoxHProperty()),
-                        hint("Crops while decoding: changing it later moves the areas, crops and colour shading"
-                                + " of edited photos. Prefer the crop tool of the editor.")));
+                        check(I18n.t("raw.noStretch"), model.dontStretchPixelsProperty()),
+                        spinner(I18n.t("raw.shotSelect"), 0, 10, 0, model.shotSelectProperty())),
+                settingsCard(I18n.t("raw.card.files"),
+                        textField(I18n.t("raw.badPixels"), model.badPixelsPathProperty()),
+                        textField(I18n.t("raw.darkFrame"), model.darkFramePathProperty()),
+                        doubleField(I18n.t("raw.coolscan"), model.coolScanNEFGammaProperty()),
+                        intField(I18n.t("raw.options"), model.rawProcessingOptionsProperty())),
+                settingsCard(I18n.t("raw.card.advanced"),
+                        hint(I18n.t("raw.hint.advanced")),
+                        check(I18n.t("raw.expCorrec"), model.enableExposureCorrectionProperty()),
+                        slider(I18n.t("raw.expShift"), 0.25, 8.0, model.exposureShiftProperty()),
+                        slider(I18n.t("raw.expPreser"), 0.0, 1.0, model.expoCorrectionHighlightProperty()),
+                        hint(I18n.t("raw.hint.expShift")),
+                        textField(I18n.t("raw.cameraProfile"), model.cameraProfilePathProperty()),
+                        hint(I18n.t("raw.hint.cameraProfile")),
+                        check(I18n.t("raw.cropBox"), model.useCropBoxProperty()),
+                        spinner(I18n.t("raw.cropX"), 0, 100000, 0, model.cropBoxXProperty()),
+                        spinner(I18n.t("raw.cropY"), 0, 100000, 0, model.cropBoxYProperty()),
+                        spinner(I18n.t("raw.cropW"), 0, 100000, 0, model.cropBoxWProperty()),
+                        spinner(I18n.t("raw.cropH"), 0, 100000, 0, model.cropBoxHProperty()),
+                        hint(I18n.t("raw.hint.cropBox"))));
     }
 
     /**
@@ -552,7 +550,7 @@ public class RawSettingsLabController implements Initializable {
      *  Kamera. Liefert false, wenn der User abbricht oder die Datei unlesbar ist. */
     private boolean chooseSample(Window owner) {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Open sample RAW image");
+        chooser.setTitle(I18n.t("raw.openSample"));
         if (sampleFile != null) {
             chooser.setInitialDirectory(sampleFile.toFile().getParentFile());
         }
@@ -572,7 +570,7 @@ public class RawSettingsLabController implements Initializable {
             return true;
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
-            showError("Cannot open RAW file: " + ex.getMessage());
+            showError(I18n.t("raw.cannotOpen", ex.getMessage()));
             return false;
         }
     }
@@ -652,21 +650,21 @@ public class RawSettingsLabController implements Initializable {
         if (cameraKey.get() == null || sampleFile == null) {
             if (!chooseSample(((Node) event.getSource()).getScene().getWindow())) {
                 statusLabel.setTextFill(Color.web("#ff6961"));
-                statusLabel.setText("Select a sample image first — the profile name is derived from the camera.");
+                statusLabel.setText(I18n.t("raw.selectSampleFirst"));
                 return;
             }
         }
         TextInputDialog dialog = new TextInputDialog(cameraKey.get());
-        dialog.setTitle("New RAW decoder profile");
-        dialog.setHeaderText("Profile name (detected from the sample image: maker + model)");
-        dialog.setContentText("Name:");
+        dialog.setTitle(I18n.t("raw.newProfile"));
+        dialog.setHeaderText(I18n.t("raw.newProfileHeader"));
+        dialog.setContentText(I18n.t("raw.name"));
         dialog.showAndWait().ifPresent(name -> {
             if (name == null || name.isBlank()) {
                 return;
             }
             String key = name.trim();
             if (profileList.getItems().contains(key)) {
-                showError("A profile with this name already exists.");
+                showError(I18n.t("raw.profileExists"));
                 return;
             }
             RawSettingsStore.saveProfile(key, model);   // aktuelle Settings ins neue Profil
@@ -682,7 +680,7 @@ public class RawSettingsLabController implements Initializable {
             return;
         }
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete RAW decoder profile '" + key + "'?", ButtonType.YES, ButtonType.NO);
+                I18n.t("raw.deleteQuestion", key), ButtonType.YES, ButtonType.NO);
         confirm.setHeaderText(null);
         confirm.showAndWait().ifPresent(bt -> {
             if (bt == ButtonType.YES) {
@@ -690,7 +688,7 @@ public class RawSettingsLabController implements Initializable {
                 // Default selektieren UND aktivieren (auch wenn er schon selektiert war)
                 selectAndApplyProfile(RawSettingsStore.DEFAULT_KEY);
                 statusLabel.setTextFill(Color.web("#ff6961"));
-                statusLabel.setText("Deleted profile '" + key + "'");
+                statusLabel.setText(I18n.t("raw.deleted", key));
             }
         });
     }
@@ -700,12 +698,12 @@ public class RawSettingsLabController implements Initializable {
     private void saveAction(ActionEvent event) {
         String key = profileList.getSelectionModel().getSelectedItem();
         if (key == null) {
-            showError("Select a profile first.");
+            showError(I18n.t("raw.selectProfile"));
             return;
         }
         RawSettingsStore.saveProfile(key, model);
         statusLabel.setTextFill(Color.web("#7bd88f"));
-        statusLabel.setText("Saved profile '" + key + "'");
+        statusLabel.setText(I18n.t("raw.saved", key));
     }
 
     // ------------------------------------------------------------------
@@ -749,11 +747,10 @@ public class RawSettingsLabController implements Initializable {
     private boolean calibrating;
 
     private Node calibrationRow() {
-        Button calibrate = new Button("Calibrate from ColorChecker…", new FontIcon("fa-crosshairs"));
-        calibrate.setTooltip(new Tooltip("Open a photo of a ColorChecker as sample, then click the centres of its"
-                + " four corner patches in the right image"));
+        Button calibrate = new Button(I18n.t("raw.calibrateCC"), new FontIcon("fa-crosshairs"));
+        calibrate.setTooltip(new Tooltip(I18n.t("raw.calibrateCCTip")));
         calibrate.setOnAction(e -> startCalibration());
-        Button remove = new Button("Remove");
+        Button remove = new Button(I18n.t("raw.remove"));
         remove.setOnAction(e -> {
             model.setUseColorMatrix(false);
             model.setColorMatrix("");
@@ -762,7 +759,7 @@ public class RawSettingsLabController implements Initializable {
         remove.disableProperty().bind(model.colorMatrixProperty().isEmpty());
         calibrationInfo.setTextFill(Color.web("#9f9f9f"));
         Runnable info = () -> calibrationInfo.setText(RawLook.parseMatrix(model.getColorMatrix()) == null
-                ? "Not calibrated" : "Calibrated");
+                ? I18n.t("raw.notCalibrated") : I18n.t("raw.calibrated"));
         model.colorMatrixProperty().addListener((obs, o, n) -> info.run());
         info.run();
         HBox row = new HBox(10, calibrate, remove, calibrationInfo);
@@ -772,7 +769,7 @@ public class RawSettingsLabController implements Initializable {
 
     private void startCalibration() {
         if (sampleFile == null || previewView.getImage() == null) {
-            showError("Open a RAW photo of a ColorChecker first (Open sample).");
+            showError(I18n.t("raw.openCCFirst"));
             return;
         }
         calibrating = true;
@@ -780,7 +777,7 @@ public class RawSettingsLabController implements Initializable {
         calibrationMarkers.getChildren().clear();
         previewView.setCursor(Cursor.CROSSHAIR);
         statusLabel.setTextFill(Color.web("#ffd24d"));
-        statusLabel.setText("Click the centres of the four corner patches of the ColorChecker in the right image (any order)");
+        statusLabel.setText(I18n.t("raw.clickCorners"));
     }
 
     private void calibrationClick(MouseEvent e) {
@@ -793,7 +790,7 @@ public class RawSettingsLabController implements Initializable {
         calibrationClicks.add(new double[]{fx, fy});
         mark(fx, fy, 7, Color.web("#ffd24d"));
         if (calibrationClicks.size() < 4) {
-            statusLabel.setText((4 - calibrationClicks.size()) + " corner patch(es) to go");
+            statusLabel.setText(I18n.t("raw.cornersToGo", 4 - calibrationClicks.size()));
             return;
         }
         calibrating = false;
@@ -804,11 +801,10 @@ public class RawSettingsLabController implements Initializable {
     private final Label shadingInfo = new Label();
 
     private Node shadingRow() {
-        Button calibrate = new Button("Calibrate colour shading from camera JPEGs…", new FontIcon("fa-th"));
-        calibrate.setTooltip(new Tooltip("Compares the RAW photos of this camera in the folder of the sample with"
-                + " the JPEG the camera embeds (Sigma X3F) and corrects the colour drift towards the edges"));
+        Button calibrate = new Button(I18n.t("raw.calibrateShading"), new FontIcon("fa-th"));
+        calibrate.setTooltip(new Tooltip(I18n.t("raw.calibrateShadingTip")));
         calibrate.setOnAction(e -> runShadingCalibration());
-        Button remove = new Button("Remove");
+        Button remove = new Button(I18n.t("raw.remove"));
         remove.setOnAction(e -> {
             model.setUseShading(false);
             model.setShadingMap("");
@@ -817,8 +813,8 @@ public class RawSettingsLabController implements Initializable {
         shadingInfo.setTextFill(Color.web("#9f9f9f"));
         Runnable info = () -> {
             ColorShading cs = ColorShading.parse(model.getShadingMap());
-            shadingInfo.setText(cs == null ? "Not calibrated"
-                    : String.format(java.util.Locale.ROOT, "Calibrated, strongest correction %.0f %%", cs.strength()));
+            shadingInfo.setText(cs == null ? I18n.t("raw.notCalibrated")
+                    : I18n.t("raw.calibratedStrength", cs.strength()));
         };
         model.shadingMapProperty().addListener((obs, o, n) -> info.run());
         info.run();
@@ -830,7 +826,7 @@ public class RawSettingsLabController implements Initializable {
     /** All RAW photos of the sample's camera in its folder with an embedded camera JPEG. */
     private void runShadingCalibration() {
         if (sampleFile == null || cameraKey.get() == null) {
-            showError("Open a RAW photo of the camera first (Open sample): its folder is used.");
+            showError(I18n.t("raw.openCameraFirst"));
             return;
         }
         RawDecoderSettings settings = model.toRawDecoderSettings();
@@ -841,7 +837,7 @@ public class RawSettingsLabController implements Initializable {
         Task<ColorShading.Calibration> task = new Task<>() {
             @Override
             protected ColorShading.Calibration call() throws Exception {
-                updateMessage("Looking for photos of " + camera + "…");
+                updateMessage(I18n.t("raw.lookingFor", camera));
                 List<Path> files = new ArrayList<>();
                 try (var list = java.nio.file.Files.list(folder)) {
                     for (Path p : list.sorted().toList()) {
@@ -858,7 +854,7 @@ public class RawSettingsLabController implements Initializable {
                     }
                 }
                 return ColorShading.calibrate(files, settings, matrix,
-                        (done, total) -> updateMessage("Colour shading: photo " + done + " of " + total + "…"));
+                        (done, total) -> updateMessage(I18n.t("raw.shadingProgress", done, total)));
             }
         };
         statusLabel.textProperty().bind(task.messageProperty());
@@ -867,19 +863,18 @@ public class RawSettingsLabController implements Initializable {
             ColorShading.Calibration c = task.getValue();
             if (c == null) {
                 statusLabel.setTextFill(Color.web("#ff6961"));
-                statusLabel.setText("Not enough photos with an embedded camera JPEG in the folder (at least 5 X3F of this camera)");
+                statusLabel.setText(I18n.t("raw.notEnoughPhotos"));
                 return;
             }
             model.setShadingMap(c.shading().format());
             model.setUseShading(true);
-            shadingInfo.setText(String.format(java.util.Locale.ROOT, "Calibrated from %d photos, strongest correction %.0f %%",
-                    c.photos(), c.shading().strength()));
-            statusLabel.setText("Colour shading calibrated. Save into the profile to keep it.");
+            shadingInfo.setText(I18n.t("raw.calibratedFrom", c.photos(), c.shading().strength()));
+            statusLabel.setText(I18n.t("raw.shadingCalibrated"));
         });
         task.setOnFailed(e -> {
             statusLabel.textProperty().unbind();
             statusLabel.setTextFill(Color.web("#ff6961"));
-            statusLabel.setText("Colour shading failed: " + task.getException().getMessage());
+            statusLabel.setText(I18n.t("raw.shadingFailed", task.getException().getMessage()));
             LOG.log(Level.SEVERE, "Colour shading failed", task.getException());
         });
         executor.submit(task);
@@ -891,7 +886,7 @@ public class RawSettingsLabController implements Initializable {
     /** Decodes the sample with the current settings (no look) and fits the matrix. */
     private void runCalibration(List<double[]> clicks) {
         statusLabel.setTextFill(Color.web("#9f9f9f"));
-        statusLabel.setText("Calibrating…");
+        statusLabel.setText(I18n.t("raw.calibrating"));
         RawDecoderSettings settings = model.toRawDecoderSettings();
         // the matrix does not contain the white balance: a fixed one only fits photos in the same light
         boolean fixedWhiteBalance = model.isUseUserMultipliers();
@@ -922,7 +917,7 @@ public class RawSettingsLabController implements Initializable {
             ColorCalibration.Result r = task.getValue();
             if (r == null) {
                 statusLabel.setTextFill(Color.web("#ff6961"));
-                statusLabel.setText("The chart was not found: click the centres of the four corner patches");
+                statusLabel.setText(I18n.t("raw.chartNotFound"));
                 return;
             }
             calibrationMarkers.getChildren().clear();
@@ -931,16 +926,14 @@ public class RawSettingsLabController implements Initializable {
             }
             model.setColorMatrix(RawLook.formatMatrix(r.matrix()));
             model.setUseColorMatrix(true);
-            calibrationInfo.setText(String.format(java.util.Locale.ROOT,
-                    "Colour error %.1f → %.1f (Lab a/b, below 5 is very good)%s", r.errorBefore(), r.errorAfter(),
-                    fixedWhiteBalance ? ". Note: custom WB multipliers give every photo the white balance of"
-                    + " this one; use the camera white balance for photos in other light" : ""));
+            calibrationInfo.setText(I18n.t("raw.colourError", r.errorBefore(), r.errorAfter(),
+                    fixedWhiteBalance ? I18n.t("raw.colourErrorNote") : ""));
             statusLabel.setTextFill(Color.web("#9f9f9f"));
-            statusLabel.setText("Calibrated. Save into the profile to keep it.");
+            statusLabel.setText(I18n.t("raw.calibratedSave"));
         });
         task.setOnFailed(e -> {
             statusLabel.setTextFill(Color.web("#ff6961"));
-            statusLabel.setText("Calibration failed: " + task.getException().getMessage());
+            statusLabel.setText(I18n.t("raw.calibrationFailed", task.getException().getMessage()));
             LOG.log(Level.SEVERE, "Calibration failed", task.getException());
         });
         executor.submit(task);
@@ -967,7 +960,7 @@ public class RawSettingsLabController implements Initializable {
             return;
         }
         statusLabel.setTextFill(Color.web("#9f9f9f"));
-        statusLabel.setText("Decoding…");
+        statusLabel.setText(I18n.t("raw.decoding"));
         progress.setVisible(true);
         java.util.concurrent.atomic.AtomicInteger pending = pendingDecodes.computeIfAbsent(progress,
                 p -> new java.util.concurrent.atomic.AtomicInteger());
@@ -988,12 +981,12 @@ public class RawSettingsLabController implements Initializable {
             hideProgressAfterMinimum(progress, start);
             onDone.accept(task.getValue());
             statusLabel.setTextFill(Color.web("#9f9f9f"));
-            statusLabel.setText("Ready");
+            statusLabel.setText(I18n.t("raw.ready"));
         });
         task.setOnFailed(e -> {
             hideProgressAfterMinimum(progress, start);
             statusLabel.setTextFill(Color.web("#ff6961"));
-            statusLabel.setText("Decode failed: " + task.getException().getMessage());
+            statusLabel.setText(I18n.t("raw.decodeFailed", task.getException().getMessage()));
             LOG.log(Level.SEVERE, "Decode failed", task.getException());
         });
         executor.submit(task);

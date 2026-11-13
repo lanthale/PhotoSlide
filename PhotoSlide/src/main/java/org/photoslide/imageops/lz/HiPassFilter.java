@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -22,8 +24,8 @@ public class HiPassFilter extends AbstractImageFilter {
     private static final int SIZE = 5;
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("gain", "Gain", 0, 0.01f, 1f, 0.02f, 0.001f),
-            ParamSpec.slider("radius", "Radius", 1, 0.2f, 5f, 0.8f, 0.001f));
+            ParamSpec.slider("gain", I18n.t("tool.param.gain"), 0, 0.01f, 1f, 0.02f, 0.001f),
+            ParamSpec.slider("radius", I18n.t("tool.param.radius"), 1, 0.2f, 5f, 0.8f, 0.001f));
 
     public HiPassFilter() {
         super(NAME);
@@ -31,7 +33,7 @@ public class HiPassFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Hi Pass Sharpen";
+        return I18n.t("tool.hiPass");
     }
 
     @Override

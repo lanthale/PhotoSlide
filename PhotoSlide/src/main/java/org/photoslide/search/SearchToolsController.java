@@ -5,6 +5,8 @@
  */
 package org.photoslide.search;
 
+
+import org.photoslide.I18n;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.attribute.FileTime;
@@ -221,7 +223,7 @@ public class SearchToolsController implements Initializable {
 
     private void startSearch(String keyword) {
         cancelSearch();
-        searchLabel.setText("Populating results...");
+        searchLabel.setText(I18n.t("searchToolsDialog.populatingResults"));
         searchProgress.setVisible(true);
         searchProgress.setManaged(true);
         searchLabel.setVisible(true);
@@ -244,7 +246,7 @@ public class SearchToolsController implements Initializable {
             searchTextField.setRight(clearButton);
             progressInd.setVisible(false);
             if (t.getSource().getException() instanceof IOException) {
-                searchLabel.setText("Nothing found!");
+                searchLabel.setText(I18n.t("search.nothingFound"));
                 searchProgress.setVisible(false);
                 searchProgress.setManaged(false);
             } else {
@@ -285,7 +287,7 @@ public class SearchToolsController implements Initializable {
         content.putString(factory.getSelectedMediaFile().getEditFilePath().getParent().toString());
         clipboard.setContent(content);
         String text = mediaFileInfoLabel.getText();
-        mediaFileInfoLabel.setText("Copied path to clipboard successfully!");
+        mediaFileInfoLabel.setText(I18n.t("search.copiedPath"));
         PauseTransition pause = new PauseTransition(Duration.millis(5000));
         pause.setOnFinished((t) -> {
             mediaFileInfoLabel.setVisible(true);

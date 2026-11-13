@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -34,7 +36,7 @@ public class CloneFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Clone";
+        return I18n.t("tool.clone");
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.Image16;
@@ -20,7 +22,7 @@ public class GaussianBlurFilter extends AbstractImageFilter {
     public static final String NAME = "GaussianBlurFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("radius", "Radius", 0, 0.1f, 500f, 5f, 0.1f));
+            ParamSpec.slider("radius", I18n.t("tool.param.radius"), 0, 0.1f, 500f, 5f, 0.1f));
 
     public GaussianBlurFilter() {
         super(NAME);
@@ -28,7 +30,7 @@ public class GaussianBlurFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Gaussian Blur";
+        return I18n.t("tool.gaussianBlur");
     }
 
     @Override

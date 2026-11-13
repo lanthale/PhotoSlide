@@ -5,6 +5,8 @@
  */
 package org.photoslide.search;
 
+
+import org.photoslide.I18n;
 import org.photoslide.browsermetadata.MetadataResult;
 import fr.dudie.nominatim.model.Address;
 import java.io.IOException;
@@ -168,7 +170,7 @@ public class SearchIndex {
                         if (known != null && known == modified) {
                             continue;
                         }
-                        task.report("Updating search index...", shortPath(path));
+                        task.report(I18n.t("search.updatingIndex"), shortPath(path));
                         try {
                             if (addToBatch(task, merge, collectionName, fileItem, entry.getValue(), modified)) {
                                 pending[0]++;
@@ -594,7 +596,7 @@ public class SearchIndex {
                 return null;
             }
             long start = System.currentTimeMillis();
-            updateTitle("Checking search index...");
+            updateTitle(I18n.t("search.checkingIndex"));
             scanCollection(this, root, collectionName);
             LOG.log(Level.FINE, "Search index of {0} {1} after {2} ms", new Object[]{collectionName, isCancelled() ? "cancelled" : "checked", System.currentTimeMillis() - start});
             return null;

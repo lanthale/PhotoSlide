@@ -15,22 +15,22 @@
          <children>
             <HBox fx:id="menuBox" spacing="30.0">
                <children>
-                <Button id="toolbutton" mnemonicParsing="false" onAction="#copyClipboardAction" text="Copy to clipboard">
+                <Button id="toolbutton" mnemonicParsing="false" onAction="#copyClipboardAction" text="%bookmarkBoard.copyToClipboard">
                      <graphic>
                         <FontIcon iconLiteral="ti-clipboard" iconSize="18" />
                      </graphic>
                   </Button>
-                  <Button id="toolbutton" mnemonicParsing="false" onAction="#exportAction" text="Export content">
+                  <Button id="toolbutton" mnemonicParsing="false" onAction="#exportAction" text="%bookmarkBoard.exportContent">
                      <graphic>
                         <FontIcon iconLiteral="ti-export" iconSize="18" />
                      </graphic>
                   </Button>
-                  <Button id="toolbutton" mnemonicParsing="false" onAction="#removeMediaFileAction" text="Remove Mediafile">
+                  <Button id="toolbutton" mnemonicParsing="false" onAction="#removeMediaFileAction" text="%bookmarkBoard.removeMediafile">
                      <graphic>
                         <FontIcon iconLiteral="ti-close" iconSize="18" />
                      </graphic>
                   </Button>
-                  <Button id="toolbutton" mnemonicParsing="false" onAction="#clearBoardAction" text="Clear board">
+                  <Button id="toolbutton" mnemonicParsing="false" onAction="#clearBoardAction" text="%bookmarkBoard.clearBoard">
                      <graphic>
                         <FontIcon iconLiteral="ti-trash" iconSize="18" />
                      </graphic>

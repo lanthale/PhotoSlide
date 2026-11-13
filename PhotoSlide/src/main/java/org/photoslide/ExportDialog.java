@@ -26,7 +26,7 @@ public class ExportDialog extends Alert {
     public ExportDialog(AlertType at) {
         super(at);
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/ExportDialog.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/photoslide/fxml/ExportDialog.fxml"), org.photoslide.I18n.bundle());
             Parent root = (Parent) fxmlLoader.load();
             controller = fxmlLoader.<ExportDialogController>getController();
             //controller.setModel(new LoginModel(data));

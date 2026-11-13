@@ -5,6 +5,8 @@
  */
 package org.photoslide.search;
 
+
+import org.photoslide.I18n;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -130,8 +132,8 @@ public class MediaGridCellSR extends GridCell<MediaFile> {
     public final void setError(MediaFile item) {
         rootPane.getChildren().clear();
         dummyIcon.setIconLiteral("ti-bolt");        
-        Label errorLabel=new Label("Error loading");        
-        Tooltip tp=new Tooltip("Cannot load mediafile, because format is not supported!");
+        Label errorLabel=new Label(I18n.t("cell.errorLoading"));        
+        Tooltip tp=new Tooltip(I18n.t("cell.formatNotSupported"));
         tp.setFont(new Font(13));
         errorLabel.setPadding(new Insets(-5));
         errorLabel.setTooltip(tp);                

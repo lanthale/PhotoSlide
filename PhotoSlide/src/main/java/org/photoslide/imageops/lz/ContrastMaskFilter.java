@@ -1,5 +1,7 @@
 package org.photoslide.imageops.lz;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.photoslide.datamodel.Filter16;
@@ -24,8 +26,8 @@ public class ContrastMaskFilter extends AbstractImageFilter {
     public static final String NAME = "ContrastMaskFilter";
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("radius", "Radius", 0, 0.1f, 500f, 128f, 0.1f),
-            ParamSpec.slider("gamma", "Gamma", 1, 0.2f, 5f, 2.2f, 0.1f));
+            ParamSpec.slider("radius", I18n.t("tool.param.radius"), 0, 0.1f, 500f, 128f, 0.1f),
+            ParamSpec.slider("gamma", I18n.t("tool.param.gamma"), 1, 0.2f, 5f, 2.2f, 0.1f));
 
     public ContrastMaskFilter() {
         super(NAME);
@@ -33,7 +35,7 @@ public class ContrastMaskFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Contrast Mask";
+        return I18n.t("tool.contrastMask");
     }
 
     @Override

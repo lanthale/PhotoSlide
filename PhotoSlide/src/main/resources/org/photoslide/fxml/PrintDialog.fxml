@@ -63,29 +63,29 @@
                </rowConstraints>
                <children>
                   <ComboBox fx:id="printerCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
-                  <Label text="Printer" />
+                  <Label text="%printDialog.printer" />
                   <ComboBox fx:id="paperSizeCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
-                  <Label text="Paper size" GridPane.rowIndex="1" />
-                  <Label text="Copies" GridPane.rowIndex="2" />
+                  <Label text="%printDialog.paperSize" GridPane.rowIndex="1" />
+                  <Label text="%printDialog.copies" GridPane.rowIndex="2" />
                   <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
                      <children>
                         <TextField fx:id="copyQTY" prefHeight="27.0" prefWidth="34.0" text="1" HBox.hgrow="NEVER" />
-                        <CheckBox fx:id="greyscaleChoice" mnemonicParsing="false" text="Greyscale" />
+                        <CheckBox fx:id="greyscaleChoice" mnemonicParsing="false" text="%printDialog.greyscale" />
                      </children>
                   </HBox>
-                  <Label text="Pages" GridPane.rowIndex="3" />
-                  <RadioButton fx:id="allPagesRadio" mnemonicParsing="false" onAction="#allPagesRadioAction" selected="true" text="All" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <Label text="%printDialog.pages" GridPane.rowIndex="3" />
+                  <RadioButton fx:id="allPagesRadio" mnemonicParsing="false" onAction="#allPagesRadioAction" selected="true" text="%printDialog.all" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                   <HBox alignment="CENTER_LEFT" prefWidth="206.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
                      <children>
-                        <RadioButton fx:id="rangeRadio" disable="true" mnemonicParsing="false" onAction="#rangeRadioAction" text="From" />
+                        <RadioButton fx:id="rangeRadio" disable="true" mnemonicParsing="false" onAction="#rangeRadioAction" text="%printDialog.from" />
                         <TextField fx:id="pageFromText" disable="true" onAction="#pageFormTextAction" prefHeight="27.0" prefWidth="29.0" />
-                        <Label disable="true" text="To" />
+                        <Label disable="true" text="%printDialog.to" />
                         <TextField fx:id="pageToText" disable="true" onAction="#pageToTextAction" prefHeight="27.0" prefWidth="36.0" />
                      </children>
                   </HBox>
-                  <Label text="Copies per page" GridPane.rowIndex="5" />
+                  <Label text="%printDialog.copiesPerPage" GridPane.rowIndex="5" />
                   <ComboBox fx:id="copyiesPerPageCombo" prefHeight="27.0" prefWidth="220.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                  <Label text="Orientation" GridPane.rowIndex="6" />
+                  <Label text="%printDialog.orientation" GridPane.rowIndex="6" />
                   <HBox spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
                      <children>
                         <ToggleButton fx:id="portraitButton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" selected="true" text="ToggleButton">
@@ -100,7 +100,7 @@
                         </ToggleButton>
                      </children>
                   </HBox>
-                  <CheckBox fx:id="borderLessBox" mnemonicParsing="false" text="Borderless printing" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                  <CheckBox fx:id="borderLessBox" mnemonicParsing="false" text="%printDialog.borderlessPrinting" GridPane.columnIndex="1" GridPane.rowIndex="7" />
                </children>
             </GridPane>
          </children>

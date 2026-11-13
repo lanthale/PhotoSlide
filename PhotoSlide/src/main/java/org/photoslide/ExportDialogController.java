@@ -151,23 +151,23 @@ public class ExportDialogController implements Initializable {
         qSliderToolTip.textProperty().bind(Bindings.format("%.0f", qualitySlider.valueProperty()));
         qSliderToolTip.setShowDelay(Duration.ZERO);
         qualityTextField.textProperty().bindBidirectional(qualitySlider.valueProperty(), new NumberStringConverter("##"));
-        fileSequenceCombo.getItems().add("Title/Caption based");
-        fileSequenceCombo.getItems().add("Orginial filename");
-        fileSequenceCombo.getItems().add("Custom filname");
-        fileSequenceCombo.getSelectionModel().select("Title/Caption based");
+        fileSequenceCombo.getItems().add(I18n.t("export.seq.title"));
+        fileSequenceCombo.getItems().add(I18n.t("export.seq.original"));
+        fileSequenceCombo.getItems().add(I18n.t("export.seq.custom"));
+        fileSequenceCombo.getSelectionModel().select(I18n.t("export.seq.title"));
         fileSequenceCombo.valueProperty().addListener((o) -> {
             String selectedItem = fileSequenceCombo.getSelectionModel().getSelectedItem();
-            if (selectedItem.equalsIgnoreCase("Custom filname")) {
+            if (selectedItem.equalsIgnoreCase(I18n.t("export.seq.custom"))) {
                 filenamePrefixText.setDisable(false);
                 filenamePrefixText.clear();
             }
-            if (selectedItem.equalsIgnoreCase("Orginial filename")) {
+            if (selectedItem.equalsIgnoreCase(I18n.t("export.seq.original"))) {
                 filenamePrefixText.setDisable(true);
                 filenamePrefixText.clear();
                 filenamePrefixText.setText("<Original>");
             }
         });
-        fileSequenceCombo.getSelectionModel().select("Title/Caption based");
+        fileSequenceCombo.getSelectionModel().select(I18n.t("export.seq.title"));
         filenamePrefixText.setText("Probe_01");
         filenamePrefixText.setDisable(true);
         exportBasicMetadataBox.setOnAction((t) -> {
@@ -234,7 +234,7 @@ public class ExportDialogController implements Initializable {
             new Thread(taskFind).start();
         });
         outputDirToolTip.textProperty().bind(outputDirText.textProperty());
-        sortComboBox.getItems().addAll("Record time based", "Actual view");
+        sortComboBox.getItems().addAll(I18n.t("export.sort.recordTime"), I18n.t("export.sort.actualView"));
         sortComboBox.getSelectionModel().selectFirst();
     }
 
@@ -267,7 +267,7 @@ public class ExportDialogController implements Initializable {
             filenamePrefixText.setText(titel);
             //exampleLabel.setText(filenamePrefixText.getText() + "_1" + "." + fileFormatCombo.getSelectionModel().getSelectedItem());
         } else {
-            fileSequenceCombo.getSelectionModel().select("Custom filname");
+            fileSequenceCombo.getSelectionModel().select(I18n.t("export.seq.custom"));
         }
     }
 

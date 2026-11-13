@@ -1,5 +1,7 @@
 package org.photoslide.imageops;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import org.photoslide.datamodel.Filter16;
 import org.photoslide.datamodel.RenderContext;
@@ -8,7 +10,7 @@ import org.photoslide.imageops.lz.LuminanceRatioFilter16;
 /**
  * Exposure in stops (+1 = twice as much light) on the linear 16 bit data.
  * All channels are scaled by the same factor, so the hue stays. With
- * "Protect highlights" the brightest tones roll off smoothly into white
+ * I18n.t("tool.param.protectHighlights") the brightest tones roll off smoothly into white
  * instead of being clipped.
  *
  * @author selfemp
@@ -21,8 +23,8 @@ public class ExposureFilter extends AbstractImageFilter {
     private static final double SHOULDER = 0.8;
 
     private static final List<ParamSpec> PARAMS = List.of(
-            ParamSpec.slider("ev", "Exposure (EV)", 0, -5f, 5f, 0f, 0.05f),
-            ParamSpec.check("protect", "Protect highlights", 1, true));
+            ParamSpec.slider("ev", I18n.t("tool.param.exposureEv"), 0, -5f, 5f, 0f, 0.05f),
+            ParamSpec.check("protect", I18n.t("tool.param.protectHighlights"), 1, true));
 
     public ExposureFilter() {
         super(NAME);
@@ -30,7 +32,7 @@ public class ExposureFilter extends AbstractImageFilter {
 
     @Override
     public String displayName() {
-        return "Exposure";
+        return I18n.t("tool.exposure");
     }
 
     @Override

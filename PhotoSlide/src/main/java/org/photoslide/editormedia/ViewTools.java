@@ -1,5 +1,7 @@
 package org.photoslide.editormedia;
 
+
+import org.photoslide.I18n;
 import java.util.Locale;
 import java.util.Objects;
 import javafx.beans.InvalidationListener;
@@ -111,19 +113,19 @@ final class ViewTools {
             box.setMinSize(0, 0);
         }
 
-        undo =button("ti-back-left", "Undo (" + UNDO.getDisplayText() + ")");
+        undo =button("ti-back-left", I18n.t("view.undoKey", UNDO.getDisplayText()));
         undo.setOnAction(e -> undo());
-        redo = button("ti-back-right", "Redo (" + REDO.getDisplayText() + ")");
+        redo = button("ti-back-right", I18n.t("view.redoKey", REDO.getDisplayText()));
         redo.setOnAction(e -> redo());
-        fit = textButton("Fit", "Show the whole photo");
+        fit = textButton(I18n.t("rawSettingsLab.fit"), I18n.t("view.fitTip"));
         fit.setOnAction(e -> zoomTo(0));
-        oneToOne = textButton("1:1", "Actual pixels (100 %)");
+        oneToOne = textButton("1:1", I18n.t("view.oneToOneTip"));
         oneToOne.setOnAction(e -> zoomTo(oneToOneZoom()));
-        zoomIn = button("fa-search-plus", "Larger");
+        zoomIn = button("fa-search-plus", I18n.t("view.larger"));
         zoomIn.setOnAction(e -> zoomBy(ZOOM_STEP));
-        zoomOut = button("fa-search-minus", "Smaller");
+        zoomOut = button("fa-search-minus", I18n.t("view.smaller"));
         zoomOut.setOnAction(e -> zoomBy(1 / ZOOM_STEP));
-        crop = toggle("fa-crop", "Crop mode: drag the frame or its handles, Enter applies, Esc cancels");
+        crop = toggle("fa-crop", I18n.t("view.cropTip"));
         crop.setOnAction(e -> {
             if (crop.isSelected()) {
                 startCrop();
@@ -131,7 +133,7 @@ final class ViewTools {
                 overlay.commit();
             }
         });
-        rotate = toggle("ti-reload", "Rotate mode: draw a line along the horizon to straighten the photo");
+        rotate = toggle("ti-reload", I18n.t("view.rotateTip"));
         rotate.setOnAction(e -> {
             if (rotate.isSelected()) {
                 startRotate();
@@ -139,13 +141,13 @@ final class ViewTools {
                 endMode();
             }
         });
-        rotateLeft = button("fa-rotate-left", "Rotate left");
+        rotateLeft = button("fa-rotate-left", I18n.t("history.rotateLeft"));
         rotateLeft.setOnAction(e -> turn(-90));
-        rotateRight = button("fa-rotate-right", "Rotate right");
+        rotateRight = button("fa-rotate-right", I18n.t("history.rotateRight"));
         rotateRight.setOnAction(e -> turn(90));
-        flipH = button("fa-arrows-h", "Flip horizontal");
+        flipH = button("fa-arrows-h", I18n.t("history.flipH"));
         flipH.setOnAction(e -> flip(true));
-        flipV = button("fa-arrows-v", "Flip vertical");
+        flipV = button("fa-arrows-v", I18n.t("history.flipV"));
         flipV.setOnAction(e -> flip(false));
 
         bar.getItems().addAll(0, java.util.List.of(undo, redo, new Separator(), fit, oneToOne, zoomIn, zoomOut,
@@ -153,15 +155,15 @@ final class ViewTools {
 
         // settings of the active mode
         aspect.setOnAction(e -> overlay.setAspect(aspectValue()));
-        Button resetCrop = new Button("Reset", new FontIcon("fa-expand"));
-        resetCrop.setTooltip(new Tooltip("Frame the whole photo"));
+        Button resetCrop = new Button(I18n.t("browserMetadata.reset"), new FontIcon("fa-expand"));
+        resetCrop.setTooltip(new Tooltip(I18n.t("view.resetCropTip")));
         resetCrop.setOnAction(e -> overlay.resetCrop());
-        Button cancelCrop = new Button("Cancel");
+        Button cancelCrop = new Button(I18n.t("common.cancel"));
         cancelCrop.setOnAction(e -> endMode());
-        Button applyCrop = new Button("Apply", new FontIcon("fa-check"));
+        Button applyCrop = new Button(I18n.t("common.apply"), new FontIcon("fa-check"));
         applyCrop.setDefaultButton(false);
         applyCrop.setOnAction(e -> overlay.commit());
-        cropControls = new HBox(6, new Label("Aspect ratio"), aspect, resetCrop, cancelCrop, applyCrop);
+        cropControls = new HBox(6, new Label(I18n.t("crop.aspectRatio")), aspect, resetCrop, cancelCrop, applyCrop);
         cropControls.setAlignment(Pos.CENTER_LEFT);
 
         straighten.setPrefWidth(220);
@@ -175,13 +177,13 @@ final class ViewTools {
                 setStraighten(Math.round(straighten.getValue() * 10) / 10.0);
             }
         });
-        Button resetAngle = new Button("Reset", new FontIcon("fa-undo"));
+        Button resetAngle = new Button(I18n.t("browserMetadata.reset"), new FontIcon("fa-undo"));
         resetAngle.setOnAction(e -> setStraighten(0));
-        Button done = new Button("Done", new FontIcon("fa-check"));
+        Button done = new Button(I18n.t("common.done"), new FontIcon("fa-check"));
         done.setOnAction(e -> endMode());
-        Label hint = new Label("or draw a line along the horizon");
+        Label hint = new Label(I18n.t("view.horizonHint"));
         hint.setFont(new Font(11));
-        rotateControls = new HBox(6, new Label("Angle"), straighten, straightenValue, resetAngle, hint, done);
+        rotateControls = new HBox(6, new Label(I18n.t("view.angle")), straighten, straightenValue, resetAngle, hint, done);
         rotateControls.setAlignment(Pos.CENTER_LEFT);
         modeBar.setVisible(false);
         modeBar.setManaged(false);
@@ -522,7 +524,7 @@ final class ViewTools {
         endMode();
         if (f != null && !Objects.equals(r, f.getCropView())) {
             f.setCropView(r);
-            EditPipeline.filtersChanged(f, r == null ? "Reset crop" : "Crop");
+            EditPipeline.filtersChanged(f, r == null ? I18n.t("history.resetCrop") : I18n.t("history.crop"));
         }
         applyView();
     }
@@ -575,7 +577,7 @@ final class ViewTools {
         }
         file.setGeometry(n);
         updateSlider();
-        EditPipeline.filtersChanged(file, "Straighten");
+        EditPipeline.filtersChanged(file, I18n.t("history.straighten"));
     }
 
     // ------------------------------------------------------------------
@@ -618,7 +620,7 @@ final class ViewTools {
             }
         }
         updateSlider();
-        EditPipeline.filtersChanged(file, horizontal ? "Flip horizontal" : "Flip vertical");
+        EditPipeline.filtersChanged(file, horizontal ? I18n.t("history.flipH") : I18n.t("history.flipV"));
         applyView();
     }
 }

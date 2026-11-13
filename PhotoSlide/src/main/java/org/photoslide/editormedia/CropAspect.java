@@ -1,5 +1,7 @@
 package org.photoslide.editormedia;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ComboBox;
@@ -12,7 +14,7 @@ import javafx.scene.control.ComboBox;
  */
 public final class CropAspect {
 
-    private static final List<String> NAMES = List.of("Free", "Original", "3:2", "2:3", "4:3", "3:4", "1:1", "16:9", "9:16", "5:4", "4:5");
+    private static final List<String> NAMES = List.of(I18n.t("crop.free"), I18n.t("crop.original"), "3:2", "2:3", "4:3", "3:4", "1:1", "16:9", "9:16", "5:4", "4:5");
     /** width / height on screen; 0 = free, -1 = like the photo */
     private static final double[] VALUES = {0, -1, 3.0 / 2, 2.0 / 3, 4.0 / 3, 3.0 / 4, 1, 16.0 / 9, 9.0 / 16, 5.0 / 4, 4.0 / 5};
 

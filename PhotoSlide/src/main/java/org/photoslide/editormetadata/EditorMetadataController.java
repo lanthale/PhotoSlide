@@ -5,6 +5,8 @@
  */
 package org.photoslide.editormetadata;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.ArrayList;
 import javafx.scene.Node;
@@ -170,7 +172,7 @@ public class EditorMetadataController implements Initializable {
     /** All rows at once: adding them one by one lays out the grid for each row. */
     private void updateUIWithExtendedMetadata(MetadataResult metadata) {
         if (metadata == null) {
-            Label none = new Label("No metadata available");
+            Label none = new Label(I18n.t("meta.noMetadata"));
             none.getStyleClass().add("metadata-entry");
             GridPane.setConstraints(none, 0, 1, 2, 1);
             gridPaneMetaInfo.getChildren().setAll(none);

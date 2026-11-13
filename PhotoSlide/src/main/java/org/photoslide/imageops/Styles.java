@@ -1,5 +1,7 @@
 package org.photoslide.imageops;
 
+
+import org.photoslide.I18n;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -145,14 +147,19 @@ public final class Styles {
             f.setPosition(position++);
             file.getFilterList().add(f);
         }
-        EditPipeline.filtersChanged(file, "Style: " + style.name());
+        EditPipeline.filtersChanged(file, I18n.t("styles.applied", style.name()));
     }
 
     // ------------------------------------------------------------------
     // building the tools
     // ------------------------------------------------------------------
+    /** Translated style / category name; the key is built from the English name. */
+    private static String styleText(String english) {
+        return I18n.tOrDefault("style." + english.replaceAll("[^A-Za-z0-9]", ""), english);
+    }
+
     private static void add(String category, String name, Tool... tools) {
-        STYLES.add(new Style(category, name, List.copyOf(Arrays.asList(tools))));
+        STYLES.add(new Style(styleText(category), styleText(name), List.copyOf(Arrays.asList(tools))));
     }
 
     /** A tool with values and layer settings; creates a new instance on every get(). */

@@ -27,14 +27,14 @@
 
 <AnchorPane prefWidth="258.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.browsermetadata.MetadataController">
    <children>
-      <Label layoutX="21.0" layoutY="81.0" text="MetaData" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
+      <Label layoutX="21.0" layoutY="81.0" text="%browserMetadata.metadata" textFill="#9f9f9f" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
          <font>
             <Font size="24.0" />
          </font>
       </Label>
       <Accordion fx:id="accordionPane" layoutX="14.0" layoutY="49.0" prefHeight="614.0" prefWidth="238.0" scaleX="0.9" scaleY="0.9" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="20.0">
         <panes>
-          <TitledPane fx:id="keywordsPane" animated="false" text="Keywords and Comments">
+          <TitledPane fx:id="keywordsPane" animated="false" text="%browserMetadata.keywordsAndComments">
             <content>
                   <StackPane fx:id="stackPane">
                      <children>
@@ -44,19 +44,19 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Caption" />
+                                          <Label text="%browserMetadata.caption" />
                                           <TextField fx:id="captionTextField" />
                                        </children>
                                     </VBox>
                                     <VBox>
                                        <children>
-                                          <Label prefHeight="17.0" text="Record date" />
+                                          <Label prefHeight="17.0" text="%browserMetadata.recordDate" />
                                           <TextField fx:id="recordDateField" disable="true" editable="false" prefWidth="50.0" />
                                        </children>
                                     </VBox>
                                     <VBox spacing="2.0">
                                        <children>
-                                          <Label text="Keywords" />
+                                          <Label text="%browserMetadata.keywords" />
                                           <ScrollPane fitToWidth="true" minViewportHeight="90.0" minViewportWidth="100.0" prefViewportWidth="230.0">
                                              <content>
                                                 <FlowPane fx:id="keywordText" hgap="5.0" prefHeight="100.0" prefWidth="230.0" style="-fx-background-color: rgb(80, 80, 80);" vgap="5.0">
@@ -66,10 +66,10 @@
                                                 </FlowPane>
                                              </content>
                                           </ScrollPane>
-                                          <TextField fx:id="addKeywordTextField" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="Add Keywords..." />
+                                          <TextField fx:id="addKeywordTextField" onKeyPressed="#addKeywordAction" prefHeight="27.0" prefWidth="205.0" promptText="%browserMetadata.addKeywords" />
                                           <HBox alignment="CENTER_RIGHT">
                                              <children>
-                                                <Button mnemonicParsing="false" onAction="#applyKeywordsToAllAction" text="Apply to all/sel. mediafiles...">
+                                                <Button mnemonicParsing="false" onAction="#applyKeywordsToAllAction" text="%browserMetadata.applyToAllSelMediafiles">
                                                    <font>
                                                       <Font size="10.0" />
                                                    </font>
@@ -81,7 +81,7 @@
                               </VBox>
                               <VBox prefHeight="50.0" prefWidth="226.0" spacing="5.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="290.0">
                                  <children>
-                                    <Label text="GPS Info" />
+                                    <Label text="%browserMetadata.gpsInfo" />
                                     <GridPane alignment="CENTER_LEFT" hgap="5.0" vgap="5.0">
                                       <columnConstraints>
                                         <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="10.0" />
@@ -96,26 +96,26 @@
                                           <FontIcon iconLiteral="ti-map-alt" iconSize="12" onMouseClicked="#showGPSPositionIconMouse" onTouchPressed="#showGPSPositionIconTouch" />
                                           <TextField fx:id="gpsPlace" editable="false" onAction="#showGPSPosition" onMousePressed="#showGPSPositionMouse" onTouchPressed="#showGPSPositionTouch" GridPane.columnIndex="1">
                                              <tooltip>
-                                                <Tooltip text="GPS Position" />
+                                                <Tooltip text="%browserMetadata.gpsPosition" />
                                              </tooltip>
                                           </TextField>
                                           <FontIcon iconLiteral="ti-flag" iconSize="12" GridPane.rowIndex="1" />
                                           <TextField fx:id="gpsHeight" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                              <tooltip>
-                                                <Tooltip text="GPS Height" />
+                                                <Tooltip text="%browserMetadata.gpsHeight" />
                                              </tooltip>
                                           </TextField>
                                           <FontIcon iconLiteral="ti-time" iconSize="12" GridPane.rowIndex="2" />
                                           <TextField fx:id="gpsDateTime" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                              <tooltip>
-                                                <Tooltip text="GPS Record Date/Time" />
+                                                <Tooltip text="%browserMetadata.gpsRecordDateTime" />
                                              </tooltip>
                                           </TextField>
                                        </children>
                                     </GridPane>
                                     <HBox alignment="TOP_RIGHT">
                                        <children>
-                                          <Button fx:id="gpsPosButton" mnemonicParsing="false" onAction="#changeGPSPosAction" text="Change GPS position">
+                                          <Button fx:id="gpsPosButton" mnemonicParsing="false" onAction="#changeGPSPosAction" text="%browserMetadata.changeGpsPosition">
                                              <font>
                                                 <Font size="10.0" />
                                              </font>
@@ -126,7 +126,7 @@
                               </VBox>
                               <VBox layoutX="-8.0" layoutY="428.0" prefHeight="120.0" prefWidth="226.0" AnchorPane.leftAnchor="-8.0" AnchorPane.rightAnchor="-8.0" AnchorPane.topAnchor="428.0">
                                  <children>
-                                    <Label text="Comments" />
+                                    <Label text="%browserMetadata.comments" />
                                     <TextArea fx:id="commentText" prefHeight="200.0" prefWidth="200.0" wrapText="true" />
                                  </children>
                               </VBox>
@@ -145,7 +145,7 @@
                   </StackPane>
             </content>
           </TitledPane>
-          <TitledPane fx:id="metadataPane" animated="false" text="Metadata Details">
+          <TitledPane fx:id="metadataPane" animated="false" text="%browserMetadata.metadataDetails">
                <content>
                   <ScrollPane hbarPolicy="NEVER" prefHeight="564.0" prefWidth="236.0" vbarPolicy="NEVER">
                      <content>
@@ -162,7 +162,7 @@
                   </ScrollPane>
                </content>
           </TitledPane>
-          <TitledPane fx:id="quickDevPane" alignment="TOP_LEFT" animated="false" text="Quick Develop">
+          <TitledPane fx:id="quickDevPane" alignment="TOP_LEFT" animated="false" text="%browserMetadata.quickDevelop">
                <content>
                   <VBox spacing="10.0">
                      <children>
@@ -173,7 +173,7 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Exposure" />
+                                          <Label text="%browserMetadata.exposure" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="exposureSlider" blockIncrement="0.1" max="5.0" min="-5.0" minorTickCount="0" value="0.0" HBox.hgrow="ALWAYS" />
@@ -184,12 +184,12 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="Reset" HBox.hgrow="NEVER">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetExposureAction" text="%browserMetadata.reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Reset exposure" />
+                                    <Tooltip text="%browserMetadata.resetExposure" />
                                  </tooltip>
                               </Button>
                            </children>
@@ -206,7 +206,7 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Gain" />
+                                          <Label text="%browserMetadata.gain" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="gainSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" HBox.hgrow="ALWAYS" />
@@ -217,7 +217,7 @@
                                     </VBox>
                                     <VBox>
                                        <children>
-                                          <Label text="Bias" />
+                                          <Label text="%browserMetadata.bias" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="biasSlider" blockIncrement="0.01" max="1.0" minorTickCount="1" value="0.5" HBox.hgrow="ALWAYS" />
@@ -228,12 +228,12 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetGainFilterAction" text="Reset" HBox.hgrow="NEVER">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetGainFilterAction" text="%browserMetadata.reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Reset gain / bias" />
+                                    <Tooltip text="%browserMetadata.resetGainBias" />
                                  </tooltip>
                               </Button>
                            </children>
@@ -250,7 +250,7 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Temperature (K)" />
+                                          <Label text="%browserMetadata.temperatureK" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="temperatureSlider" HBox.hgrow="ALWAYS" />
@@ -261,7 +261,7 @@
                                     </VBox>
                                     <VBox>
                                        <children>
-                                          <Label text="Tint" />
+                                          <Label text="%browserMetadata.tint" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="tintSlider" HBox.hgrow="ALWAYS" />
@@ -272,12 +272,12 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetWhiteBalanceAction" text="Reset" HBox.hgrow="NEVER">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetWhiteBalanceAction" text="%browserMetadata.reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Reset white balance" />
+                                    <Tooltip text="%browserMetadata.resetWhiteBalance" />
                                  </tooltip>
                               </Button>
                            </children>
@@ -294,7 +294,7 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Saturation" />
+                                          <Label text="%browserMetadata.saturation" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="saturationSlider" HBox.hgrow="ALWAYS" />
@@ -305,7 +305,7 @@
                                     </VBox>
                                     <VBox>
                                        <children>
-                                          <Label text="Vibrance" />
+                                          <Label text="%browserMetadata.vibrance" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="vibranceSlider" HBox.hgrow="ALWAYS" />
@@ -316,12 +316,12 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetSaturationAction" text="Reset" HBox.hgrow="NEVER">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetSaturationAction" text="%browserMetadata.reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Reset saturation" />
+                                    <Tooltip text="%browserMetadata.resetSaturation" />
                                  </tooltip>
                               </Button>
                            </children>
@@ -338,7 +338,7 @@
                                  <children>
                                     <VBox>
                                        <children>
-                                          <Label text="Shadows" />
+                                          <Label text="%browserMetadata.shadows" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="shadowsSlider" HBox.hgrow="ALWAYS" />
@@ -349,7 +349,7 @@
                                     </VBox>
                                     <VBox>
                                        <children>
-                                          <Label text="Highlights" />
+                                          <Label text="%browserMetadata.highlights" />
                                           <HBox alignment="CENTER_LEFT" spacing="5.0">
                                              <children>
                                                 <Slider fx:id="highlightsSlider" HBox.hgrow="ALWAYS" />
@@ -360,12 +360,12 @@
                                     </VBox>
                                  </children>
                               </VBox>
-                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetRelightAction" text="Reset" HBox.hgrow="NEVER">
+                              <Button id="toolbutton" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" onAction="#resetRelightAction" text="%browserMetadata.reset" HBox.hgrow="NEVER">
                                  <graphic>
                                     <FontIcon iconLiteral="fa-undo" />
                                  </graphic>
                                  <tooltip>
-                                    <Tooltip text="Reset shadows / highlights" />
+                                    <Tooltip text="%browserMetadata.resetShadowsHighlights" />
                                  </tooltip>
                               </Button>
                            </children>

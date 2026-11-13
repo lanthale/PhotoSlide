@@ -1,5 +1,7 @@
 package org.photoslide.imageops;
 
+
+import org.photoslide.I18n;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import org.photoslide.datamodel.Filter16;
@@ -98,7 +100,7 @@ public record Geometry(boolean flipH, boolean flipV, double straighten) {
 
             @Override
             public String name() {
-                return "Geometry";
+                return I18n.t("tool.geometry");
             }
         };
     }

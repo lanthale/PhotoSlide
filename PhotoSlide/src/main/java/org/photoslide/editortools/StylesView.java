@@ -1,5 +1,7 @@
 package org.photoslide.editortools;
 
+
+import org.photoslide.I18n;
 import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TitledPane;
@@ -30,7 +32,7 @@ public final class StylesView {
     private MediaFile file;
 
     public StylesView() {
-        TreeItem<Entry> root = new TreeItem<>(new Entry("Styles", null));
+        TreeItem<Entry> root = new TreeItem<>(new Entry(I18n.t("styles.title"), null));
         for (Map.Entry<String, List<Styles.Style>> e : Styles.byCategory().entrySet()) {
             TreeItem<Entry> category = new TreeItem<>(new Entry(e.getKey(), null));
             for (Styles.Style style : e.getValue()) {
@@ -69,7 +71,7 @@ public final class StylesView {
                 apply(selected.getValue().style());
             }
         });
-        pane.setText("Styles");
+        pane.setText(I18n.t("styles.title"));
         pane.setGraphic(new FontIcon("fa-magic"));
         pane.setContent(tree);
         pane.setAnimated(false);
@@ -94,7 +96,7 @@ public final class StylesView {
     }
 
     private static String describe(Styles.Style style) {
-        StringBuilder b = new StringBuilder("Adds: ");
+        StringBuilder b = new StringBuilder(I18n.t("styles.adds"));
         for (int i = 0; i < style.tools().size(); i++) {
             AbstractImageFilter f = style.tools().get(i).get();
             b.append(i == 0 ? "" : ", ").append(f.displayName());

@@ -1,5 +1,7 @@
 package org.photoslide.editortools;
 
+
+import org.photoslide.I18n;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -125,11 +127,11 @@ public final class ColorMaskView {
         }
         Job job = new Job(preview.getSource(), filters, t, file.getGeometry());
         if (t != null) {
-            hint.setText(t.displayName() + ": white = acts fully, black = not at all");
+            hint.setText(I18n.t("mask.hintTool", t.displayName()));
         } else if (tool != null) {
-            hint.setText(tool.displayName() + " acts on the whole image");
+            hint.setText(I18n.t("mask.hintWhole", tool.displayName()));
         } else {
-            hint.setText("Edited photo. Click on a tool to see where it acts");
+            hint.setText(I18n.t("mask.hintEdited"));
         }
         if (queued.compareAndSet(false, true)) {
             executor.submit(() -> {

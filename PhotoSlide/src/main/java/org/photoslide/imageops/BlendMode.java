@@ -1,5 +1,7 @@
 package org.photoslide.imageops;
 
+
+import org.photoslide.I18n;
 /**
  * How the result of a tool (front) is combined with the image below it
  * (back), per channel on values 0..1.
@@ -144,7 +146,7 @@ public enum BlendMode {
     private final String label;
 
     BlendMode(String label) {
-        this.label = label;
+        this.label = label; // English fallback, see label() // English fallback, see label() // English fallback, see label() // English fallback, see label() // English fallback, see label()
     }
 
     /**
@@ -155,12 +157,12 @@ public enum BlendMode {
     public abstract float blend(float f, float b);
 
     public String label() {
-        return label;
+        return I18n.tOrDefault("blend." + name(), label);
     }
 
     @Override
     public String toString() {
-        return label;
+        return I18n.tOrDefault("blend." + name(), label);
     }
 
     private static float lowPass(float f, float b, float threshold, float transition) {

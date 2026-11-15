@@ -12,6 +12,7 @@ import org.photoslide.datamodel.MediaFileLoader;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.FileTypes;
 import org.photoslide.datamodel.MediaFile;
+import org.photoslide.datamodel.XmpSidecar;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -108,6 +109,14 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
                         boolean validFile = FileTypes.isValidType(fileItem.toString());
                         if (validFile == true) {
                             Path targetFile = Files.copy(fileItem.toPath(), Path.of(targetPath + File.separator + fileItem.toPath().getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                            // copy the sidecars (XMP, former .edit) before loading, so the edits are read
+                            for (Path sidecar : XmpSidecar.existingSidecars(fileItem.toPath())) {
+                                try {
+                                    Files.copy(sidecar, targetFile.resolveSibling(sidecar.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                                } catch (IOException ex) {
+                                    Logger.getLogger(MediaLoadingTaskFiles.class.getName()).log(Level.WARNING, "Cannot copy sidecar " + sidecar, ex);
+                                }
+                            }
                             if (FileTypes.isValidType(fileItem.toString())) {
                                 MediaFile m = new MediaFile();
                                 m.setName(targetFile.getFileName().toString());

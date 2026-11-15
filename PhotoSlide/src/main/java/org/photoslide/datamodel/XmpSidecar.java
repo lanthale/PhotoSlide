@@ -78,6 +78,34 @@ public final class XmpSidecar {
     private XmpSidecar() {
     }
 
+    /**
+     * Existing sidecar files of an image: the XMP sidecar ({@code <name>.xmp})
+     * and a not yet converted former properties file ({@code Ω_<name>.edit}).
+     * Used to copy or move them together with the image.
+     */
+    public static List<Path> existingSidecars(Path image) {
+        List<Path> result = new ArrayList<>(2);
+        Path fileName = image.getFileName();
+        if (fileName == null) {
+            return result;
+        }
+        String name = fileName.toString();
+        int dot = name.lastIndexOf('.');
+        String base = dot > 0 ? name.substring(0, dot) : name;
+        for (Path p : new Path[]{image.resolveSibling(base + ".xmp"), image.resolveSibling("Ω_" + base + ".edit")}) {
+            if (!p.equals(image) && Files.isRegularFile(p)) {
+                result.add(p);
+            }
+        }
+        return result;
+    }
+
+    /** True for sidecar files (.xmp, .edit) that belong to an image. */
+    public static boolean isSidecarFile(Path file) {
+        String name = file.getFileName() == null ? "" : file.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".xmp") || name.endsWith(".edit");
+    }
+
     /** {@code <folder>/<name without extension>.xmp} */
     public static Path sidecarPath(MediaFile file) {
         Path image = file.getPathStorage();

@@ -20,6 +20,7 @@ import org.photoslide.editormedia.CropAspect;
 import org.photoslide.editormedia.CropRotateOverlay;
 import org.photoslide.editpipeline.ImagePreview16;
 import org.photoslide.datamodel.SidecarWatcher;
+import org.photoslide.datamodel.XmpSidecar;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.browsermetadata.MetadataController;
@@ -492,7 +493,7 @@ public class LighttableController implements Initializable {
             List<File> fileList = new ArrayList<>();
             Set<MediaFile> selection = factory.getSelectionModel().getSelection();
             for (MediaFile mediaFile : selection) {
-                fileList.add(mediaFile.getPathStorage().toFile());
+                addWithSidecars(fileList, mediaFile);
             }
             content.putFiles(fileList);
             db.setContent(content);
@@ -1306,16 +1307,31 @@ public class LighttableController implements Initializable {
         final ClipboardContent content = new ClipboardContent();
         List<File> filesForClipboard = new ArrayList<>();
         filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
-            filesForClipboard.add(mfile.getPathStorage().toFile());
-            if (mfile.getEditFilePath().toFile().exists()) {
-                filesForClipboard.add(mfile.getEditFilePath().toFile());
-            }
+            addWithSidecars(filesForClipboard, mfile);
         });
         content.putFiles(filesForClipboard);
         clipboard.setContent(content);
         pasteButton.setDisable(false);
         mainController.getStatusLabelLeft().setText(I18n.t("lighttable.copyClipboardDone"));
         util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
+    }
+
+    /**
+     * Adds the media file and its sidecars (XMP, former .edit file) to the
+     * list, so that copying or moving them (clipboard, drag and drop) keeps
+     * the edits and metadata. A sidecar shared by RAW and JPG is added once.
+     */
+    private static void addWithSidecars(List<File> files, MediaFile mediaFile) {
+        File image = mediaFile.getPathStorage().toFile();
+        if (!files.contains(image)) {
+            files.add(image);
+        }
+        for (Path sidecar : XmpSidecar.existingSidecars(mediaFile.getPathStorage())) {
+            File f = sidecar.toFile();
+            if (!files.contains(f)) {
+                files.add(f);
+            }
+        }
     }
 
     public void pastAction() {

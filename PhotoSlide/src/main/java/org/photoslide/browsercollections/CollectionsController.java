@@ -10,6 +10,7 @@ import org.photoslide.I18n;
 import org.photoslide.search.SearchIndex;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
+import org.photoslide.datamodel.XmpSidecar;
 import org.photoslide.browserlighttable.LighttableController;
 import java.io.File;
 import java.io.IOException;
@@ -987,7 +988,12 @@ public class CollectionsController implements Initializable {
                         final Path targetFinalPath = Paths.get(targetPath.toString(), sourceFilePath.getFileName().toString());
                         targetPath.toFile().mkdir();
                         copyMoveFolder(sourceFilePath, targetFinalPath, clipboardMode, StandardCopyOption.REPLACE_EXISTING);
-                        Files.delete(sourceFilePath);
+                        // all files are moved now: remove the source folder with its (empty) subfolders
+                        try (Stream<Path> remaining = Files.walk(sourceFilePath)) {
+                            for (Path dir : remaining.sorted(Comparator.reverseOrder()).toList()) {
+                                Files.delete(dir);
+                            }
+                        }
                     } else {
                         //copy
                         final Path targetFinalPath = Paths.get(targetPath.toString(), sourceFilePath.getFileName().toString());
@@ -996,6 +1002,7 @@ public class CollectionsController implements Initializable {
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    throw ex;
                 }
                 return true;
             }
@@ -1177,7 +1184,7 @@ public class CollectionsController implements Initializable {
             alert.showAndWait();
             if (alert.getResult() == ButtonType.OK) {
                 File dropFile = db.getFiles().get(0);
-                List<File> fileItem = db.getFiles();
+                List<File> fileItem = new ArrayList<>(db.getFiles());
                 AtomicLong count = new AtomicLong(0);
                 if (dropFile.isDirectory()) {
                     try {
@@ -1186,6 +1193,16 @@ public class CollectionsController implements Initializable {
                         Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
+                    // copy the sidecars (XMP, former .edit) of the images with them
+                    for (File f : db.getFiles()) {
+                        if (f.isFile()) {
+                            for (Path sidecar : XmpSidecar.existingSidecars(f.toPath())) {
+                                if (!fileItem.contains(sidecar.toFile())) {
+                                    fileItem.add(sidecar.toFile());
+                                }
+                            }
+                        }
+                    }
                     count.set(fileItem.size());
                 }
                 Task<Boolean> task = new Task<>() {

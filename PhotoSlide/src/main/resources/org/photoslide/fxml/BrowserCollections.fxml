@@ -96,6 +96,11 @@
                         </StackedFontIcon>
                      </graphic>
                   </MenuItem>
+                  <MenuItem fx:id="searchIndexMenu" mnemonicParsing="false" onAction="#toggleSearchIndexAction" text="%browserCollections.addToSearchIndex">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-search" />
+                     </graphic>
+                  </MenuItem>
                   <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="%browserCollections.removeCollection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_RIGHT">

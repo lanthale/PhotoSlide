@@ -15,7 +15,7 @@
 
 <AnchorPane fx:id="mainSearchPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="600.0" stylesheets="@../css/Dialogs.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.photoslide.search.SearchToolsController">
    <children>
-      <Button id="toolbutton" fx:id="closeAction" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="Button" AnchorPane.leftAnchor="-20.0" AnchorPane.topAnchor="-10.0">
+      <Button id="toolbutton" fx:id="closeAction" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" text="Button" AnchorPane.leftAnchor="-12.0" AnchorPane.topAnchor="-10.0">
          <graphic>
             <FontIcon iconLiteral="ti-close" />
          </graphic>

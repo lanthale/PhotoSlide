@@ -107,6 +107,8 @@ public class CollectionsController implements Initializable {
     private MenuItem pasteMenu;
     @FXML
     private MenuItem deleteMenu;
+    @FXML
+    private MenuItem searchIndexMenu;
     private Image iconImage;
     private SearchIndex searchIndexProcess;
     private DirectoryWatcher directorywatchSelected;
@@ -151,6 +153,7 @@ public class CollectionsController implements Initializable {
         executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallelScheduled").build());
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
+        menuButton.setOnShowing(e -> updateSearchIndexMenu());
         collectionStorage = new LinkedHashMap<>();
         collectionStorageSearchIndex = new LinkedHashMap<>();
         directorywatchSelected = new DirectoryWatcher(this);
@@ -652,6 +655,59 @@ public class CollectionsController implements Initializable {
             alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
             alert.show();
         }
+    }
+
+    /**
+     * Adds the expanded collection to the search index, or removes it. A
+     * collection added without index (the question when it was added) can
+     * so be searched later. The names, titles etc. come from the files and
+     * their XMP sidecars, nothing is lost by removing.
+     */
+    @FXML
+    private void toggleSearchIndexAction(ActionEvent event) {
+        TitledPane expandedPane = accordionPane.getExpandedPane();
+        if (expandedPane == null) {
+            showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandForSearchIndex"));
+            return;
+        }
+        String root = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
+        String urlKey = getPrefKeyForRemoving(root, "URL");
+        if (urlKey == null) {
+            return;
+        }
+        String indexKey = getPrefKeyForRemoving(root, "INDEX");
+        if (indexKey == null) {
+            if (createSearchIndex(root)) {
+                // same number as the collection: "URL3" -> "INDEX3"
+                String key = "INDEX" + urlKey.substring("URL".length());
+                pref.put(key, root);
+                collectionStorageSearchIndex.put(key, root);
+                searchIndexProcess.createCheckSearchIndex(root);
+            }
+        } else {
+            Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+            alert = Utility.setDefaultButton(alert, ButtonType.NO);
+            alert.setHeaderText(I18n.t("coll.removeFromSearchIndexQuestion", root));
+            styleCollectionAlert(alert);
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.YES) {
+                pref.remove(indexKey);
+                collectionStorageSearchIndex.remove(indexKey);
+                searchIndexProcess.removeCollectionFromSearchDB(root);
+            }
+        }
+    }
+
+    /** The text of the search index entry follows the expanded collection. */
+    private void updateSearchIndexMenu() {
+        TitledPane expandedPane = accordionPane.getExpandedPane();
+        boolean indexed = false;
+        if (expandedPane != null && expandedPane.getContent() instanceof TreeView<?> tree && tree.getRoot() != null) {
+            String root = ((PathItem) tree.getRoot().getValue()).getFilePath().toString();
+            indexed = getPrefKeyForRemoving(root, "INDEX") != null;
+        }
+        searchIndexMenu.setText(I18n.t(indexed ? "browserCollections.removeFromSearchIndex"
+                : "browserCollections.addToSearchIndex"));
     }
 
     /**

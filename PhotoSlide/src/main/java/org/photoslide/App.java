@@ -69,7 +69,7 @@ public class App extends Application {
     private static boolean MAXIMIZED = true;
     // 3: metadata without icafe4j number lists
     // 4: faces (FACES, FACE_EMBEDDINGS), rebuilt from the MWG regions in the XMP sidecars
-    private static final int SEARCHDB_VERSION = 4;
+    private static final int SEARCHDB_VERSION = 5;
     /** Characters that separate the words of the full text index. */
     public static final String SEARCH_WHITESPACE_CHARS = " ;-:/.,\\";
     private static final String NODE_NAME = "PhotoSlide";
@@ -283,7 +283,7 @@ public class App extends Application {
         if (version == SEARCHDB_VERSION) {
             return;
         }
-        if (version == 3) {
+        if (version == 3 || version == 4) {
             // only the face tables are new: no rebuild (it would also resolve all places again)
             try (Statement stat = con.createStatement()) {
                 createFaceTables(stat);
@@ -332,7 +332,7 @@ public class App extends Application {
         }
     }
 
-    /** Faces and their feature vectors (version 4). */
+    /** Faces and their feature vectors (version 5). */
     private static void createFaceTables(Statement stat) throws SQLException {
         {
             stat.execute("DROP TABLE IF EXISTS FACES");
@@ -346,9 +346,11 @@ public class App extends Application {
                     + "x DOUBLE, y DOUBLE, w DOUBLE, h DOUBLE,"
                     + "PRIMARY KEY(pathStorage, idx))");
             stat.execute("CREATE INDEX FACES_NAME ON FACES(name)");
-            // feature vectors of faces (only here, they can be computed again from photo and region)
+            // feature vectors of faces per recognizer ("auraface": 512 floats, "sface": 128);
+            // only here, they can be computed again from photo and region
             stat.execute("CREATE TABLE FACE_EMBEDDINGS("
                     + "pathStorage VARCHAR(1000) NOT NULL,"
+                    + "model VARCHAR(16) NOT NULL,"
                     + "x DOUBLE, y DOUBLE, w DOUBLE, h DOUBLE,"
                     + "embedding VARBINARY(2048) NOT NULL)");
             stat.execute("CREATE INDEX FACE_EMBEDDINGS_PATH ON FACE_EMBEDDINGS(pathStorage)");

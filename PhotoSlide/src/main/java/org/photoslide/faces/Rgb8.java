@@ -1,5 +1,7 @@
 package org.photoslide.faces;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.photoslide.datamodel.Display16;
 import org.photoslide.datamodel.Image16;
 
@@ -52,22 +54,17 @@ record Rgb8(int width, int height, int[] pixels) {
         return new Rgb8(ow, oh, out);
     }
 
-    /** Bilinear sample of one channel (0 = red, 1 = green, 2 = blue), 0 outside. */
-    float sample(double x, double y, int channel) {
-        int shift = 16 - channel * 8;
-        int x0 = (int) Math.floor(x);
-        int y0 = (int) Math.floor(y);
-        double fx = x - x0;
-        double fy = y - y0;
-        double v = (1 - fx) * (1 - fy) * at(x0, y0, shift) + fx * (1 - fy) * at(x0 + 1, y0, shift)
-                + (1 - fx) * fy * at(x0, y0 + 1, shift) + fx * fy * at(x0 + 1, y0 + 1, shift);
-        return (float) v;
-    }
-
-    private int at(int x, int y, int shift) {
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return 0;
+    /** As OpenCV image: 8 bit BGR (the caller releases it). */
+    Mat toMat() {
+        byte[] bgr = new byte[width * height * 3];
+        for (int i = 0; i < pixels.length; i++) {
+            int rgb = pixels[i];
+            bgr[3 * i] = (byte) rgb;
+            bgr[3 * i + 1] = (byte) (rgb >> 8);
+            bgr[3 * i + 2] = (byte) (rgb >> 16);
         }
-        return (pixels[y * width + x] >> shift) & 0xFF;
+        Mat mat = new Mat(height, width, CvType.CV_8UC3);
+        mat.put(0, 0, bgr);
+        return mat;
     }
 }

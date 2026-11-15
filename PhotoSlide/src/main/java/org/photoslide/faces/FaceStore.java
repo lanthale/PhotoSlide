@@ -13,7 +13,7 @@ import org.photoslide.datamodel.FaceRegion;
 /**
  * Faces in the search database: the table FACES mirrors the regions of the
  * XMP sidecars (rebuilt by every scan), FACE_EMBEDDINGS keeps the feature
- * vectors. Embeddings are matched to faces by position, so renaming a face
+ * vectors, separately for each recognizer (column MODEL). Embeddings are matched to faces by position, so renaming a face
  * keeps its embedding. All methods use the given connection and do not
  * commit.
  */
@@ -105,64 +105,78 @@ public final class FaceStore {
         }
     }
 
-    /** Stores the feature vector of a face (replaces one at the same position). */
-    public static void putEmbedding(Connection con, String path, FaceRegion r, float[] embedding) throws SQLException {
+    /** Stores the feature vector of a face (replaces one of the model at the same position). */
+    public static void putEmbedding(Connection con, String path, FaceRegion r, String model, float[] embedding)
+            throws SQLException {
         try (PreparedStatement delete = con.prepareStatement("DELETE FROM FACE_EMBEDDINGS f WHERE f.PATHSTORAGE=? AND "
-                + "ABS(f.X-?)<" + SAME + " AND ABS(f.Y-?)<" + SAME + " AND ABS(f.W-?)<" + SAME + " AND ABS(f.H-?)<" + SAME)) {
+                + "f.MODEL=? AND ABS(f.X-?)<" + SAME + " AND ABS(f.Y-?)<" + SAME + " AND ABS(f.W-?)<" + SAME
+                + " AND ABS(f.H-?)<" + SAME)) {
             delete.setString(1, path);
-            delete.setDouble(2, r.x());
-            delete.setDouble(3, r.y());
-            delete.setDouble(4, r.w());
-            delete.setDouble(5, r.h());
+            delete.setString(2, model);
+            delete.setDouble(3, r.x());
+            delete.setDouble(4, r.y());
+            delete.setDouble(5, r.w());
+            delete.setDouble(6, r.h());
             delete.executeUpdate();
         }
         try (PreparedStatement insert = con.prepareStatement(
-                "INSERT INTO FACE_EMBEDDINGS (PATHSTORAGE, X, Y, W, H, EMBEDDING) VALUES (?,?,?,?,?,?)")) {
+                "INSERT INTO FACE_EMBEDDINGS (PATHSTORAGE, MODEL, X, Y, W, H, EMBEDDING) VALUES (?,?,?,?,?,?,?)")) {
             insert.setString(1, path);
-            insert.setDouble(2, r.x());
-            insert.setDouble(3, r.y());
-            insert.setDouble(4, r.w());
-            insert.setDouble(5, r.h());
-            insert.setBytes(6, toBytes(embedding));
+            insert.setString(2, model);
+            insert.setDouble(3, r.x());
+            insert.setDouble(4, r.y());
+            insert.setDouble(5, r.w());
+            insert.setDouble(6, r.h());
+            insert.setBytes(7, toBytes(embedding));
             insert.executeUpdate();
         }
     }
 
-    /** @return the stored feature vector of the face, null if none */
-    public static float[] embedding(Connection con, String path, FaceRegion r) throws SQLException {
+    /** @return the stored feature vector of the face by the model, null if none */
+    public static float[] embedding(Connection con, String path, FaceRegion r, String model) throws SQLException {
         try (PreparedStatement stm = con.prepareStatement("SELECT EMBEDDING FROM FACE_EMBEDDINGS f WHERE f.PATHSTORAGE=? AND "
-                + "ABS(f.X-?)<" + SAME + " AND ABS(f.Y-?)<" + SAME + " AND ABS(f.W-?)<" + SAME + " AND ABS(f.H-?)<" + SAME)) {
+                + "f.MODEL=? AND ABS(f.X-?)<" + SAME + " AND ABS(f.Y-?)<" + SAME + " AND ABS(f.W-?)<" + SAME
+                + " AND ABS(f.H-?)<" + SAME)) {
             stm.setString(1, path);
-            stm.setDouble(2, r.x());
-            stm.setDouble(3, r.y());
-            stm.setDouble(4, r.w());
-            stm.setDouble(5, r.h());
+            stm.setString(2, model);
+            stm.setDouble(3, r.x());
+            stm.setDouble(4, r.y());
+            stm.setDouble(5, r.w());
+            stm.setDouble(6, r.h());
             try (ResultSet rs = stm.executeQuery()) {
                 return rs.next() ? fromBytes(rs.getBytes(1)) : null;
             }
         }
     }
 
-    /** All confirmed faces that have a feature vector. */
-    public static List<KnownFace> knownFaces(Connection con) throws SQLException {
+    /** All confirmed faces that have a feature vector of the model. */
+    public static List<KnownFace> knownFaces(Connection con, String model) throws SQLException {
         List<KnownFace> result = new ArrayList<>();
         try (PreparedStatement stm = con.prepareStatement("SELECT f.NAME, e.EMBEDDING FROM FACES f JOIN FACE_EMBEDDINGS e "
-                + "ON f.PATHSTORAGE=e.PATHSTORAGE AND " + SAME_FACE + " WHERE f.CONFIRMED AND f.NAME IS NOT NULL");
-                ResultSet rs = stm.executeQuery()) {
-            while (rs.next()) {
-                result.add(new KnownFace(rs.getString(1), fromBytes(rs.getBytes(2))));
+                + "ON f.PATHSTORAGE=e.PATHSTORAGE AND e.MODEL=? AND " + SAME_FACE
+                + " WHERE f.CONFIRMED AND f.NAME IS NOT NULL")) {
+            stm.setString(1, model);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new KnownFace(rs.getString(1), fromBytes(rs.getBytes(2))));
+                }
             }
         }
         return result;
     }
 
-    /** Confirmed faces without feature vector (e.g. after the database was built again from the XMP files). */
-    public static List<PendingFace> confirmedWithoutEmbedding(Connection con, int limit) throws SQLException {
+    /**
+     * Confirmed faces without feature vector of the model (e.g. after the
+     * database was built again from the XMP files, or the model was changed).
+     */
+    public static List<PendingFace> confirmedWithoutEmbedding(Connection con, String model, int limit)
+            throws SQLException {
         List<PendingFace> result = new ArrayList<>();
         try (PreparedStatement stm = con.prepareStatement("SELECT f.PATHSTORAGE, f.X, f.Y, f.W, f.H, f.NAME FROM FACES f "
                 + "WHERE f.CONFIRMED AND NOT EXISTS (SELECT 1 FROM FACE_EMBEDDINGS e WHERE e.PATHSTORAGE=f.PATHSTORAGE AND "
-                + SAME_FACE + ") LIMIT ?")) {
-            stm.setInt(1, limit);
+                + "e.MODEL=? AND " + SAME_FACE + ") LIMIT ?")) {
+            stm.setString(1, model);
+            stm.setInt(2, limit);
             try (ResultSet rs = stm.executeQuery()) {
                 while (rs.next()) {
                     result.add(new PendingFace(rs.getString(1), new FaceRegion(rs.getDouble(2), rs.getDouble(3),

@@ -230,6 +230,20 @@ public final class FaceOverlay extends Pane {
     // ------------------------------------------------------------------
     // one face
     // ------------------------------------------------------------------
+    private static final double FIELD_FONT_SIZE = 11;
+    /** Padding and caret room of the name field. */
+    private static final double FIELD_EXTRA = 18;
+    private static final double MAX_FIELD_WIDTH = 220;
+
+    private static double textWidth(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        javafx.scene.text.Text t = new javafx.scene.text.Text(text);
+        t.setFont(javafx.scene.text.Font.font(FIELD_FONT_SIZE));
+        return Math.ceil(t.getLayoutBounds().getWidth());
+    }
+
     private final class FaceBox {
 
         private FaceRegion face;
@@ -245,10 +259,11 @@ public final class FaceOverlay extends Pane {
             frame.setStrokeWidth(2);
             frame.setManaged(false);
             frame.setMouseTransparent(true);
-            field.setPrefColumnCount(10);
-            field.setPromptText(I18n.t("faces.namePrompt"));
-            field.setStyle("-fx-background-color: rgba(30,30,30,0.85); -fx-text-fill: white; "
-                    + "-fx-prompt-text-fill: #bbbbbb; -fx-font-size: 11px; -fx-padding: 2 4 2 4;");
+            // "No name" until a name is typed; it disappears when the field is clicked
+            field.setPromptText(I18n.t("faces.noName"));
+            styleField(false);
+            fitFieldWidth();
+            field.textProperty().addListener((o, old, text) -> fitFieldWidth());
             accept.setTooltip(new Tooltip(I18n.t("faces.confirm")));
             remove.setTooltip(new Tooltip(I18n.t("faces.remove")));
             for (Button b : new Button[]{accept, remove}) {
@@ -274,6 +289,7 @@ public final class FaceOverlay extends Pane {
                 }
             });
             field.focusedProperty().addListener((o, was, is) -> {
+                styleField(is);
                 if (!is) {
                     commitIfChanged();
                 }
@@ -286,6 +302,28 @@ public final class FaceOverlay extends Pane {
             });
             update();
             getChildren().addAll(frame, editor);
+        }
+
+        /** The prompt is hidden while the field has the focus (the inline style overrides Modena's rule). */
+        private void styleField(boolean focused) {
+            field.setStyle("-fx-background-color: rgba(30,30,30,0.85); -fx-text-fill: white; "
+                    + "-fx-prompt-text-fill: " + (focused ? "transparent" : "#dddddd") + "; "
+                    + "-fx-font-size: " + FIELD_FONT_SIZE + "px; -fx-padding: 2 4 2 4;");
+        }
+
+        /**
+         * Wide enough for "No name" at least, wider for longer names. Set
+         * explicitly: the editor is not managed and is sized before the skin
+         * of the field exists, which made the field tiny.
+         */
+        private void fitFieldWidth() {
+            double min = textWidth(field.getPromptText()) + FIELD_EXTRA;
+            double width = Math.max(min, Math.min(MAX_FIELD_WIDTH, textWidth(field.getText()) + FIELD_EXTRA));
+            field.setMinWidth(min);
+            field.setPrefWidth(width);
+            if (editor.getParent() != null) {
+                layoutBoxes();
+            }
         }
 
         void commitIfChanged() {
@@ -357,6 +395,8 @@ public final class FaceOverlay extends Pane {
             frame.setY(r.getMinY());
             frame.setWidth(r.getWidth());
             frame.setHeight(r.getHeight());
+            // creates the skins first: without them the preferred sizes are too small
+            editor.applyCss();
             editor.autosize();
             double ew = editor.prefWidth(-1);
             double eh = editor.prefHeight(-1);

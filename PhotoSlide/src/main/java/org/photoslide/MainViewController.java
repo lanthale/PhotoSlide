@@ -318,6 +318,7 @@ public class MainViewController implements Initializable {
         });
         taskProgressView.setPrefSize(300, 200);
         // after the start, so it does not slow down loading the first folder
+        org.photoslide.faces.FaceService.get().setDownloadStarter(() -> Platform.runLater(this::downloadFaceModels));
         executorParallelScheduled.schedule(() -> Platform.runLater(this::downloadFaceModels), 20, TimeUnit.SECONDS);
         String OS = System.getProperty("os.name").toUpperCase();
         if (OS.contains("MAC")) {

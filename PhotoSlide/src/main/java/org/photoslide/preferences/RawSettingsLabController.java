@@ -99,6 +99,7 @@ public class RawSettingsLabController implements Initializable {
     @FXML private TreeView<String> settingsTree;
     @FXML private VBox rawLabRoot;
     @FXML private StackPane generalPane;
+    @FXML private javafx.scene.control.CheckBox fastFaceModelCheck;
 
     private static final String TREE_RAW = I18n.t("raw.treeRaw");
     private static final String TREE_GENERAL = I18n.t("rawSettingsLab.general");
@@ -236,6 +237,10 @@ public class RawSettingsLabController implements Initializable {
         applyButton.disableProperty().bind(cameraKey.isNull().or(fileLabel.textProperty().isEqualTo(I18n.t("rawSettingsLab.noImageLoaded"))));
         resetButton.disableProperty().bind(cameraKey.isNull());
         saveButton.disableProperty().bind(profileList.getSelectionModel().selectedItemProperty().isNull());
+        // face recognition: AuraFace by default, SFace as fast fallback
+        org.photoslide.faces.FaceService faces = org.photoslide.faces.FaceService.get();
+        fastFaceModelCheck.setSelected(faces.isFastModel());
+        fastFaceModelCheck.selectedProperty().addListener((obs, was, fast) -> faces.setFastModel(fast));
     }
 
     // ------------------------------------------------------------------

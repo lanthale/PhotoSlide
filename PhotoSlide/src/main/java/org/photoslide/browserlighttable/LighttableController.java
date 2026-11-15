@@ -178,6 +178,8 @@ public class LighttableController implements Initializable {
     private ToggleButton faceOnlyUnknownButton;
     /** The photo whose faces are shown, null = face mode off. */
     private MediaFile facesFile;
+    /** The faces are on (button pressed); facesFile is null while no photo is shown. */
+    private boolean facesOn;
     /** Writes the sidecars after face changes, one after another. */
     private final java.util.concurrent.ExecutorService faceSaver = java.util.concurrent.Executors.newSingleThreadExecutor(
             Thread.ofPlatform().name("faceSaver").daemon().factory());
@@ -243,7 +245,14 @@ public class LighttableController implements Initializable {
         imageView.setVisible(false);
         preview = new ImagePreview16(imageView, "lighttablePreview");
         preview.setOnProgress((p) -> imageProgress.setProgress(p));
-        preview.setOnShown(() -> imageProgress.setVisible(false));
+        preview.setOnShown(() -> {
+            imageProgress.setVisible(false);
+            // another photo is shown while the faces are on: show its faces. Not by a listener on
+            // the image of the view: photos of the same size reuse the image, so it does not change
+            if (facesOn && preview.getFile() != facesFile) {
+                showFaces();
+            }
+        });
         preview.setOnFailed((ex) -> imageProgress.setVisible(false));
         cropOverlay = new CropRotateOverlay(imageView, preview);
         cropBar = createCropBar();
@@ -253,9 +262,9 @@ public class LighttableController implements Initializable {
         faceOverlay.setOnAddingEnded(() -> faceAddButton.setSelected(false));
         faceBar = createFaceBar();
         stackPane.getChildren().addAll(cropOverlay, cropBar, faceOverlay, faceBar);
-        // another photo is shown while the faces are on: show its faces
+        // a video or no photo selected (the preview's onShown does not come then): hide the faces
         imageView.imageProperty().addListener((o, oldImage, newImage) -> {
-            if (facesFile != null && preview.getFile() != facesFile) {
+            if (facesOn && preview.getFile() != facesFile) {
                 showFaces();
             }
         });
@@ -817,6 +826,15 @@ public class LighttableController implements Initializable {
         if (f != null) {
             EditHistory.of(f);
         }
+        // faces are on: show the faces of the newly selected photo. Later in the event queue, when
+        // the grid has handed the file to the preview (it does so after this call)
+        if (facesOn && f != facesFile) {
+            Platform.runLater(() -> {
+                if (facesOn && preview.getFile() != facesFile) {
+                    showFaces();
+                }
+            });
+        }
     }
 
     /** Records the change of the file as a history step; undo and redo follow it. */
@@ -961,7 +979,7 @@ public class LighttableController implements Initializable {
             return;
         }
         EditHistory.of(item);
-        if (facesFile != null) {
+        if (facesOn) {
             facesButton.setSelected(false);
             stopFaces();
         }
@@ -1591,6 +1609,7 @@ public class LighttableController implements Initializable {
             facesButton.setSelected(false);
             return;
         }
+        facesOn = true;
         org.photoslide.faces.FaceService service = org.photoslide.faces.FaceService.get();
         if (service.modelsAvailable()) {
             showFaces();
@@ -1608,6 +1627,7 @@ public class LighttableController implements Initializable {
             facesButton.setDisable(false);
             if (ex != null) {
                 facesButton.setSelected(false);
+                facesOn = false;
                 Alert error = new Alert(Alert.AlertType.ERROR, I18n.t("faces.downloadFailed", rootMessage(ex)), ButtonType.OK);
                 error.initOwner(stackPane.getScene().getWindow());
                 error.show();
@@ -1617,8 +1637,15 @@ public class LighttableController implements Initializable {
         }));
     }
 
-    /** Shows the faces of the photo in the preview and searches the ones not known yet. */
+    /**
+     * Shows the faces of the photo in the preview and searches the ones not
+     * known yet. With no photo in the preview (e.g. for a moment while the
+     * selection changes, or a video) nothing is shown, but the faces stay on.
+     */
     private void showFaces() {
+        if (!org.photoslide.faces.FaceService.get().modelsAvailable()) {
+            return;                                  // still downloading: shown when the download is done
+        }
         faceOverlay.commitEditing();                 // a name being typed belongs to the previous photo
         MediaFile item = preview.getFile();
         if (item == null || item.getMediaType() != MediaFile.MediaTypes.IMAGE) {
@@ -1653,18 +1680,17 @@ public class LighttableController implements Initializable {
                 merged.add(typed != null && typed.confirmed() ? typed : f);
             }
             faceOverlay.setFaces(merged);
-            boolean scanned = item.isFacesScanned();
+            // only in memory: the sidecar is written when the user names, removes or adds a face
+            // (facesChanged); finding the faces again later costs a few milliseconds
             item.setFaceRegions(merged);
             item.setFacesScanned(true);
-            if (!scanned) {
-                saveFaces(item);                      // found faces and the scan are kept in the sidecar
-            }
             updateFaceStatus();
         }));
     }
 
     private void stopFaces() {
         faceOverlay.commitEditing();
+        facesOn = false;
         facesFile = null;
         faceOverlay.clear();
         faceOverlay.setVisible(false);

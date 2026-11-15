@@ -11,12 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.DoubleConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
+import org.opencv.core.Mat;
 import org.photoslide.App;
 import org.photoslide.datamodel.FaceRegion;
 import org.photoslide.datamodel.FileTypes;
@@ -34,28 +38,36 @@ import org.photoslide.faces.FaceStore.PendingFace;
  * The names live in the XMP sidecars (see XmpFaceRegions); the search
  * database holds a copy (FACES) and the feature vectors (FACE_EMBEDDINGS),
  * which are computed again from the photos if the database is new. All work
- * runs on one background thread, the models are loaded on first use.
+ * runs on one background thread. The models are loaded on first use and
+ * released again after two minutes without use (AuraFace takes some hundred
+ * MB of native memory).
  */
 public final class FaceService {
 
     private static final Logger LOG = Logger.getLogger(FaceService.class.getName());
     private static final FaceService INSTANCE = new FaceService();
 
-    /** Minimum cosine similarity for a suggestion (OpenCV's value for SFace). */
-    static final double MATCH_THRESHOLD = 0.363;
+    private static final String PREF_FAST_MODEL = "faces.fastModel";
+    private static final long IDLE_SECONDS = 120;
     /** A new detection overlapping a known face more than this is the same face. */
     private static final double SAME_FACE_IOU = 0.4;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
             Thread.ofPlatform().name("faceRecognition").daemon().priority(Thread.NORM_PRIORITY - 1).factory());
+    private final Preferences preferences = Preferences.userRoot().node("PhotoSlide");
+    private volatile EmbedderType type = preferences.getBoolean(PREF_FAST_MODEL, false)
+            ? EmbedderType.SFACE : EmbedderType.AURAFACE;
     private final AtomicBoolean learning = new AtomicBoolean();
     private final List<DoubleConsumer> progressListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
     private volatile double downloadProgress;
     private CompletableFuture<Void> download;
     // used on the executor thread only
     private FaceDetector detector;
+    private FaceAligner aligner;
     private FaceEmbedder embedder;
     private Connection connection;
+    private ScheduledFuture<?> idleRelease;
+    private volatile Runnable downloadStarter;
 
     private FaceService() {
     }
@@ -64,14 +76,52 @@ public final class FaceService {
         return INSTANCE;
     }
 
-    /** true if the models are on disk (else {@link #downloadModels} first). */
-    public boolean modelsAvailable() {
-        return FaceModels.available();
+    /** The recognizer in use: AuraFace, or SFace if the fast model is chosen in the preferences. */
+    public EmbedderType embedderType() {
+        return type;
     }
 
-    /** Size of the download in bytes. */
+    /** true if the fast but less accurate model (SFace) is used instead of AuraFace. */
+    public boolean isFastModel() {
+        return type == EmbedderType.SFACE;
+    }
+
+    /**
+     * Switches the recognizer (preferences). The vectors of each model are
+     * kept apart in the database; missing ones of the new model are computed
+     * in the background as soon as its files are there.
+     */
+    public void setFastModel(boolean fast) {
+        EmbedderType newType = fast ? EmbedderType.SFACE : EmbedderType.AURAFACE;
+        preferences.putBoolean(PREF_FAST_MODEL, fast);
+        if (newType != type) {
+            type = newType;
+            executor.execute(this::releaseModels);
+            Runnable starter = downloadStarter;
+            if (!FaceModels.available(newType) && starter != null) {
+                starter.run();
+            } else {
+                learnMissingEmbeddings();
+            }
+        }
+    }
+
+    /**
+     * How a missing model is downloaded when the recognizer is changed (the
+     * main window shows the download in its task list).
+     */
+    public void setDownloadStarter(Runnable starter) {
+        downloadStarter = starter;
+    }
+
+    /** true if the models of the recognizer in use are on disk (else {@link #downloadModels} first). */
+    public boolean modelsAvailable() {
+        return FaceModels.available(type);
+    }
+
+    /** Bytes still to download for the recognizer in use. */
     public long modelDownloadSize() {
-        return FaceModels.DETECTOR.size() + FaceModels.RECOGNIZER.size();
+        return FaceModels.missingSize(type);
     }
 
     /**
@@ -82,11 +132,13 @@ public final class FaceService {
     public synchronized CompletableFuture<Void> downloadModels(DoubleConsumer progress) {
         progressListeners.add(progress);
         progress.accept(downloadProgress);
-        if (download == null || download.isCompletedExceptionally()) {
+        if (download == null || download.isCompletedExceptionally()
+                || (download.isDone() && !FaceModels.available(type))) {
             downloadProgress = 0;
+            EmbedderType forType = type;
             download = CompletableFuture.runAsync(() -> {
                 try {
-                    FaceModels.download(p -> {
+                    FaceModels.download(forType, p -> {
                         downloadProgress = p;
                         progressListeners.forEach(l -> l.accept(p));
                     });
@@ -95,7 +147,12 @@ public final class FaceService {
                 }
             }, runnable -> Thread.ofPlatform().name("faceModelDownload").daemon()
                     .priority(Thread.MIN_PRIORITY).start(runnable));
-            download.whenComplete((v, ex) -> progressListeners.clear());
+            download.whenComplete((v, ex) -> {
+                progressListeners.clear();
+                if (ex == null) {
+                    learnMissingEmbeddings();
+                }
+            });
         }
         return download;
     }
@@ -134,6 +191,7 @@ public final class FaceService {
                     }
                 }
                 List<KnownFace> known = knownFaces();
+                double threshold = embedder.type().matchThreshold();
                 List<FaceRegion> result = new ArrayList<>();
                 for (int i = 0; i < faces.size(); i++) {
                     FaceRegion face = faces.get(i);
@@ -143,7 +201,7 @@ public final class FaceService {
                         storeEmbedding(path, face, embedding);
                     }
                     if (!face.confirmed()) {
-                        String name = match(known, embedding);
+                        String name = match(known, embedding, threshold);
                         face = face.withName(name, false);
                     }
                     result.add(face);
@@ -153,6 +211,8 @@ public final class FaceService {
             } catch (Exception ex) {
                 rollback();
                 throw new java.util.concurrent.CompletionException(ex);
+            } finally {
+                scheduleRelease();
             }
         }, executor);
     }
@@ -168,10 +228,12 @@ public final class FaceService {
                 float[] embedding = embed(source, quarters, face, null);
                 storeEmbedding(path, face, embedding);
                 commit();
-                return match(knownFaces(), embedding);
+                return match(knownFaces(), embedding, embedder.type().matchThreshold());
             } catch (Exception ex) {
                 rollback();
                 throw new java.util.concurrent.CompletionException(ex);
+            } finally {
+                scheduleRelease();
             }
         }, executor);
     }
@@ -195,7 +257,7 @@ public final class FaceService {
      * another computer. Does nothing while the models are not downloaded.
      */
     public void learnMissingEmbeddings() {
-        if (!FaceModels.available() || App.getSearchDBConnection() == null || !learning.compareAndSet(false, true)) {
+        if (!FaceModels.available(type) || App.getSearchDBConnection() == null || !learning.compareAndSet(false, true)) {
             return;
         }
         try {
@@ -204,6 +266,7 @@ public final class FaceService {
                     learnMissing();
                 } finally {
                     learning.set(false);
+                    scheduleRelease();
                 }
             });
         } catch (java.util.concurrent.RejectedExecutionException ex) {
@@ -216,7 +279,8 @@ public final class FaceService {
         try {
             ensureModels();
             while (true) {
-                List<PendingFace> pending = FaceStore.confirmedWithoutEmbedding(connection(), 50 + failed.size());
+                List<PendingFace> pending = FaceStore.confirmedWithoutEmbedding(connection(), embedder.type().id(),
+                        50 + failed.size());
                 pending.removeIf(p -> failed.contains(p.path()));
                 if (pending.isEmpty()) {
                     return;
@@ -259,14 +323,54 @@ public final class FaceService {
     // executor thread
     // ------------------------------------------------------------------
     private void ensureModels() throws IOException {
-        if (!FaceModels.available()) {
+        EmbedderType wanted = type;
+        if (!FaceModels.available(wanted)) {
             throw new IOException("The face recognition models are not downloaded");
+        }
+        if (idleRelease != null) {
+            idleRelease.cancel(false);
+            idleRelease = null;
+        }
+        if (embedder != null && embedder.type() != wanted) {
+            embedder.close();
+            embedder = null;
         }
         if (detector == null) {
             detector = new FaceDetector();
         }
+        if (aligner == null) {
+            aligner = new FaceAligner();
+        }
         if (embedder == null) {
-            embedder = new FaceEmbedder();
+            embedder = wanted == EmbedderType.SFACE ? new SFaceEmbedder(aligner) : new AuraFaceEmbedder();
+        }
+    }
+
+    /** Releases the models after a while without use. */
+    private void scheduleRelease() {
+        if (idleRelease != null) {
+            idleRelease.cancel(false);
+        }
+        try {
+            idleRelease = executor.schedule(this::releaseModels, IDLE_SECONDS, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.RejectedExecutionException ex) {
+            idleRelease = null;
+        }
+    }
+
+    private void releaseModels() {
+        idleRelease = null;
+        if (embedder != null) {
+            embedder.close();
+            embedder = null;
+        }
+        if (aligner != null) {
+            aligner.close();
+            aligner = null;
+        }
+        if (detector != null) {
+            detector.close();
+            detector = null;
         }
     }
 
@@ -287,16 +391,21 @@ public final class FaceService {
                 }
             }
             if (landmarks == null) {
-                landmarks = FaceEmbedder.guessLandmarks(face, quarters);
+                landmarks = FaceAligner.guessLandmarks(face, quarters);
             }
         }
-        return embedder.embed(source, landmarks);
+        Mat aligned = aligner.align(source, landmarks);
+        try {
+            return embedder.embed(aligned);
+        } finally {
+            aligned.release();
+        }
     }
 
     /** The name of the most similar known face, null if none is similar enough. */
-    static String match(List<KnownFace> known, float[] embedding) {
+    static String match(List<KnownFace> known, float[] embedding, double threshold) {
         String best = null;
-        double bestScore = MATCH_THRESHOLD;
+        double bestScore = threshold;
         for (KnownFace k : known) {
             double s = FaceEmbedder.similarity(k.embedding(), embedding);
             if (s >= bestScore) {
@@ -318,18 +427,18 @@ public final class FaceService {
 
     private List<KnownFace> knownFaces() throws SQLException {
         Connection con = connection();
-        return con == null ? List.of() : FaceStore.knownFaces(con);
+        return con == null ? List.of() : FaceStore.knownFaces(con, embedder.type().id());
     }
 
     private float[] storedEmbedding(String path, FaceRegion face) throws SQLException {
         Connection con = connection();
-        return con == null ? null : FaceStore.embedding(con, path, face);
+        return con == null ? null : FaceStore.embedding(con, path, face, embedder.type().id());
     }
 
     private void storeEmbedding(String path, FaceRegion face, float[] embedding) throws SQLException {
         Connection con = connection();
         if (con != null) {
-            FaceStore.putEmbedding(con, path, face, embedding);
+            FaceStore.putEmbedding(con, path, face, embedder.type().id(), embedding);
         }
     }
 

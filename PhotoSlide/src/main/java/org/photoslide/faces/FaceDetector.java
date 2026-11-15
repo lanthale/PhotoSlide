@@ -1,32 +1,29 @@
 package org.photoslide.faces;
 
-import ai.djl.inference.Predictor;
-import ai.djl.ndarray.NDArray;
-import ai.djl.ndarray.NDList;
-import ai.djl.ndarray.NDManager;
-import ai.djl.ndarray.types.Shape;
-import ai.djl.repository.zoo.ZooModel;
-import ai.djl.translate.TranslateException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
+import org.opencv.objdetect.FaceDetectorYN;
 import org.photoslide.datamodel.FaceRegion;
 import org.photoslide.datamodel.Image16;
 
 /**
- * Finds faces with YuNet. The image is turned by the PhotoSlide rotation
+ * Finds faces with YuNet, run by OpenCV's FaceDetectorYN. The image is turned by the PhotoSlide rotation
  * first (the model only finds upright faces) and the results are turned back,
  * so they are relative to the source image. Not thread safe: used on the
  * thread of the FaceService only.
  */
 final class FaceDetector implements AutoCloseable {
 
-    /** The model takes 640 x 640 pixels: the image is scaled to fit and padded. */
+    /** The model takes 640 x 640 pixels (fixed): the image is scaled to fit and padded. */
     static final int INPUT_SIDE = 640;
     /** Photos larger than this (long side in pixels) are also searched in tiles. */
     private static final int TILE_SIDE = 1600;
-    private static final int[] STRIDES = {8, 16, 32};
     private static final float SCORE_THRESHOLD = 0.75f;
     private static final float NMS_THRESHOLD = 0.3f;
 
@@ -39,12 +36,12 @@ final class FaceDetector implements AutoCloseable {
     record Detection(FaceRegion region, double[] landmarks, float score) {
     }
 
-    private final ZooModel<NDList, NDList> model;
-    private final Predictor<NDList, NDList> predictor;
+    private final FaceDetectorYN yunet;
 
     FaceDetector() throws IOException {
-        model = FaceModels.load(FaceModels.DETECTOR);
-        predictor = model.newPredictor();
+        FaceModels.loadOpenCv();
+        yunet = FaceDetectorYN.create(FaceModels.path(FaceModels.YUNET).toString(), "",
+                new Size(INPUT_SIDE, INPUT_SIDE), SCORE_THRESHOLD, NMS_THRESHOLD, 5000);
     }
 
     /**
@@ -52,7 +49,7 @@ final class FaceDetector implements AutoCloseable {
      * Large photos are also searched in overlapping tiles: scaled to 640
      * pixels, the faces of a group photo would be too small for the model.
      */
-    List<Detection> detect(Image16 source, int quarters) throws TranslateException {
+    List<Detection> detect(Image16 source, int quarters) {
         List<Detection> all = new ArrayList<>(detect(Rgb8.of(source, INPUT_SIDE), quarters));
         int tiles = (int) Math.min(3, Math.ceil(Math.max(source.width(), source.height()) / (double) TILE_SIDE));
         if (tiles >= 2) {
@@ -73,7 +70,7 @@ final class FaceDetector implements AutoCloseable {
      * Faces in a part of the image, e.g. to find the landmarks of a face whose
      * rectangle is known. Results are relative to the whole source.
      */
-    List<Detection> detect(Image16 source, int quarters, FaceRegion part) throws TranslateException {
+    List<Detection> detect(Image16 source, int quarters, FaceRegion part) {
         int x = (int) Math.floor(part.x() * source.width());
         int y = (int) Math.floor(part.y() * source.height());
         int w = (int) Math.ceil(part.w() * source.width());
@@ -100,55 +97,35 @@ final class FaceDetector implements AutoCloseable {
         return result;
     }
 
-    private List<Detection> detect(Rgb8 unturned, int quarters) throws TranslateException {
+    private List<Detection> detect(Rgb8 unturned, int quarters) {
         Rgb8 img = unturned.rotated(quarters);
-        int pw = INPUT_SIDE;
-        int ph = INPUT_SIDE;
-        // planar BGR, 0..255, zero padded at the right and bottom (like OpenCV's blobFromImage)
-        float[] data = new float[3 * pw * ph];
-        int plane = pw * ph;
-        int[] px = img.pixels();
-        for (int y = 0; y < img.height(); y++) {
-            for (int x = 0; x < img.width(); x++) {
-                int rgb = px[y * img.width() + x];
-                int i = y * pw + x;
-                data[i] = rgb & 0xFF;
-                data[plane + i] = (rgb >> 8) & 0xFF;
-                data[2 * plane + i] = (rgb >> 16) & 0xFF;
-            }
-        }
         List<Detection> found = new ArrayList<>();
-        try (NDManager manager = model.getNDManager().newSubManager()) {
-            NDList out = predictor.predict(new NDList(manager.create(data, new Shape(1, 3, ph, pw))));
-            for (int stride : STRIDES) {
-                float[] cls = values(out, "cls_" + stride);
-                float[] obj = values(out, "obj_" + stride);
-                float[] box = values(out, "bbox_" + stride);
-                float[] kps = values(out, "kps_" + stride);
-                int cols = pw / stride;
-                int rows = ph / stride;
-                for (int r = 0; r < rows; r++) {
-                    for (int c = 0; c < cols; c++) {
-                        int idx = r * cols + c;
-                        float score = (float) Math.sqrt(clamp(cls[idx]) * clamp(obj[idx]));
-                        if (score < SCORE_THRESHOLD) {
-                            continue;
-                        }
-                        double cx = (c + box[idx * 4]) * stride;
-                        double cy = (r + box[idx * 4 + 1]) * stride;
-                        double bw = Math.exp(box[idx * 4 + 2]) * stride;
-                        double bh = Math.exp(box[idx * 4 + 3]) * stride;
-                        double[] lm = new double[10];
-                        for (int k = 0; k < 5; k++) {
-                            lm[2 * k] = (kps[idx * 10 + 2 * k] + c) * stride / img.width();
-                            lm[2 * k + 1] = (kps[idx * 10 + 2 * k + 1] + r) * stride / img.height();
-                        }
-                        FaceRegion shown = new FaceRegion((cx - bw / 2) / img.width(), (cy - bh / 2) / img.height(),
-                                bw / img.width(), bh / img.height(), null, false);
-                        found.add(new Detection(shown, lm, score));
-                    }
+        // top left in a black 640 x 640 image, like the blob OpenCV pads
+        Mat input = Mat.zeros(INPUT_SIDE, INPUT_SIDE, CvType.CV_8UC3);
+        Mat pixels = img.toMat();
+        Mat target = input.submat(new Rect(0, 0, img.width(), img.height()));
+        Mat faces = new Mat();
+        try {
+            pixels.copyTo(target);
+            yunet.detect(input, faces);
+            float[] row = new float[15];
+            for (int r = 0; r < faces.rows(); r++) {
+                // x, y, w, h, right eye, left eye, nose tip, right and left mouth corner, score
+                faces.get(r, 0, row);
+                double[] lm = new double[10];
+                for (int k = 0; k < 10; k += 2) {
+                    lm[k] = row[4 + k] / img.width();
+                    lm[k + 1] = row[5 + k] / img.height();
                 }
+                FaceRegion shown = new FaceRegion(row[0] / img.width(), row[1] / img.height(),
+                        row[2] / img.width(), row[3] / img.height(), null, false);
+                found.add(new Detection(shown, lm, row[14]));
             }
+        } finally {
+            target.release();
+            input.release();
+            pixels.release();
+            faces.release();
         }
         List<Detection> result = new ArrayList<>();
         for (Detection d : nms(found)) {
@@ -161,18 +138,6 @@ final class FaceDetector implements AutoCloseable {
             result.add(new Detection(clip(d.region().rotated(-quarters)), lm, d.score()));
         }
         return result;
-    }
-
-    private static float[] values(NDList out, String name) {
-        NDArray a = out.get(name);
-        if (a == null) {
-            throw new IllegalStateException("YuNet output " + name + " missing");
-        }
-        return a.toFloatArray();
-    }
-
-    private static float clamp(float v) {
-        return Math.max(0f, Math.min(1f, v));
     }
 
     /** Point of the turned image -> source (both normalized). */
@@ -230,7 +195,6 @@ final class FaceDetector implements AutoCloseable {
 
     @Override
     public void close() {
-        predictor.close();
-        model.close();
+        // FaceDetectorYN has no close: its native object is freed by the garbage collector
     }
 }

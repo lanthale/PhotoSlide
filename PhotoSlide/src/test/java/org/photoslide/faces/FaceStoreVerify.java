@@ -46,6 +46,19 @@ public final class FaceStoreVerify {
                 rs.next();
                 check(rs.getInt(1) == 1, "migration keeps the indexed files");
             }
+            // as a database of version 5 (no background scan yet): the names stay
+            try (Statement s = con.createStatement()) {
+                s.execute("ALTER TABLE FACES DROP COLUMN AUTO");
+                s.execute("DROP TABLE FACE_SCANS");
+                s.execute("INSERT INTO FACES (PATHSTORAGE, IDX, NAME, CONFIRMED) VALUES ('/old/a.jpg', 0, 'Old', TRUE)");
+                s.execute("UPDATE SCHEMAINFO SET version=5");
+            }
+            App.prepareSearchDB(con);
+            check(FaceStore.names(con).equals(List.of("Old")), "v5 -> v6 keeps the names");
+            check(FaceStore.hasXmpFaces(con, "/old/a.jpg"), "old faces are XMP faces");
+            try (Statement s = con.createStatement()) {
+                s.execute("DELETE FROM FACES");
+            }
 
             String path = "/old/a.jpg";
             FaceRegion anna = new FaceRegion(0.1, 0.2, 0.05, 0.08, "Anna", true);
@@ -76,13 +89,61 @@ public final class FaceStoreVerify {
             check(FaceStore.knownFaces(con, AURA).get(0).name().equals("Anna Maria"), "renamed keeps embedding");
             check(FaceStore.embedding(con, path, unknown, AURA) == null, "embedding of removed face deleted");
 
+            // background scan: a photo without faces in its XMP
+            String b = "/old/b.jpg";
+            try (Statement s = con.createStatement()) {
+                s.execute("INSERT INTO MEDIAFILES (PATHSTORAGE, COLLECTIONNAME, NAME, LASTMODIFIED) VALUES ('/old/b.jpg', '/old', 'b.jpg', 100)");
+            }
+            check(FaceStore.unscannedFiles(con, "/old", AURA).stream().anyMatch(i -> i.path().equals(b)), "b not scanned yet");
+            FaceRegion bAnna = new FaceRegion(0.3, 0.3, 0.1, 0.1, null, false);
+            FaceRegion bOther = new FaceRegion(0.6, 0.3, 0.1, 0.1, null, false);
+            float[] far = FaceEmbedder.normalize(new float[]{3, -2, 0});
+            FaceStore.putEmbedding(con, b, bAnna, AURA, e);
+            FaceStore.putEmbedding(con, b, bOther, AURA, far);
+            FaceStore.writeAutoFaces(con, b, List.of(bAnna, bOther));
+            FaceStore.markScanned(con, b, AURA, 100);
+            check(FaceStore.unscannedFiles(con, "/old", AURA).stream().noneMatch(i -> i.path().equals(b)), "b scanned");
+            check(FaceStore.unscannedFiles(con, "/old", SFACE).stream().anyMatch(i -> i.path().equals(b)), "b again for SFace");
+            FaceStore.forgetScans(con, "/old");
+            check(FaceStore.unscannedFiles(con, "/old", AURA).stream().anyMatch(i -> i.path().equals(b)), "rescan forced");
+            FaceStore.markScanned(con, b, AURA, 100);
+            check(!FaceStore.hasXmpFaces(con, b), "scan faces are not XMP faces");
+            check(FaceStore.searchText(con, b) == null, "no names yet");
+            // matching again (as FaceService.rematch): Anna Maria is known now
+            List<FaceStore.KnownFace> nowKnown = FaceStore.knownFaces(con, AURA);
+            List<FaceStore.AutoFace> autos = FaceStore.autoFaces(con, AURA);
+            check(autos.size() == 2, "auto faces " + autos.size());
+            for (FaceStore.AutoFace a : autos) {
+                FaceStore.setAutoName(con, a.path(), a.idx(), FaceService.match(nowKnown, a.embedding(), 0.3));
+            }
+            FaceStore.refreshSearchText(con, b);
+            check("Anna Maria".equals(FaceStore.searchText(con, b)), "suggestion searchable: " + FaceStore.searchText(con, b));
+            try (Statement s = con.createStatement(); ResultSet rs = s.executeQuery("SELECT FACES FROM MEDIAFILES WHERE PATHSTORAGE='/old/b.jpg'")) {
+                rs.next();
+                check("Anna Maria".equals(rs.getString(1)), "MEDIAFILES.FACES");
+            }
+            check(FaceStore.names(con).equals(List.of("Anna Maria")), "suggestions are not offered as names");
+            check(FaceStore.knownFaces(con, AURA).size() == 1, "suggestions do not teach");
+            // an XMP without faces keeps the scan faces, one with faces replaces them
+            FaceStore.writeFaces(con, b, List.of());
+            check(FaceStore.autoFaces(con, AURA).size() == 2, "empty XMP keeps scan faces");
+            FaceStore.writeFaces(con, b, List.of(bAnna.withName("Anna Maria", true)));
+            check(FaceStore.autoFaces(con, AURA).isEmpty(), "XMP faces replace scan faces");
+            check(FaceStore.embedding(con, b, bOther, AURA) == null, "embedding of replaced scan face deleted");
+            check(FaceStore.knownFaces(con, AURA).size() == 2, "confirmed face teaches");
+            FaceStore.writeFaces(con, b, List.of());
+
             FaceStore.relocate(con, "/old", "/new");
             check(FaceStore.embedding(con, "/new/a.jpg", anna, AURA) != null, "relocated");
             try (Statement s = con.createStatement()) {
-                s.execute("UPDATE MEDIAFILES SET PATHSTORAGE='/new/a.jpg', COLLECTIONNAME='/new'");
+                s.execute("UPDATE MEDIAFILES SET PATHSTORAGE='/new/' || NAME, COLLECTIONNAME='/new'");
             }
             FaceStore.deleteCollection(con, "/new");
             check(FaceStore.knownFaces(con, AURA).isEmpty() && FaceStore.names(con).isEmpty(), "collection removed");
+            try (Statement s = con.createStatement(); ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM FACE_SCANS")) {
+                rs.next();
+                check(rs.getInt(1) == 0, "scans of the collection removed");
+            }
         }
         System.out.println("FaceStoreVerify OK");
     }

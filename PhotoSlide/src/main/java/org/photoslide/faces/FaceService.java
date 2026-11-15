@@ -30,6 +30,8 @@ import org.photoslide.editpipeline.EditPipeline;
 import org.photoslide.faces.FaceDetector.Detection;
 import org.photoslide.faces.FaceStore.KnownFace;
 import org.photoslide.faces.FaceStore.PendingFace;
+import org.photoslide.faces.FaceStore.AutoFace;
+import org.photoslide.faces.FaceStore.ScanItem;
 
 /**
  * Face recognition of PhotoSlide: finds the faces of a photo, suggests names
@@ -48,6 +50,11 @@ public final class FaceService {
     private static final FaceService INSTANCE = new FaceService();
 
     private static final String PREF_FAST_MODEL = "faces.fastModel";
+    private static final String PREF_AUTO_SCAN = "faces.autoScan";
+    /** The background scan waits this long after the start of the program. */
+    private static final long SCAN_START_DELAY_MS = 60_000;
+    /** Delay of the new matching after a name was changed (several changes in a row: once). */
+    private static final long REMATCH_DELAY_SECONDS = 5;
     private static final long IDLE_SECONDS = 120;
     /** A new detection overlapping a known face more than this is the same face. */
     private static final double SAME_FACE_IOU = 0.4;
@@ -68,6 +75,8 @@ public final class FaceService {
     private Connection connection;
     private ScheduledFuture<?> idleRelease;
     private volatile Runnable downloadStarter;
+    private final long startTime = System.currentTimeMillis();
+    private ScheduledFuture<?> pendingRematch;
 
     private FaceService() {
     }
@@ -112,6 +121,23 @@ public final class FaceService {
      */
     public void setDownloadStarter(Runnable starter) {
         downloadStarter = starter;
+    }
+
+    /** true if the photos of the indexed collections are searched for faces in the background (preferences). */
+    public boolean isAutoScan() {
+        return preferences.getBoolean(PREF_AUTO_SCAN, true);
+    }
+
+    public void setAutoScan(boolean autoScan) {
+        preferences.putBoolean(PREF_AUTO_SCAN, autoScan);
+    }
+
+    /**
+     * Milliseconds the background scan should still wait so that it does not
+     * slow down the start of the program.
+     */
+    public long scanStartDelay() {
+        return Math.max(0, startTime + SCAN_START_DELAY_MS - System.currentTimeMillis());
     }
 
     /** true if the models of the recognizer in use are on disk (else {@link #downloadModels} first). */
@@ -283,6 +309,7 @@ public final class FaceService {
                         50 + failed.size());
                 pending.removeIf(p -> failed.contains(p.path()));
                 if (pending.isEmpty()) {
+                    rematch();
                     return;
                 }
                 Map<String, List<FaceRegion>> byPath = new HashMap<>();
@@ -307,6 +334,118 @@ public final class FaceService {
             }
         } catch (IOException | SQLException ex) {
             LOG.log(Level.WARNING, "Cannot compute face embeddings", ex);
+        }
+    }
+
+    /**
+     * Background scan of one file (see SearchIndex): finds the faces of a
+     * photo without faces in its XMP and stores them with the suggested names
+     * in the search database only, so that the names are found by the search.
+     * The XMP is not changed. Each file is a job of its own: the photo the
+     * user is looking at comes in between.
+     */
+    public CompletableFuture<Void> scanFile(ScanItem item) {
+        return CompletableFuture.runAsync(() -> {
+            String path = item.path();
+            try {
+                Connection con = connection();
+                if (con == null) {
+                    return;
+                }
+                String model = type.id();
+                MediaFile m = mediaFile(Path.of(path));
+                if (m.getMediaType() != MediaFile.MediaTypes.IMAGE || FaceStore.hasXmpFaces(con, path)
+                        || !m.getFaceRegions().isEmpty() || m.isFacesScanned()) {
+                    // the faces of the XMP count (also none, if the user removed all)
+                    FaceStore.writeAutoFaces(con, path, List.of());
+                } else {
+                    ensureModels();
+                    int quarters = FaceRegion.quarters(m.getRotationAngleProperty().get());
+                    Image16 source = EditPipeline.loadSourceUncached(m);
+                    List<KnownFace> known = FaceStore.knownFaces(con, embedder.type().id());
+                    double threshold = embedder.type().matchThreshold();
+                    List<FaceRegion> faces = new ArrayList<>();
+                    for (Detection d : detector.detect(source, quarters)) {
+                        if (indexOfSame(faces, d.region()) >= 0) {
+                            continue;
+                        }
+                        float[] embedding = embed(source, quarters, d.region(), d.landmarks());
+                        storeEmbedding(path, d.region(), embedding);
+                        faces.add(d.region().withName(match(known, embedding, threshold), false));
+                    }
+                    FaceStore.writeAutoFaces(con, path, faces);
+                }
+                FaceStore.refreshSearchText(con, path);
+                FaceStore.markScanned(con, path, model, item.lastModified());
+                commit();
+            } catch (Exception ex) {
+                // e.g. a damaged file: not again until it changes
+                LOG.log(Level.FINE, "No faces scanned in " + path, ex);
+                rollback();
+                try {
+                    Connection con = connection();
+                    if (con != null) {
+                        FaceStore.markScanned(con, path, type.id(), item.lastModified());
+                        commit();
+                    }
+                } catch (SQLException ex2) {
+                    rollback();
+                }
+            } finally {
+                scheduleRelease();
+            }
+        }, executor);
+    }
+
+    /**
+     * Matches the faces of the background scan again with the confirmed
+     * faces, a few seconds later (after a name was given or changed). Needs no
+     * models, only the stored feature vectors.
+     */
+    public void rematchLater() {
+        if (App.getSearchDBConnection() == null) {
+            return;
+        }
+        try {
+            executor.execute(() -> {
+                if (pendingRematch != null) {
+                    pendingRematch.cancel(false);
+                }
+                pendingRematch = executor.schedule(this::rematch, REMATCH_DELAY_SECONDS, TimeUnit.SECONDS);
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ex) {
+            // shut down
+        }
+    }
+
+    /** Matches the faces of the background scan again (on the executor thread). */
+    private void rematch() {
+        pendingRematch = null;
+        try {
+            Connection con = connection();
+            if (con == null) {
+                return;
+            }
+            EmbedderType t = type;
+            List<KnownFace> known = FaceStore.knownFaces(con, t.id());
+            Set<String> changed = new HashSet<>();
+            for (AutoFace a : FaceStore.autoFaces(con, t.id())) {
+                String name = match(known, a.embedding(), t.matchThreshold());
+                if (!java.util.Objects.equals(name, a.name())) {
+                    FaceStore.setAutoName(con, a.path(), a.idx(), name);
+                    changed.add(a.path());
+                }
+            }
+            for (String path : changed) {
+                FaceStore.refreshSearchText(con, path);
+            }
+            commit();
+            if (!changed.isEmpty()) {
+                LOG.log(Level.FINE, "Face suggestions changed in {0} files", changed.size());
+            }
+        } catch (SQLException ex) {
+            rollback();
+            LOG.log(Level.WARNING, "Cannot match the scanned faces", ex);
         }
     }
 

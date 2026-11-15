@@ -317,6 +317,7 @@ public class MainViewController implements Initializable {
             }
         });
         taskProgressView.setPrefSize(300, 200);
+        taskProgressView.getStylesheets().add(getClass().getResource("/org/photoslide/css/TaskProgress.css").toExternalForm());
         // after the start, so it does not slow down loading the first folder
         org.photoslide.faces.FaceService.get().setDownloadStarter(() -> Platform.runLater(this::downloadFaceModels));
         executorParallelScheduled.schedule(() -> Platform.runLater(this::downloadFaceModels), 20, TimeUnit.SECONDS);

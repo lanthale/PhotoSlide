@@ -69,7 +69,8 @@ public class App extends Application {
     private static boolean MAXIMIZED = true;
     // 3: metadata without icafe4j number lists
     // 4: faces (FACES, FACE_EMBEDDINGS), rebuilt from the MWG regions in the XMP sidecars
-    private static final int SEARCHDB_VERSION = 5;
+    // 5: embeddings per recognizer; 6: faces of the background scan (FACES.auto, FACE_SCANS)
+    private static final int SEARCHDB_VERSION = 6;
     /** Characters that separate the words of the full text index. */
     public static final String SEARCH_WHITESPACE_CHARS = " ;-:/.,\\";
     private static final String NODE_NAME = "PhotoSlide";
@@ -291,6 +292,14 @@ public class App extends Application {
             }
             return;
         }
+        if (version == 5) {
+            // faces found by the background scan: keeps the names already in the database
+            try (Statement stat = con.createStatement()) {
+                addFaceScanTables(stat);
+                stat.execute("UPDATE SCHEMAINFO SET version=" + SEARCHDB_VERSION);
+            }
+            return;
+        }
         try (Statement stat = con.createStatement()) {
             try {
                 FullText.dropAll(con);
@@ -300,6 +309,7 @@ public class App extends Application {
             stat.execute("DROP TABLE IF EXISTS MEDIAFILES");
             stat.execute("DROP TABLE IF EXISTS FACES");
             stat.execute("DROP TABLE IF EXISTS FACE_EMBEDDINGS");
+            stat.execute("DROP TABLE IF EXISTS FACE_SCANS");
             stat.execute("DROP TABLE IF EXISTS SCHEMAINFO");
             stat.execute("DROP ALIAS IF EXISTS FT_INIT");
             FullText.init(con);
@@ -332,11 +342,12 @@ public class App extends Application {
         }
     }
 
-    /** Faces and their feature vectors (version 5). */
+    /** Faces and their feature vectors (version 6). */
     private static void createFaceTables(Statement stat) throws SQLException {
         {
             stat.execute("DROP TABLE IF EXISTS FACES");
             stat.execute("DROP TABLE IF EXISTS FACE_EMBEDDINGS");
+            stat.execute("DROP TABLE IF EXISTS FACE_SCANS");
             // the faces of each file as in its XMP sidecar (normalized to the decoded source)
             stat.execute("CREATE TABLE FACES("
                     + "pathStorage VARCHAR(1000) NOT NULL,"
@@ -354,7 +365,21 @@ public class App extends Application {
                     + "x DOUBLE, y DOUBLE, w DOUBLE, h DOUBLE,"
                     + "embedding VARBINARY(2048) NOT NULL)");
             stat.execute("CREATE INDEX FACE_EMBEDDINGS_PATH ON FACE_EMBEDDINGS(pathStorage)");
+            addFaceScanTables(stat);
         }
+    }
+
+    /**
+     * Version 6: FACES.auto marks a face of the background scan (only in the
+     * database, not in the XMP); FACE_SCANS records the files the scan has
+     * done, with the recognizer and the modification time of the file.
+     */
+    private static void addFaceScanTables(Statement stat) throws SQLException {
+        stat.execute("ALTER TABLE FACES ADD COLUMN IF NOT EXISTS auto BOOLEAN DEFAULT FALSE NOT NULL");
+        stat.execute("CREATE TABLE IF NOT EXISTS FACE_SCANS("
+                + "pathStorage VARCHAR(1000) PRIMARY KEY,"
+                + "model VARCHAR(16) NOT NULL,"
+                + "lastModified BIGINT NOT NULL)");
     }
 
     private static int searchDBVersion(Connection con) {

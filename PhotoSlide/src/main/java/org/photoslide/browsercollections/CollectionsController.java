@@ -8,6 +8,7 @@ package org.photoslide.browsercollections;
 
 import org.photoslide.I18n;
 import org.photoslide.search.SearchIndex;
+import org.photoslide.faces.FaceService;
 import org.photoslide.MainViewController;
 import org.photoslide.Utility;
 import org.photoslide.datamodel.XmpSidecar;
@@ -109,6 +110,10 @@ public class CollectionsController implements Initializable {
     private MenuItem deleteMenu;
     @FXML
     private MenuItem searchIndexMenu;
+    /** key of the pane property with the folder of the collection */
+    private static final String COLLECTION_PATH = "collectionPath";
+    @FXML
+    private MenuItem rescanFacesMenu;
     private Image iconImage;
     private SearchIndex searchIndexProcess;
     private DirectoryWatcher directorywatchSelected;
@@ -163,6 +168,7 @@ public class CollectionsController implements Initializable {
         accordionPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 searchIndexProcess = new SearchIndex(mainController.getMetadataPaneController(), mainController);
+                searchIndexProcess.setIndexChangedListener(this::updateFileCount);
                 loadURLs();
             }
         });
@@ -471,6 +477,7 @@ public class CollectionsController implements Initializable {
         TitledPane actCollectionTitlePane = new TitledPane();
         actCollectionTitlePane.setGraphic(waitPrg);
         actCollectionTitlePane.setText(path);
+        actCollectionTitlePane.getProperties().put(COLLECTION_PATH, path);
         actCollectionTitlePane.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         actCollectionTitlePane.setAnimated(true);
         actCollectionTitlePane.setTextAlignment(TextAlignment.LEFT);
@@ -509,6 +516,7 @@ public class CollectionsController implements Initializable {
             FontIcon greenIcon = new FontIcon("ti-agenda");
             greenIcon.setId("CollectorGreen");
             actCollectionTitlePane.setGraphic(greenIcon);
+            updateFileCount(actCollectionTitlePane);
             TreeView<PathItem> dirTreeView = (TreeView<PathItem>) t.getSource().getValue();
             dirTreeView.getRoot().setExpanded(true);
             dirTreeView.setDisable(false);
@@ -537,6 +545,7 @@ public class CollectionsController implements Initializable {
             FontIcon redIcon = new FontIcon("ti-agenda");
             redIcon.setId("CollectorRed");
             actCollectionTitlePane.setGraphic(redIcon);
+            updateFileCount(actCollectionTitlePane);
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
             Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
@@ -698,6 +707,25 @@ public class CollectionsController implements Initializable {
         }
     }
 
+    /**
+     * Searches all photos of the expanded collection for faces again (only
+     * for collections in the search index; the faces in the XMP stay).
+     */
+    @FXML
+    private void rescanFacesAction(ActionEvent event) {
+        TitledPane expandedPane = accordionPane.getExpandedPane();
+        if (expandedPane == null) {
+            showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandForRescanFaces"));
+            return;
+        }
+        String root = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
+        if (getPrefKeyForRemoving(root, "INDEX") == null) {
+            showCollectionAlert(AlertType.INFORMATION, I18n.t("coll.rescanFacesNeedsIndex"));
+            return;
+        }
+        searchIndexProcess.rescanFaces(root);
+    }
+
     /** The text of the search index entry follows the expanded collection. */
     private void updateSearchIndexMenu() {
         TitledPane expandedPane = accordionPane.getExpandedPane();
@@ -708,6 +736,7 @@ public class CollectionsController implements Initializable {
         }
         searchIndexMenu.setText(I18n.t(indexed ? "browserCollections.removeFromSearchIndex"
                 : "browserCollections.addToSearchIndex"));
+        rescanFacesMenu.setDisable(!FaceService.get().modelsAvailable());
     }
 
     /**
@@ -823,6 +852,46 @@ public class CollectionsController implements Initializable {
         stage.getIcons().add(iconImage);
         Utility.centerChildWindowOnStage(stage, (Stage) accordionPane.getScene().getWindow());
         alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+    }
+
+    /** The folder of the collection shown by the pane (its title may also show the number of files). */
+    private static String collectionPath(TitledPane pane) {
+        Object path = pane.getProperties().get(COLLECTION_PATH);
+        return path instanceof String p ? p : pane.getText();
+    }
+
+    /** Updates the number of files at the collection (FX thread; see SearchIndex). */
+    private void updateFileCount(String collectionName) {
+        for (TitledPane pane : accordionPane.getPanes()) {
+            String path = collectionPath(pane);
+            if (!path.isEmpty() && Path.of(path).equals(Path.of(collectionName))) {
+                updateFileCount(pane);
+            }
+        }
+    }
+
+    /**
+     * Shows the number of files of the search index after the path of the
+     * collection, e.g. "/Volumes/photo-1 (5.300)": only if the collection is
+     * available (green icon) and in the search index.
+     */
+    private void updateFileCount(TitledPane pane) {
+        String path = collectionPath(pane);
+        if (!isAvailable(pane) || searchIndexProcess == null || getPrefKeyForRemoving(path, "INDEX") == null) {
+            pane.setText(path);
+            return;
+        }
+        searchIndexProcess.fileCount(path).thenAccept(count -> Platform.runLater(() -> {
+            if (isAvailable(pane) && getPrefKeyForRemoving(path, "INDEX") != null && count > 0) {
+                pane.setText(path + " (" + java.text.NumberFormat.getIntegerInstance().format(count) + ")");
+            } else {
+                pane.setText(path);
+            }
+        }));
+    }
+
+    private static boolean isAvailable(TitledPane pane) {
+        return pane.getGraphic() != null && "CollectorGreen".equals(pane.getGraphic().getId());
     }
 
     private String getPrefKeyForRemoving(String path, String prefix) {
@@ -1209,7 +1278,7 @@ public class CollectionsController implements Initializable {
             ComboBox<String> cb = new ComboBox<>();
             cb.setPrefWidth(200);
             accordionPane.getPanes().forEach((pan) -> {
-                cb.getItems().add(pan.getText());
+                cb.getItems().add(collectionPath(pan));
             });
             content.addRow(0, cbLabel, cb);
             Label cbRootLabel = new Label(I18n.t("coll.selectEvent"));
@@ -1218,7 +1287,7 @@ public class CollectionsController implements Initializable {
             content.addRow(1, cbRootLabel, cbRootFolder);
             cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
                 cbRootFolder.getItems().clear();
-                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
                 TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
                 tree.getRoot().getChildren().forEach((treeitem) -> {
                     cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
@@ -1320,7 +1389,7 @@ public class CollectionsController implements Initializable {
                     stageError.showAndWait();
                 });
                 task.setOnSucceeded((suc) -> {
-                    FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> panet.getText().equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+                    FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
                     if (filtered.isEmpty() == false) {
                         accordionPane.setExpandedPane(filtered.get(0));
                         TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();

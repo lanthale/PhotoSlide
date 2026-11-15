@@ -101,6 +101,11 @@
                         <FontIcon iconLiteral="ti-search" />
                      </graphic>
                   </MenuItem>
+                  <MenuItem fx:id="rescanFacesMenu" mnemonicParsing="false" onAction="#rescanFacesAction" text="%browserCollections.rescanFaces">
+                     <graphic>
+                        <FontIcon iconLiteral="ti-face-smile" />
+                     </graphic>
+                  </MenuItem>
                   <MenuItem mnemonicParsing="false" onAction="#removeCollectionAction" text="%browserCollections.removeCollection">
                      <graphic>
                         <StackedFontIcon alignment="CENTER_RIGHT">

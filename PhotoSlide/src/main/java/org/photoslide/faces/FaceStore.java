@@ -12,7 +12,9 @@ import org.photoslide.datamodel.FaceRegion;
 
 /**
  * Faces in the search database: the table FACES mirrors the regions of the
- * XMP sidecars (rebuilt by every scan), FACE_EMBEDDINGS keeps the feature
+ * XMP sidecars (rebuilt by every scan) plus the faces the background scan
+ * found in files without faces in their XMP (AUTO, only here), FACE_SCANS
+ * records the files the background scan has done, FACE_EMBEDDINGS keeps the feature
  * vectors, separately for each recognizer (column MODEL). Embeddings are matched to faces by position, so renaming a face
  * keeps its embedding. All methods use the given connection and do not
  * commit.
@@ -32,12 +34,25 @@ public final class FaceStore {
     public record PendingFace(String path, FaceRegion region) {
     }
 
+    /** A face of the background scan with its feature vector (name = current suggestion or null). */
+    public record AutoFace(String path, int idx, String name, float[] embedding) {
+    }
+
+    /** A file the background scan still has to do. */
+    public record ScanItem(String path, long lastModified) {
+    }
+
     private FaceStore() {
     }
 
-    /** Replaces the faces of the file; embeddings of removed faces are deleted. */
+    /**
+     * Replaces the faces of the file by those of its XMP; embeddings of
+     * removed faces are deleted. Faces in the XMP replace those of the
+     * background scan; without faces in the XMP the ones of the scan stay.
+     */
     public static void writeFaces(Connection con, String path, List<FaceRegion> faces) throws SQLException {
-        try (PreparedStatement delete = con.prepareStatement("DELETE FROM FACES WHERE PATHSTORAGE=?")) {
+        try (PreparedStatement delete = con.prepareStatement(faces.isEmpty()
+                ? "DELETE FROM FACES WHERE PATHSTORAGE=? AND NOT AUTO" : "DELETE FROM FACES WHERE PATHSTORAGE=?")) {
             delete.setString(1, path);
             delete.executeUpdate();
         }
@@ -70,9 +85,159 @@ public final class FaceStore {
         }
     }
 
+    /**
+     * Replaces the faces the background scan found in the file (suggested
+     * names unconfirmed). Only for files without faces in their XMP.
+     */
+    public static void writeAutoFaces(Connection con, String path, List<FaceRegion> faces) throws SQLException {
+        try (PreparedStatement delete = con.prepareStatement("DELETE FROM FACES WHERE PATHSTORAGE=? AND AUTO")) {
+            delete.setString(1, path);
+            delete.executeUpdate();
+        }
+        if (faces.isEmpty()) {
+            return;
+        }
+        try (PreparedStatement insert = con.prepareStatement(
+                "INSERT INTO FACES (PATHSTORAGE, IDX, NAME, CONFIRMED, X, Y, W, H, AUTO) VALUES (?,?,?,FALSE,?,?,?,?,TRUE)")) {
+            int i = 0;
+            for (FaceRegion r : faces) {
+                insert.setString(1, path);
+                insert.setInt(2, i++);
+                if (r.isUnknown()) {
+                    insert.setNull(3, Types.VARCHAR);
+                } else {
+                    insert.setString(3, r.name());
+                }
+                insert.setDouble(4, r.x());
+                insert.setDouble(5, r.y());
+                insert.setDouble(6, r.w());
+                insert.setDouble(7, r.h());
+                insert.addBatch();
+            }
+            insert.executeBatch();
+        }
+    }
+
+    /** true if the file has faces from its XMP (not only ones of the background scan). */
+    public static boolean hasXmpFaces(Connection con, String path) throws SQLException {
+        try (PreparedStatement stm = con.prepareStatement("SELECT 1 FROM FACES WHERE PATHSTORAGE=? AND NOT AUTO LIMIT 1")) {
+            stm.setString(1, path);
+            try (ResultSet rs = stm.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    /**
+     * The searchable names of the file: the confirmed ones and the
+     * suggestions of the background scan, each once ("; " separated), null
+     * if none.
+     */
+    public static String searchText(Connection con, String path) throws SQLException {
+        StringBuilder text = new StringBuilder();
+        try (PreparedStatement stm = con.prepareStatement("SELECT DISTINCT NAME FROM FACES WHERE PATHSTORAGE=? "
+                + "AND NAME IS NOT NULL AND (CONFIRMED OR AUTO) ORDER BY NAME")) {
+            stm.setString(1, path);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    if (text.length() > 0) {
+                        text.append("; ");
+                    }
+                    text.append(rs.getString(1));
+                }
+            }
+        }
+        return text.length() == 0 ? null : text.toString();
+    }
+
+    /** Writes {@link #searchText} into the full text indexed column MEDIAFILES.FACES. */
+    public static void refreshSearchText(Connection con, String path) throws SQLException {
+        try (PreparedStatement stm = con.prepareStatement("UPDATE MEDIAFILES SET FACES=? WHERE PATHSTORAGE=?")) {
+            String text = searchText(con, path);
+            if (text == null) {
+                stm.setNull(1, Types.VARCHAR);
+            } else {
+                stm.setString(1, text);
+            }
+            stm.setString(2, path);
+            stm.executeUpdate();
+        }
+    }
+
+    /** All faces of the background scan that have a feature vector of the model. */
+    public static List<AutoFace> autoFaces(Connection con, String model) throws SQLException {
+        List<AutoFace> result = new ArrayList<>();
+        try (PreparedStatement stm = con.prepareStatement("SELECT f.PATHSTORAGE, f.IDX, f.NAME, e.EMBEDDING FROM FACES f "
+                + "JOIN FACE_EMBEDDINGS e ON f.PATHSTORAGE=e.PATHSTORAGE AND e.MODEL=? AND " + SAME_FACE
+                + " WHERE f.AUTO")) {
+            stm.setString(1, model);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new AutoFace(rs.getString(1), rs.getInt(2), rs.getString(3), fromBytes(rs.getBytes(4))));
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Sets the suggested name of a face of the background scan (null = unknown). */
+    public static void setAutoName(Connection con, String path, int idx, String name) throws SQLException {
+        try (PreparedStatement stm = con.prepareStatement("UPDATE FACES SET NAME=? WHERE PATHSTORAGE=? AND IDX=? AND AUTO")) {
+            if (name == null) {
+                stm.setNull(1, Types.VARCHAR);
+            } else {
+                stm.setString(1, name);
+            }
+            stm.setString(2, path);
+            stm.setInt(3, idx);
+            stm.executeUpdate();
+        }
+    }
+
+    /**
+     * The files of the collection the background scan has not done yet with
+     * the model in their current state (new, changed or done with another
+     * model), sorted by path.
+     */
+    public static List<ScanItem> unscannedFiles(Connection con, String collectionName, String model) throws SQLException {
+        List<ScanItem> result = new ArrayList<>();
+        try (PreparedStatement stm = con.prepareStatement("SELECT m.PATHSTORAGE, m.LASTMODIFIED FROM MEDIAFILES m "
+                + "LEFT JOIN FACE_SCANS s ON s.PATHSTORAGE=m.PATHSTORAGE WHERE m.COLLECTIONNAME=? AND "
+                + "(s.PATHSTORAGE IS NULL OR s.MODEL<>? OR s.LASTMODIFIED<>m.LASTMODIFIED) ORDER BY m.PATHSTORAGE")) {
+            stm.setString(1, collectionName);
+            stm.setString(2, model);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    result.add(new ScanItem(rs.getString(1), rs.getLong(2)));
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Forgets the background scans of the files of the collection: the next scan does them all again. */
+    public static void forgetScans(Connection con, String collectionName) throws SQLException {
+        try (PreparedStatement stm = con.prepareStatement("DELETE FROM FACE_SCANS "
+                + "WHERE PATHSTORAGE IN (SELECT PATHSTORAGE FROM MEDIAFILES WHERE COLLECTIONNAME=?)")) {
+            stm.setString(1, collectionName);
+            stm.executeUpdate();
+        }
+    }
+
+    /** Records that the background scan has done the file in this state. */
+    public static void markScanned(Connection con, String path, String model, long lastModified) throws SQLException {
+        try (PreparedStatement stm = con.prepareStatement(
+                "MERGE INTO FACE_SCANS (PATHSTORAGE, MODEL, LASTMODIFIED) KEY(PATHSTORAGE) VALUES (?,?,?)")) {
+            stm.setString(1, path);
+            stm.setString(2, model);
+            stm.setLong(3, lastModified);
+            stm.executeUpdate();
+        }
+    }
+
     /** Removes faces and embeddings of the file. */
     public static void deleteFile(Connection con, String path) throws SQLException {
-        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS"}) {
+        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS", "FACE_SCANS"}) {
             try (PreparedStatement stm = con.prepareStatement("DELETE FROM " + table + " WHERE PATHSTORAGE=?")) {
                 stm.setString(1, path);
                 stm.executeUpdate();
@@ -82,7 +247,7 @@ public final class FaceStore {
 
     /** Removes faces and embeddings of all files of the collection (before the files are removed). */
     public static void deleteCollection(Connection con, String collectionName) throws SQLException {
-        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS"}) {
+        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS", "FACE_SCANS"}) {
             try (PreparedStatement stm = con.prepareStatement("DELETE FROM " + table
                     + " WHERE PATHSTORAGE IN (SELECT PATHSTORAGE FROM MEDIAFILES WHERE COLLECTIONNAME=?)")) {
                 stm.setString(1, collectionName);
@@ -93,7 +258,7 @@ public final class FaceStore {
 
     /** Rewrites the paths below oldRoot to newRoot. */
     public static void relocate(Connection con, String oldRoot, String newRoot) throws SQLException {
-        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS"}) {
+        for (String table : new String[]{"FACES", "FACE_EMBEDDINGS", "FACE_SCANS"}) {
             try (PreparedStatement stm = con.prepareStatement("UPDATE " + table
                     + " SET PATHSTORAGE = ? || SUBSTRING(PATHSTORAGE, ?) WHERE LEFT(PATHSTORAGE, ?) = ?")) {
                 stm.setString(1, newRoot);

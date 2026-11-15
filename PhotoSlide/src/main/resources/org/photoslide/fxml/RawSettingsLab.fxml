@@ -112,6 +112,10 @@
                     <Label text="%faces.title" styleClass="settings-section-title"/>
                     <CheckBox fx:id="fastFaceModelCheck" text="%preferences.facesFastModel"/>
                     <Label text="%preferences.facesFastModelHint" wrapText="true" maxWidth="640.0" style="-fx-text-fill: #9f9f9f;"/>
+                    <CheckBox fx:id="autoFaceScanCheck" text="%preferences.facesAutoScan">
+                        <VBox.margin><Insets top="8.0"/></VBox.margin>
+                    </CheckBox>
+                    <Label text="%preferences.facesAutoScanHint" wrapText="true" maxWidth="640.0" style="-fx-text-fill: #9f9f9f;"/>
                 </VBox>
             </StackPane>
         </StackPane>

@@ -1,0 +1,11 @@
+/* Task list: long titles and messages are cut off with an ellipsis instead of
+   widening the list (the progress bar and the Cancel button stay visible). */
+.task-title, .task-message {
+    -fx-min-width: 0;
+    -fx-pref-width: 240;
+}
+
+/* paths: the end (current folder) matters most */
+.task-message {
+    -fx-text-overrun: leading-ellipsis;
+}

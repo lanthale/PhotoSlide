@@ -100,6 +100,7 @@ public class RawSettingsLabController implements Initializable {
     @FXML private VBox rawLabRoot;
     @FXML private StackPane generalPane;
     @FXML private javafx.scene.control.CheckBox fastFaceModelCheck;
+    @FXML private javafx.scene.control.CheckBox autoFaceScanCheck;
 
     private static final String TREE_RAW = I18n.t("raw.treeRaw");
     private static final String TREE_GENERAL = I18n.t("rawSettingsLab.general");
@@ -241,6 +242,8 @@ public class RawSettingsLabController implements Initializable {
         org.photoslide.faces.FaceService faces = org.photoslide.faces.FaceService.get();
         fastFaceModelCheck.setSelected(faces.isFastModel());
         fastFaceModelCheck.selectedProperty().addListener((obs, was, fast) -> faces.setFastModel(fast));
+        autoFaceScanCheck.setSelected(faces.isAutoScan());
+        autoFaceScanCheck.selectedProperty().addListener((obs, was, on) -> faces.setAutoScan(on));
     }
 
     // ------------------------------------------------------------------

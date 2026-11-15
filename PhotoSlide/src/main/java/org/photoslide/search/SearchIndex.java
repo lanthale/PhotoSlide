@@ -71,10 +71,14 @@ public class SearchIndex {
     // one thread: collections are scanned one after another, edits in between
     private final ExecutorService executor;
     private final ExecutorService geoExecutor;
+    // background face scans, one collection after another
+    private final ExecutorService faceExecutor;
     private final Map<Task<Void>, String> tasks = new ConcurrentHashMap<>();
     // collections whose places are being resolved
     private final Set<String> geoPending = ConcurrentHashMap.newKeySet();
     private volatile boolean terminated;
+    /** told (FX thread) when the files of a collection in the index may have changed */
+    private volatile java.util.function.Consumer<String> indexChangedListener;
     // used on the executor thread only
     private Connection connection;
 
@@ -83,6 +87,7 @@ public class SearchIndex {
         mainViewController = c;
         executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
         geoExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexGeoExecutor").build());
+        faceExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexFaceExecutor").build());
         MediaFile.setEditsSavedListener(this::updateEdits);
     }
 
@@ -114,6 +119,83 @@ public class SearchIndex {
         executor.submit(task);
     }
 
+    /**
+     * Searches the photos of the collection for faces in the background (only
+     * new and changed files, see FaceService.scanFile), unless switched off
+     * in the preferences or the models are missing.
+     */
+    private void createFaceScan(String collectionName, boolean force) {
+        FaceService faces = FaceService.get();
+        if (terminated || App.getSearchDBConnection() == null || !faces.modelsAvailable()
+                || (!force && !faces.isAutoScan())) {
+            return;
+        }
+        if (force) {
+            // a scan of the collection that is waiting or running would only be repeated
+            tasks.forEach((t, name) -> {
+                if (t instanceof FaceScanTask && name.equals(collectionName)) {
+                    t.cancel(false);
+                }
+            });
+        }
+        FaceScanTask task = new FaceScanTask(collectionName, force);
+        tasks.put(task, collectionName);
+        task.setOnSucceeded((t) -> finished(task));
+        task.setOnCancelled((t) -> finished(task));
+        task.setOnFailed((t) -> {
+            finished(task);
+            LOG.log(Level.WARNING, "Face scan of " + collectionName + " failed", t.getSource().getException());
+        });
+        try {
+            faceExecutor.submit(task);
+        } catch (java.util.concurrent.RejectedExecutionException ex) {
+            tasks.remove(task);
+        }
+    }
+
+    /**
+     * Searches all photos of the collection for faces again (menu of the
+     * collections), also if the background scan is switched off. Faces in the
+     * XMP files stay as they are.
+     */
+    public void rescanFaces(String collectionName) {
+        createFaceScan(collectionName, true);
+    }
+
+    /**
+     * Number of files of the collection in the search index, 0 if it is not
+     * indexed (own connection: does not wait for a running scan).
+     */
+    public java.util.concurrent.CompletableFuture<Integer> fileCount(String collectionName) {
+        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (terminated || App.getSearchDBConnection() == null) {
+                return 0;
+            }
+            try (Connection con = App.openSearchDBConnection();
+                    PreparedStatement stm = con.prepareStatement("SELECT COUNT(*) FROM MEDIAFILES WHERE COLLECTIONNAME=?")) {
+                stm.setString(1, collectionName);
+                try (ResultSet rs = stm.executeQuery()) {
+                    return rs.next() ? rs.getInt(1) : 0;
+                }
+            } catch (SQLException ex) {
+                LOG.log(Level.FINE, "Cannot count the files of " + collectionName, ex);
+                return 0;
+            }
+        });
+    }
+
+    /** Called on the FX thread with the collection whose indexed files may have changed. */
+    public void setIndexChangedListener(java.util.function.Consumer<String> listener) {
+        indexChangedListener = listener;
+    }
+
+    private void fireIndexChanged(String collectionName) {
+        java.util.function.Consumer<String> listener = indexChangedListener;
+        if (listener != null && !terminated) {
+            javafx.application.Platform.runLater(() -> listener.accept(collectionName));
+        }
+    }
+
     private void finished(Task<Void> task) {
         tasks.remove(task);
         mainViewController.getTaskProgressView().getTasks().remove(task);
@@ -126,6 +208,10 @@ public class SearchIndex {
         con.setAutoCommit(false);
         try (PreparedStatement merge = con.prepareStatement(MERGE_SQL)) {
             int[] pending = {0};
+            // for the task list: files checked so far
+            int[] checked = {0};
+            // files indexed before: the total to expect (unknown at the first scan)
+            int total = indexed.size();
             // files and sidecars of the folders being visited: a sidecar may come after its image
             Deque<Map<String, BasicFileAttributes>> folders = new ArrayDeque<>();
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -169,11 +255,13 @@ public class SearchIndex {
                         if (sidecar != null) {
                             modified = Math.max(modified, sidecar.lastModifiedTime().toMillis());
                         }
+                        checked[0]++;
                         Long known = indexed.remove(path);
                         if (known != null && known == modified) {
                             continue;
                         }
-                        task.report(I18n.t("search.updatingIndex"), shortPath(path));
+                        task.report(progressTitle(checked[0], total), folderOf(collectionName, path));
+                        task.progress(checked[0], total);
                         try {
                             if (addToBatch(task, merge, collectionName, fileItem, entry.getValue(), modified)) {
                                 pending[0]++;
@@ -186,6 +274,10 @@ public class SearchIndex {
                         } catch (SQLException ex) {
                             throw new IOException(ex);
                         }
+                    }
+                    if (!files.isEmpty()) {
+                        task.report(progressTitle(checked[0], total), folderName(collectionName, dir));
+                        task.progress(checked[0], total);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -211,6 +303,8 @@ public class SearchIndex {
             if (complete) {
                 App.setSEARCHINDEXFINISHED(collectionName, LocalDate.now());
             }
+            // e.g. the number of files shown at the collection
+            fireIndexChanged(collectionName);
         } catch (IOException | SQLException ex) {
             con.rollback();
             throw ex;
@@ -221,6 +315,7 @@ public class SearchIndex {
             requestPlaces(collectionName);
             // embeddings of named faces, e.g. after the database was built again from the XMP files
             FaceService.get().learnMissingEmbeddings();
+            createFaceScan(collectionName, false);
         }
     }
 
@@ -233,10 +328,6 @@ public class SearchIndex {
     private static String sidecarName(String fileName) {
         int dot = fileName.lastIndexOf('.');
         return (dot > 0 ? fileName.substring(0, dot) : fileName) + ".xmp";
-    }
-
-    private static String shortPath(String path) {
-        return path.length() > 35 ? "..." + path.substring(path.length() - 35) : path;
     }
 
     private static Map<String, Long> loadIndexed(Connection con, String collectionName) throws SQLException {
@@ -305,9 +396,13 @@ public class SearchIndex {
             // indexed without metadata: name, path and edits are still found
             LOG.log(Level.FINEST, "Cannot read " + m.getName() + " - " + m.getPathStorage(), ex);
         }
-        setValues(merge, collectionName, m, metadata, modified, attrs.size());
-        merge.addBatch();
         FaceStore.writeFaces(merge.getConnection(), path, m.getFaceRegions());
+        setValues(merge, collectionName, m, metadata, modified, attrs.size());
+        if (m.getFaceRegions().isEmpty()) {
+            // the faces found by the background scan stay searchable
+            setText(merge, 12, FaceStore.searchText(merge.getConnection(), path));
+        }
+        merge.addBatch();
         return true;
     }
 
@@ -383,6 +478,12 @@ public class SearchIndex {
                     }
                     // also for files of collections without search: the names teach the recognition
                     FaceStore.writeFaces(connection(), path, faceRegions);
+                    if (faceRegions.isEmpty()) {
+                        FaceStore.refreshSearchText(connection(), path);
+                    } else {
+                        // the new names may fit faces the background scan found in other photos
+                        FaceService.get().rematchLater();
+                    }
                 } catch (IOException | SQLException ex) {
                     LOG.log(Level.WARNING, "Cannot update search index of " + path, ex);
                 }
@@ -481,6 +582,7 @@ public class SearchIndex {
         }
         executor.shutdown();
         geoExecutor.shutdownNow();
+        faceExecutor.shutdown();
     }
 
     /**
@@ -501,6 +603,7 @@ public class SearchIndex {
                 FaceStore.deleteCollection(connection(), colname);
                 stm.setString(1, colname);
                 stm.executeUpdate();
+                fireIndexChanged(colname);
             } catch (SQLException ex) {
                 LOG.log(Level.SEVERE, null, ex);
             }
@@ -589,6 +692,103 @@ public class SearchIndex {
         createCheckSearchIndex(newRoot);
     }
 
+    /**
+     * Background face scan of a collection. Gentle on slow computers: starts
+     * a minute after the program, does one file at a time and pauses after
+     * each file as long as it took; it is shown in the task list only if
+     * there is something to do. Cancelled files are done by the next scan.
+     */
+    private final class FaceScanTask extends Task<Void> {
+
+        private final String collectionName;
+        /** started by the user: at once, all files, also if the background scan is switched off */
+        private final boolean force;
+
+        FaceScanTask(String collectionName, boolean force) {
+            this.collectionName = collectionName;
+            this.force = force;
+        }
+
+        @Override
+        protected Void call() throws Exception {
+            FaceService faces = FaceService.get();
+            long wait = force ? 0 : faces.scanStartDelay();
+            while (wait > 0 && !isCancelled()) {
+                Thread.sleep(Math.min(wait, 1000));
+                wait = faces.scanStartDelay();
+            }
+            if (isCancelled() || terminated || (!force && !faces.isAutoScan()) || !faces.modelsAvailable()) {
+                return null;
+            }
+            List<FaceStore.ScanItem> items;
+            try (Connection con = App.openSearchDBConnection()) {
+                if (force) {
+                    FaceStore.forgetScans(con, collectionName);
+                }
+                items = FaceStore.unscannedFiles(con, collectionName, faces.embedderType().id());
+            }
+            if (items.isEmpty()) {
+                return null;
+            }
+            updateTitle(I18n.t("faces.scanTitle"));
+            javafx.application.Platform.runLater(() -> {
+                if (tasks.containsKey(this)) {
+                    mainViewController.getTaskProgressView().getTasks().add(this);
+                }
+            });
+            long start = System.currentTimeMillis();
+            int done = 0;
+            for (FaceStore.ScanItem item : items) {
+                if (isCancelled() || terminated || (!force && !faces.isAutoScan())) {
+                    break;
+                }
+                // the counter in the title: the message (folder) is cut off at its start if too long
+                updateTitle(I18n.t("faces.scanProgress", done + 1, items.size()));
+                updateMessage(folderOf(collectionName, item.path()));
+                updateProgress(done, items.size());
+                long t0 = System.nanoTime();
+                faces.scanFile(item).join();
+                done++;
+                // pause as long as the file took: half of one core at most
+                long took = (System.nanoTime() - t0) / 1_000_000;
+                if (took > 0 && !isCancelled()) {
+                    Thread.sleep(Math.min(took, 5000));
+                }
+            }
+            faces.rematchLater();
+            LOG.log(Level.FINE, "Face scan of {0}: {1} of {2} files in {3} ms",
+                    new Object[]{collectionName, done, items.size(), System.currentTimeMillis() - start});
+            return null;
+        }
+    }
+
+    /**
+     * The folder of the file from the folder of the collection on (e.g.
+     * "Bergfotos/2023/Juli"), for the task list.
+     */
+    static String folderOf(String collectionName, String path) {
+        Path folder = Path.of(path).getParent();
+        return folder == null ? "" : folderName(collectionName, folder);
+    }
+
+    /** "Search index: 1234 / 5300" (without total at the first scan of a collection). */
+    private static String progressTitle(int checked, int total) {
+        return total > 0 ? I18n.t("search.checkedOf", checked, Math.max(checked, total))
+                : I18n.t("search.checkedCount", checked);
+    }
+
+    /** The folder from the folder of the collection on (see {@link #folderOf}). */
+    static String folderName(String collectionName, Path folder) {
+        Path root = Path.of(collectionName);
+        if (folder.startsWith(root)) {
+            Path name = root.getFileName();
+            Path rel = root.relativize(folder);
+            String head = name == null ? root.toString() : name.toString();
+            return rel.toString().isEmpty() ? head : head + "/" + rel.toString().replace('\\', '/');
+        }
+        return folder.toString();
+    }
+
     private final class ScanTask extends Task<Void> {
 
         private final Path root;
@@ -618,6 +818,13 @@ public class SearchIndex {
         void report(String title, String message) {
             updateTitle(title);
             updateMessage(message);
+        }
+
+        /** Progress bar; stays indeterminate without total. */
+        void progress(int done, int total) {
+            if (total > 0) {
+                updateProgress(Math.min(done, total), total);
+            }
         }
     }
 

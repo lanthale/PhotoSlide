@@ -921,6 +921,12 @@ public class MainViewController implements Initializable {
         Platform.exit();
     }
 
+    /** Help menu: email with the logs to the developer. */
+    @FXML
+    private void mailLogsMenuAction(ActionEvent event) {
+        DiagnosticsMail.sendLogs(menuBar.getScene() == null ? null : menuBar.getScene().getWindow(), null);
+    }
+
     @FXML
     private void aboutMenuAction(ActionEvent event) {
         Utility util = new Utility();

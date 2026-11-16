@@ -101,6 +101,8 @@ public class RawSettingsLabController implements Initializable {
     @FXML private StackPane generalPane;
     @FXML private javafx.scene.control.CheckBox fastFaceModelCheck;
     @FXML private javafx.scene.control.CheckBox autoFaceScanCheck;
+    @FXML private javafx.scene.control.CheckBox uiWatchdogCheck;
+    @FXML private Button mailLogsButton;
 
     private static final String TREE_RAW = I18n.t("raw.treeRaw");
     private static final String TREE_GENERAL = I18n.t("rawSettingsLab.general");
@@ -244,6 +246,16 @@ public class RawSettingsLabController implements Initializable {
         fastFaceModelCheck.selectedProperty().addListener((obs, was, fast) -> faces.setFastModel(fast));
         autoFaceScanCheck.setSelected(faces.isAutoScan());
         autoFaceScanCheck.selectedProperty().addListener((obs, was, on) -> faces.setAutoScan(on));
+        // diagnostics: off by default
+        uiWatchdogCheck.setSelected(org.photoslide.FxStallWatchdog.isEnabled());
+        uiWatchdogCheck.selectedProperty().addListener((obs, was, on) -> org.photoslide.FxStallWatchdog.setEnabled(on));
+    }
+
+    /** Opens a new email in the email app with the logs attached. */
+    @FXML
+    private void mailLogsAction() {
+        mailLogsButton.setDisable(true);
+        org.photoslide.DiagnosticsMail.sendLogs(mailLogsButton.getScene().getWindow(), () -> mailLogsButton.setDisable(false));
     }
 
     // ------------------------------------------------------------------

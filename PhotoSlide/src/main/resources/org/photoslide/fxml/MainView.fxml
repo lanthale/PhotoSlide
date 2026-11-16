@@ -207,6 +207,7 @@
                 <Menu mnemonicParsing="false" text="%mainView.help">
                     <items>
                         <MenuItem fx:id="aboutMenu" mnemonicParsing="false" onAction="#aboutMenuAction" text="%mainView.aboutPhotoslide" />
+                        <MenuItem mnemonicParsing="false" onAction="#mailLogsMenuAction" text="%mainView.mailLogs" />
                     </items>
                 </Menu>
             </menus>

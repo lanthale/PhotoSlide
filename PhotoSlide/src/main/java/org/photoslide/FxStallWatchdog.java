@@ -12,13 +12,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.prefs.Preferences;
 import javafx.application.Platform;
 
 /**
  * Diagnostics: notices when the JavaFX thread does not respond (spinning
  * beachball) and samples its stack while it hangs. Each stall is written with
  * the stacks seen, most frequent first, to fx-stalls.log in the app data
- * folder.
+ * folder. Off by default (preferences): it wakes up 50 times a second.
  */
 public final class FxStallWatchdog {
 
@@ -27,20 +28,49 @@ public final class FxStallWatchdog {
     private static final int FRAMES = 40;
     // a stall that does not end is written while it lasts
     private static final long ONGOING_MS = 3000;
+    private static final long MAX_LOG_BYTES = 5L * 1024 * 1024;
+
+    private static final String PREF_ENABLED = "diagnostics.fxWatchdog";
+    private static final Preferences PREFS = Preferences.userRoot().node("PhotoSlide");
 
     private static volatile Thread fxThread;
     private static volatile long lastPong;
+    private static Thread watcher;
 
     private FxStallWatchdog() {
     }
 
-    /** Call on the JavaFX thread. */
+    /** Call on the JavaFX thread at the start: watches if switched on in the preferences. */
     public static void start() {
         fxThread = Thread.currentThread();
+        if (isEnabled()) {
+            startWatcher();
+        }
+    }
+
+    public static boolean isEnabled() {
+        return PREFS.getBoolean(PREF_ENABLED, false);
+    }
+
+    /** Switches the watchdog on or off at once and for the next starts. */
+    public static synchronized void setEnabled(boolean enabled) {
+        PREFS.putBoolean(PREF_ENABLED, enabled);
+        if (enabled) {
+            startWatcher();
+        } else if (watcher != null) {
+            watcher.interrupt();
+            watcher = null;
+        }
+    }
+
+    private static synchronized void startWatcher() {
+        if (watcher != null || fxThread == null) {
+            return;
+        }
         lastPong = System.currentTimeMillis();
-        Thread t = new Thread(FxStallWatchdog::run, "fxStallWatchdog");
-        t.setDaemon(true);
-        t.start();
+        watcher = new Thread(FxStallWatchdog::run, "fxStallWatchdog");
+        watcher.setDaemon(true);
+        watcher.start();
     }
 
     private static void run() {
@@ -49,7 +79,7 @@ public final class FxStallWatchdog {
         long stallStart = 0;
         long gcAtStart = 0;
         long lastOngoing = 0;
-        while (true) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 Thread.sleep(PING_MS);
             } catch (InterruptedException ex) {
@@ -108,7 +138,9 @@ public final class FxStallWatchdog {
         List<Map.Entry<String, Integer>> sorted = new ArrayList<>(samples.entrySet());
         sorted.sort((a, b) -> b.getValue() - a.getValue());
         File log = new File(Utility.getAppData() + File.separatorChar + "fx-stalls.log");
-        try (PrintWriter w = new PrintWriter(new FileWriter(log, true))) {
+        // the log is for the recent stalls only: started anew when too big
+        boolean append = log.length() < MAX_LOG_BYTES;
+        try (PrintWriter w = new PrintWriter(new FileWriter(log, append))) {
             w.println("=== " + LocalDateTime.now() + " FX thread stalled " + duration + " ms, GC " + gc + " ms" + state);
             for (Map.Entry<String, Integer> e : sorted) {
                 w.println(" " + e.getValue() + " samples:");

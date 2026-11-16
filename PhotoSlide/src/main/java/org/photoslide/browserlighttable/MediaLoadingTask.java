@@ -126,8 +126,10 @@ public class MediaLoadingTask extends Task<MediaFile> {
     protected MediaFile call() throws Exception {
         final long qty;
         try {
+            long t0 = System.currentTimeMillis();
             updateTitle(I18n.t("loading.readingFolder"));
             FolderScan scan = scanFolder();
+            long tScan = System.currentTimeMillis();
             if (this.isCancelled()) {
                 return null;
             }
@@ -137,6 +139,7 @@ public class MediaLoadingTask extends Task<MediaFile> {
             updateTitle(I18n.t("loading.readingCache"));
             File inPath = new File(Utility.getAppData() + File.separatorChar + "cache" + File.separatorChar + createMD5Hash(selectedPath.toString()) + "-" + selectedPath.toFile().getName() + ".bin");
             restoreCacheFromDisk(inPath, scan);
+            long tCache = System.currentTimeMillis();
             if (this.isCancelled()) {
                 return null;
             }
@@ -223,7 +226,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
             }
             long endtime = System.currentTimeMillis();
             updateMessage(I18n.t("lighttable.loadingFinished"));
-            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.FINE, "Collect Time in ms: " + (endtime - starttime) + " " + selectedPath);
+            Logger.getLogger(MediaLoadingTask.class.getName()).log(Level.INFO, "Folder {0}: listing {1} ms, cache {2} ms ({3} files), loading {4} ms ({5} files)",
+                    new Object[]{selectedPath, tScan - t0, tCache - tScan, cacheList.size() - toLoad.size(), endtime - starttime, toLoad.size()});
             updateMessage(I18n.t("lighttable.sorting"));
         } catch (IOException ex) {
             Platform.runLater(() -> {

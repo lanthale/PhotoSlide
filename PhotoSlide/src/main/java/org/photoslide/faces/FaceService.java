@@ -317,6 +317,13 @@ public final class FaceService {
                     byPath.computeIfAbsent(p.path(), k -> new ArrayList<>()).add(p.region());
                 }
                 for (Map.Entry<String, List<FaceRegion>> e : byPath.entrySet()) {
+                    // the user waits for a folder (only then: this thread also serves the user)
+                    try {
+                        org.photoslide.BackgroundPause.awaitResumed(() -> false);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
                     try {
                         MediaFile m = mediaFile(Path.of(e.getKey()));
                         int quarters = FaceRegion.quarters(m.getRotationAngleProperty().get());

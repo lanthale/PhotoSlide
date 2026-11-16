@@ -455,6 +455,7 @@ public class LighttableController implements Initializable {
         });
         executorParallel.submit(taskMLoading);
         //executorSchedule.schedule(taskMLoading, 50, TimeUnit.MILLISECONDS);
+        watchSlowLoading(taskMLoading, sPath);
         this.mainController.getTaskProgressView().getTasks().add(taskMLoading);
         imageGrid.setOnKeyPressed((t) -> {
             if (keyCombinationMetaC.match(t)) {
@@ -692,6 +693,20 @@ public class LighttableController implements Initializable {
                 nextCell.requestLayout();
                 nextCell.requestFocus();
             }
+        }
+    }
+
+    /**
+     * Diagnostics: if the folder takes long, writes what all threads do to
+     * slow-load.log (see ThreadDump), a few times while it lasts.
+     */
+    private void watchSlowLoading(MediaLoadingTask task, Path path) {
+        for (long seconds : new long[]{15, 45, 120}) {
+            executorSchedule.schedule(() -> {
+                if (task == taskMLoading && task.isRunning()) {
+                    org.photoslide.ThreadDump.write("Folder " + path + " loading for " + seconds + " s, phase: " + task.getTitle());
+                }
+            }, seconds, java.util.concurrent.TimeUnit.SECONDS);
         }
     }
 

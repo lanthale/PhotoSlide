@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -100,6 +101,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
      * @param attributes attributes of the media files from the listing
      * @param editFileNames lower case names of the .xmp and .edit files
      */
+    private static final boolean IS_WINDOWS = System.getProperty("os.name", "").toLowerCase().contains("win");
+
     private record FolderScan(List<Path> media, Map<Path, BasicFileAttributes> attributes, Set<String> editFileNames) {
     }
 
@@ -240,13 +243,17 @@ public class MediaLoadingTask extends Task<MediaFile> {
 
     /**
      * Lists the folder once. Under Windows the attributes come with the
-     * listing, elsewhere it is one access per file (instead of one for the
-     * times plus three for the edit files of every media file).
+     * listing; elsewhere only the names are read (see scanNames).
      */
     private FolderScan scanFolder() throws IOException {
         List<Path> media = new ArrayList<>();
         Map<Path, BasicFileAttributes> attributes = new HashMap<>();
         Set<String> editFileNames = new HashSet<>();
+        if (!IS_WINDOWS) {
+            scanNames(media, editFileNames);
+            media.sort(new FilenameComparator());
+            return new FolderScan(media, attributes, editFileNames);
+        }
         Files.walkFileTree(selectedPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
@@ -274,6 +281,30 @@ public class MediaLoadingTask extends Task<MediaFile> {
         });
         media.sort(new FilenameComparator());
         return new FolderScan(media, attributes, editFileNames);
+    }
+
+    /**
+     * Lists the names only: one directory read instead of one access per
+     * file, which takes minutes for a big folder on a network share (e.g.
+     * 18000 files over SMB). The times of cached files come from the cache,
+     * those of new files are read when they are loaded (MediaFile.getCreationTime).
+     */
+    private void scanNames(List<Path> media, Set<String> editFileNames) throws IOException {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(selectedPath)) {
+            for (Path file : stream) {
+                if (isCancelled()) {
+                    return;
+                }
+                String name = file.getFileName().toString();
+                String lower = name.toLowerCase();
+                if (lower.endsWith(".xmp") || lower.endsWith(".edit")) {
+                    editFileNames.add(lower);
+                } else if (FileTypes.isValidType(name)) {
+                    // a folder named like a photo is not checked for: it would cost one access per file
+                    media.add(file);
+                }
+            }
+        }
     }
 
     /**

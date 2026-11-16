@@ -234,6 +234,11 @@ public class SearchIndex {
 
                 @Override
                 public FileVisitResult visitFile(final Path fileItem, final BasicFileAttributes attrs) throws IOException {
+                    // reading a big folder is one access per file: also paused in between
+                    pauseScan(task, con, merge, pending);
+                    if (terminated || task.isCancelled()) {
+                        return FileVisitResult.TERMINATE;
+                    }
                     if (attrs.isRegularFile() && !isIgnored(fileItem)) {
                         folders.peek().put(fileItem.getFileName().toString(), attrs);
                     }

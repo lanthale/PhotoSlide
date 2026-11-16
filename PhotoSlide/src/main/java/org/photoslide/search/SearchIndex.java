@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 import javafx.concurrent.Task;
 import org.photoslide.App;
 import org.photoslide.MainViewController;
+import org.photoslide.BackgroundPause;
 import org.photoslide.ThreadFactoryBuilder;
 import org.photoslide.browsermetadata.GeoCoding;
 import org.photoslide.datamodel.FaceRegion;
@@ -220,6 +221,10 @@ public class SearchIndex {
                     if (terminated || task.isCancelled()) {
                         return FileVisitResult.TERMINATE;
                     }
+                    pauseScan(task, con, merge, pending);
+                    if (terminated || task.isCancelled()) {
+                        return FileVisitResult.TERMINATE;
+                    }
                     if (!dir.equals(root) && isIgnored(dir)) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
@@ -259,6 +264,10 @@ public class SearchIndex {
                         Long known = indexed.remove(path);
                         if (known != null && known == modified) {
                             continue;
+                        }
+                        pauseScan(task, con, merge, pending);
+                        if (terminated || task.isCancelled()) {
+                            return FileVisitResult.TERMINATE;
                         }
                         task.report(progressTitle(checked[0], total), folderOf(collectionName, path));
                         task.progress(checked[0], total);
@@ -316,6 +325,30 @@ public class SearchIndex {
             // embeddings of named faces, e.g. after the database was built again from the XMP files
             FaceService.get().learnMissingEmbeddings();
             createFaceScan(collectionName, false);
+        }
+    }
+
+    /**
+     * Waits while the user waits for a folder (see BackgroundPause). The rows
+     * so far are committed first: no open transaction during the pause.
+     */
+    private void pauseScan(ScanTask task, Connection con, PreparedStatement merge, int[] pending) throws IOException {
+        if (!BackgroundPause.isPaused()) {
+            return;
+        }
+        try {
+            if (pending[0] > 0) {
+                merge.executeBatch();
+                con.commit();
+                pending[0] = 0;
+            }
+            task.report(I18n.t("search.checkingIndex"), I18n.t("background.paused"));
+            BackgroundPause.awaitResumed(() -> terminated || task.isCancelled());
+        } catch (SQLException ex) {
+            throw new IOException(ex);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new java.io.InterruptedIOException();
         }
     }
 
@@ -744,6 +777,13 @@ public class SearchIndex {
                 }
                 // the counter in the title: the message (folder) is cut off at its start if too long
                 updateTitle(I18n.t("faces.scanProgress", done + 1, items.size()));
+                if (BackgroundPause.isPaused()) {
+                    updateMessage(I18n.t("background.paused"));
+                    BackgroundPause.awaitResumed(() -> isCancelled() || terminated);
+                    if (isCancelled() || terminated) {
+                        break;
+                    }
+                }
                 updateMessage(folderOf(collectionName, item.path()));
                 updateProgress(done, items.size());
                 long t0 = System.nanoTime();

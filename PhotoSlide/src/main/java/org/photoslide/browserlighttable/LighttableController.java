@@ -6,6 +6,7 @@
 package org.photoslide.browserlighttable;
 
 
+import org.photoslide.BackgroundPause;
 import org.photoslide.I18n;
 import org.photoslide.datamodel.FaceRegion;
 import javafx.application.Platform;
@@ -320,6 +321,8 @@ public class LighttableController implements Initializable {
      * @param sPath The root path where all collections via directories exists
      */
     public void setSelectedPath(Path sPath) {
+        // search index and face scan wait until the media list is there
+        BackgroundPause.pause(this);
         mainController.getStatusLabelLeft().setVisible(true);
         mainController.getStatusLabelLeft().setText(I18n.t("lighttable.scanning"));
         mainController.getStatusLabelRight().textProperty().unbind();
@@ -411,6 +414,7 @@ public class LighttableController implements Initializable {
             mainController.getProgressPane().setVisible(true);
         });
         taskMLoading.setOnSucceeded((WorkerStateEvent t) -> {
+            resumeBackground(t);
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getStatusLabelRight().textProperty().unbind();
@@ -430,7 +434,9 @@ public class LighttableController implements Initializable {
             imageGrid.requestLayout();
             taskMLoading.saveCacheToDisk();
         });
+        taskMLoading.setOnCancelled(this::resumeBackground);
         taskMLoading.setOnFailed((t2) -> {
+            resumeBackground(t2);
             Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, t2.getSource().getException());
             mainController.getProgressbar().progressProperty().unbind();
             mainController.getProgressbarLabel().textProperty().unbind();
@@ -689,7 +695,16 @@ public class LighttableController implements Initializable {
         }
     }
 
+    /** The media list of the current folder is there (or not coming): background work goes on. */
+    private void resumeBackground(WorkerStateEvent event) {
+        // a cancelled task of the folder before must not resume during the new one
+        if (event.getSource() == taskMLoading) {
+            BackgroundPause.resume(this);
+        }
+    }
+
     public void Shutdown() {
+        BackgroundPause.resume(this);
         if (sidecarWatcher != null) {
             sidecarWatcher.stop();
         }

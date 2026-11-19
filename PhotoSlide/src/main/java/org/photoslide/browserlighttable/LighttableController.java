@@ -34,6 +34,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -497,12 +498,12 @@ public class LighttableController implements Initializable {
             /* drag was detected, start a drag-and-drop gesture*/
             Dragboard db = imageGrid.startDragAndDrop(TransferMode.ANY);
             final ClipboardContent content = new ClipboardContent();
-            List<File> fileList = new ArrayList<>();
+            Set<File> fileSet = new LinkedHashSet<>();
             Set<MediaFile> selection = factory.getSelectionModel().getSelection();
             for (MediaFile mediaFile : selection) {
-                addWithSidecars(fileList, mediaFile);
+                addWithSidecars(fileSet, mediaFile);
             }
-            content.putFiles(fileList);
+            content.putFiles(new ArrayList<>(fileSet));
             db.setContent(content);
             t.consume();
         });
@@ -1333,34 +1334,36 @@ public class LighttableController implements Initializable {
     public void copyAction() {
         mainController.getStatusLabelLeft().setVisible(true);
         mainController.getStatusLabelLeft().setText(I18n.t("lighttable.copyClipboard"));
-        final Clipboard clipboard = Clipboard.getSystemClipboard();
-        final ClipboardContent content = new ClipboardContent();
-        List<File> filesForClipboard = new ArrayList<>();
-        filteredMediaList.stream().filter(c -> c.isSelected() == true).forEach((mfile) -> {
-            addWithSidecars(filesForClipboard, mfile);
+        // Snapshot the selection on the FX thread (cheap), then resolve the
+        // sidecars off the FX thread: that is one or two file system lookups
+        // per image, which blocks the UI for large selections.
+        final List<MediaFile> selected = filteredMediaList.stream().filter(MediaFile::isSelected).toList();
+        Thread.ofVirtual().start(() -> {
+            Set<File> files = new LinkedHashSet<>();
+            for (MediaFile mfile : selected) {
+                addWithSidecars(files, mfile);
+            }
+            final List<File> filesForClipboard = new ArrayList<>(files);
+            Platform.runLater(() -> {
+                final ClipboardContent content = new ClipboardContent();
+                content.putFiles(filesForClipboard);
+                Clipboard.getSystemClipboard().setContent(content);
+                pasteButton.setDisable(false);
+                mainController.getStatusLabelLeft().setText(I18n.t("lighttable.copyClipboardDone"));
+                util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
+            });
         });
-        content.putFiles(filesForClipboard);
-        clipboard.setContent(content);
-        pasteButton.setDisable(false);
-        mainController.getStatusLabelLeft().setText(I18n.t("lighttable.copyClipboardDone"));
-        util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 3, true);
     }
 
     /**
      * Adds the media file and its sidecars (XMP, former .edit file) to the
-     * list, so that copying or moving them (clipboard, drag and drop) keeps
+     * set, so that copying or moving them (clipboard, drag and drop) keeps
      * the edits and metadata. A sidecar shared by RAW and JPG is added once.
      */
-    private static void addWithSidecars(List<File> files, MediaFile mediaFile) {
-        File image = mediaFile.getPathStorage().toFile();
-        if (!files.contains(image)) {
-            files.add(image);
-        }
+    private static void addWithSidecars(Set<File> files, MediaFile mediaFile) {
+        files.add(mediaFile.getPathStorage().toFile());
         for (Path sidecar : XmpSidecar.existingSidecars(mediaFile.getPathStorage())) {
-            File f = sidecar.toFile();
-            if (!files.contains(f)) {
-                files.add(f);
-            }
+            files.add(sidecar.toFile());
         }
     }
 

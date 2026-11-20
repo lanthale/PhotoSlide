@@ -77,8 +77,18 @@ public final class FaceService {
     private volatile Runnable downloadStarter;
     private final long startTime = System.currentTimeMillis();
     private ScheduledFuture<?> pendingRematch;
+    private volatile boolean closed;
 
     private FaceService() {
+    }
+
+    /**
+     * Stops the face work when the program is quit: the learning loop ends
+     * and waiting callers (search index) are released by the interrupt.
+     */
+    public void shutdown() {
+        closed = true;
+        executor.shutdownNow();
     }
 
     public static FaceService get() {
@@ -304,7 +314,7 @@ public final class FaceService {
         Set<String> failed = new HashSet<>();
         try {
             ensureModels();
-            while (true) {
+            while (!closed) {
                 List<PendingFace> pending = FaceStore.confirmedWithoutEmbedding(connection(), embedder.type().id(),
                         50 + failed.size());
                 pending.removeIf(p -> failed.contains(p.path()));
@@ -317,9 +327,12 @@ public final class FaceService {
                     byPath.computeIfAbsent(p.path(), k -> new ArrayList<>()).add(p.region());
                 }
                 for (Map.Entry<String, List<FaceRegion>> e : byPath.entrySet()) {
+                    if (closed || Thread.currentThread().isInterrupted()) {
+                        return;
+                    }
                     // the user waits for a folder (only then: this thread also serves the user)
                     try {
-                        org.photoslide.BackgroundPause.awaitResumed(() -> false);
+                        org.photoslide.BackgroundPause.awaitResumed(() -> closed);
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                         return;

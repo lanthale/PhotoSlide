@@ -197,6 +197,7 @@ public class MainViewController implements Initializable {
     // full-width modules by FXML name, loaded on first use
     private final Map<String, Node> moduleViews = new HashMap<>();
     private final Map<String, ViewModule> moduleControllers = new HashMap<>();
+    private MediaFileLoader wipeLoader;
     // the module chosen last (null = browser/editor): shown when its loading finishes
     private ModuleSpec requestedModule;
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
@@ -608,34 +609,50 @@ public class MainViewController implements Initializable {
     }
 
     public void Shutdown() {
+        // each part on its own: an exception must not leave the remaining
+        // thread pools running, they would keep the JVM alive
         if (searchtools != null) {
-            searchtools.shutdown();
+            safe("searchtools", searchtools::shutdown);
         }
         if (searchDialog != null) {
-            searchDialog.getController().shutdown();
-            searchDialog.setResult(ButtonType.CANCEL);
+            safe("searchDialog", () -> {
+                searchDialog.getController().shutdown();
+                searchDialog.setResult(ButtonType.CANCEL);
+            });
         }
         if (printDialog != null) {
-            printDialog.getController().shutdown();
+            safe("printDialog", () -> printDialog.getController().shutdown());
         }
         if (bookmarksController != null) {
-            bookmarksController.shutdown();
+            safe("bookmarks", bookmarksController::shutdown);
         }
         if (swUpdater != null) {
-            swUpdater.Shutdown();
+            safe("swUpdater", swUpdater::Shutdown);
         }
-        collectionsPaneController.Shutdown();
-        lighttablePaneController.Shutdown();
-        metadataPaneController.Shutdown();
+        safe("collections", collectionsPaneController::Shutdown);
+        safe("lighttable", lighttablePaneController::Shutdown);
+        safe("metadata", metadataPaneController::Shutdown);
         if (editorToolsPaneController != null) {
-            editorMetaDataPaneController.shutdown();
-            editorMediaViewPaneController.shutdown();
-            editorToolsPaneController.shutdown();
+            safe("editorMetadata", editorMetaDataPaneController::shutdown);
+            safe("editorMediaView", editorMediaViewPaneController::shutdown);
+            safe("editorTools", editorToolsPaneController::shutdown);
         }
-        moduleControllers.values().forEach(ViewModule::shutdown);
+        moduleControllers.forEach((name, module) -> safe("module " + name, module::shutdown));
+        safe("faces", () -> org.photoslide.faces.FaceService.get().shutdown());
+        if (wipeLoader != null) {
+            safe("wipeLoader", wipeLoader::shutdown);
+        }
         executor.shutdownNow();
         executorParallel.shutdownNow();
         executorParallelScheduled.shutdownNow();
+    }
+
+    private static void safe(String part, Runnable shutdown) {
+        try {
+            shutdown.run();
+        } catch (RuntimeException ex) {
+            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Shutdown of " + part + " failed", ex);
+        }
     }
 
     @FXML
@@ -916,8 +933,7 @@ public class MainViewController implements Initializable {
 
     @FXML
     public void quitMenuAction(ActionEvent event) {
-        App.saveSettings((Stage) browseButton.getScene().getWindow(), MainViewController.this);
-        Shutdown();
+        App.shutdownApp();
         Platform.exit();
     }
 
@@ -1267,46 +1283,66 @@ public class MainViewController implements Initializable {
 
     private void openEditor() {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
-        if (selectedMediaItem == null) {
+        if (selectedMediaItem != null) {
+            showEditor(selectedMediaItem);
+            return;
+        }
+        // nothing selected: the first file of the folder. Listing the folder,
+        // reading the sidecar and decoding a RAW take long: not on the FX thread
+        final Path folder = collectionsPaneController.getSelectedPath();
+        if (folder == null) {
+            return;
+        }
+        final int size = (int) Math.max(lighttablePaneController.getImageGrid().getCellWidth(),
+                lighttablePaneController.getImageGrid().getCellHeight()) + 300;
+        Thread.ofVirtual().start(() -> {
+            MediaFile first = null;
             try {
-                Stream<Path> fileList = Files.list(collectionsPaneController.getSelectedPath()).filter((t) -> {
-                    return FileTypes.isValidType(t.getFileName().toString());
-                }).sorted();
-                Path fileItem = fileList.iterator().next();
-                if (Files.isDirectory(fileItem) == false) {
-                    if (FileTypes.isValidType(fileItem.toString())) {
-                        MediaFile m = new MediaFile();
-                        m.setName(fileItem.toString());
-                        m.setPathStorage(fileItem);
-                        m.readEdits();
-                        m.getCreationTime();
-                        if (FileTypes.isValidVideo(fileItem.toString())) {
-                            m.setMediaType(MediaFile.MediaTypes.VIDEO);
-                        } else if (FileTypes.isValidImage(fileItem.toString())) {
-                            m.setMediaType(MediaFile.MediaTypes.IMAGE);
-                            int size = (int) Math.max(lighttablePaneController.getImageGrid().getCellWidth(),
-                                    lighttablePaneController.getImageGrid().getCellHeight()) + 300;
-                            // RAW: same decoder, profile and base look as the editor
-                            Image img = EditPipeline.loadRawThumbnail(m, size);
-                            if (img == null && org.photoslide.datamodel.MediaFileLoader.isTiff(m)) {
-                                // random access: a JavaFX stream would buffer the whole TIFF file
-                                img = org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoader.loadScaled(m.getPathStorage(), size, size);
-                            }
-                            if (img == null) {
-                                img = new Image(m.getPathStorage().toUri().toURL().toString(), size, size, true, false, false);
-                            }
-                            m.setImage(img);
-                        } else {
-                            m.setMediaType(MediaFile.MediaTypes.NONE);
-                        }
-                        selectedMediaItem = m;
-                    }
-                }
+                first = loadFirstMediaFile(folder, size);
             } catch (IOException ex) {
                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
             }
+            final MediaFile m = first;
+            Platform.runLater(() -> showEditor(m));
+        });
+    }
+
+    /** The first media file of the folder with its preview image (background thread). */
+    private static MediaFile loadFirstMediaFile(Path folder, int size) throws IOException {
+        Path fileItem;
+        try (Stream<Path> fileList = Files.list(folder)) {
+            fileItem = fileList.filter((t) -> FileTypes.isValidType(t.getFileName().toString()))
+                    .sorted().findFirst().orElse(null);
         }
-        final MediaFile selMedia = selectedMediaItem;
+        if (fileItem == null || Files.isDirectory(fileItem)) {
+            return null;
+        }
+        MediaFile m = new MediaFile();
+        m.setName(fileItem.toString());
+        m.setPathStorage(fileItem);
+        m.readEdits();
+        m.getCreationTime();
+        if (FileTypes.isValidVideo(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.VIDEO);
+        } else if (FileTypes.isValidImage(fileItem.toString())) {
+            m.setMediaType(MediaFile.MediaTypes.IMAGE);
+            // RAW: same decoder, profile and base look as the editor
+            Image img = EditPipeline.loadRawThumbnail(m, size);
+            if (img == null && org.photoslide.datamodel.MediaFileLoader.isTiff(m)) {
+                // random access: a JavaFX stream would buffer the whole TIFF file
+                img = org.photoslide.datamodel.customformats.tiffsupport.TIFFImageLoader.loadScaled(m.getPathStorage(), size, size);
+            }
+            if (img == null) {
+                img = new Image(m.getPathStorage().toUri().toURL().toString(), size, size, true, false, false);
+            }
+            m.setImage(img);
+        } else {
+            m.setMediaType(MediaFile.MediaTypes.NONE);
+        }
+        return m;
+    }
+
+    private void showEditor(MediaFile selMedia) {
         FadeTransition ft = new FadeTransition(Duration.millis(250), collectionsPane);
         ft.setAutoReverse(false);
         ft.setFromValue(1.0);
@@ -1420,28 +1456,24 @@ public class MainViewController implements Initializable {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.YES) {
             collectionsPaneController.getSearchIndexProcess().shutdown();
-            try {
-                Statement stat = App.getSearchDBConnection().createStatement();
-                stat.execute("DROP TABLE MEDIAFILES");
-            } catch (SQLException ef) {
-            }
-            try {
-                FullText.dropAll(App.getSearchDBConnection());
-                App.getSearchDBConnection().close();
-            } catch (SQLException ef) {
-            }
-            final File downloadDirectory = new File(Utility.getAppData());
-            final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("SearchMediaFilesDB.*"));
-            Arrays.asList(files).stream().forEach(File::delete);
-            Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
-            msg.setHeaderText(I18n.t("main.resetSearchIndexDone"));
-            msg.getDialogPane().getStylesheets().add(
-                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-            msg.setResizable(false);
-            Utility.centerChildWindowOnStage((Stage) msg.getDialogPane().getScene().getWindow(), (Stage) progressPane.getScene().getWindow());
-            stage = (Stage) msg.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(dialogIcon);
-            msg.show();
+            // the DROP can wait for H2 locks of an index scan still finishing: not on the FX thread
+            Thread.ofVirtual().start(() -> {
+                try (Statement stat = App.getSearchDBConnection().createStatement()) {
+                    stat.execute("DROP TABLE MEDIAFILES");
+                } catch (SQLException ef) {
+                }
+                try {
+                    FullText.dropAll(App.getSearchDBConnection());
+                    App.getSearchDBConnection().close();
+                } catch (SQLException ef) {
+                }
+                final File downloadDirectory = new File(Utility.getAppData());
+                final File[] files = downloadDirectory.listFiles((dir, name) -> name.matches("SearchMediaFilesDB.*"));
+                if (files != null) {
+                    Arrays.asList(files).forEach(File::delete);
+                }
+                Platform.runLater(() -> showInfo(I18n.t("main.resetSearchIndexDone")));
+            });
         }
     }
 
@@ -1627,25 +1659,48 @@ public class MainViewController implements Initializable {
     @FXML
     private void wipeAllMediaFileEdits(ActionEvent event) {
         MediaFile selectedMediaItem = lighttablePaneController.getFactory().getSelectedMediaItem();
-        selectedMediaItem.removeAllEdits();
-        // all views (editor tools, sliders, previews) show the unedited file; only the stack is kept
-        EditPipeline.editsReloaded(selectedMediaItem, I18n.t("history.removeAllEdits"));
-        selectedMediaItem.thumbnailChanged();
-        int indexOf = lighttablePaneController.getFullMediaList().indexOf(selectedMediaItem);
-        if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
-            new MediaFileLoader().loadImage(selectedMediaItem);
-            lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
-            try {
-                lighttablePaneController.getFactory().loadImage();
-            } catch (MalformedURLException ex) {
-                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        if (selectedMediaItem == null) {
+            return;
         }
-        if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {
-            new MediaFileLoader().loadVideo(selectedMediaItem);
-            lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
-            Thread.ofVirtual().start(lighttablePaneController.getFactory().loadVideo());
+        // deleting the sidecars may block (network share, sidecar lock): not on the FX thread
+        Thread.ofVirtual().start(() -> {
+            selectedMediaItem.deleteEditFiles();
+            Platform.runLater(() -> {
+                boolean saveStack = selectedMediaItem.resetAllEdits();
+                if (saveStack) {
+                    Thread.ofVirtual().start(selectedMediaItem::saveEdits);
+                }
+                // all views (editor tools, sliders, previews) show the unedited file; only the stack is kept
+                EditPipeline.editsReloaded(selectedMediaItem, I18n.t("history.removeAllEdits"));
+                selectedMediaItem.thumbnailChanged();
+                int indexOf = lighttablePaneController.getFullMediaList().indexOf(selectedMediaItem);
+                if (indexOf < 0) {
+                    return;
+                }
+                if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.IMAGE) {
+                    wipeLoader().loadImage(selectedMediaItem);
+                    lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
+                    try {
+                        lighttablePaneController.getFactory().loadImage();
+                    } catch (MalformedURLException ex) {
+                        Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (selectedMediaItem.getMediaType() == MediaFile.MediaTypes.VIDEO) {
+                    wipeLoader().loadVideo(selectedMediaItem);
+                    lighttablePaneController.getFullMediaList().set(indexOf, selectedMediaItem);
+                    Thread.ofVirtual().start(lighttablePaneController.getFactory().loadVideo());
+                }
+            });
+        });
+    }
+
+    /** One loader for "remove all edits" (before: a new thread pool per use that was never shut down). */
+    private MediaFileLoader wipeLoader() {
+        if (wipeLoader == null) {
+            wipeLoader = new MediaFileLoader();
         }
+        return wipeLoader;
     }
 
     public CollectionsController getCollectionsPaneController() {
@@ -1727,19 +1782,26 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void resetMediaCache(ActionEvent event) {
-        try {
-            Files.newDirectoryStream(Path.of(Utility.getAppData() + File.separatorChar + "cache")).forEach(file -> {
-                try {
-                    Files.delete(file);
-                } catch (IOException e) {
-                    file.toFile().deleteOnExit();
-                }
-            });
-        } catch (IOException ex) {
-            Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        // many (big) files: not on the FX thread
+        Thread.ofVirtual().start(() -> {
+            try (java.nio.file.DirectoryStream<Path> dir = Files.newDirectoryStream(Path.of(Utility.getAppData() + File.separatorChar + "cache"))) {
+                dir.forEach(file -> {
+                    try {
+                        Files.delete(file);
+                    } catch (IOException e) {
+                        file.toFile().deleteOnExit();
+                    }
+                });
+            } catch (IOException ex) {
+                Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            Platform.runLater(() -> showInfo(I18n.t("main.resetCacheDone")));
+        });
+    }
+
+    private void showInfo(String header) {
         Alert msg = new Alert(AlertType.INFORMATION, "", ButtonType.OK);
-        msg.setHeaderText(I18n.t("main.resetCacheDone"));
+        msg.setHeaderText(header);
         msg.getDialogPane().getStylesheets().add(
                 getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
         msg.setResizable(false);

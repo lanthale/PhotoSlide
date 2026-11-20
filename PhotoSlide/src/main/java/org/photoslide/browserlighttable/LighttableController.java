@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.photoslide.browsercollections.library.Libraries;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -298,9 +299,9 @@ public class LighttableController implements Initializable {
         sortOptions = FXCollections.observableArrayList(I18n.t("lighttable.sort.filename"), I18n.t("lighttable.sort.captureTime"), I18n.t("lighttable.sort.creationTime"));
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableController").build());
-        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableControllerScheduled").build());
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableController").setDaemon(true).build());
+        executorSchedule = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setPriority(6).setNamePrefix("lightTableControllerScheduled").setDaemon(true).build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelection").setDaemon(true).build());
         //executorParallel = Executors.newVirtualThreadPerTaskExecutor();
         dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
         showPreviewPaneToggle.selectedProperty().addListener((o) -> {
@@ -378,7 +379,7 @@ public class LighttableController implements Initializable {
         sortOrderComboBox.getSelectionModel().selectFirst();
         detailToolbar.setDisable(!Clipboard.getSystemClipboard().hasFiles());
         mainController.handleMenuDisable(true);
-        pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles());
+        pasteButton.setDisable(!Clipboard.getSystemClipboard().hasFiles() || Libraries.isReadOnly(sPath));
         //sortOrderComboBox.setDisable(true);            
         mainController.getStatusLabelRight().textProperty().unbind();
         mainController.getStatusLabelRight().setText(I18n.t("lighttable.retrieveImagesFor", selectedPath.toString()));
@@ -500,8 +501,21 @@ public class LighttableController implements Initializable {
             final ClipboardContent content = new ClipboardContent();
             Set<File> fileSet = new LinkedHashSet<>();
             Set<MediaFile> selection = factory.getSelectionModel().getSelection();
+            // the dragboard must be filled here, on the FX thread: no file
+            // system access per image (two checks each, slow for big
+            // selections and on network shares), the sidecars of the folder are known
+            Set<Path> listed = sidecarWatcher != null ? sidecarWatcher.listedSidecars() : null;
+            Path watchedFolder = sidecarWatcher != null ? sidecarWatcher.folder().toAbsolutePath().normalize() : null;
             for (MediaFile mediaFile : selection) {
-                addWithSidecars(fileSet, mediaFile);
+                Path parent = mediaFile.getPathStorage().toAbsolutePath().normalize().getParent();
+                if (listed != null && watchedFolder.equals(parent)) {
+                    fileSet.add(mediaFile.getPathStorage().toFile());
+                    for (Path sidecar : XmpSidecar.knownSidecars(mediaFile.getPathStorage(), listed)) {
+                        fileSet.add(sidecar.toFile());
+                    }
+                } else {
+                    addWithSidecars(fileSet, mediaFile);
+                }
             }
             content.putFiles(new ArrayList<>(fileSet));
             db.setContent(content);
@@ -514,7 +528,7 @@ public class LighttableController implements Initializable {
         imageGrid.setOnDragDropped((t) -> {
             Dragboard db = t.getDragboard();
             boolean success = false;
-            if (db.hasFiles()) {
+            if (db.hasFiles() && !Libraries.isReadOnly(sPath)) {
                 List<File> files = db.getFiles();
                 MediaLoadingTaskFiles taskMLoadingFiles = new MediaLoadingTaskFiles(files, fullMediaList, factory, sPath, mainController, mediaQTYLabel, sortOrderComboBox.getSelectionModel().getSelectedItem(), metadataController);
                 executorParallel.submit(taskMLoadingFiles);
@@ -742,6 +756,10 @@ public class LighttableController implements Initializable {
         if (executor != null) {
             executor.shutdownNow();
         }
+        if (preview != null) {
+            preview.shutdown();
+        }
+        faceSaver.shutdown();
     }
 
     @FXML
@@ -1129,6 +1147,11 @@ public class LighttableController implements Initializable {
     private void startSidecarWatcher(Path folder) {
         if (sidecarWatcher != null) {
             sidecarWatcher.stop();
+            sidecarWatcher = null;
+        }
+        if (Libraries.isVirtual(folder)) {
+            // the sidecars of a photo library are only written by PhotoSlide
+            return;
         }
         final ObservableList<MediaFile> list = fullMediaList;
         sidecarWatcher = new SidecarWatcher(folder, sidecar -> {
@@ -1143,12 +1166,14 @@ public class LighttableController implements Initializable {
             }
             return matches;
         }, (m, sidecar) -> {
-            m.reloadEdits();
-            EditPipeline.editsReloaded(m);
-            if (factory != null && factory.getSelectedMediaItem() == m && !isCropping()) {
-                // the crop is in pixels of the original; the preview scales it to the shown image
-                preview.setViewport(m.getCropView());
-            }
+            // reading the sidecar may take a while (network share): not on the FX thread
+            m.reloadEditsAsync(() -> {
+                EditPipeline.editsReloaded(m);
+                if (factory != null && factory.getSelectedMediaItem() == m && !isCropping()) {
+                    // the crop is in pixels of the original; the preview scales it to the shown image
+                    preview.setViewport(m.getCropView());
+                }
+            });
         });
         sidecarWatcher.start();
     }
@@ -1304,15 +1329,39 @@ public class LighttableController implements Initializable {
                 taskMLoading.cancel();
                 setSelectedPath(selectedPath);
             } else {
-                Comparator<MediaFile> comparing = Comparator.comparing((MediaFile t) -> {
-                    try {
-                        return t.getCreationTime(); //To change body of generated lambdas, choose Tools | Templates.
-                    } catch (IOException ex) {
-                        Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+                // times not read yet need one file access each: read them first in
+                // the background, the comparator then reads no file on the FX thread
+                final List<MediaFile> files = new ArrayList<>(fullMediaList);
+                Task<Boolean> taskTimes = new Task<>() {
+                    @Override
+                    protected Boolean call() {
+                        int n = 0;
+                        for (MediaFile m : files) {
+                            if (isCancelled()) {
+                                return false;
+                            }
+                            try {
+                                m.getCreationTime();
+                            } catch (IOException ex) {
+                                Logger.getLogger(LighttableController.class.getName()).log(Level.FINE, null, ex);
+                            }
+                            updateProgress(++n, files.size());
+                        }
+                        return true;
                     }
-                    return null;
+                };
+                taskTimes.setOnSucceeded((t) -> {
+                    Comparator<MediaFile> comparing = Comparator.comparing((MediaFile m) -> {
+                        try {
+                            return m.getCreationTime();
+                        } catch (IOException ex) {
+                            return null;
+                        }
+                    }, Comparator.nullsLast(Comparator.naturalOrder()));
+                    sortedMediaList.setComparator(comparing);
                 });
-                sortedMediaList.setComparator(comparing);
+                taskSortRead = taskTimes;
+                executor.submit(taskTimes);
             }
         }
     }
@@ -1368,6 +1417,10 @@ public class LighttableController implements Initializable {
     }
 
     public void pastAction() {
+        if (Libraries.isReadOnly(selectedPath)) {
+            // nothing is copied into a photo library
+            return;
+        }
         mainController.getProgressPane().setVisible(true);
         mainController.getStatusLabelLeft().setVisible(true);
         mainController.getStatusLabelLeft().setText(I18n.t("lighttable.pasting"));
@@ -1380,18 +1433,21 @@ public class LighttableController implements Initializable {
         Task<String> pasteTask = new Task<>() {
             @Override
             protected String call() throws Exception {
-                files.forEach((fileItem) -> {
-                    if (this.isCancelled() == false) {
-                        try {
-                            updateProgress(files.indexOf(fileItem) + 1, files.size());
-                            updateMessage("" + (files.indexOf(fileItem) + 1) + "/" + files.size());
-                            Files.copy(fileItem.toPath(), selectedPath.resolve(fileItem.getName()), StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException ex) {
-                            Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
-                        }
+                int done = 0;
+                for (File fileItem : files) {
+                    if (this.isCancelled()) {
+                        break;
                     }
-                });
-                clipboard.clear();
+                    done++;
+                    updateProgress(done, files.size());
+                    updateMessage("" + done + "/" + files.size());
+                    try {
+                        Files.copy(fileItem.toPath(), selectedPath.resolve(fileItem.getName()), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException ex) {
+                        Logger.getLogger(LighttableController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                // the clipboard is cleared in onSucceeded: only on the FX thread
                 return "Successfully!";
             }
 
@@ -1408,6 +1464,7 @@ public class LighttableController implements Initializable {
             mainController.getStatusLabelLeft().setVisible(false);
         });
         pasteTask.setOnSucceeded((t) -> {
+            clipboard.clear();
             pasteButton.setDisable(true);
             mainController.getProgressbarLabel().textProperty().unbind();
             mainController.getProgressbar().progressProperty().unbind();

@@ -51,6 +51,7 @@ import java.util.stream.StreamSupport;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -97,6 +98,10 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.javafx.StackedFontIcon;
 import org.photoslide.ThreadFactoryBuilder;
+import org.photoslide.browsercollections.library.Libraries;
+import org.photoslide.browsercollections.library.LibraryNode;
+import org.photoslide.browsercollections.library.LibraryProvider;
+import org.photoslide.browsercollections.library.SystemPicturesFolders;
 
 /**
  *
@@ -153,9 +158,9 @@ public class CollectionsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsController").build());
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallel").build());
-        executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallelScheduled").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsController").setDaemon(true).build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallel").setDaemon(true).build());
+        executorParallelTimers = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNamePrefix("collectionsControllerParallelScheduled").setDaemon(true).build());
         util = new Utility();
         pref = Preferences.userRoot().node(NODE_NAME);
         menuButton.setOnShowing(e -> updateSearchIndexMenu());
@@ -195,15 +200,14 @@ public class CollectionsController implements Initializable {
                         if (this.isCancelled() == false) {
                             //Directorywatch is installed in LightTabelController for selected path only
                             loadDirectoryTree(dTree.getValue());
-                            executorParallel.submit(() -> {
-                                try {
-                                    directoryRootwatch.startWatch(Path.of(dTree.getValue()), false);
-                                } catch (IOException ex) {
-                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                } catch (InterruptedException ex) {
-                                    //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            });
+                            if (Libraries.isLibrary(Path.of(dTree.getValue()))) {
+                                return;
+                            }
+                            try {
+                                directoryRootwatch.watch(Path.of(dTree.getValue()), false);
+                            } catch (IOException ex) {
+                                Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     });
                 }
@@ -395,10 +399,83 @@ public class CollectionsController implements Initializable {
         }
     }
 
-    public void Shutdown() {
+    /**
+     * Fills the tree of a photo library with its top level nodes (background
+     * thread; the items are added on the FX thread).
+     */
+    private void createLibraryTree(LibraryProvider provider, TreeItem<PathItem> parent) throws IOException {
+        List<LibraryNode> nodes = provider.topLevel();
+        for (LibraryNode node : nodes) {
+            addLibraryNode(provider, node, parent);
+        }
+    }
+
+    /** Adds the node; its sub nodes are read when it is expanded the first time. */
+    private void addLibraryNode(LibraryProvider provider, LibraryNode node, TreeItem<PathItem> parent) {
+        TreeItem<PathItem> item = new TreeItem<>(new PathItem(Libraries.virtualPath(provider.root(), node.id()), node));
+        Platform.runLater(() -> {
+            item.setGraphic(new FontIcon(switch (node.kind()) {
+                case FOLDER -> "ti-folder";
+                case ALBUM -> "ti-gallery";
+                case EVENT -> "ti-calendar";
+            }));
+            parent.getChildren().add(item);
+        });
+        if (!node.hasChildren()) {
+            return;
+        }
+        TreeItem<PathItem> placeholder = new TreeItem<>(new PathItem(Paths.get(I18n.t("coll.pleaseWait"))));
+        Platform.runLater(() -> item.getChildren().add(placeholder));
+        EventHandler<TreeItem.TreeModificationEvent<PathItem>> onExpand = new EventHandler<>() {
+            @Override
+            public void handle(TreeItem.TreeModificationEvent<PathItem> event) {
+                if (event.getTreeItem() != item) {
+                    return;
+                }
+                item.removeEventHandler(TreeItem.branchExpandedEvent(), this);
+                Task<List<LibraryNode>> load = new Task<>() {
+                    @Override
+                    protected List<LibraryNode> call() throws Exception {
+                        return provider.children(node.id());
+                    }
+                };
+                load.setOnSucceeded(t -> {
+                    item.getChildren().remove(placeholder);
+                    for (LibraryNode child : load.getValue()) {
+                        addLibraryNode(provider, child, item);
+                    }
+                });
+                load.setOnFailed(t -> {
+                    item.getChildren().remove(placeholder);
+                    // try again when expanded the next time
+                    item.addEventHandler(TreeItem.branchExpandedEvent(), this);
+                    mainController.getStatusLabelLeft().setVisible(true);
+                    mainController.getStatusLabelLeft().setText(load.getException().getMessage());
+                    util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
+                });
+                executor.submit(load);
+            }
+        };
+        item.addEventHandler(TreeItem.branchExpandedEvent(), onExpand);
+    }
+
+    /** Reads the library again (it is copied again if Photos changed it). */
+    private void refreshLibraryTree(TreeView<PathItem> treeView) {
+        TreeItem<PathItem> root = treeView.getRoot();
+        LibraryProvider provider = Libraries.provider(root.getValue().getFilePath());
+        root.getChildren().clear();
         Thread.ofVirtual().start(() -> {
-            directorywatchSelected.stopWatch();
-        });        
+            try {
+                createLibraryTree(provider, root);
+            } catch (IOException ex) {
+                Platform.runLater(() -> showCollectionAlert(AlertType.WARNING, ex.getMessage()));
+            }
+        });
+    }
+
+    public void Shutdown() {
+        directorywatchSelected.stopWatch();
+        directoryRootwatch.stopWatch();
         if (searchIndexProcess != null) {
             searchIndexProcess.shutdown();
         }
@@ -412,20 +489,140 @@ public class CollectionsController implements Initializable {
         addExistingPath();
     }
 
+    /** The kinds of collection offered when adding one. */
+    private enum AddType {
+        FOLDER("coll.typeFolder"),
+        APPLE_PHOTOS("coll.typeApplePhotos"),
+        SYSTEM_PICTURES("coll.typeSystemPictures");
+
+        private final String key;
+
+        AddType(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String toString() {
+            return I18n.t(key);
+        }
+    }
+
+    /**
+     * Asks for the kind of the new collection (folder, macOS Photos library,
+     * the picture folders of the system) and adds it.
+     */
     public void addExistingPath() {
-        Stage stage = (Stage) accordionPane.getScene().getWindow();
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-        File selectedDirectory = directoryChooser.showDialog(stage);
-        if (selectedDirectory != null) {
-            loadDirectoryTree(selectedDirectory.getAbsolutePath());
-            String prefKeyForSaving = getPrefKeyForSaving();
-            pref.put("URL" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
-            if (createSearchIndex(selectedDirectory.getAbsolutePath()) == true) {
-                pref.put("INDEX" + prefKeyForSaving, selectedDirectory.getAbsolutePath());
-                searchIndexProcess.createCheckSearchIndex(selectedDirectory.getAbsolutePath());
+        List<AddType> types = new ArrayList<>(List.of(AddType.FOLDER));
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            types.add(AddType.APPLE_PHOTOS);
+        }
+        types.add(AddType.SYSTEM_PICTURES);
+        javafx.scene.control.ChoiceDialog<AddType> dialog = new javafx.scene.control.ChoiceDialog<>(AddType.FOLDER, types);
+        dialog.setTitle(I18n.t("coll.addCollections"));
+        dialog.setHeaderText(I18n.t("coll.chooseType"));
+        dialog.setContentText(I18n.t("coll.type"));
+        dialog.setGraphic(new FontIcon("ti-agenda:50"));
+        dialog.getDialogPane().getStylesheets().add(
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+        Stage dialogStage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        dialogStage.getIcons().add(iconImage);
+        Utility.centerChildWindowOnStage(dialogStage, (Stage) accordionPane.getScene().getWindow());
+        dialog.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+        Optional<AddType> type = dialog.showAndWait();
+        if (type.isEmpty()) {
+            return;
+        }
+        switch (type.get()) {
+            case FOLDER -> {
+                DirectoryChooser directoryChooser = new DirectoryChooser();
+                directoryChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+                File selectedDirectory = directoryChooser.showDialog(accordionPane.getScene().getWindow());
+                if (selectedDirectory != null) {
+                    addCollection(selectedDirectory.getAbsolutePath(), true);
+                }
+            }
+            case APPLE_PHOTOS -> addApplePhotosLibrary();
+            case SYSTEM_PICTURES -> addSystemPictureFolders();
+        }
+    }
+
+    /** Adds the macOS Photos library: the default one, or one chosen by the user. */
+    private void addApplePhotosLibrary() {
+        Path library = Path.of(System.getProperty("user.home"), "Pictures", "Photos Library.photoslibrary");
+        if (!Files.exists(library)) {
+            // the chooser of macOS shows a library as a folder
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setTitle(I18n.t("coll.chooseApplePhotos"));
+            chooser.setInitialDirectory(new File(System.getProperty("user.home"), "Pictures"));
+            File chosen = chooser.showDialog(accordionPane.getScene().getWindow());
+            if (chosen == null) {
+                return;
+            }
+            library = chosen.toPath();
+            if (!Libraries.isLibrary(library)) {
+                showCollectionAlert(AlertType.ERROR, I18n.t("coll.noApplePhotos", library.toString()));
+                return;
             }
         }
+        if (getPrefKeyForRemoving(library.toString(), "URL") != null) {
+            showCollectionAlert(AlertType.INFORMATION, I18n.t("coll.alreadyAdded", library.toString()));
+            return;
+        }
+        // no search index: it would read the whole library folder (previews, caches)
+        addCollection(library.toString(), false);
+    }
+
+    /** Adds the picture folders of the system (Windows library, XDG, ~/Pictures) as folder collections. */
+    private void addSystemPictureFolders() {
+        List<Path> folders = SystemPicturesFolders.list();
+        List<String> added = new ArrayList<>();
+        for (Path folder : folders) {
+            String path = folder.toAbsolutePath().toString();
+            boolean overlaps = collectionRoots().stream().anyMatch(r -> {
+                Path root = Path.of(r);
+                return folder.startsWith(root) || root.startsWith(folder);
+            });
+            if (!overlaps) {
+                addCollection(path, false);
+                added.add(path);
+            }
+        }
+        if (added.isEmpty()) {
+            showCollectionAlert(AlertType.INFORMATION, I18n.t("coll.noSystemPictures"));
+        } else if (createSearchIndex(String.join("\n", added))) {
+            for (String path : added) {
+                String key = getPrefKeyForRemoving(path, "URL");
+                if (key != null) {
+                    pref.put("INDEX" + key.substring("URL".length()), path);
+                    searchIndexProcess.createCheckSearchIndex(path);
+                }
+            }
+        }
+    }
+
+    /** Shows the collection and stores it; asks for the search index if wanted. */
+    private void addCollection(String path, boolean askSearchIndex) {
+        loadDirectoryTree(path);
+        String prefKeyForSaving = getPrefKeyForSaving();
+        pref.put("URL" + prefKeyForSaving, path);
+        collectionStorage.put("URL" + prefKeyForSaving, path);
+        if (askSearchIndex && createSearchIndex(path)) {
+            pref.put("INDEX" + prefKeyForSaving, path);
+            searchIndexProcess.createCheckSearchIndex(path);
+        }
+    }
+
+    /**
+     * True if the selected item of the expanded collection is in a photo
+     * library: such a collection is read only. Shows a message then.
+     */
+    private boolean refuseReadOnly() {
+        TitledPane expanded = accordionPane.getExpandedPane();
+        if (expanded == null || !Libraries.isLibrary(Path.of(collectionPath(expanded)))) {
+            return false;
+        }
+        showCollectionAlert(AlertType.INFORMATION, I18n.t("coll.libraryReadOnly"));
+        return true;
     }
 
     private boolean createSearchIndex(String p) {
@@ -488,9 +685,11 @@ public class CollectionsController implements Initializable {
         Task<TreeView<PathItem>> task = new Task<TreeView<PathItem>>() {
             @Override
             protected TreeView<PathItem> call() throws Exception {
+                final boolean library = Libraries.isLibrary(Paths.get(path));
                 TreeItem<PathItem> root = new TreeItem<>(new PathItem(Paths.get(path)));
                 TreeView<PathItem> dirTreeView = new TreeView<>();
-                dirTreeView.setEditable(true);
+                // the folders of a library cannot be renamed
+                dirTreeView.setEditable(!library);
                 dirTreeView.setCellFactory(TreeCellTextField.forTreeView(new PathItemConverter()));
                 dirTreeView.setOnEditCommit((t) -> {
                     PathItem newValue = t.getNewValue();
@@ -508,7 +707,11 @@ public class CollectionsController implements Initializable {
                     actCollectionTitlePane.setContent(dirTreeView);
                     dirTreeView.setRoot(root);
                 });
-                createRootTree(Paths.get(path), root);
+                if (library) {
+                    createLibraryTree(Libraries.provider(Paths.get(path)), root);
+                } else {
+                    createRootTree(Paths.get(path), root);
+                }
                 return dirTreeView;
             }
         };
@@ -528,14 +731,17 @@ public class CollectionsController implements Initializable {
                 if (selectedItem != null) {
                     selectedPath = selectedItem.getValue().getFilePath();
                     lighttablePaneController.setSelectedPath(selectedItem.getValue().getFilePath());
-                    executorParallel.submit(() -> {
+                    if (selectedItem.getValue().getLibraryNode() != null) {
+                        // a library is read through its database, not watched
+                        return;
+                    }
+                    final Path watchParent = selectedItem.getValue().getFilePath().getParent();
+                    // registering may touch a network share: not on the FX thread
+                    Thread.ofVirtual().start(() -> {
                         try {
-                            directorywatchSelected.stopWatch();
-                            directorywatchSelected.startWatch(selectedItem.getValue().getFilePath().getParent(), false);
+                            directorywatchSelected.watchOnly(watchParent);
                         } catch (IOException ex) {
                             Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (InterruptedException ex) {
-                            //Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     });
                 }
@@ -549,6 +755,10 @@ public class CollectionsController implements Initializable {
             mainController.getStatusLabelLeft().setText(t.getSource().getMessage());
             util.hideNodeAfterTime(mainController.getStatusLabelLeft(), 10, true);
             Tooltip tip = new Tooltip(t.getSource().getException().getMessage());
+            if (Libraries.isLibrary(Paths.get(path))) {
+                // e.g. the missing Full Disk Access: tell it, not only in the tooltip
+                showCollectionAlert(AlertType.WARNING, t.getSource().getException().getMessage());
+            }
             actCollectionTitlePane.setTooltip(tip);
         });
         executorParallel.submit(task);
@@ -566,43 +776,70 @@ public class CollectionsController implements Initializable {
         refreshTree();
     }
 
-    public synchronized void refreshTree() {
-        try {
-            TreeItem<PathItem> parent;
-            TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
-            ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
-            String selectedItemName = selectedItems.get(0).getValue().toString();
-            if (selectedItems.get(0).getParent() == null) {
-                parent = selectedItems.get(0);
-                parent.getChildren().clear();
-                //createTree(parent.getValue().getFilePath(), parent);
-                createRootTree(parent.getValue().getFilePath(), parent);
-                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                Platform.runLater(() -> {
-                    parent.getChildren().setAll(sorted);
-                });
-                //Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
-                //treeView.getSelectionModel().select(findFirst.get());
-            } else {
-                parent = selectedItems.get(0).getParent();
-                Path filePath = selectedItems.get(0).getValue().getFilePath();
-                int index = parent.getChildren().indexOf(selectedItems.get(0));
-                parent.getChildren().remove(selectedItems.get(0));
-                createTree(filePath, parent);
-                SortedList<TreeItem<PathItem>> sorted = parent.getChildren().sorted();
-                Platform.runLater(() -> {
-                    parent.getChildren().setAll(sorted);
-                    Optional<TreeItem<PathItem>> findFirst = sorted.stream().filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName)).findFirst();
-                    treeView.getSelectionModel().select(findFirst.get());
-                });
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-            util.showError(this.accordionPane, I18n.t("coll.cannotCreateTree"), ex);
+    /**
+     * Reads the selected folder (or the collection root) again. The folders
+     * are listed in a background thread: on a network share that takes a
+     * while. {@link #createTree} and {@link #createRootTree} add the tree
+     * items on the FX thread themselves.
+     */
+    public void refreshTree() {
+        if (accordionPane.getExpandedPane() == null
+                || !(accordionPane.getExpandedPane().getContent() instanceof TreeView<?>)) {
+            return;
         }
+        TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
+        ObservableList<TreeItem<PathItem>> selectedItems = treeView.getSelectionModel().getSelectedItems();
+        if (selectedItems.isEmpty() || selectedItems.get(0) == null) {
+            return;
+        }
+        final TreeItem<PathItem> selected = selectedItems.get(0);
+        final String selectedItemName = selected.getValue().toString();
+        final boolean root = selected.getParent() == null;
+        final TreeItem<PathItem> parent = root ? selected : selected.getParent();
+        final Path filePath = selected.getValue().getFilePath();
+        if (Libraries.isLibrary(Path.of(collectionPath(accordionPane.getExpandedPane())))) {
+            refreshLibraryTree(treeView);
+            return;
+        }
+        if (root) {
+            parent.getChildren().clear();
+        } else {
+            parent.getChildren().remove(selected);
+        }
+        Thread.ofVirtual().start(() -> {
+            try {
+                if (root) {
+                    createRootTree(filePath, parent);
+                } else {
+                    createTree(filePath, parent);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                Platform.runLater(() -> util.showError(this.accordionPane, I18n.t("coll.cannotCreateTree"), ex));
+                return;
+            }
+            // after the items queued by createTree
+            Platform.runLater(() -> {
+                FXCollections.sort(parent.getChildren(), Comparator.comparing(t -> t.getValue().getFilePath()));
+                if (!root) {
+                    parent.getChildren().stream()
+                            .filter(obj -> obj.getValue().toString().equalsIgnoreCase(selectedItemName))
+                            .findFirst()
+                            .ifPresent(item -> treeView.getSelectionModel().select(item));
+                }
+            });
+        });
     }
 
-    public synchronized void refreshTreeParent(String path, String eventKind) {
+    /** Called by the directory watcher, on the FX thread. */
+    public void refreshTreeParent(String path, String eventKind) {
+        if (accordionPane.getExpandedPane() == null
+                || !(accordionPane.getExpandedPane().getContent() instanceof TreeView<?> tv)
+                || tv.getSelectionModel().getSelectedItems().isEmpty()
+                || tv.getSelectionModel().getSelectedItems().get(0) == null
+                || tv.getSelectionModel().getSelectedItems().get(0).getParent() == null) {
+            return;
+        }
         if (eventKind.equalsIgnoreCase("ENTRY_CREATE")) {
             TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
             TreeItem<PathItem> treeItemParent = treeView.getSelectionModel().getSelectedItems().get(0).getParent();
@@ -679,6 +916,9 @@ public class CollectionsController implements Initializable {
             showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandForSearchIndex"));
             return;
         }
+        if (refuseReadOnly()) {
+            return;
+        }
         String root = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
         String urlKey = getPrefKeyForRemoving(root, "URL");
         if (urlKey == null) {
@@ -718,6 +958,9 @@ public class CollectionsController implements Initializable {
             showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandForRescanFaces"));
             return;
         }
+        if (refuseReadOnly()) {
+            return;
+        }
         String root = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
         if (getPrefKeyForRemoving(root, "INDEX") == null) {
             showCollectionAlert(AlertType.INFORMATION, I18n.t("coll.rescanFacesNeedsIndex"));
@@ -751,6 +994,9 @@ public class CollectionsController implements Initializable {
             showCollectionAlert(AlertType.ERROR, I18n.t("coll.expandToRelocate"));
             return;
         }
+        if (refuseReadOnly()) {
+            return;
+        }
         String oldRoot = ((TreeView<PathItem>) expandedPane.getContent()).getRoot().getValue().getFilePath().toString();
         String urlKey = getPrefKeyForRemoving(oldRoot, "URL");
         if (urlKey == null) {
@@ -780,8 +1026,15 @@ public class CollectionsController implements Initializable {
             }
         }
         String indexKey = getPrefKeyForRemoving(oldRoot, "INDEX");
-        String question = I18n.t("coll.relocateQuestion", oldRoot, newRoot);
-        if (indexKey != null) {
+        String baseQuestion = I18n.t("coll.relocateQuestion", oldRoot, newRoot);
+        if (indexKey == null) {
+            confirmRelocation(expandedPane, oldRoot, newRoot, urlKey, indexKey, baseQuestion);
+            return;
+        }
+        // the check queries the search database and tests files on the new
+        // location (often a network share): not on the FX thread
+        Thread.ofVirtual().start(() -> {
+            String question = baseQuestion;
             int[] check = searchIndexProcess.checkRelocation(oldRoot, newRoot, 20);
             if (check[1] > 0) {
                 question += I18n.t("coll.relocateFound", check[0], check[1]);
@@ -789,7 +1042,13 @@ public class CollectionsController implements Initializable {
                     question += I18n.t("coll.relocateNotMoved");
                 }
             }
-        }
+            final String q = question;
+            Platform.runLater(() -> confirmRelocation(expandedPane, oldRoot, newRoot, urlKey, indexKey, q));
+        });
+    }
+
+    private void confirmRelocation(TitledPane expandedPane, String oldRoot, String newRoot, String urlKey, String indexKey, String question) {
+        Path newPath = Path.of(newRoot);
         Alert alert = new Alert(AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
         alert = Utility.setDefaultButton(alert, ButtonType.NO);
         alert.setHeaderText(question);
@@ -812,12 +1071,11 @@ public class CollectionsController implements Initializable {
         }
         accordionPane.getPanes().remove(expandedPane);
         loadDirectoryTree(newRoot);
-        executorParallel.submit(() -> {
+        Thread.ofVirtual().start(() -> {
             try {
-                directoryRootwatch.startWatch(newPath, false);
+                directoryRootwatch.watch(newPath, false);
             } catch (IOException ex) {
                 Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InterruptedException ex) {
             }
         });
     }
@@ -941,7 +1199,7 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void createEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCreate"))) {
+        if (refuseReadOnly() || checkIfElementInTreeSelected(I18n.t("coll.selectToCreate"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -979,7 +1237,7 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void cutEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCut"))) {
+        if (refuseReadOnly() || checkIfElementInTreeSelected(I18n.t("coll.selectToCut"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -996,7 +1254,7 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void copyEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected(I18n.t("coll.selectToCopy"))) {
+        if (refuseReadOnly() || checkIfElementInTreeSelected(I18n.t("coll.selectToCopy"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -1013,7 +1271,7 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void deleteEventAction(ActionEvent event) {
-        if (checkIfElementInTreeSelected(I18n.t("coll.selectToDelete"))) {
+        if (refuseReadOnly() || checkIfElementInTreeSelected(I18n.t("coll.selectToDelete"))) {
             return;
         }
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -1089,6 +1347,9 @@ public class CollectionsController implements Initializable {
 
     @FXML
     private void pasteEventAction(ActionEvent event) {
+        if (refuseReadOnly()) {
+            return;
+        }
         Path sourceFilePath = clipboardPath;
 
         TreeView<PathItem> treeView = (TreeView<PathItem>) accordionPane.getExpandedPane().getContent();
@@ -1263,150 +1524,219 @@ public class CollectionsController implements Initializable {
         Dragboard db = t.getDragboard();
         boolean success = false;
         if (db.hasFiles()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("coll.importTarget"), ButtonType.CANCEL, ButtonType.OK);
-            alert.setTitle(I18n.t("coll.importTargetTitle"));
-            alert.setHeaderText(I18n.t("coll.importHeader"));
-            FontIcon ft = new FontIcon("ti-import:50");
-            alert.setGraphic(ft);
-            DialogPane dialogPane = alert.getDialogPane();
-            alert.setResizable(true);
-            GridPane content = new GridPane();
-            content.setAlignment(Pos.CENTER_RIGHT);
-            content.setHgap(5);
-            content.setVgap(5);
-            Label cbLabel = new Label(I18n.t("coll.selectCollection"));
-            ComboBox<String> cb = new ComboBox<>();
-            cb.setPrefWidth(200);
-            accordionPane.getPanes().forEach((pan) -> {
-                cb.getItems().add(collectionPath(pan));
-            });
-            content.addRow(0, cbLabel, cb);
-            Label cbRootLabel = new Label(I18n.t("coll.selectEvent"));
-            ComboBox<String> cbRootFolder = new ComboBox<>();
-            cbRootFolder.setPrefWidth(200);
-            content.addRow(1, cbRootLabel, cbRootFolder);
-            cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
-                cbRootFolder.getItems().clear();
-                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
-                TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
-                tree.getRoot().getChildren().forEach((treeitem) -> {
-                    cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
-                });
-            });
-            cbRootFolder.getSelectionModel().selectedItemProperty().addListener((o) -> {
-                dialogPane.lookupButton(ButtonType.OK).setDisable(false);
-            });
-            dialogPane.setContent(content);
-            dialogPane.lookupButton(ButtonType.OK).setDisable(true);
-            dialogPane.getStylesheets().add(
-                    getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-            Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
-            Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-            stage.getIcons().add(dialogIcon);
-            Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
-            alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
-            alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
-            alert.showAndWait();
-            if (alert.getResult() == ButtonType.OK) {
-                File dropFile = db.getFiles().get(0);
-                List<File> fileItem = new ArrayList<>(db.getFiles());
-                AtomicLong count = new AtomicLong(0);
-                if (dropFile.isDirectory()) {
-                    try {
-                        count.set(Utility.fileCount(dropFile.toPath()));
-                    } catch (IOException ex) {
-                        Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    // copy the sidecars (XMP, former .edit) of the images with them
-                    for (File f : db.getFiles()) {
-                        if (f.isFile()) {
-                            for (Path sidecar : XmpSidecar.existingSidecars(f.toPath())) {
-                                if (!fileItem.contains(sidecar.toFile())) {
-                                    fileItem.add(sidecar.toFile());
-                                }
-                            }
-                        }
-                    }
-                    count.set(fileItem.size());
-                }
-                Task<Boolean> task = new Task<>() {
-                    @Override
-                    protected Boolean call() throws Exception {
-                        String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
-                        updateTitle(I18n.t("coll.copyMediafilesTo", Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString()));
-                        AtomicInteger iatom = new AtomicInteger(1);
-                        if (dropFile.isDirectory()) {
-                            Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
-                            updateMessage(I18n.t("coll.copyToTarget"));
-                            Files.createDirectory(targetPath);
-                            String src = dropFile.getAbsolutePath();
-                            String dest = targetPath.toString();
-                            Files.walk(Paths.get(src)).forEach(a -> {
-                                Path b = Paths.get(dest, a.toString().substring(src.length()));
-                                try {
-                                    if (!a.toString().equals(src)) {
-                                        Files.copy(a, b, true ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
-                                        updateMessage(iatom.get() + " / " + count.get());
-                                        iatom.addAndGet(1);
-                                    }
-                                } catch (IOException e) {
-                                }
-                            });
-                        } else {
-                            //Create Task
-                            String targetDir = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-                            Files.createDirectory(Path.of(targetDir));
-                            fileItem.forEach((t) -> {
-                                try {
-                                    updateMessage(I18n.t("coll.copyItem", t.getName()));
-                                    Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
-                                    updateMessage(iatom.get() + " / " + count.get());
-                                    iatom.addAndGet(1);
-                                } catch (IOException ex) {
-                                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                            });
-                        }
-                        return true;
-                    }
-                };
-                task.setOnScheduled((tk) -> {
-                    mainController.getStatusLabelLeft().setVisible(true);
-                    mainController.getProgressPane().setVisible(true);
-                    mainController.getProgressbarLabel().setText(I18n.t("lighttable.filesFoundLoading", count));
-                    mainController.getStatusLabelRight().setVisible(true);
-                });
-                task.setOnFailed((fail) -> {
-                    Alert alertError = new Alert(AlertType.ERROR, I18n.t("coll.importError"), ButtonType.OK);
-                    alertError.getDialogPane().getStylesheets().add(
-                            getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
-                    alertError.setResizable(false);
-                    alertError.setGraphic(new FontIcon("ti-close:30"));
-                    Utility.centerChildWindowOnStage((Stage) alertError.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
-                    Stage stageError = (Stage) alertError.getDialogPane().getScene().getWindow();
-                    stageError.getIcons().add(dialogIcon);
-                    stageError.showAndWait();
-                });
-                task.setOnSucceeded((suc) -> {
-                    FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
-                    if (filtered.isEmpty() == false) {
-                        accordionPane.setExpandedPane(filtered.get(0));
-                        TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
-                        FilteredList<TreeItem<PathItem>> filteredTreeItem = tree.getRoot().getChildren().filtered((treeIt) -> treeIt.getValue().getFilePath().compareTo(Path.of(cbRootFolder.getSelectionModel().getSelectedItem())) == 0);
-                        if (filteredTreeItem.isEmpty() == false) {
-                            tree.getSelectionModel().clearSelection();
-                            tree.getSelectionModel().select(filteredTreeItem.get(0));
-                            refreshTree();
-                        }
-                    }
-                });
-                executorParallel.submit(task);
-                mainController.getTaskProgressView().getTasks().add(task);
-            }
+            // only the files are taken from the dragboard; the dialog runs after
+            // the drop gesture is completed (a nested event loop inside a drop
+            // handler blocks the drag source, e.g. the Finder)
+            final List<File> dropped = new ArrayList<>(db.getFiles());
+            Platform.runLater(() -> importDroppedFiles(dropped));
         }
         t.setDropCompleted(true);
         t.consume();
+    }
+
+    /** Adds a new event folder below the root of the collection tree and selects it. */
+    private void addEventToTree(TreeView<PathItem> tree, Path eventFolder) {
+        TreeItem<PathItem> root = tree.getRoot();
+        boolean exists = root.getChildren().stream()
+                .anyMatch(item -> item.getValue().getFilePath().equals(eventFolder));
+        Thread.ofVirtual().start(() -> {
+            if (!exists) {
+                try {
+                    // adds the item on the FX thread
+                    createTree(eventFolder, root);
+                } catch (IOException ex) {
+                    Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                    return;
+                }
+            }
+            // after the item queued by createTree
+            Platform.runLater(() -> {
+                FXCollections.sort(root.getChildren(), Comparator.comparing(t -> t.getValue().getFilePath()));
+                tree.setShowRoot(false);
+                root.getChildren().stream()
+                        .filter(item -> item.getValue().getFilePath().equals(eventFolder))
+                        .findFirst()
+                        .ifPresent(item -> {
+                            tree.getSelectionModel().clearSelection();
+                            tree.getSelectionModel().select(item);
+                            tree.scrollTo(tree.getRow(item));
+                        });
+            });
+        });
+    }
+
+    private void importDroppedFiles(List<File> dropped) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("coll.importTarget"), ButtonType.CANCEL, ButtonType.OK);
+        alert.setTitle(I18n.t("coll.importTargetTitle"));
+        alert.setHeaderText(I18n.t("coll.importHeader"));
+        FontIcon ft = new FontIcon("ti-import:50");
+        alert.setGraphic(ft);
+        DialogPane dialogPane = alert.getDialogPane();
+        alert.setResizable(true);
+        GridPane content = new GridPane();
+        content.setAlignment(Pos.CENTER_RIGHT);
+        content.setHgap(5);
+        content.setVgap(5);
+        Label cbLabel = new Label(I18n.t("coll.selectCollection"));
+        ComboBox<String> cb = new ComboBox<>();
+        cb.setPrefWidth(200);
+        accordionPane.getPanes().forEach((pan) -> {
+            if (!Libraries.isLibrary(Path.of(collectionPath(pan)))) {
+                cb.getItems().add(collectionPath(pan));
+            }
+        });
+        content.addRow(0, cbLabel, cb);
+        Label cbRootLabel = new Label(I18n.t("coll.selectEvent"));
+        ComboBox<String> cbRootFolder = new ComboBox<>();
+        cbRootFolder.setPrefWidth(200);
+        content.addRow(1, cbRootLabel, cbRootFolder);
+        // the root of the collection is a target too: the folder becomes a new event
+        final String[] collectionRoot = new String[1];
+        cbRootFolder.setConverter(new javafx.util.StringConverter<String>() {
+            @Override
+            public String toString(String path) {
+                return path != null && path.equals(collectionRoot[0]) ? I18n.t("coll.collectionRootTarget") : path;
+            }
+
+            @Override
+            public String fromString(String string) {
+                return string;
+            }
+        });
+        cb.getSelectionModel().selectedItemProperty().addListener((o) -> {
+            cbRootFolder.getItems().clear();
+            FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+            TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
+            collectionRoot[0] = tree.getRoot().getValue().getFilePath().toString();
+            cbRootFolder.getItems().add(collectionRoot[0]);
+            tree.getRoot().getChildren().forEach((treeitem) -> {
+                cbRootFolder.getItems().add(treeitem.getValue().getFilePath().toString());
+            });
+        });
+        cbRootFolder.getSelectionModel().selectedItemProperty().addListener((o) -> {
+            dialogPane.lookupButton(ButtonType.OK).setDisable(false);
+        });
+        dialogPane.setContent(content);
+        dialogPane.lookupButton(ButtonType.OK).setDisable(true);
+        dialogPane.getStylesheets().add(
+                getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+        Image dialogIcon = new Image(getClass().getResourceAsStream("/org/photoslide/img/Installericon.png"));
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(dialogIcon);
+        Utility.centerChildWindowOnStage((Stage) alert.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+        alert = Utility.setDefaultButton(alert, ButtonType.CANCEL);
+        alert.getDialogPane().getScene().setFill(Paint.valueOf("rgb(80, 80, 80)"));
+        alert.showAndWait();
+        if (alert.getResult() == ButtonType.OK) {
+            File dropFile = dropped.get(0);
+            List<File> fileItem = new ArrayList<>(dropped);
+            AtomicLong count = new AtomicLong(0);
+            // the folder the files were copied into
+            java.util.concurrent.atomic.AtomicReference<Path> created = new java.util.concurrent.atomic.AtomicReference<>();
+            Task<Boolean> task = new Task<>() {
+                @Override
+                protected Boolean call() throws Exception {
+                    // counting a folder tree and looking for sidecars access the
+                    // file system for every file: here, not on the FX thread
+                    if (dropFile.isDirectory()) {
+                        try {
+                            count.set(Utility.fileCount(dropFile.toPath()));
+                        } catch (IOException ex) {
+                            Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    } else {
+                        // copy the sidecars (XMP, former .edit) of the images with them
+                        java.util.Set<File> known = new java.util.HashSet<>(fileItem);
+                        for (File f : dropped) {
+                            if (f.isFile()) {
+                                for (Path sidecar : XmpSidecar.existingSidecars(f.toPath())) {
+                                    if (known.add(sidecar.toFile())) {
+                                        fileItem.add(sidecar.toFile());
+                                    }
+                                }
+                            }
+                        }
+                        count.set(fileItem.size());
+                    }
+                    String targetStr = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + dropFile.toPath().getFileName().toString();
+                    updateTitle(I18n.t("coll.copyMediafilesTo", Path.of(cbRootFolder.getSelectionModel().getSelectedItem()).getFileName().toString()));
+                    AtomicInteger iatom = new AtomicInteger(1);
+                    if (dropFile.isDirectory()) {
+                        Path targetPath = Path.of(targetStr + "_" + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE));
+                        created.set(targetPath);
+                        updateMessage(I18n.t("coll.copyToTarget"));
+                        Files.createDirectory(targetPath);
+                        String src = dropFile.getAbsolutePath();
+                        String dest = targetPath.toString();
+                        Files.walk(Paths.get(src)).forEach(a -> {
+                            Path b = Paths.get(dest, a.toString().substring(src.length()));
+                            try {
+                                if (!a.toString().equals(src)) {
+                                    Files.copy(a, b, true ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+                                    updateMessage(iatom.get() + " / " + count.get());
+                                    iatom.addAndGet(1);
+                                }
+                            } catch (IOException e) {
+                            }
+                        });
+                    } else {
+                        //Create Task
+                        String targetDir = cbRootFolder.getSelectionModel().getSelectedItem() + File.separator + LocalDateTime.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+                        Files.createDirectory(Path.of(targetDir));
+                        created.set(Path.of(targetDir));
+                        fileItem.forEach((t) -> {
+                            try {
+                                updateMessage(I18n.t("coll.copyItem", t.getName()));
+                                Files.copy(t.toPath(), Path.of(targetDir + File.separator + t.getName()), StandardCopyOption.REPLACE_EXISTING);
+                                updateMessage(iatom.get() + " / " + count.get());
+                                iatom.addAndGet(1);
+                            } catch (IOException ex) {
+                                Logger.getLogger(CollectionsController.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        });
+                    }
+                    return true;
+                }
+            };
+            task.setOnScheduled((tk) -> {
+                mainController.getStatusLabelLeft().setVisible(true);
+                mainController.getProgressPane().setVisible(true);
+                mainController.getProgressbarLabel().setText(I18n.t("lighttable.filesFoundLoading", count));
+                mainController.getStatusLabelRight().setVisible(true);
+            });
+            task.setOnFailed((fail) -> {
+                Alert alertError = new Alert(AlertType.ERROR, I18n.t("coll.importError"), ButtonType.OK);
+                alertError.getDialogPane().getStylesheets().add(
+                        getClass().getResource("/org/photoslide/css/Dialogs.css").toExternalForm());
+                alertError.setResizable(false);
+                alertError.setGraphic(new FontIcon("ti-close:30"));
+                Utility.centerChildWindowOnStage((Stage) alertError.getDialogPane().getScene().getWindow(), (Stage) accordionPane.getScene().getWindow());
+                Stage stageError = (Stage) alertError.getDialogPane().getScene().getWindow();
+                stageError.getIcons().add(dialogIcon);
+                stageError.showAndWait();
+            });
+            task.setOnSucceeded((suc) -> {
+                FilteredList<TitledPane> filtered = accordionPane.getPanes().filtered((panet) -> collectionPath(panet).equalsIgnoreCase(cb.getSelectionModel().getSelectedItem()));
+                if (filtered.isEmpty() == false) {
+                    accordionPane.setExpandedPane(filtered.get(0));
+                    TreeView<PathItem> tree = (TreeView<PathItem>) filtered.get(0).getContent();
+                    if (cbRootFolder.getSelectionModel().getSelectedItem().equals(collectionRoot[0]) && created.get() != null) {
+                        // copied into the root: the new event is added to the tree and
+                        // selected (the root is not shown, so it cannot be selected and refreshed)
+                        addEventToTree(tree, created.get());
+                        return;
+                    }
+                    FilteredList<TreeItem<PathItem>> filteredTreeItem = tree.getRoot().getChildren().filtered((treeIt) -> treeIt.getValue().getFilePath().compareTo(Path.of(cbRootFolder.getSelectionModel().getSelectedItem())) == 0);
+                    if (filteredTreeItem.isEmpty() == false) {
+                        tree.getSelectionModel().clearSelection();
+                        tree.getSelectionModel().select(filteredTreeItem.get(0));
+                        refreshTree();
+                    }
+                }
+            });
+            executorParallel.submit(task);
+            mainController.getTaskProgressView().getTasks().add(task);
+        }
     }
 
     @FXML

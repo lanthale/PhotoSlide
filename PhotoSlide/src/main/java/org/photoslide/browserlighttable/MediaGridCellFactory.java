@@ -93,7 +93,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
     private boolean listFilesActive;
 
     public MediaGridCellFactory(LighttableController lightController, GridView<MediaFile> grid, Utility util, MetadataController metadataController) {
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("factoryController").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(10).setNamePrefix("factoryController").setDaemon(true).build());
         listFilesActive = true;
         this.util = util;
         this.metadataController = metadataController;
@@ -323,7 +323,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
         selectedCell = (MediaGridCell) t.getSource();
         lightController.mediaFileSelected(selectedMediaItem);
         if (selectedMediaItem.isDeleted() == true) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("lighttable.restoreQuestion", selectedMediaItem.getName()), ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("lighttable.restoreQuestion", selectedMediaItem.getDisplayName()), ButtonType.CANCEL, ButtonType.YES, ButtonType.NO);
 
             DialogPane dialogPane = alert.getDialogPane();
             dialogPane.getStylesheets().add(
@@ -586,7 +586,7 @@ public class MediaGridCellFactory implements Callback<GridView<MediaFile>, GridC
             lightController.getRateButton().setDisable(true);
         }
         lightController.getFilenameLabel().setVisible(true);
-        lightController.getFilenameLabel().setText(item.getName());
+        lightController.getFilenameLabel().setText(item.getDisplayName());
     }
 
     public void setStdGUIState() {

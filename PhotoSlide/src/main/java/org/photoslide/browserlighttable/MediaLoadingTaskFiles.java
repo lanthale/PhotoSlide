@@ -63,7 +63,7 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
         metadataController = metaControllerParam;
         this.factory = factory;
         this.fullMediaList = fullMediaList;
-        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").build());
+        executorParallel = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNamePrefix("lightTableControllerSelectionMediaLoading").setDaemon(true).build());
         if (Utility.nativeMemorySize > 4194500) {
             loadingLimit = 75;
         } else {
@@ -235,6 +235,18 @@ public class MediaLoadingTaskFiles extends Task<MediaFile> {
     protected void succeeded() {
         super.succeeded();
         executorParallel.shutdown();
+    }
+
+    @Override
+    protected void cancelled() {
+        super.cancelled();
+        executorParallel.shutdownNow();
+    }
+
+    @Override
+    protected void failed() {
+        super.failed();
+        executorParallel.shutdownNow();
     }
 
 }

@@ -13,6 +13,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import org.photoslide.MainViewController;
 import org.photoslide.datamodel.FileTypes;
+import org.photoslide.browsercollections.library.Libraries;
+import org.photoslide.browsercollections.library.LibraryProvider;
 import org.photoslide.datamodel.MediaFile;
 import org.photoslide.browsermetadata.MetadataController;
 import java.io.IOException;
@@ -79,6 +81,8 @@ public class MediaLoadingTask extends Task<MediaFile> {
     // own pool: the common pool stays free, daemon threads do not keep the JVM alive on exit
     private final ExecutorService loadingPool;
     private final List<MediaFile> cacheList;
+    // set when a node of a photo library is loaded: gives the original file names
+    private volatile LibraryProvider library;
     private boolean loadedFromCache;
     // paths in cacheList, so the loading loop never searches a list
     private final Set<Path> cachedPaths;
@@ -194,6 +198,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
                     MediaFile m = new MediaFile();
                     m.setName(fileItem.getFileName().toString());
                     m.setPathStorage(fileItem);
+                    if (library != null) {
+                        m.setLibraryName(library.displayName(fileItem));
+                    }
                     m.setMediaType(MediaFile.MediaTypes.IMAGE);
                     BasicFileAttributes attr = scan.attributes().get(fileItem);
                     if (attr != null) {
@@ -249,6 +256,28 @@ public class MediaLoadingTask extends Task<MediaFile> {
         List<Path> media = new ArrayList<>();
         Map<Path, BasicFileAttributes> attributes = new HashMap<>();
         Set<String> editFileNames = new HashSet<>();
+        Libraries.NodeRef node = Libraries.nodeOf(selectedPath);
+        if (node != null) {
+            library = node.provider();
+            // a node of a photo library: the files come from its database,
+            // their sidecars are in the application data
+            media.addAll(node.provider().assets(node.nodeId()));
+            Set<Path> folders = new HashSet<>();
+            for (Path file : media) {
+                folders.add(Libraries.sidecarFolder(file));
+            }
+            for (Path folder : folders) {
+                if (!Files.isDirectory(folder)) {
+                    continue;
+                }
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder, "*.xmp")) {
+                    for (Path sidecar : stream) {
+                        editFileNames.add(sidecar.getFileName().toString().toLowerCase());
+                    }
+                }
+            }
+            return new FolderScan(media, attributes, editFileNames);
+        }
         if (!IS_WINDOWS) {
             scanNames(media, editFileNames);
             media.sort(new FilenameComparator());
@@ -356,6 +385,9 @@ public class MediaLoadingTask extends Task<MediaFile> {
                 }
                 cacheList.addAll(e2);
                 e2.forEach((m) -> {
+                    if (library != null) {
+                        m.setLibraryName(library.displayName(m.getPathStorage()));
+                    }
                     cachedPaths.add(m.getPathStorage());
                     sortKeys.prepare(m);
                 });

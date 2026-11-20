@@ -1118,6 +1118,9 @@ public class MetadataController implements Initializable {
      * original are kept.
      */
     static void writeAtomically(Path target, byte[] data) throws IOException {
+        if (org.photoslide.browsercollections.library.Libraries.isReadOnly(target)) {
+            throw new IOException(org.photoslide.I18n.t("coll.libraryReadOnly"));
+        }
         Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
         boolean keepTmp = false;
         try {
@@ -2131,6 +2134,9 @@ public class MetadataController implements Initializable {
         }
         if (executorParallel != null) {
             executorParallel.shutdownNow();
+        }
+        if (executorFilter != null) {
+            executorFilter.shutdownNow();
         }
     }
 }

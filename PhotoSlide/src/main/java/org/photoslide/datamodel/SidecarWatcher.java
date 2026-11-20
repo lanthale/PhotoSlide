@@ -44,6 +44,7 @@ public final class SidecarWatcher {
     private final Function<Path, List<MediaFile>> filesFor;
     private final BiConsumer<MediaFile, Path> reload;
     private Map<Path, Stamp> last;
+    private volatile Set<Path> listed;
     private ScheduledFuture<?> task;
 
     /**
@@ -71,18 +72,39 @@ public final class SidecarWatcher {
         timer.shutdownNow();
     }
 
+    /**
+     * The sidecars (.xmp and former .edit files) of the folder from the last
+     * poll, as normalized absolute paths; null before the first scan. Used
+     * where the file system must not be accessed (drag and drop).
+     */
+    public Set<Path> listedSidecars() {
+        return listed;
+    }
+
+    /** The watched folder. */
+    public Path folder() {
+        return folder;
+    }
+
     private Map<Path, Stamp> scan() {
         Map<Path, Stamp> stamps = new HashMap<>();
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(folder, "*.{xmp,XMP}")) {
+        Set<Path> names = new HashSet<>();
+        try (DirectoryStream<Path> dir = Files.newDirectoryStream(folder, "*.{xmp,XMP,edit}")) {
             for (Path p : dir) {
+                if (p.getFileName().toString().endsWith(".edit")) {
+                    names.add(p.toAbsolutePath().normalize());
+                    continue;
+                }
                 BasicFileAttributes a = Files.readAttributes(p, BasicFileAttributes.class);
                 if (a.isRegularFile()) {
                     stamps.put(p, new Stamp(a.lastModifiedTime().toMillis(), a.size()));
+                    names.add(p.toAbsolutePath().normalize());
                 }
             }
         } catch (IOException ex) {
             LOG.log(Level.FINE, "Cannot scan " + folder, ex);
         }
+        listed = names;
         return stamps;
     }
 

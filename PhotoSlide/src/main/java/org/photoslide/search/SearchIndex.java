@@ -86,9 +86,9 @@ public class SearchIndex {
     public SearchIndex(MetadataController metc, MainViewController c) {
         this.metadataController = metc;
         mainViewController = c;
-        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").build());
-        geoExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexGeoExecutor").build());
-        faceExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexFaceExecutor").build());
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexExecutor").setDaemon(true).build());
+        geoExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexGeoExecutor").setDaemon(true).build());
+        faceExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setPriority(1).setNamePrefix("searchIndexFaceExecutor").setDaemon(true).build());
         MediaFile.setEditsSavedListener(this::updateEdits);
     }
 
@@ -618,9 +618,10 @@ public class SearchIndex {
         } catch (java.util.concurrent.RejectedExecutionException ex) {
             // already shut down
         }
+        // daemon threads: a file still being indexed does not keep the program from quitting
         executor.shutdown();
         geoExecutor.shutdownNow();
-        faceExecutor.shutdown();
+        faceExecutor.shutdownNow();
     }
 
     /**
@@ -792,7 +793,20 @@ public class SearchIndex {
                 updateMessage(folderOf(collectionName, item.path()));
                 updateProgress(done, items.size());
                 long t0 = System.nanoTime();
-                faces.scanFile(item).join();
+                // not join(): a job dropped by FaceService.shutdown() never completes
+                java.util.concurrent.CompletableFuture<Void> scan = faces.scanFile(item);
+                while (true) {
+                    try {
+                        scan.get(1, java.util.concurrent.TimeUnit.SECONDS);
+                        break;
+                    } catch (java.util.concurrent.TimeoutException ex) {
+                        if (isCancelled() || terminated) {
+                            return null;
+                        }
+                    } catch (java.util.concurrent.ExecutionException ex) {
+                        break;
+                    }
+                }
                 done++;
                 // pause as long as the file took: half of one core at most
                 long took = (System.nanoTime() - t0) / 1_000_000;

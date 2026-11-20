@@ -11,6 +11,7 @@ import com.adobe.internal.xmp.properties.XMPProperty;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.photoslide.browsercollections.library.Libraries;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -92,12 +93,71 @@ public final class XmpSidecar {
         String name = fileName.toString();
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name;
-        for (Path p : new Path[]{image.resolveSibling(base + ".xmp"), image.resolveSibling("Ω_" + base + ".edit")}) {
+        Path folder = Libraries.sidecarFolder(image);
+        for (Path p : new Path[]{folder.resolve(base + ".xmp"), folder.resolve("Ω_" + base + ".edit")}) {
             if (!p.equals(image) && Files.isRegularFile(p)) {
                 result.add(p);
             }
         }
         return result;
+    }
+
+    /**
+     * Like {@link #existingSidecars(Path)}, but without access to the file
+     * system (for the drag and drop gesture, which must be set up on the FX
+     * thread at once): what PhotoSlide wrote or deleted itself is known, the
+     * rest comes from a listing of the folder ({@link SidecarWatcher}).
+     *
+     * @param listed normalized absolute paths of the .xmp/.edit files of the folder
+     */
+    public static List<Path> knownSidecars(Path image, java.util.Set<Path> listed) {
+        List<Path> result = new ArrayList<>(2);
+        Path fileName = image.getFileName();
+        if (fileName == null) {
+            return result;
+        }
+        String name = fileName.toString();
+        int dot = name.lastIndexOf('.');
+        String base = dot > 0 ? name.substring(0, dot) : name;
+        Path folder = Libraries.sidecarFolder(image);
+        Path xmp = folder.resolve(base + ".xmp");
+        Long own = OWN_STATE.get(key(xmp));
+        if (own != null ? own != DELETED : listed.contains(key(xmp))) {
+            result.add(xmp);
+        }
+        Path legacy = folder.resolve("Ω_" + base + ".edit");
+        if (listed.contains(key(legacy))) {
+            result.add(legacy);
+        }
+        return result;
+    }
+
+    /**
+     * Reads the sidecar of the file without changing the file: the part of
+     * {@link #read(MediaFile)} that accesses the file system (not on the FX
+     * thread). Apply the result with {@link #apply}.
+     *
+     * @return null if there is no sidecar
+     */
+    public static XMPMeta readSidecar(MediaFile file) throws IOException {
+        Path path = sidecarPath(file);
+        if (!Files.isRegularFile(path)) {
+            return null;
+        }
+        try {
+            return readMeta(path);
+        } catch (XMPException ex) {
+            throw new IOException("Cannot read " + path, ex);
+        }
+    }
+
+    /** Sets the properties of a sidecar read with {@link #readSidecar} (FX thread). */
+    public static void apply(XMPMeta meta, MediaFile file) throws IOException {
+        try {
+            get(meta, file);
+        } catch (XMPException ex) {
+            throw new IOException("Cannot read the sidecar of " + file.getName(), ex);
+        }
     }
 
     /** True for sidecar files (.xmp, .edit) that belong to an image. */
@@ -106,13 +166,17 @@ public final class XmpSidecar {
         return name.endsWith(".xmp") || name.endsWith(".edit");
     }
 
-    /** {@code <folder>/<name without extension>.xmp} */
+    /**
+     * {@code <folder>/<name without extension>.xmp}; for a file of a photo
+     * library the folder is in the application data (see
+     * {@link Libraries#sidecarFolder}).
+     */
     public static Path sidecarPath(MediaFile file) {
         Path image = file.getPathStorage();
         String name = image.getFileName().toString();
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name;
-        return image.resolveSibling(base + ".xmp");
+        return Libraries.sidecarFolder(image).resolve(base + ".xmp");
     }
 
     /**
@@ -122,6 +186,9 @@ public final class XmpSidecar {
     public static synchronized void write(MediaFile file) throws IOException {
         Path path = sidecarPath(file);
         try {
+            if (Libraries.isReadOnly(file.getPathStorage())) {
+                Files.createDirectories(path.getParent());
+            }
             XMPMeta meta = readMeta(path);
             put(meta, file);
             byte[] bytes = XMPMetaFactory.serializeToBuffer(meta,

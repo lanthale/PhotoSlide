@@ -67,6 +67,7 @@ public class MediaFile implements Serializable {
     private static final long serialVersionUID = 2L;
     private static volatile Consumer<MediaFile> editsSavedListener;
     private String name;
+    private transient String libraryName;
     private String pathStorage;
     private SimpleBooleanProperty loading;
     private SimpleBooleanProperty loadingError;
@@ -242,6 +243,22 @@ public class MediaFile implements Serializable {
         return name;
     }
 
+    /**
+     * The name shown to the user: for a file of a photo library its original
+     * file name (the library stores it under an id), else {@link #getName()}.
+     */
+    public String getDisplayName() {
+        return libraryName != null ? libraryName : name;
+    }
+
+    /**
+     * Sets the original file name of a file of a photo library (not stored in
+     * the cache, set again on loading); null for other files.
+     */
+    public void setLibraryName(String libraryName) {
+        this.libraryName = libraryName;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -339,6 +356,38 @@ public class MediaFile implements Serializable {
     public void reloadEdits() {
         readEdits();
         thumbnailChanged();
+    }
+
+    /**
+     * Like {@link #reloadEdits()} for a file that is shown: the sidecar is
+     * read in a background thread (network share), the edits are set on
+     * the FX thread, then {@code onReloaded} runs there.
+     */
+    public void reloadEditsAsync(Runnable onReloaded) {
+        Thread.ofVirtual().start(() -> {
+            com.adobe.internal.xmp.XMPMeta meta;
+            try {
+                meta = XmpSidecar.readSidecar(this);
+            } catch (IOException ex) {
+                Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot read " + getEditFilePath(), ex);
+                return;
+            }
+            javafx.application.Platform.runLater(() -> {
+                if (meta != null) {
+                    try {
+                        XmpSidecar.apply(meta, this);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, null, ex);
+                        return;
+                    }
+                } else {
+                    // sidecar deleted (rare): former edit file or no edits
+                    readEdits();
+                }
+                thumbnailChanged();
+                onReloaded.run();
+            });
+        });
     }
 
     /**
@@ -1210,23 +1259,44 @@ public class MediaFile implements Serializable {
      * is written into a new sidecar.
      */
     public void removeAllEdits() {
-        boolean wasStacked = stacked.get();
-        String oldStackName = stackName.get();
-        int oldStackPos = stackPos.get();
+        deleteEditFiles();
+        if (resetAllEdits()) {
+            saveEdits();
+        }
+    }
+
+    /**
+     * File part of {@link #removeAllEdits()}: deletes the sidecars. May
+     * block (network share): not on the FX thread.
+     */
+    public void deleteEditFiles() {
         try {
             XmpSidecar.delete(this);
             Files.deleteIfExists(getLegacyEditFilePath());
         } catch (IOException ex) {
             Logger.getLogger(MediaFile.class.getName()).log(Level.SEVERE, "Cannot remove edits of " + name, ex);
         }
+    }
+
+    /**
+     * In-memory part of {@link #removeAllEdits()} (FX thread): resets the
+     * edits, the stack is kept.
+     *
+     * @return true if the file is stacked: the stack must be saved again
+     * ({@link #saveEdits()}, not on the FX thread)
+     */
+    public boolean resetAllEdits() {
+        boolean wasStacked = stacked.get();
+        String oldStackName = stackName.get();
+        int oldStackPos = stackPos.get();
         resetEdits();
         faces.set("");
         if (wasStacked) {
             stacked.set(true);
             stackName.set(oldStackName);
             stackPos.set(oldStackPos);
-            saveEdits();
         }
+        return wasStacked;
     }
 
     /**

@@ -279,7 +279,7 @@ public class SoftwareUpdater {
                         return;
                     }
                     downloadDialog.close();
-                    App.saveSettings((Stage) controller.getBookmarksBoardButton().getScene().getWindow(), controller);
+                    App.shutdownApp();
                     Platform.exit();
                     System.exit(0);
                 });

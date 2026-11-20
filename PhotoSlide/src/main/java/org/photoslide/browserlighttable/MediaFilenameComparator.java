@@ -39,7 +39,8 @@ public final class MediaFilenameComparator implements Comparator<MediaFile> {
     private static Key keyOf(MediaFile m) {
         Key k = m.getSortKey() instanceof Key key ? key : null;
         if (k == null) {
-            k = new Key(m.getPathStorage().getFileName().toString());
+            k = new Key(m.getDisplayName() != null && !m.getDisplayName().equals(m.getName())
+                    ? m.getDisplayName() : m.getPathStorage().getFileName().toString());
             m.setSortKey(k);
         }
         return k;

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -75,12 +76,74 @@ public class App extends Application {
     public static final String SEARCH_WHITESPACE_CHARS = " ;-:/.,\\";
     private static final String NODE_NAME = "PhotoSlide";
     private FXMLLoader fxmlLoader;
+    private static final long EXIT_GRACE_MILLIS = 10_000;
+    private static final AtomicBoolean SHUT_DOWN = new AtomicBoolean();
+    private static volatile Stage primaryStage;
+    private static volatile MainViewController mainController;
     private Image iconImage;
 
     @Override
     public void stop() throws Exception {
-        super.stop(); //To change body of generated methods, choose Tools | Templates.                
-        closeSearchDBConnection();
+        // also reached when the window is closed or by the native quit of the
+        // Dock/app menu (NSMenuFX), which only call Platform.exit()
+        try {
+            shutdownApp();
+        } finally {
+            super.stop();
+            closeSearchDBConnection();
+            startExitWatchdog();
+        }
+    }
+
+    /**
+     * Saves the settings and stops all background work. Runs once, whichever
+     * way the program is quit (Cmd+Q, menu, window close, Dock).
+     */
+    public static void shutdownApp() {
+        if (!SHUT_DOWN.compareAndSet(false, true)) {
+            return;
+        }
+        MainViewController controller = mainController;
+        if (controller == null) {
+            return;
+        }
+        try {
+            if (primaryStage != null) {
+                saveSettings(primaryStage, controller);
+            }
+        } catch (RuntimeException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, "Cannot save settings", ex);
+        }
+        controller.Shutdown();
+    }
+
+    /**
+     * Safety net: a thread that was not stopped (not a daemon) keeps the JVM
+     * alive and the program hangs after quitting. Log such threads and end
+     * the JVM after a grace period.
+     */
+    private static void startExitWatchdog() {
+        Thread watchdog = new Thread(() -> {
+            try {
+                Thread.sleep(EXIT_GRACE_MILLIS);
+            } catch (InterruptedException ex) {
+                return;
+            }
+            StringBuilder alive = new StringBuilder();
+            for (Thread t : Thread.getAllStackTraces().keySet()) {
+                if (t.isAlive() && !t.isDaemon() && t != Thread.currentThread()
+                        && !"DestroyJavaVM".equals(t.getName())) {
+                    alive.append(' ').append(t.getName());
+                }
+            }
+            Logger.getLogger(App.class.getName()).log(Level.WARNING,
+                    "JVM still running {0} ms after quit, non-daemon threads:{1}",
+                    new Object[]{EXIT_GRACE_MILLIS, alive});
+            ThreadDump.write("exit hang, non-daemon threads:" + alive);
+            System.exit(0);
+        }, "exitWatchdog");
+        watchdog.setDaemon(true);
+        watchdog.start();
     }
 
     @Override
@@ -150,6 +213,8 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
+        primaryStage = stage;
+        mainController = fxmlLoader.getController();
         restoreSettings(stage, fxmlLoader.getController());
         notifyPreloader(new ProgressNotification(0.9));
 
@@ -159,12 +224,11 @@ public class App extends Application {
         scene.addEventFilter(KeyEvent.KEY_PRESSED, (event) -> {
             if (keyComb.match(event)) {
                 event.consume();
-                App.saveSettings((Stage) scene.getWindow(), fxmlLoader.getController());
-                MainViewController controller = fxmlLoader.getController();
-                controller.Shutdown();
+                shutdownApp();
                 Platform.exit();
             }
         });
+        stage.setOnCloseRequest((event) -> shutdownApp());
         stage.setScene(scene);
         stage.getIcons().add(iconImage);
         stage.show();

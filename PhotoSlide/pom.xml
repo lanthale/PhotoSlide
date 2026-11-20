@@ -6,7 +6,7 @@
 
     <groupId>org.photoslide</groupId>
     <artifactId>PhotoSlide</artifactId>
-    <version>2.2.3-SNAPSHOT</version>
+    <version>2.3.0-SNAPSHOT</version>
 
     <!-- This description text is included in the Windows installer by default, see win-jpackage.txt -->
     <description>Photoslide is an app for managing and editing photos like Lightroom/ON1/...</description>
@@ -15,7 +15,7 @@
         <mainClass>org.photoslide.App</mainClass>
         <app.name>Photoslide</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>2.2.3</app.version>
+        <app.version>2.3.0</app.version>
         <!-- jlink creates the legal notices as symlinks: on a network share (SMB) they
              cannot be read and jpackage fails copying them, so the image is built locally -->
         <jvm.image.dir>${java.io.tmpdir}/photoslide-jvm-image</jvm.image.dir>
@@ -207,6 +207,12 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>2.5.252</version>
+        </dependency>
+        <dependency>
+            <!-- reads the database of the macOS Photos library (read only) -->
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.51.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

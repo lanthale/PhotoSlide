@@ -831,6 +831,21 @@ public class CollectionsController implements Initializable {
         });
     }
 
+    /**
+     * Ignores the changes in {@code dir} (only this folder, e.g. the temporary
+     * files of an export) until {@link #resumeWatch(Path)}.
+     */
+    public void pauseWatch(Path dir) {
+        directorywatchSelected.pause(dir);
+        directoryRootwatch.pause(dir);
+    }
+
+    /** Watches {@code dir} again after {@link #pauseWatch(Path)}. */
+    public void resumeWatch(Path dir) {
+        directorywatchSelected.resume(dir);
+        directoryRootwatch.resume(dir);
+    }
+
     /** Called by the directory watcher, on the FX thread. */
     public void refreshTreeParent(String path, String eventKind) {
         if (accordionPane.getExpandedPane() == null

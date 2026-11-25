@@ -694,6 +694,10 @@ public class MainViewController implements Initializable {
             progressbarLabel.setText(I18n.t("main.exportingFiles"));
             statusLabelLeft.setText(I18n.t("main.exporting"));
             statusLabelLeft.setVisible(true);
+            // the temporary files of the export must not show up in the collection tree:
+            // the watcher ignores the output folder (only this one) until the export ended
+            final Path exportDir = Path.of(diag.getController().getOutputDir());
+            collectionsPaneController.pauseWatch(exportDir);
             Task<Boolean> task = new Task<>() {
                 @Override
                 protected Boolean call() throws Exception {
@@ -862,12 +866,14 @@ public class MainViewController implements Initializable {
             progressbarLabel.textProperty().unbind();
             progressbarLabel.textProperty().bind(task.messageProperty());
             task.setOnSucceeded((t) -> {
+                collectionsPaneController.resumeWatch(exportDir);
                 progressbar.progressProperty().unbind();
                 progressbarLabel.textProperty().unbind();
                 progressPane.setVisible(false);
                 statusLabelLeft.setVisible(false);
             });
             task.setOnFailed((t) -> {
+                collectionsPaneController.resumeWatch(exportDir);
                 //error during rotated images occuring...                
                 Logger.getLogger(MainViewController.class.getName()).log(Level.SEVERE, "Error during export occured!", t.getSource().getException());
                 progressbar.progressProperty().unbind();
@@ -882,6 +888,7 @@ public class MainViewController implements Initializable {
                 errorDiag.show();
             });
             task.setOnCancelled((t) -> {
+                collectionsPaneController.resumeWatch(exportDir);
                 progressbar.progressProperty().unbind();
                 progressbarLabel.textProperty().unbind();
                 progressPane.setVisible(false);

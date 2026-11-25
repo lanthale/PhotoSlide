@@ -296,6 +296,9 @@ public class LighttableController implements Initializable {
         stackPane.addEventFilter(MouseEvent.MOUSE_MOVED, (t) -> {
             stackPane.setCursor(isOverRatingControl(t) ? javafx.scene.Cursor.HAND : null);
         });
+        // the toolbar buttons must not take the focus from the media grid,
+        // otherwise the keyboard navigation (next/previous photo) stops after a click
+        detailToolbar.getItems().forEach(n -> n.setFocusTraversable(false));
         sortOptions = FXCollections.observableArrayList(I18n.t("lighttable.sort.filename"), I18n.t("lighttable.sort.captureTime"), I18n.t("lighttable.sort.creationTime"));
         sortOrderComboBox.setItems(sortOptions);
         sortOrderComboBox.getSelectionModel().selectFirst();
@@ -460,6 +463,8 @@ public class LighttableController implements Initializable {
         watchSlowLoading(taskMLoading, sPath);
         this.mainController.getTaskProgressView().getTasks().add(taskMLoading);
         imageGrid.setOnKeyPressed((t) -> {
+            // only the keys handled here are consumed: the others (e.g. the menu
+            // accelerators for rotate left/right) must reach the scene
             if (keyCombinationMetaC.match(t)) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
                 final ClipboardContent content = new ClipboardContent();
@@ -471,27 +476,27 @@ public class LighttableController implements Initializable {
                 });
                 content.putFiles(fileList);
                 clipboard.setContent(content);
+                t.consume();
+                return;
             }
             if (keyCombinationMetaA.match(t)) {
                 fullMediaList.forEach((mediafile) -> {
                     factory.getSelectionModel().add(mediafile);
                 });
+                t.consume();
+                return;
             }
-
-            if (KeyCode.RIGHT == t.getCode()) {
-                selectNextImageInGrid();
+            if (t.isShortcutDown() || t.isAltDown() || t.isControlDown() || t.isMetaDown()) {
+                return;
             }
-            if (KeyCode.LEFT == t.getCode()) {
-                selectPreviousImageInGrid();
-            }
-            if (KeyCode.X == t.getCode()) {
-                bookmarkSelection();
-            }
-            if (KeyCode.B == t.getCode()) {
-                bookmarkSelection();
-            }
-            if (KeyCode.BACK_SPACE == t.getCode() || KeyCode.DELETE == t.getCode()) {
-                deleteAction();
+            switch (t.getCode()) {
+                case RIGHT -> selectNextImageInGrid();
+                case LEFT -> selectPreviousImageInGrid();
+                case X, B -> bookmarkSelection();
+                case BACK_SPACE, DELETE -> deleteAction();
+                default -> {
+                    return;
+                }
             }
             t.consume();
         });
@@ -790,6 +795,7 @@ public class LighttableController implements Initializable {
         EditPipeline.turn(item, degrees);
         historyFile = item;
         bindFitToRotation(item.getRotationAngleProperty().get());
+        imageGrid.requestFocus();
     }
 
     /** Fits the image view into the pane, swapped for a quarter turn. */
@@ -1088,7 +1094,7 @@ public class LighttableController implements Initializable {
         infoPane.setDisable(false);
         optionPane.setDisable(false);
         croppedFile = null;
-        imageView.requestFocus();
+        imageGrid.requestFocus();
     }
 
     public boolean isCropping() {
@@ -1801,7 +1807,7 @@ public class LighttableController implements Initializable {
         faceOverlay.clear();
         faceOverlay.setVisible(false);
         faceBar.setVisible(false);
-        imageView.requestFocus();
+        imageGrid.requestFocus();
     }
 
     /** The user named, confirmed or removed a face. */

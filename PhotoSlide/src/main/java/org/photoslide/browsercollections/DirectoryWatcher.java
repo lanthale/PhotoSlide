@@ -22,6 +22,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javafx.application.Platform;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +45,15 @@ public class DirectoryWatcher {
     private WatchService watchService;
     private final Map<WatchKey, Path> keys = new HashMap<>();
     private boolean stopped;
+    // folders whose events are dropped (e.g. during an export), with a count
+    // for overlapping pauses of the same folder; guarded by lock
+    private final Map<Path, Integer> paused = new HashMap<>();
+    /**
+     * Events may arrive late after the files changed (the polling watch
+     * service on macOS looks every few seconds): a folder is watched again
+     * only after this delay.
+     */
+    private static final long RESUME_DELAY_SECONDS = 12;
 
     public DirectoryWatcher(CollectionsController c) {
         controller = c;
@@ -94,6 +104,33 @@ public class DirectoryWatcher {
         }
     }
 
+    /** Drops the events of {@code dir} (only this folder) until {@link #resume(Path)}. */
+    public void pause(Path dir) {
+        Path key = normalize(dir);
+        synchronized (lock) {
+            paused.merge(key, 1, Integer::sum);
+        }
+    }
+
+    /** Watches {@code dir} again (after a short delay for late events). */
+    public void resume(Path dir) {
+        Path key = normalize(dir);
+        Thread.ofVirtual().name("directoryWatcherResume").start(() -> {
+            try {
+                TimeUnit.SECONDS.sleep(RESUME_DELAY_SECONDS);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+            synchronized (lock) {
+                paused.computeIfPresent(key, (k, n) -> n > 1 ? n - 1 : null);
+            }
+        });
+    }
+
+    private static Path normalize(Path dir) {
+        return dir.toAbsolutePath().normalize();
+    }
+
     // lock held
     private void register(WatchService ws, Path dir) throws IOException {
         WatchKey key = dir.register(ws, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
@@ -115,8 +152,15 @@ public class DirectoryWatcher {
             while (true) {
                 WatchKey key = ws.take();
                 Path dir;
+                boolean isPaused;
                 synchronized (lock) {
                     dir = keys.get(key);
+                    isPaused = dir != null && paused.containsKey(normalize(dir));
+                }
+                if (isPaused) {
+                    key.pollEvents();
+                    key.reset();
+                    continue;
                 }
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (dir == null || event.kind() == StandardWatchEventKinds.OVERFLOW) {
